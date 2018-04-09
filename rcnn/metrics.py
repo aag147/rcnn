@@ -4,10 +4,12 @@ Created on Sun Mar 18 17:03:48 2018
 
 @author: aag14
 """
+import utils
 import numpy as np
-import plotData as pd
 import copy as cp
 from sklearn.metrics import average_precision_score
+from sklearn.metrics import confusion_matrix
+
 
 #%% COMPUTE ACCURACY
 def computeLoss(Y, Y_hat, top):
@@ -27,14 +29,16 @@ def computeLoss(Y, Y_hat, top):
     return acc
         
 def computeConfusionMatrix(Y, Y_hat):
-    
+    Y = utils.getVectorLabels(Y)
+    Y_hat = utils.getVectorLabels(Y_hat)
+    return confusion_matrix(Y, Y_hat)
 
 def computeMultiLabelLoss(Y, Y_hat):
     (nb_samples, nb_classes) = Y_hat.shape
     Y_hat = cp.copy(Y_hat)
     Y_hat[Y_hat>=0.5] = 1
     Y_hat[Y_hat<0.5] = 0
-    accs = np.zeros((16,8))
+    accs = np.zeros((16,6))
     for x in range(nb_classes):
         y_total = 0
         tp = 0
@@ -55,8 +59,8 @@ def computeMultiLabelLoss(Y, Y_hat):
         p = tp / (tp+fp) if tp>0 else 0.0
         r = tp / (tp+fn) if tp>0 else 0.0
         
-        AP = average_precision_score(Y, Y_hat)
-        mAP = np.mean(AP)
+#        AP = average_precision_score(Y, Y_hat)
+#        mAP = np.mean(AP)
         accs[x,:] = [y_total, tp, fp, fn, p, r]
         
     mP = np.mean(accs[:,4])
@@ -79,3 +83,6 @@ def computeIndividualLabelLoss(Y, Y_hat):
         accs[x] = acc1
 #        print("[%d] TOP 1: " %  (x), acc1)
     return accs
+
+if __name__ == "__main__":
+    print("hej")

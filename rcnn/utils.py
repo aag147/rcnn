@@ -7,9 +7,8 @@ Created on Thu Mar 15 13:45:39 2018
 import cv2 as cv
 import numpy as np
 import sklearn.model_selection as skmodel
-from keras.utils import np_utils
-import pickle
 import json
+import glob, os
 
 def save_obj(obj, name, url):
     with open(url + name + '.json', 'w') as f:
@@ -30,37 +29,89 @@ def loadImages(imagesID, imagesMeta, url):
     return images
 
 ## Split data (IDs) ##
-def splitData(imagesID):
+def splitData(imagesID, imagesMeta):
     [trainID, testID] = skmodel.train_test_split(imagesID, test_size=0.2)
     [trainID, valID] = skmodel.train_test_split(trainID, test_size=0.2)
-    return [trainID, valID, testID]
+    trainMeta = {key:imagesMeta[key] for key in trainID}
+    valMeta = {key:imagesMeta[key] for key in valID}
+    testMeta = {key:imagesMeta[key] for key in testID}
+    return trainMeta, valMeta, testMeta
+
+
+def spliceXData(XData, s_idx, f_idx):
+    newXData = []
+    for i in range(len(XData)):
+        newXData.append(XData[i][s_idx:f_idx])
+    return newXData
+
+def concatXData(XMain, XSub):
+    newXData = []
+    if len(XMain) == 0:
+        return XSub
+    for i in range(len(XMain)):
+        newXData.append(np.append(XMain[i], XSub[i], axis=0))
+    return newXData
 
 ## Get model ready data ##
-def getData(imagesID, imagesMeta, images, shape):
-    dataXP = []
-    dataXB = []
-    dataY = []
-    dataMeta = []
+def getXData(imagesID, imagesMeta, url2Image, shape):
+    dataX = []
     for imageID in imagesID:
         imageMeta = imagesMeta[imageID]
-        image     = images[imageID]
+        image = cv.imread(url2Image + imageMeta['imageID'])
+        image = cv.cvtColor(image, cv.COLOR_BGR2RGB)
+        imageClean = preprocessImage(image, shape)
+        dataX.append(imageClean)
+    dataX = np.array(dataX)
+    return dataX    
+
+def getX2Data(imagesID, imagesMeta, url2Image, shape):
+    dataXP = []
+    dataXB = []
+    for imageID in imagesID:
+        imageMeta = imagesMeta[imageID]
+        image = cv.imread(url2Image + imageMeta['imageID'])
+        image = cv.cvtColor(image, cv.COLOR_BGR2RGB)
         for relID, rel in imageMeta['rels'].items():
             #print(imageID, relID)
             relCrops = cropImageFromRel(rel['prsBB'], rel['objBB'], image)
             relCrops = preprocessRel(relCrops['prsCrop'], relCrops['objCrop'], image, shape)
             dataXP.append(relCrops['prsCrop'])
             dataXB.append(relCrops['objCrop'])
-            dataY.append(rel['labels'])
-            dataMeta.append({'imageID': imageID, 'relID':relID})
-    dataY = (dataY)
     dataXP = np.array(dataXP)
     dataXB = np.array(dataXB)
-    return [dataXP, dataXB, dataY, dataMeta]
+    return [dataXP, dataXB]
+
+def getYData(imagesID, imagesMeta, nb_classes):
+    dataLabels = []
+    dataBBs    = []
+    for imageID in imagesID:
+        imageMeta = imagesMeta[imageID]
+        for relID, rel in imageMeta['rels'].items():
+            labels, prsGT, objGT = getGTDataRel(rel)
+            dataLabels.append(labels)
+            dataBBs.append(prsGT + objGT)
+    dataLabels = (dataLabels)
+    dataBBs = np.array(dataBBs)
+    dataLabels = getMatrixLabels(nb_classes, dataLabels)
+    return dataLabels, dataBBs
+
+
+def getGTData(bb):
+    xmin = bb['xmin']; xmax = bb['xmax']
+    ymin = bb['ymin']; ymax = bb['ymax']
+    return [xmin, xmax, ymin, ymax]
+
+def getGTDataRel(rel):
+    labels = rel['labels']
+    prsGT = getGTData(rel['prsBB'])
+    objGT = getGTData(rel['objBB'])
+    return labels, prsGT, objGT
 
 ## Resize and normalize image ##
 def preprocessImage(image, shape):
     image = cv.resize(image, shape).astype(np.float32)
-    #image = (image - np.mean(image)) / np.std(image)
+#    image = (image - np.mean(image)) / np.std(image)
+    image = (image - np.min(image)) / np.max(image)
     image = image.transpose([2,0,1])
     return image
 
@@ -86,14 +137,21 @@ def cropImageFromRel(prsBB, objBB, image):
 
 ## Convert label int to list ##
 def getMatrixLabels(nb_classes, Y):
-    YMatrix = np.zeros((nb_classes, len(Y)))
+    YMatrix = np.zeros((len(Y), nb_classes))
     sIdx = 0
-    print(len(Y))
     for y in Y:
         for clIdx in y:
-            YMatrix[clIdx][sIdx] = 1
+            YMatrix[sIdx][clIdx] = 1
         sIdx += 1
     return YMatrix
+
+def getVectorLabels(YMatrix):
+    Y = np.zeros(YMatrix.shape[0], dtype=int)
+    sIdx = 0
+    for sIdx in range(len(Y)):
+        y = np.argmax(YMatrix[sIdx,:])
+        Y[sIdx] = y
+    return Y
 
 def deleteFillerFiles(keepers, url, ext):
     i = 0

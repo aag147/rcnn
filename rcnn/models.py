@@ -12,27 +12,25 @@ from keras.optimizers import SGD
 import numpy as np
 from keras import backend as K
 from keras.layers.core import Lambda
+from keras.engine.topology import Layer
+from keras.initializers import TruncatedNormal
 
 from keras import backend as K
 K.set_image_dim_ordering('th')
 
 from keras.layers import Flatten, Dense, Dropout, Reshape, Permute, Activation, \
     Input, merge
+from keras.layers.merge import concatenate
 from keras.layers.convolutional import Convolution2D, MaxPooling2D, ZeroPadding2D
 from keras.utils.layer_utils import convert_all_kernels_in_model
 
+import tensorflow as tf
 
 def getWeightsURL():
     urlWeights = 'C:/Users/aag14/Documents/Skole/Speciale/Weights/'
     return urlWeights
 
-def replaceLastLayer(model, nb_classes):    
-    # Build final model
-    output = Dense(nb_classes)(model.layers[-2].output)
-    model = Model(input=model.input, output=output)
-    return model
-
-def VGG_16(weights_path=None, nb_classes=1000):
+def VGG_16(weights_path=None, nb_classes=1000, include='all'):
     #https://gist.github.com/baraldilorenzo/07d7802847aaad0a35d3
     #https://github.com/fchollet/deep-learning-models/blob/master/vgg16.py
     input_shape=(3,224,224)
@@ -67,8 +65,7 @@ def VGG_16(weights_path=None, nb_classes=1000):
     model.add(Dropout(0.5))
     model.add(Dense(1000, activation='softmax'))
 
-    if weights_path:
-        model.load_weights(weights_path)
+    model = final_model(model, weights_path, nb_classes, include)
 
     return model
 
@@ -85,17 +82,9 @@ def PairWiseStream(weights_path=None, nb_classes=1000, include = 'all'):
     fc = Dense(256, activation='relu')(fc)
     fc = Dense(1000, activation='relu')(fc)
     
-    model = Model(input=inputs, output=fc)
+    model = Model(inputs=inputs, outputs=fc)
     
-    if weights_path:
-        model.load_weights(weights_path)
-       
-    if nb_classes:
-        model = replaceLastLayer(model, nb_classes)
-    
-    if include == 'all':
-        prediction = Activation("sigmoid")(model.layers[-1].output)
-        model = Model(input=model.input, output=prediction)
+    model = final_model(model, weights_path, nb_classes, include)
     return model
 
 
@@ -104,62 +93,162 @@ def AlexNet(weights_path=None, nb_classes=1000, include = 'all'):
     #https://github.com/duggalrahul/AlexNet-Experiments-Keras/blob/master/convnets-keras/convnetskeras/convnets.py
     inputs = Input(shape=(3,227,227))
 
-    conv_1 = Conv2D(96, (11, 11),subsample=(4,4),activation='relu')(inputs)
+    conv_1 = Conv2D(96, (11, 11), strides=(4,4), activation='relu', kernel_initializer='TruncatedNormal')(inputs)
 
     conv_2 = MaxPooling2D((3, 3), strides=(2,2))(conv_1)
     conv_2 = crosschannelnormalization()(conv_2)
     conv_2 = ZeroPadding2D((2,2))(conv_2)
-    conv_2 = merge([
-        Convolution2D(128,5,5,activation="relu")(
+    conv_2 = concatenate([
+        Conv2D(128, (5,5), activation="relu", kernel_initializer='TruncatedNormal')(
             splittensor(ratio_split=2,id_split=i)(conv_2)
-        ) for i in range(2)], mode='concat',concat_axis=1)
+        ) for i in range(2)], axis=1)
 
     conv_3 = MaxPooling2D((3, 3), strides=(2, 2))(conv_2)
     conv_3 = crosschannelnormalization()(conv_3)
     conv_3 = ZeroPadding2D((1,1))(conv_3)
-    conv_3 = Convolution2D(384,3,3,activation='relu')(conv_3)
+    conv_3 = Conv2D(384, (3,3), activation='relu', kernel_initializer='TruncatedNormal')(conv_3)
 
     conv_4 = ZeroPadding2D((1,1))(conv_3)
-    conv_4 = merge([
-        Convolution2D(192,3,3,activation="relu")(
+    conv_4 = concatenate([
+        Conv2D(192, (3,3), activation="relu", kernel_initializer='TruncatedNormal')(
             splittensor(ratio_split=2,id_split=i)(conv_4)
-        ) for i in range(2)], mode='concat',concat_axis=1)
+        ) for i in range(2)], axis=1)
 
     conv_5 = ZeroPadding2D((1,1))(conv_4)
-    conv_5 = merge([
-        Convolution2D(128,3,3,activation="relu")(
+    conv_5 = concatenate([
+        Conv2D(128, (3,3), activation="relu", kernel_initializer='TruncatedNormal')(
             splittensor(ratio_split=2,id_split=i)(conv_5)
-        ) for i in range(2)], mode='concat',concat_axis=1)
+        ) for i in range(2)], axis=1)
 
     
     dense_1 = MaxPooling2D((3, 3), strides=(2,2))(conv_5)
     dense_1 = Flatten()(dense_1)
-    dense_1 = Dense(4096, activation='relu')(dense_1)
+    dense_1 = Dense(4096, activation='relu', kernel_initializer='TruncatedNormal')(dense_1)
     dense_2 = Dropout(0.5)(dense_1)
-    dense_2 = Dense(4096, activation='relu')(dense_2)
+    dense_2 = Dense(4096, activation='relu', kernel_initializer='TruncatedNormal')(dense_2)
     dense_3 = Dropout(0.5)(dense_2)
-    dense_3 = Dense(1000)(dense_3)
-    model = Model(input=inputs, output=dense_3)
+    dense_3 = Dense(1000, activation='relu', kernel_initializer='TruncatedNormal')(dense_3)
+    model = Model(inputs=inputs, outputs=dense_3)
 
+    model = final_model(model, weights_path, nb_classes, include)
+
+    return model
+
+def final_model(model, weights_path, nb_classes, include):    
+    # Build final model
     if weights_path:
-        model.load_weights(weights_path)
+        model.load_weights(getWeightsURL()+weights_path)
         
     if K.backend() == 'tensorflow':
        convert_all_kernels_in_model(model)
-       
     
     if include not in {'fc', 'all'}:
         output = model.layers[-8].output
-        model = Model(input=model.input, output=output)
+        model = Model(inputs=model.input, outputs=output)
     else:
-        if nb_classes:
-            model = replaceLastLayer(model, nb_classes)
-    
-        if include == 'all':
-            prediction = Activation("sigmoid")(model.layers[-1].output)
-            model = Model(input=model.input, output=prediction)
-
+        output = Dense(nb_classes)(model.layers[-2].output)
+        model = Model(inputs=model.input, outputs=output)
     return model
+
+def rpn(base_layers, num_anchors):
+    x = Conv2D(256, (3, 3), padding='same', activation='relu', kernel_initializer='normal', name='rpn_conv1')(
+        base_layers)
+
+    x_class = Conv2D(num_anchors, (1, 1), activation='sigmoid', kernel_initializer='uniform', name='rpn_out_class')(x)
+    x_regr = Conv2D(num_anchors * 4, (1, 1), activation='linear', kernel_initializer='zero', name='rpn_out_regress')(x)
+
+    return [x_class, x_regr, base_layers]
+
+
+def classifier(base_layers, input_rois, num_rois, nb_classes=21):
+    # compile times on theano tend to be very high, so we use smaller ROI pooling regions to workaround
+
+    pooling_regions = 7
+
+    out_roi_pool = RoiPoolingConv(pooling_regions, num_rois)([base_layers, input_rois])
+
+    dense_1 = Flatten()(out_roi_pool)
+    dense_1 = Dense(4096, activation='relu', kernel_initializer='TruncatedNormal')(dense_1)
+    dense_2 = Dropout(0.5)(dense_1)
+    dense_2 = Dense(4096, activation='relu', kernel_initializer='TruncatedNormal')(dense_2)
+    dense_3 = Dropout(0.5)(dense_2)
+
+
+    out_class = Dense(nb_classes, activation='sigmoid', kernel_initializer='uniform')(dense_3)
+    # note: no regression target for bg class
+    out_regr = Dense(4 * (nb_classes - 1), activation='linear', kernel_initializer='zero')(dense_3)
+
+    return [out_class, out_regr]
+
+
+class RoiPoolingConv(Layer):
+    '''ROI pooling layer for 2D inputs.
+    See Spatial Pyramid Pooling in Deep Convolutional Networks for Visual Recognition,
+    K. He, X. Zhang, S. Ren, J. Sun
+    Source: https://github.com/jinfagang/keras_frcnn/blob/master/keras_frcnn/roi_pooling_conv.py
+    # Arguments
+        pool_size: int
+            Size of pooling region to use. pool_size = 7 will result in a 7x7 region.
+        num_rois: number of regions of interest to be used
+    # Input shape
+        list of two 4D tensors [X_img,X_roi] with shape:
+        X_img:
+        `(1, channels, rows, cols)` if dim_ordering='th'
+        or 4D tensor with shape:
+        `(1, rows, cols, channels)` if dim_ordering='tf'.
+        X_roi:
+        `(1,num_rois,4)` list of rois, with ordering (x,y,w,h)
+    # Output shape
+        3D tensor with shape:
+        `(1, num_rois, channels, pool_size, pool_size)`
+    '''
+    def __init__(self, pool_size, num_rois, **kwargs):
+
+        self.dim_ordering = K.image_dim_ordering()
+        assert self.dim_ordering in {'tf'}, 'dim_ordering must be in {tf}'
+
+        self.pool_size = pool_size
+        self.num_rois = num_rois
+
+        super(RoiPoolingConv, self).__init__(**kwargs)
+
+    def build(self, input_shape):
+        self.nb_channels = input_shape[0][3]
+
+    def compute_output_shape(self, input_shape):
+        return None, self.num_rois, self.pool_size, self.pool_size, self.nb_channels
+
+    def call(self, x, mask=None):
+
+        assert(len(x) == 2)
+
+        img = x[0]
+        rois = x[1]
+
+        outputs = []
+
+        for roi_idx in range(min(self.num_rois, rois.shape[1])):
+
+            x = rois[0, roi_idx, 0]
+            y = rois[0, roi_idx, 1]
+            w = rois[0, roi_idx, 2]
+            h = rois[0, roi_idx, 3]
+
+            #NOTE: the RoiPooling implementation differs between theano and tensorflow due to the lack of a resize op
+            # in theano. The theano implementation is much less efficient and leads to long compile times
+            x = K.cast(x, 'int32')
+            y = K.cast(y, 'int32')
+            w = K.cast(w, 'int32')
+            h = K.cast(h, 'int32')
+
+            rs = tf.image.resize_images(img[:, y:y+h, x:x+w, :], (self.pool_size, self.pool_size))
+            outputs.append(rs)
+
+        final_output = K.concatenate(outputs, axis=0)
+        final_output = K.reshape(final_output, (1, self.num_rois, self.pool_size, self.pool_size, self.nb_channels))
+        final_output = K.permute_dimensions(final_output, (0, 1, 2, 3, 4))
+
+        return final_output
 
 
 def crosschannelnormalization(alpha=1e-4, k=2, beta=0.75, n=5, **kwargs):

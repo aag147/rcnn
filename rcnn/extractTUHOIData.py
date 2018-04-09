@@ -4,7 +4,7 @@ Created on Wed Feb 28 15:23:30 2018
 
 @author: aag14
 """
-import plotData as pdata
+import utils, draw
 import csv
 url = 'C:/Users/aag14/Documents/Skole/Speciale/TUHOI_instruments/'
 instruments = ["bassoon", "cello", "clarinet", "erhu", "flute", "french horn", "guitar", "harp", "recorder", "saxophone", "trumpet", "violin"]
@@ -42,9 +42,10 @@ def getLabelStats(imagesMeta):
     stats = {i:{'play':0, 'hold': 0} for i in instruments}
     stats['total'] = 0
     for imageID, imageMeta in imagesMeta.items():
-        for relID, rel in imageMeta['rels'].items():    
-            stats[rel['obj']][rel['pred']] += 1
-            stats['total'] += 1
+        for relID, rel in imageMeta['rels'].items():
+            for name in rel['names']:
+                stats[name['obj']][name['pred']] += 1
+                stats['total'] += 1
     return stats
 
 def extractObjectData():
@@ -61,9 +62,10 @@ def extractObjectData():
     return objects, allObjects
 
 def extractMetaData():
-    i = 0
+    j = 0
     newImagesMeta = {}
     rawImagesMeta = {}
+    garbage = []
     
     with open(url + 'crowdflower_result.csv', newline='') as csvfile:
         f = list(csv.reader(csvfile))
@@ -78,34 +80,37 @@ def extractMetaData():
            
            imageMeta = {'ID': relID, 'imageID': imageID + '.JPEG'}
            rels = {}
-           garbage = []
-           
            for i in range(len(imageObjs)):
                objName     = imageObjs[i]
                preds       = imagePreds[i].split("\n")
                
+               # Objects
+               if objName in ['acoustic guitar']:
+                   objName = 'guitar'
+                   print('acustic')
+               
+               if objName not in instruments:
+                   garbage.append(objName)
+                   continue
+               
+               #Predicates
                pred = None
                votesPlay = sum(predsPlay.count(i.lower()) for i in preds)
                votesHold = sum(predsHold.count(i.lower()) for i in preds)
                if votesHold >= votesPlay:
                    pred = 'hold'
-               else:
-                   if votesPlay > 0:
-                       pred = 'play'
-                       
-               if objName in ['acoustic guitar']:
-                   objName = 'guitar'
-                   print('acustic')
+               elif votesPlay > 0:
+                   pred = 'play'
+#               else:
+#                   pred = hold
                
-               if objName in instruments:
-                   if pred in ['play', 'hold']:
-                       rels[objName] = pred
-                   else:
-                       print(imageID + ": " + "" + " " + objName)
-                       print(preds)
-               else:
-                   if objName:
-                       garbage.append(objName)
+               if pred not in ['play', 'hold']:
+                   print(imageID + ": " + "" + " " + objName)
+                   print(preds)
+                   continue
+               
+               rels[objName] = pred
+
            if rels:
                #if garbage:
                #    print(garbage)
@@ -116,13 +121,16 @@ def extractMetaData():
                #print(line[19:30])
                #print(imageID)
 
-        i += 1
-    return rawImagesMeta, newImagesMeta
+           j += 1
+    garbage = set(garbage)
+    print(len(f))
+    return newImagesMeta, rawImagesMeta, garbage
 
 def getBoundingBoxes(imagesMeta, objects, labels):
     newImagesMeta = {}
     imagesBadOnes = {}
     noImage = 0
+    total = 0
 
     for imageID, imageMeta in imagesMeta.items():
         try:
@@ -162,9 +170,10 @@ def getBoundingBoxes(imagesMeta, objects, labels):
                 if objName in relsObj.keys():
                     pred = relsObj[objName]
                     label = labels[pred+objName]
-                    relsTmp.append({'label': label, 'pred': pred, 'obj': objName, 'objBB': bb})
+                    relsTmp.append({'labels': [label], 'names': [{'pred': pred, 'obj': objName}], 'objBB': bb})
                 else:
                     relsObjBad.append({'pred': pred, 'name': objName, 'bb': bb})
+                total += 1
         
         # Choose best person boxes
         bestPrs = np.array([[0.0, 0.0, None] for i in range(len(relsTmp))])
@@ -174,8 +183,8 @@ def getBoundingBoxes(imagesMeta, objects, labels):
             relIdx = 0
             for rel in relsTmp:
                 objBB = rel['objBB']
-                IoUPsy = pdata.get_iou(objBB, perBB, False)
-                IoU = pdata.get_iou(objBB, perBB)
+                IoUPsy = utils.get_iou(objBB, perBB, False)
+                IoU = utils.get_iou(objBB, perBB)
                 IoUs[relIdx,:] = [IoUPsy, IoU]
                 relIdx += 1 
             bestIdx = np.argmax(IoUs[:,0])
@@ -215,6 +224,7 @@ def getBoundingBoxes(imagesMeta, objects, labels):
         imagesBadOnes[imageID] = [relsObjBad, relsPrsBad]
         noImage += 1
     #print(badOnes)
+    print(total)
     return newImagesMeta, imagesBadOnes
 
 
@@ -222,11 +232,14 @@ if __name__ == "__main__":
     plt.close("all")
     #deleteFillerFiles(images, 'bbox', 'XML')
     
-    rawImagesMeta, imagesMeta = extractMetaData()
+    imagesMeta, rawImagesMeta, garbage = extractMetaData()
     objects, allObjects = extractObjectData()
-    imagesMeta, samples, imagesBadOnes = getBoundingBoxes(imagesMeta, objects)
-    
+    unique_labels = getUniqueLabels()
+    imagesMeta, imagesBadOnes = getBoundingBoxes(imagesMeta, objects, unique_labels)
+    imagesMeta = utils.load_obj('TU_PPMI', url)
     images = list(imagesMeta.keys())
     images.sort()
     
-    pdata.drawImages(images[383:387], imagesMeta, url+'images/', imagesBadOnes)
+    stat = getLabelStats(imagesMeta)
+    
+#    draw.drawImages(images[383:387], imagesMeta, url+'images/', imagesBadOnes)

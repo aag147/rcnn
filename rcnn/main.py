@@ -5,14 +5,16 @@ Created on Thu Mar 15 13:49:30 2018
 @author: aag14
 """
 import extractTUHOIData as tuhoi
-import preprocess as pp
-import plotData as pdata
+import utils, draw
+from model_trainer import model_trainer
+from config import config
+from models import AlexNet, PairWiseStream
+from generators import DataGenerator
+from methods import HO_RCNN, HO_RCNN_2
+
 from matplotlib import pyplot as plt
 import cv2 as cv, numpy as np
 import copy as cp
-from HO_RCNN import HO_RCNN
-from models import AlexNet, PairWiseStream
-from generators import DataGenerator
 
 from keras.callbacks import EarlyStopping, LearningRateScheduler
 from keras.optimizers import SGD
@@ -21,83 +23,59 @@ from keras.models import Sequential, Model
 
 
 plt.close("all")
+url = tuhoi.getURL()
+url2Images = url+"images/"
+unique_labels = tuhoi.getUniqueLabels()
+nb_classes = len(unique_labels)
+cfg = config(url2Images=url2Images, nb_classes=nb_classes)
 #pp.save_obj(imagesMeta, 'TU_PPMI', url)
 # Read data
-if False:
-    # Load data (should be done by generator working on big data)
-    url = tuhoi.getURL()
-    unique_labels = tuhoi.getUniqueLabels()
-    rawImagesMeta, imagesMeta = tuhoi.extractMetaData()
-    objects, allObjects = tuhoi.extractObjectData()
-    imagesMeta, imagesBadOnes = tuhoi.getBoundingBoxes(imagesMeta, objects, unique_labels)
-    imagesMeta = pp.load_obj('TU_PPMI', url)
+if True:
+    # Load data
+#    imagesMeta, rawImagesMeta, garbage = tuhoi.extractMetaData()
+#    print(garbage)
+#    objects, allObjects = tuhoi.extractObjectData()
+#    imagesMeta, imagesBadOnes = tuhoi.getBoundingBoxes(imagesMeta, objects, unique_labels)
+    
+    imagesMeta = utils.load_obj('TU_PPMI', url)
     imagesID = list(imagesMeta.keys())
     imagesID.sort()
-    imagesID = imagesID
     
-    images = pp.loadImages(imagesID, imagesMeta, url+"images/")
-    [trainID, valID, testID] = pp.splitData(imagesID)
-    
+    trainMeta, valMeta, testMeta = utils.splitData(imagesID, imagesMeta)
 if True:
     # Create batch generators
     #class-itr
-    gen = DataGenerator(train_type='class-itr', val_type='itr')
-    gen.setDataVariables(allID=imagesID, trainID=trainID, valID=valID, testID=testID, imagesMeta=imagesMeta, \
-                            images=images, unique_labels=unique_labels)
+    genTrain = DataGenerator(imagesMeta=trainMeta, cfg=cfg, gen_type='itr')
+    genVal = DataGenerator(imagesMeta=valMeta, cfg=cfg)
+    genTest = DataGenerator(imagesMeta=testMeta, cfg=cfg)
     
 
 if True:
-    # Create and run model
-    method = HO_RCNN(unique_classes=unique_labels, class_type='multi-class')
-    method.createModel()
-    #method.setModel(methodW.model)
-    method.compileModel(wp=1)
-    method.trainModel(start_epoch=0, final_epoch=15, generator=gen)
+    cfg.patience = 8
+    cfg.epoch_begin = 0
+    cfg.epoch_end = 1
+    cfg.epoch_split = 10
+    cfg.init_lr = 0.001
+    cfg.task = 'multi-class'
+    
+    # Create model
+    model = HO_RCNN(include_weights=True, nb_classes=cfg.nb_classes, task=cfg.task)
+#    model = trainer.model
+    # train model
+    trainer = model_trainer(model=model, genTrain=genTrain, genVal=genVal, genTest=genTest, task=cfg.task)
+    trainer.compileModel(wp=20, n_opt = 'adam')
+    trainer.trainModel(cfg)
 #    method.evaluateModel(gen.testX, gen.testY)
     
 #    testYHat = method.evalYHat
 #    testYMatrix = method.testYMatrix
 #    testY = method.testY
-
-
-if False:
-    mean  = [103.939, 116.779, 123.68]
-    shape = (227, 227)
-    urlWeights = 'C:/Users/aag14/Documents/Skole/Speciale/Weights/'
-    
-    [trainID, testID] = pp.splitData(imagesID)
-    [trainPrsX, trainObjX, trainY, trainMeta] = pp.getData(trainID, imagesMeta, images, shape)
-    trainParX = method.getDataPairWiseStream(trainID, imagesMeta)
-    testParX = method.getDataPairWiseStream(testID, imagesMeta)
-    [testPrsX, testObjX, testY, testMeta] = pp.getData(testID, imagesMeta, images, shape)
-    trainYMatrix = pp.getMatrixLabels(unique_labels, trainY)
-    modelPrs = AlexNet(urlWeights+"alexnet_weights.h5", len(unique_labels), include='fc')
-    modelObj = AlexNet(urlWeights+"alexnet_weights.h5", len(unique_labels), include='fc')
-    modelPar = PairWiseStream(nb_classes = len(unique_labels), include='fc')
-                       
-    mergedOut = Add()([modelPrs.output, modelObj.output, modelPar.output])
-    mergedOut = Activation("softmax",name="softmax")(mergedOut)
-    model = Model(input=[modelPrs.input, modelObj.input, modelPar.input], output=mergedOut)
-    
-    def step_decay(epoch):
-        if epoch > 3:
-            return 0.0001
-        else:
-            return 0.001
-    
-    earlyStopping = EarlyStopping(monitor='val_loss', patience=0, verbose=0, mode='auto')
-    lrate = LearningRateScheduler(step_decay)
-    sgd = SGD(lr = 0.001, momentum = 0.8, decay = 0.0, nesterov=False)
-    model.compile(loss='categorical_crossentropy', optimizer=sgd, metrics=['accuracy'])
-    model.fit([trainPrsX, trainObjX, trainParX],trainYMatrix,epochs=12,batch_size=64, callbacks=[earlyStopping, lrate], validation_split=0.20)
-    
-    y_hat_p = model.predict(x=[testPrsX,testObjX,testParX])
     
 
 if False:
     i = 0
-    idx = 31
-    for sample in gen.generateTrain():
+    idx = 0
+    for sample in genTrain.begin():
         print(np.argmax(sample[1][idx]))
         win = sample[0][2][idx]
         prs = sample[0][0][idx].transpose([1,2,0])
@@ -106,28 +84,31 @@ if False:
         spl = spl.ravel()
         spl[0].imshow(win[0], cmap=plt.cm.gray)
         spl[1].imshow(win[1], cmap=plt.cm.gray)
-        spl[2].imshow((prs - np.min(prs)) / np.max(prs))
-        spl[3].imshow((obj - np.min(obj)) / np.max(obj))
+        spl[2].imshow(prs)
+        spl[3].imshow(obj)
         i += 1
         if i == 5:
             break
 
 if False:
-    imagesMeta = pp.load_obj('TU_PPMI', url)
+    imagesMeta = utils.load_obj('TU_PPMI', url)
     stats = tuhoi.getLabelStats(imagesMeta)
     i = 100
     print("i",i*9)
-    pdata.drawImages(imagesID[i*9:i*9+9], imagesMeta, url+'images/', imagesBadOnes)
+    draw.drawImages(imagesID[i*9:i*9+9], imagesMeta, url+'images/', imagesBadOnes)
 
-#imageID = imagesID[1]
+#
+#imageID = trainMeta[1]
+#X, y = next(genTrain)
 #imageMeta = imagesMeta[imageID]
 #rel = imageMeta['rels'][0]
 #image = images[imageID]
 #f, spl = plt.subplots(2,2)
 #spl = spl.ravel()
-#spl[0].imshow(res['pairwise'][0], cmap=plt.cm.gray)
-#spl[1].imshow(res['pairwise'][1], cmap=plt.cm.gray)
-#spl[2].imshow(image)
+#spl[0].imshow(X[2][0], cmap=plt.cm.gray)
+#spl[1].imshow(X[2][1], cmap=plt.cm.gray)
+#spl[2].imshow(X[0])
+#spl[3].imshow(X[1])
 #
 #print(np.unique(res['pairwise'][0]))
 #print(np.unique(res['pairwise'][1]))
