@@ -5,6 +5,7 @@ Created on Sun Mar 18 17:03:48 2018
 @author: aag14
 """
 import metrics as m
+import os
 
 import numpy as np
 from keras.callbacks import EarlyStopping, LearningRateScheduler, Callback, ModelCheckpoint
@@ -16,7 +17,11 @@ def MyEarlyStopping(cfg):
 
 
 def MyModelCheckpoint(cfg):
-    path = cfg.weights_path + cfg.modelnamekey + 'weights.{epoch:02d}-{val_loss:.2f}.h5'
+    for fid in range(100):
+        if not os.path.exists(cfg.weights_path + cfg.modelnamekey + '%d/' % fid):
+            path = cfg.weights_path + cfg.modelnamekey + '%d/' % fid
+            break
+    path = path + 'weights.{epoch:02d}-{val_loss:.2f}.h5'
     return ModelCheckpoint(path, monitor='val_loss', verbose=0, save_best_only=True, save_weights_only=True, mode='auto', period=1)
 
 def MyLearningRateScheduler(cfg):
@@ -49,12 +54,9 @@ class LogHistory(Callback):
       self.val_acc.append(logs.get('val_acc'))
 	
 class EvaluateTest(Callback):
-   def __init__(self, gen):
+   def __init__(self, gen, f):
       self.gen = gen
-      self.nb_samples = gen.nb_samples
-      self.nb_batches = gen.nb_batches
-      self.nb_classes = gen.nb_classes
-      self.batch_size = gen.batch_size
+      self.f = f
       
       self.F1 = []
       self.mP = []
@@ -66,26 +68,12 @@ class EvaluateTest(Callback):
        return
 		
    def on_epoch_end(self, epoch, logs={}):
-      self.evalYHat = np.zeros([self.nb_samples, self.nb_classes])
-      self.y = np.zeros([self.nb_samples, self.nb_classes])
-      iterGen = self.gen.begin()
-      for i in range(self.nb_batches):
-          batch, y = next(iterGen)
-#          print(batch[0].shape)
-#          print(y.shape)
-          y_hat = self.model.predict_on_batch(x=batch)
-          s_idx = i * self.batch_size
-          f_idx = min(self.nb_samples,s_idx+self.batch_size)
-          self.evalYHat[s_idx:f_idx, :] = y_hat
-          self.y[s_idx:f_idx, :] = y
-#      print(self.evalYHat)
-#      print(self.evalYHat.shape)
-
-      accs, mP, mR, F1 = m.computeMultiLabelLoss(self.y, self.evalYHat)
+      accs, mP, mR, F1, nb_zeros = self.f(self.model, self.gen)
       self.multilabel.append(accs)
       self.mP.append(mP)
       self.mR.append(mR)
       self.F1.append(F1)
+      self.zeroAcc.append(nb_zeros)
       
    def on_epoch_begin(self, epoch, logs={}):
        if len(self.F1) > 0:

@@ -6,7 +6,8 @@ Created on Thu Mar 15 13:49:30 2018
 """
 
 import sys 
-sys.path.append('../..')
+sys.path.append('..')
+sys.path.append('rcnn/')
 
 import extractTUHOIData as tuhoi
 import utils, draw
@@ -63,7 +64,8 @@ if True:
     trainer.compileModel(cfg)
     trainer.trainModel(cfg)
     trainer.saveLog(cfg)
-#    method.evaluateModel(gen.testX, gen.testY)
+    accs, mP, mR, F1 = trainer.evaluateModel(genTest)
+    print("F1:", F1)
     
 #    testYHat = method.evalYHat
 #    testYMatrix = method.testYMatrix

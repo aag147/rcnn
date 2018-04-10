@@ -135,7 +135,6 @@ class DataGenerator():
             self.batch_size = self.batch_size
             self.nb_batches = m.ceil(len(self.gt_label) / self.batch_size)
             self.nb_samples = len(self.gt_label)
-            self.nb_batches = 5
             
             
     def getSinglePairWiseStream(self, thisBB, thatBB, width, height, newWidth, newHeight):

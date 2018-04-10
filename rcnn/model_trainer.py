@@ -18,13 +18,33 @@ import os
 from keras.callbacks import EarlyStopping, LearningRateScheduler, Callback
 from keras.optimizers import SGD, Adam
 
+def _evaluate(model, gen):
+  evalYHat = np.zeros([gen.nb_samples, gen.nb_classes])
+  Y = np.zeros([gen.nb_samples, gen.nb_classes])
+  iterGen = gen.begin()
+  for i in range(gen.nb_batches):
+      batch, y = next(iterGen)
+#          print(batch[0].shape)
+#          print(y.shape)
+      y_hat = model.predict_on_batch(x=batch)
+      s_idx = i * gen.batch_size
+      f_idx = min(gen.nb_samples,s_idx+gen.batch_size)
+      evalYHat[s_idx:f_idx, :] = y_hat
+      Y[s_idx:f_idx, :] = y
+#      print(self.evalYHat)
+#      print(self.evalYHat.shape)
+
+  accs, mP, mR, F1 = m.computeMultiLabelLoss(Y, evalYHat)
+  nb_zeros = np.count_nonzero(accs[:,1] == 0)
+  return accs, mP, mR, F1, nb_zeros
+
 class model_trainer:
     def __init__(self, model, genTrain=None, genVal=None, genTest=None, task='multi-class'):
         self.task = task
         self.model = model
         self.genTrain = genTrain
         self.genVal = genVal
-        self.eval = cb.EvaluateTest(genTest)
+        self.eval = cb.EvaluateTest(genTest, _evaluate)
         self.log = cb.LogHistory()
         
     def saveLog(self, cfg):
@@ -66,17 +86,11 @@ class model_trainer:
         if cfg.include_eval:
             callbacks.append(self.eval)
         
-        
         self.model.fit_generator(generator = self.genTrain.begin(), \
                     steps_per_epoch = self.genTrain.nb_batches, \
                     validation_data = self.genVal.begin(), \
                     validation_steps = self.genVal.nb_batches, \
                     epochs = cfg.epoch_end, initial_epoch=cfg.epoch_begin, callbacks=callbacks)
 
-    def evaluateModel(self, genTest):
-        if X is None:
-            X = self.testX
-            y = self.testY
-        EvaluateTest()
-        self.evalYHat = self.model.predict(x=X)
-        return m.computeMultiLabelLoss(y, self.evalYHat)
+    def evaluateModel(self, gen):
+        return _evaluate(self.model, gen)

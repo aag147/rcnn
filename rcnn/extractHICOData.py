@@ -4,8 +4,7 @@ Created on Wed Mar  7 17:03:10 2018
 
 @author: aag14
 """
-import newplotData as pdata
-import newpreprocess as pp
+import draw, utils
 import csv
 url = 'C:/Users/aag14/Documents/Skole/Speciale/HICO/'
 
@@ -60,10 +59,10 @@ def extractMetaData(metaData, actions):
                     idx = None
                     for BBID, exisBB in bbLists[key].items():
                         if imageID == 'HICO_train2015_00006593.jpg':
-                            print(imageID, key, pdata.get_iou(exisBB, bb))
-                        if pdata.get_iou(exisBB, bb) > 0.4:
+                            print(imageID, key, utils.get_iou(exisBB, bb))
+                        if utils.get_iou(exisBB, bb) > 0.4:
                             idx = BBID
-                            bb = pdata.meanBB(bb, exisBB)
+                            bb = utils.meanBB(bb, exisBB)
                             bbLists[key][idx] = bb
                             break
                     if idx is None:
@@ -92,18 +91,18 @@ def extractMetaData(metaData, actions):
 if __name__ == "__main__":
     plt.close("all")
 #    metaData = sio.loadmat(url + 'anno.mat', struct_as_record=False, squeeze_me=True)
-#    bbData = sio.loadmat(url + 'anno_bbox.mat', struct_as_record=False, squeeze_me=True)
-#    actions = bbData['list_action']
+    bbData = sio.loadmat(url + 'anno_bbox.mat', struct_as_record=False, squeeze_me=True)
+    actions = bbData['list_action']
 #    trainYMatrix = metaData['anno_train']
-#    bbDataTrain   = bbData['bbox_train']
-#    imagesMeta = extractMetaData(bbDataTrain, actions)
+    bbDataTrain   = bbData['bbox_test']
+    imagesMeta = extractMetaData(bbDataTrain, actions)
     imagesID = list(imagesMeta.keys())
     imagesID.sort()
-    imagesID = imagesID[6490:7000]
-    images = pp.loadImages(imagesID, imagesMeta, url+"images/train2015/")
-    [dataXP, dataXB, dataY, dataMeta] = pp.getData(imagesID, imagesMeta, images, (224,244))
-    trainYMatrix = pp.getMatrixLabels(len(actions), dataY)
-    
-    sampleMeta = imagesMeta[imagesID[0]]
-    i = 0
-    pdata.drawImages(imagesID[i*9:(i+1)*9], imagesMeta, url+'images/train2015/', False)
+#    imagesID = imagesID[6490:7000]
+#    images = pp.loadImages(imagesID, imagesMeta, url+"images/train2015/")
+#    [dataXP, dataXB, dataY, dataMeta] = pp.getData(imagesID, imagesMeta, images, (224,244))
+#    trainYMatrix = pp.getMatrixLabels(len(actions), dataY)
+    utils.save_obj(imagesMeta, url+'HICO_test')
+#    sampleMeta = imagesMeta[imagesID[0]]
+#    i = 0
+#    pdata.drawImages(imagesID[i*9:(i+1)*9], imagesMeta, url+'images/train2015/', False)
