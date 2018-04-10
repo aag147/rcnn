@@ -6,7 +6,6 @@ Created on Wed Feb 28 15:23:30 2018
 """
 import utils, draw
 import csv
-url = 'C:/Users/aag14/Documents/Skole/Speciale/TUHOI_instruments/'
 instruments = ["bassoon", "cello", "clarinet", "erhu", "flute", "french horn", "guitar", "harp", "recorder", "saxophone", "trumpet", "violin"]
 
 nonactive_instruments = ['bassoon', 'clarinet', 'erhu', 'recorder']
