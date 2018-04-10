@@ -11,20 +11,20 @@ from keras.callbacks import EarlyStopping, LearningRateScheduler, Callback, Mode
 from keras import backend as K
 
 
-def MyEarlyStopping(patience = ''):
-    return EarlyStopping(monitor='val_loss', patience=patience, verbose=0, mode='auto')
+def MyEarlyStopping(cfg):
+    return EarlyStopping(monitor='val_loss', patience=cfg.patience, verbose=0, mode='auto')
 
 
-def MyModelCheckpoint(key = '', cfg):
-    path = cfg.weights_path + key + 'weights.{epoch:02d}-{val_loss:.2f}.h5'
-    return ModelCheckpoint(path+filename, monitor='val_loss', verbose=0, save_best_only=True, save_weights_only=True, mode='auto', period=1)
+def MyModelCheckpoint(cfg):
+    path = cfg.weights_path + cfg.modelnamekey + 'weights.{epoch:02d}-{val_loss:.2f}.h5'
+    return ModelCheckpoint(path, monitor='val_loss', verbose=0, save_best_only=True, save_weights_only=True, mode='auto', period=1)
 
-def MyLearningRateScheduler(epoch_split = 5, init_lr = 0.001):
+def MyLearningRateScheduler(cfg):
    def step_decay(epoch):
-      if epoch >= epoch_split:
-          return init_lr / 10.0
+      if epoch >= cfg.epoch_split:
+          return cfg.init_lr / 10.0
       else:
-          return init_lr
+          return cfg.init_lr
    return LearningRateScheduler(step_decay)
 	
 class PrintCallBack(Callback):

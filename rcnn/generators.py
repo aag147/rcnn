@@ -26,7 +26,7 @@ class DataGenerator():
       self.cIdx = 0
       self.winShape = (64, 64)
       
-      self.url2Images = cfg.url2Images
+      self.data_path = cfg.data_path
       self.nb_classes = cfg.nb_classes
 
       self.dataID = list(imagesMeta.keys())      
@@ -52,7 +52,7 @@ class DataGenerator():
     
     def _generateBatchFromIDs(self, batchID):
         batchID = [self.dataID[idx] for idx in batchID]
-        [dataXP, dataXB] = utils.getX2Data(batchID, self.imagesMeta, self.url2Images, self.shape)
+        [dataXP, dataXB] = utils.getX2Data(batchID, self.imagesMeta, self.data_path, self.shape)
         dataXW = self.getDataPairWiseStream(batchID, self.imagesMeta)
         X = [dataXP, dataXB, dataXW]
         y, _ = utils.getYData(batchID, self.imagesMeta, self.nb_classes)

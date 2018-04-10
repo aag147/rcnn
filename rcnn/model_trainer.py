@@ -55,11 +55,13 @@ class model_trainer:
         
     def trainModel(self, cfg):
         callbacks = [self.log, \
-                     self.eval, \
-                     cb.MyEarlyStopping(patience=cfg.patience), \
-                     cb.MyModelCheckpoint(key=cfg.modelnamekey), \
-                     cb.MyLearningRateScheduler(epoch_split=cfg.epoch_split, init_lr=cfg.init_lr), \
+                     cb.MyEarlyStopping(cfg), \
+                     cb.MyModelCheckpoint(cfg), \
+                     cb.MyLearningRateScheduler(cfg), \
                      cb.PrintCallBack()]
+        
+        if cfg.include_eval:
+            callbacks.append(self.eval)
         
         
         self.model.fit_generator(generator = self.genTrain.begin(), \

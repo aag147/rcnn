@@ -10,19 +10,19 @@ import sklearn.model_selection as skmodel
 import json
 import glob, os
 
-def save_obj(obj, name, url):
-    with open(url + name + '.json', 'w') as f:
+def save_obj(obj, path):
+    with open(path + '.json', 'w') as f:
         json.dump(obj, f, sort_keys=True, indent=4)
 
-def load_obj(name, url):
-    with open(url + name + '.json', 'r') as f:
+def load_obj(path):
+    with open(path + '.json', 'r') as f:
         return json.load(f)
 
 ## Load images ##
-def loadImages(imagesID, imagesMeta, url):
+def loadImages(imagesID, imagesMeta, data_path):
     images = {}
     for imageID in imagesID:
-        image = cv.imread(url + imagesMeta[imageID]['imageID'])
+        image = cv.imread(data_path+'_images/' + imagesMeta[imageID]['imageID'])
         if image is None:
             print(imageID)
         images[imageID] = image
@@ -53,23 +53,23 @@ def concatXData(XMain, XSub):
     return newXData
 
 ## Get model ready data ##
-def getXData(imagesID, imagesMeta, url2Image, shape):
+def getXData(imagesID, imagesMeta, data_path, shape):
     dataX = []
     for imageID in imagesID:
         imageMeta = imagesMeta[imageID]
-        image = cv.imread(url2Image + imageMeta['imageID'])
+        image = cv.imread(data_path+'_images/' + imageMeta['imageID'])
         image = cv.cvtColor(image, cv.COLOR_BGR2RGB)
         imageClean = preprocessImage(image, shape)
         dataX.append(imageClean)
     dataX = np.array(dataX)
     return dataX    
 
-def getX2Data(imagesID, imagesMeta, url2Image, shape):
+def getX2Data(imagesID, imagesMeta, data_path, shape):
     dataXP = []
     dataXB = []
     for imageID in imagesID:
         imageMeta = imagesMeta[imageID]
-        image = cv.imread(url2Image + imageMeta['imageID'])
+        image = cv.imread(data_path+'_images/' + imageMeta['imageID'])
         image = cv.cvtColor(image, cv.COLOR_BGR2RGB)
         for relID, rel in imageMeta['rels'].items():
             #print(imageID, relID)
@@ -153,9 +153,9 @@ def getVectorLabels(YMatrix):
         Y[sIdx] = y
     return Y
 
-def deleteFillerFiles(keepers, url, ext):
+def deleteFillerFiles(keepers, path, ext):
     i = 0
-    for filepath in glob.iglob(url +'*.' + ext):
+    for filepath in glob.iglob(path +'*.' + ext):
         filename = os.path.splitext(os.path.basename(filepath))[0]
         if filename not in keepers:
             os.remove(filepath)
