@@ -67,6 +67,7 @@ if True:
     trainer = model_trainer(model=model, genTrain=genTrain, genVal=genVal, genTest=genTest, task=cfg.task)
     trainer.compileModel(wp=20, n_opt = 'adam')
     trainer.trainModel(cfg)
+    trainer.saveLog(cfg)
 #    method.evaluateModel(gen.testX, gen.testY)
     
 #    testYHat = method.evalYHat

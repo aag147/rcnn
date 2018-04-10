@@ -13,6 +13,7 @@ import metrics as m, \
 import numpy as np
 import cv2 as cv
 import random as r
+import os
 
 from keras.callbacks import EarlyStopping, LearningRateScheduler, Callback
 from keras.optimizers import SGD, Adam
@@ -26,16 +27,22 @@ class model_trainer:
         self.eval = cb.EvaluateTest(genTest)
         self.log = cb.LogHistory()
         
-    def getEvals(self):
+    def saveLog(self, cfg):
 #        multilabel = np.array(self.eval.multilabel)
 #        mP = np.array(self.eval.mP)
 #        mR = np.array(self.eval.mR)
-        F1 = np.array(self.eval.F1)
-#        train_loss = np.array(self.log.train_loss)
+#        F1 = np.array(self.eval.F1)
+        train_loss = np.array(self.log.train_loss)
 #        train_acc = np.array(self.log.train_acc)
         val_loss = np.array(self.log.val_loss)
 #        val_acc = np.array(self.log.val_acc)
-        return val_loss, F1
+        
+        for fid in range(100):
+            if not os.path.exists(cfg.results_path + 'val_loss%d.out' % fid):
+                np.savetxt(cfg.results_path + 'val_loss%d.out' % fid, val_loss, fmt='%.2f')
+                np.savetxt(cfg.results_path + 'train_loss%d.out' % fid, train_loss, fmt='%.2f')
+                break
+        return val_loss, train_loss
     
     def compileModel(self, wp=2, n_opt = 'sgd'):
         if n_opt == 'adam':
