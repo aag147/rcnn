@@ -61,7 +61,7 @@ if True:
     cfg.task = 'multi-class'
     
     # Create model
-    model = HO_RCNN(include_weights=True, nb_classes=cfg.nb_classes, task=cfg.task)
+    model = HO_RCNN(cfg)
 #    model = trainer.model
     # train model
     trainer = model_trainer(model=model, genTrain=genTrain, genVal=genVal, genTest=genTest, task=cfg.task)

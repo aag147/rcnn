@@ -9,7 +9,6 @@ import metrics as m, \
        losses as l, \
        callbacks as cb
 
-from models import AlexNet, PairWiseStream, getWeightsURL
 
 import numpy as np
 import cv2 as cv
@@ -17,9 +16,6 @@ import random as r
 
 from keras.callbacks import EarlyStopping, LearningRateScheduler, Callback
 from keras.optimizers import SGD, Adam
-from keras.layers import Add, Activation
-from keras.models import Sequential, Model
-from keras import backend as K
 
 class model_trainer:
     def __init__(self, model, genTrain=None, genVal=None, genTest=None, task='multi-class'):

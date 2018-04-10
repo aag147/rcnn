@@ -26,10 +26,6 @@ from keras.utils.layer_utils import convert_all_kernels_in_model
 
 import tensorflow as tf
 
-def getWeightsURL():
-    urlWeights = 'C:/Users/aag14/Documents/Skole/Speciale/Weights/'
-    return urlWeights
-
 def VGG_16(weights_path=None, nb_classes=1000, include='all'):
     #https://gist.github.com/baraldilorenzo/07d7802847aaad0a35d3
     #https://github.com/fchollet/deep-learning-models/blob/master/vgg16.py
@@ -137,7 +133,7 @@ def AlexNet(weights_path=None, nb_classes=1000, include = 'all'):
 def final_model(model, weights_path, nb_classes, include):    
     # Build final model
     if weights_path:
-        model.load_weights(getWeightsURL()+weights_path)
+        model.load_weights(weights_path)
         
     if K.backend() == 'tensorflow':
        convert_all_kernels_in_model(model)
