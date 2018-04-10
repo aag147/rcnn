@@ -23,11 +23,9 @@ from keras.models import Sequential, Model
 
 
 plt.close("all")
-url = tuhoi.getURL()
-url2Images = url+"images/"
 unique_labels = tuhoi.getUniqueLabels()
 nb_classes = len(unique_labels)
-cfg = config(url2Images=url2Images, nb_classes=nb_classes)
+cfg = config(nb_classes=nb_classes)
 #pp.save_obj(imagesMeta, 'TU_PPMI', url)
 # Read data
 if True:
@@ -37,7 +35,7 @@ if True:
 #    objects, allObjects = tuhoi.extractObjectData()
 #    imagesMeta, imagesBadOnes = tuhoi.getBoundingBoxes(imagesMeta, objects, unique_labels)
     
-    imagesMeta = utils.load_obj('TU_PPMI', url)
+    imagesMeta = utils.load_obj('TU_PPMI', cfg.data_path)
     imagesID = list(imagesMeta.keys())
     imagesID.sort()
     

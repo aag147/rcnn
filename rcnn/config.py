@@ -8,7 +8,8 @@ Created on Sat Apr  7 13:08:31 2018
 class config:
    def __init__(self, url2Images, nb_classes):
        #basics
-       self.url2Images = url2Images
+       self.weights_path = 'C:/Users/aag14/Documents/Skole/Speciale/weights/'
+       self.data_path  = 'C:/Users/aag14/Documents/Skole/Speciale/data/'
        self.nb_classes = nb_classes
        
        #generator

@@ -15,9 +15,8 @@ def MyEarlyStopping(patience = ''):
     return EarlyStopping(monitor='val_loss', patience=patience, verbose=0, mode='auto')
 
 
-def MyModelCheckpoint(key = ''):
-    path = 'C:/Users/aag14/Documents/Skole/Speciale/Weights/'
-    filename = key + 'weights.{epoch:02d}-{val_loss:.2f}.h5'
+def MyModelCheckpoint(key = '', cfg):
+    path = cfg.weights_path + key + 'weights.{epoch:02d}-{val_loss:.2f}.h5'
     return ModelCheckpoint(path+filename, monitor='val_loss', verbose=0, save_best_only=True, save_weights_only=True, mode='auto', period=1)
 
 def MyLearningRateScheduler(epoch_split = 5, init_lr = 0.001):
