@@ -12,9 +12,9 @@ class config:
    def __init__(self, nb_classes, dataset):
        #basics
        self.dataset = dataset
-       self.results_path = 'C:/Users/aag14/Documents/Skole/Speciale/results/'
-       self.weights_path = 'C:/Users/aag14/Documents/Skole/Speciale/weights/'
-       self.part_data_path  = 'C:/Users/aag14/Documents/Skole/Speciale/data/'
+       self.results_path = None
+       self.weights_path = None
+       self.part_data_path  = None
        self.data_path = self.get_data_path()
        self.nb_classes = nb_classes
        
