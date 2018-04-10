@@ -12,6 +12,7 @@ import extractTUHOIData as tuhoi
 import utils, draw
 from model_trainer import model_trainer
 from config import config
+from config_helper import set_config
 from models import AlexNet, PairWiseStream
 from generators import DataGenerator
 from methods import HO_RCNN, HO_RCNN_2
@@ -30,6 +31,7 @@ plt.close("all")
 unique_labels = tuhoi.getUniqueLabels()
 nb_classes = len(unique_labels)
 cfg = config(nb_classes=nb_classes, dataset='TU_PPMI')
+cfg = set_config(cfg)
 #pp.save_obj(imagesMeta, 'TU_PPMI', url)
 # Read data
 if True:
@@ -47,25 +49,18 @@ if True:
 if True:
     # Create batch generators
     #class-itr
-    genTrain = DataGenerator(imagesMeta=trainMeta, cfg=cfg, gen_type='itr')
-    genVal = DataGenerator(imagesMeta=valMeta, cfg=cfg)
-    genTest = DataGenerator(imagesMeta=testMeta, cfg=cfg)
+    genTrain = DataGenerator(imagesMeta=trainMeta, cfg=cfg, gen_type=cfg.train_type)
+    genVal = DataGenerator(imagesMeta=valMeta, cfg=cfg, gen_type=cfg.val_type)
+    genTest = DataGenerator(imagesMeta=testMeta, cfg=cfg, gen_type=cfg.test_type)
     
 
-if True:
-    cfg.patience = 8
-    cfg.epoch_begin = 0
-    cfg.epoch_end = 1
-    cfg.epoch_split = 10
-    cfg.init_lr = 0.001
-    cfg.task = 'multi-class'
-    
+if True:    
     # Create model
     model = HO_RCNN(cfg)
 #    model = trainer.model
     # train model
     trainer = model_trainer(model=model, genTrain=genTrain, genVal=genVal, genTest=genTest, task=cfg.task)
-    trainer.compileModel(wp=20, n_opt = 'adam')
+    trainer.compileModel(cfg)
     trainer.trainModel(cfg)
     trainer.saveLog(cfg)
 #    method.evaluateModel(gen.testX, gen.testY)

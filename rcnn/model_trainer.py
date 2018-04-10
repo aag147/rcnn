@@ -44,13 +44,13 @@ class model_trainer:
                 break
         return val_loss, train_loss
     
-    def compileModel(self, wp=2, n_opt = 'sgd'):
-        if n_opt == 'adam':
+    def compileModel(self, cfg):
+        if cfg.optimizer == 'adam':
             opt = Adam(lr=0.001, decay=0.0)
         else:
             opt = SGD(lr = 0.001, momentum = 0.9, decay = 0.0, nesterov=False)
         if self.task == 'multi-label':
-            loss = l.weigthed_binary_crossentropy(wp,1)
+            loss = l.weigthed_binary_crossentropy(cfg.wp,1)
         else:
             loss = 'categorical_crossentropy'
         self.model.compile(loss=loss, optimizer=opt, metrics=['accuracy'])
