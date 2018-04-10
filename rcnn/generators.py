@@ -13,11 +13,12 @@ import utils
 
 class DataGenerator():
     
-    def __init__(self, imagesMeta, cfg, batch_size=32, gen_type='itr', shuffle=False):
+    def __init__(self, imagesMeta, cfg, batch_size=32, gen_type='itr', data_type='', shuffle=False):
       'Initialization'
       self.mean  = [103.939, 116.779, 123.68]
       self.gen_type = gen_type
       self.batch_size = batch_size
+      self.data_type = data_type
       self.shuffle = shuffle
       #self.xdim = cfg.xdim
       #self.ydim = cfg.ydim
@@ -52,7 +53,9 @@ class DataGenerator():
     
     def _generateBatchFromIDs(self, batchID):
         batchID = [self.dataID[idx] for idx in batchID]
-        [dataXP, dataXB] = utils.getX2Data(batchID, self.imagesMeta, self.data_path, self.shape)
+        data_path = self.data_path + '_images/'
+        data_path = data_path + 'train/' if self.data_type in ['train', 'val'] else data_path + 'test/'
+        [dataXP, dataXB] = utils.getX2Data(batchID, self.imagesMeta, data_path, self.shape)
         dataXW = self.getDataPairWiseStream(batchID, self.imagesMeta)
         X = [dataXP, dataXB, dataXW]
         y, _ = utils.getYData(batchID, self.imagesMeta, self.nb_classes)

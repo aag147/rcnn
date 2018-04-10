@@ -42,6 +42,8 @@ if True:
     testMeta = utils.load_obj(cfg.data_path+'_test') 
 #    trainMeta, valMeta = utils.splitData(list(trainMeta.keys()), trainMeta)
     
+    
+if False:
     for imageID, metaData in testMeta.items():
         oldPath = cfg.part_data_path + 'TU_PPMI_images/' + metaData['imageID']
         newPath = cfg.part_data_path + 'TU_PPMI_images/test/' + metaData['imageID']

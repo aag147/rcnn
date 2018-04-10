@@ -57,7 +57,7 @@ def getXData(imagesID, imagesMeta, data_path, shape):
     dataX = []
     for imageID in imagesID:
         imageMeta = imagesMeta[imageID]
-        image = cv.imread(data_path+'_images/' + imageMeta['imageID'])
+        image = cv.imread(data_path + imageMeta['imageID'])
         image = cv.cvtColor(image, cv.COLOR_BGR2RGB)
         imageClean = preprocessImage(image, shape)
         dataX.append(imageClean)
@@ -69,7 +69,7 @@ def getX2Data(imagesID, imagesMeta, data_path, shape):
     dataXB = []
     for imageID in imagesID:
         imageMeta = imagesMeta[imageID]
-        image = cv.imread(data_path+'_images/' + imageMeta['imageID'])
+        image = cv.imread(data_path + imageMeta['imageID'])
         image = cv.cvtColor(image, cv.COLOR_BGR2RGB)
         for relID, rel in imageMeta['rels'].items():
             #print(imageID, relID)

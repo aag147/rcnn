@@ -39,13 +39,13 @@ if True:
     testMeta = utils.load_obj(cfg.data_path+'_test') 
     trainMeta, valMeta = utils.splitData(list(trainMeta.keys()), trainMeta)
     
-if False:
+if True:
     # Create batch generators
-    genTrain = DataGenerator(imagesMeta=trainMeta, cfg=cfg, gen_type=cfg.train_type)
-    genVal = DataGenerator(imagesMeta=valMeta, cfg=cfg, gen_type=cfg.val_type)
-    genTest = DataGenerator(imagesMeta=testMeta, cfg=cfg, gen_type=cfg.test_type)  
+    genTrain = DataGenerator(imagesMeta=trainMeta, cfg=cfg, gen_type=cfg.train_type, data_type='train')
+    genVal = DataGenerator(imagesMeta=valMeta, cfg=cfg, gen_type=cfg.val_type, data_type='val')
+    genTest = DataGenerator(imagesMeta=testMeta, cfg=cfg, gen_type=cfg.test_type, data_type='test')  
 
-if False:    
+if True:    
     # Create model
     model = HO_RCNN(cfg)
     # train model
