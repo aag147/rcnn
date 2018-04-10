@@ -29,7 +29,7 @@ import numpy as np
 def getURL():
     return url
 
-def getUniqueLabels():
+def getUniqueLabels(cfg):
     labels = np.array([['play'+i, 'hold'+i] for i in instruments if i not in nonactive_instruments])
     labels = labels.reshape([2*8])
     #labels = np.append(labels, 'other')

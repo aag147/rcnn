@@ -19,6 +19,11 @@ import matplotlib.gridspec as gridspec
 
 import numpy as np
 
+def getUniqueLabels(cfg):
+#    bbData = sio.loadmat(cfg + 'anno_bbox.mat', struct_as_record=False, squeeze_me=True)
+#    labels = bbData['list_action']
+    return [i for i in range(600)]
+
 def extractMetaData(metaData, actions):
     imagesMeta = {}
     for line in metaData:
@@ -102,7 +107,7 @@ if __name__ == "__main__":
 #    images = pp.loadImages(imagesID, imagesMeta, url+"images/train2015/")
 #    [dataXP, dataXB, dataY, dataMeta] = pp.getData(imagesID, imagesMeta, images, (224,244))
 #    trainYMatrix = pp.getMatrixLabels(len(actions), dataY)
-    utils.save_obj(imagesMeta, url+'HICO_test')
+#    utils.save_obj(imagesMeta, url+'HICO_test')
 #    sampleMeta = imagesMeta[imagesID[0]]
 #    i = 0
 #    pdata.drawImages(imagesID[i*9:(i+1)*9], imagesMeta, url+'images/train2015/', False)

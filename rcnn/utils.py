@@ -31,11 +31,11 @@ def loadImages(imagesID, imagesMeta, data_path):
 ## Split data (IDs) ##
 def splitData(imagesID, imagesMeta):
     [trainID, testID] = skmodel.train_test_split(imagesID, test_size=0.2)
-    [trainID, valID] = skmodel.train_test_split(trainID, test_size=0.2)
+#    [trainID, valID] = skmodel.train_test_split(trainID, test_size=0.2)
     trainMeta = {key:imagesMeta[key] for key in trainID}
-    valMeta = {key:imagesMeta[key] for key in valID}
+#    valMeta = {key:imagesMeta[key] for key in valID}
     testMeta = {key:imagesMeta[key] for key in testID}
-    return trainMeta, valMeta, testMeta
+    return trainMeta, testMeta
 
 
 def spliceXData(XData, s_idx, f_idx):
@@ -94,6 +94,15 @@ def getYData(imagesID, imagesMeta, nb_classes):
     dataBBs = np.array(dataBBs)
     dataLabels = getMatrixLabels(nb_classes, dataLabels)
     return dataLabels, dataBBs
+
+
+def getUniqueClasses(cfg):
+    if cfg.dataset == 'TU_PPMI':
+        from extractTUHOIData import getUniqueLabels
+    else:
+        from extractHICOData import getUniqueLabels
+    unique_labels = getUniqueLabels(cfg)
+    return len(unique_labels)
 
 
 def getGTData(bb):

@@ -4,18 +4,21 @@ Created on Sat Apr  7 13:08:31 2018
 
 @author: aag14
 """
+import utils
 
 class config:
    def get_data_path(self):
        return self.part_data_path + self.dataset
    
-   def __init__(self, nb_classes, dataset):
+   def get_nb_classes(self):
+       return utils.getUniqueClasses(self)
+   
+   def __init__(self):
        #basics
-       self.dataset = dataset
+       self.dataset = 'TU_PPMI'
        self.results_path = ''
        self.weights_path = ''
        self.part_data_path  = ''
-       self.nb_classes = nb_classes
        
        #generator
        self.train_type = 'itr'
