@@ -12,10 +12,9 @@ class config:
    def __init__(self, nb_classes, dataset):
        #basics
        self.dataset = dataset
-       self.results_path = None
-       self.weights_path = None
-       self.part_data_path  = None
-       self.data_path = self.get_data_path()
+       self.results_path = ''
+       self.weights_path = ''
+       self.part_data_path  = ''
        self.nb_classes = nb_classes
        
        #generator
@@ -37,7 +36,7 @@ class config:
        #model callbacks
        self.patience = 0
        self.modelnamekey = ''
-       self.epoch_split = 5
+       self.epoch_splits = [5]
        self.init_lr = 0.001
        self.include_eval = False
        

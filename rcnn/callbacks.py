@@ -20,11 +20,13 @@ def MyModelCheckpoint(cfg):
     return ModelCheckpoint(path, monitor='val_loss', verbose=0, save_best_only=True, save_weights_only=True, mode='auto', period=1)
 
 def MyLearningRateScheduler(cfg):
+   epoch_splits = cfg.epoch_splits
+   init_lr = cfg.init_lr
    def step_decay(epoch):
-      if epoch >= cfg.epoch_split:
-          return cfg.init_lr / 10.0
-      else:
-          return cfg.init_lr
+      for idx in range(len(epoch_splits)):
+          if epoch < epoch_splits[idx]:
+              return init_lr / pow(10.0, idx)
+      return init_lr / pow(10.0, idx+1)
    return LearningRateScheduler(step_decay)
 	
 class PrintCallBack(Callback):

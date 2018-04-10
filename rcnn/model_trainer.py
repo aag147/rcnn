@@ -39,8 +39,8 @@ class model_trainer:
         
         for fid in range(100):
             if not os.path.exists(cfg.results_path + 'val_loss%d.out' % fid):
-                np.savetxt(cfg.results_path + 'val_loss%d.out' % fid, val_loss, fmt='%.2f')
-                np.savetxt(cfg.results_path + 'train_loss%d.out' % fid, train_loss, fmt='%.2f')
+                np.savetxt(cfg.results_path + 'val_loss%d.out' % fid, val_loss, fmt='%.4f')
+                np.savetxt(cfg.results_path + 'train_loss%d.out' % fid, train_loss, fmt='%.4f')
                 break
         return val_loss, train_loss
     
