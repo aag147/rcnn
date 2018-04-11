@@ -13,13 +13,19 @@ import utils
 
 class DataGenerator():
     
-    def __init__(self, imagesMeta, cfg, batch_size=32, gen_type='itr', data_type='', shuffle=False):
+    def __init__(self, imagesMeta, cfg, data_type='train'):
       'Initialization'
       self.mean  = [103.939, 116.779, 123.68]
-      self.gen_type = gen_type
-      self.batch_size = batch_size
       self.data_type = data_type
-      self.shuffle = shuffle
+      if data_type == 'train':
+          g_cfg = cfg.train_cfg
+      elif data_type == 'val':
+          g_cfg = cfg.val_cfg
+      else:
+          g_cfg = cfg.test_cfg
+      self.gen_type = g_cfg.type
+      self.batch_size = g_cfg.batch_size
+      self.shuffle = g_cfg.shuffle
       #self.xdim = cfg.xdim
       #self.ydim = cfg.ydim
       #self.cdim = cfg.cdim
@@ -30,11 +36,13 @@ class DataGenerator():
       self.data_path = cfg.data_path
       self.nb_classes = cfg.nb_classes
 
-      self.dataID = list(imagesMeta.keys())      
+      self.dataID = list(imagesMeta.keys())
+      self.dataID.sort()
+      if self.shuffle:
+          r.shuffle(self.dataID)
+      
       self.imagesMeta = imagesMeta
       self.gt_label, self.gt_bb = utils.getYData(self.dataID, self.imagesMeta, self.nb_classes)
-
-
        
       self._configGenerators()
       
@@ -54,7 +62,7 @@ class DataGenerator():
     def _generateBatchFromIDs(self, batchID):
         batchID = [self.dataID[idx] for idx in batchID]
         data_path = self.data_path + '_images/'
-        data_path = data_path + 'train/' if self.data_type in ['train', 'val'] else data_path + 'test/'
+        data_path = data_path + 'test/' if self.data_type == 'test' else data_path + 'train/'
         [dataXP, dataXB] = utils.getX2Data(batchID, self.imagesMeta, data_path, self.shape)
         dataXW = self.getDataPairWiseStream(batchID, self.imagesMeta)
         X = [dataXP, dataXB, dataXW]

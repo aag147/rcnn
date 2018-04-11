@@ -42,27 +42,52 @@ if True:
     testMeta = utils.load_obj(cfg.data_path+'_test') 
 #    trainMeta, valMeta = utils.splitData(list(trainMeta.keys()), trainMeta)
     
+import sys
     
 if True:
-    for imageID, metaData in trainMeta.items():
-        oldPath = cfg.part_data_path + 'HICO_images/train/' + metaData['imageID']
+    i = 0
+    c = 0.0
+    end = len(testMeta)
+    for imageID, metaData in testMeta.items():
+        oldPath = cfg.part_data_path + 'HICO_images/test/' + metaData['imageID']
         image = cv.imread(oldPath)
+        if i / end > c:
+#            print(c)
+            c += 0.01
+#        print(str(c) + ': ' + str(imageID), end='')
+        sys.stdout.write('\r' + str(c) + ': ' + str(imageID))
+        sys.stdout.flush()
         if image is None:
             print(imageID)
         for relID, rel in metaData['rels'].items():
-            #print(imageID, relID)
+#            print(imageID, relID)
             relCrops = utils.cropImageFromRel(rel['prsBB'], rel['objBB'], image)
             relCrops = utils.preprocessRel(relCrops['prsCrop'], relCrops['objCrop'], image, (227,227))
-        if image is None:
-            print(imageID)
-#        os.rename(oldPath, newPath)
+        i += 1
 
+
+if False:
+    imageID = 'HICO_train2015_00027301.jpg'
+    imageMeta = trainMeta[imageID]
+    oldPath = cfg.part_data_path + 'HICO_images/train/' + imageMeta['imageID']
+    image = cv.imread(oldPath)
+    i = 0
+    for relID, rel in metaData['rels'].items():
+#            print(imageID, relID)
+        relCrops = utils.cropImageFromRel(rel['prsBB'], rel['objBB'], image)
+        relCrops = utils.preprocessRel(relCrops['prsCrop'], relCrops['objCrop'], image, (227,227))
+        i += 1
     
 if False:
     # Create batch generators
     genTrain = DataGenerator(imagesMeta=trainMeta, cfg=cfg, gen_type=cfg.train_type)
-    genVal = DataGenerator(imagesMeta=valMeta, cfg=cfg, gen_type=cfg.val_type)
+#    genVal = DataGenerator(imagesMeta=valMeta, cfg=cfg, gen_type=cfg.val_type)
     genTest = DataGenerator(imagesMeta=testMeta, cfg=cfg, gen_type=cfg.test_type)
+
+if False:
+    imagesID = list(trainMeta.keys())
+    imagesID.sort()
+    draw.drawImages(imagesID[26960:26969], trainMeta, cfg.data_path+'_images/train/', False)
 
 if False:
     i = 0

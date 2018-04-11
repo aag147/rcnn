@@ -7,6 +7,12 @@ Created on Sat Apr  7 13:08:31 2018
 import utils
 
 class config:
+   class gen_config:
+       def __init__(self):
+           self.type = 'itr'
+           self.batch_size = 32
+           self.shuffle = False
+    
    def get_data_path(self):
        return self.part_data_path + self.dataset
    
@@ -21,9 +27,9 @@ class config:
        self.part_data_path  = ''
        
        #generator
-       self.train_type = 'itr'
-       self.val_type = 'itr'
-       self.test_type = 'itr'
+       self.train_cfg = self.gen_config()
+       self.test_cfg = self.gen_config()
+       self.val_cfg = self.gen_config()
        self.xdim=227
        self.ydim=227
        self.cdim=3

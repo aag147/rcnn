@@ -41,9 +41,9 @@ if True:
     
 if True:
     # Create batch generators
-    genTrain = DataGenerator(imagesMeta=trainMeta, cfg=cfg, gen_type=cfg.train_type, batch_size=cfg.train_batch_size, data_type='train')
-    genVal = DataGenerator(imagesMeta=valMeta, cfg=cfg, gen_type=cfg.val_type, batch_size=cfg.val_batch_size, data_type='val')
-    genTest = DataGenerator(imagesMeta=testMeta, cfg=cfg, gen_type=cfg.test_type, batch_size=cfg.test_batch_size, data_type='test')  
+    genTrain = DataGenerator(imagesMeta=trainMeta, cfg=cfg, data_type='train')
+    genVal = DataGenerator(imagesMeta=valMeta, cfg=cfg, data_type='val')
+    genTest = DataGenerator(imagesMeta=testMeta, cfg=cfg, data_type='test')  
 
 if True:    
     # Create model

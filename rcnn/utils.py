@@ -134,6 +134,7 @@ def cropImageFromBB(bb, image):
     # Single image, half relation
     xmin = bb['xmin']; xmax = bb['xmax']
     ymin = bb['ymin']; ymax = bb['ymax']
+#    print(image.shape, [ymin, ymax, xmin, xmax])
     crop = image[ymin:ymax, xmin:xmax, :]
     return crop
 
