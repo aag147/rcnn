@@ -9,12 +9,22 @@ import numpy as np
 import sklearn.model_selection as skmodel
 import json
 import glob, os
+import pickle
+
 
 def save_obj(obj, path):
+    with open(path + '.pkl', 'wb') as f:
+        pickle.dump(obj, f, pickle.HIGHEST_PROTOCOL)
+
+def load_obj(path):
+    with open(path + '.pkl', 'rb') as f:
+        return pickle.load(f)
+
+def save_dict(obj, path):
     with open(path + '.json', 'w') as f:
         json.dump(obj, f, sort_keys=True, indent=4)
 
-def load_obj(path):
+def load_dict(path):
     with open(path + '.json', 'r') as f:
         return json.load(f)
 

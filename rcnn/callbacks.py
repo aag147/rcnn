@@ -41,44 +41,26 @@ class PrintCallBack(Callback):
 		
 class LogHistory(Callback):
    def __init__(self):
-      self.train_loss = []
-      self.train_acc = []
-      self.val_loss = []
-      self.val_acc = []
-   def on_train_begin(self, logs={}):
-      return
+      self.hist = m.LogHistory()
 
    def on_epoch_end(self, epoch, logs={}):
-      self.train_loss.append(logs.get('loss'))
-      self.train_acc.append(logs.get('acc'))
-      self.val_loss.append(logs.get('val_loss'))
-      self.val_acc.append(logs.get('val_acc'))
+      self.hist.newEpoch(logs)
 	
 class EvaluateTest(Callback):
    def __init__(self, gen, f):
       self.gen = gen
-      self.f = f
-      
-      self.F1 = []
-      self.mP = []
-      self.mR = []
-       
-      self.multilabel = []
-      self.zeroAcc = []
+      self.f = f  
+      self.epochs = []
    def on_train_begin(self, logs=None):
        return
 		
    def on_epoch_end(self, epoch, logs={}):
-      accs, mP, mR, F1, nb_zeros = self.f(self.model, self.gen)
-      self.multilabel.append(accs)
-      self.mP.append(mP)
-      self.mR.append(mR)
-      self.F1.append(F1)
-      self.zeroAcc.append(nb_zeros)
+       results = self.f(self.model, self.gen)
+       self.epochs.append(results)
       
    def on_epoch_begin(self, epoch, logs={}):
-       if len(self.F1) > 0:
-           print('test_f1:', self.F1[-1])
+       if len(self.epochs) > 0:
+           print('test_f1:', self.epochs[-1].F1)
 		
 			
    def on_train_end(self, logs=None):

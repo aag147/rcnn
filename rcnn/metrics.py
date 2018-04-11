@@ -11,6 +11,61 @@ from sklearn.metrics import average_precision_score
 from sklearn.metrics import confusion_matrix
 
 
+#%%
+class LogHistory():
+    def __init__(self):
+      self.train_loss = []
+      self.train_acc = []
+      self.val_loss = []
+      self.val_acc = []
+      
+    def newEpoch(self, logs):
+      self.train_loss.append(logs.get('loss'))
+      self.train_acc.append(logs.get('acc'))
+      self.val_loss.append(logs.get('val_loss'))
+      self.val_acc.append(logs.get('val_acc'))
+
+class EvalResults():
+    def __init__(self, model, gen):
+      self.tp = []
+      self.fp = []
+      self.fn = []
+      self.precision = []
+      self.recall = []
+      
+      self.mP = None
+      self.mR = None
+      self.F1 = None
+       
+      self.nb_zeros = None
+      
+      self.model=model
+      self.gen=gen
+      
+      self._evaluate()
+    
+    def _evaluate(self):
+      evalYHat = np.zeros([self.gen.nb_samples, self.gen.nb_classes])
+      Y = np.zeros([self.gen.nb_samples, self.gen.nb_classes])
+      iterGen = self.gen.begin()
+      for i in range(self.gen.nb_batches):
+          batch, y = next(iterGen)
+          y_hat = self.model.predict_on_batch(x=batch)
+          s_idx = i * self.gen.batch_size
+          f_idx = min(self.gen.nb_samples,s_idx+self.gen.batch_size)
+          evalYHat[s_idx:f_idx, :] = y_hat
+          Y[s_idx:f_idx, :] = y
+    
+      accs, self.mP, self.mR, self.F1 = computeMultiLabelLoss(Y, evalYHat)
+      self.tp = accs[:,1]
+      self.fp = accs[:,2]
+      self.fn = accs[:,3]
+      self.precision = accs[:,4]
+      self.recall = accs[:,5]
+      self.nb_zeros = np.count_nonzero(accs[:,1] == 0)
+      
+
+
 #%% COMPUTE ACCURACY
 def computeLoss(Y, Y_hat, top):
     acc = 0.0

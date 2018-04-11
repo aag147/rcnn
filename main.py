@@ -35,8 +35,8 @@ cfg = set_config(cfg)
 # Read data
 if True:
     # Load data 
-    trainMeta = utils.load_obj(cfg.data_path+'_train')
-    testMeta = utils.load_obj(cfg.data_path+'_test') 
+    trainMeta = utils.load_dict(cfg.data_path+'_train')
+    testMeta = utils.load_dict(cfg.data_path+'_test') 
     trainMeta, valMeta = utils.splitData(list(trainMeta.keys()), trainMeta)
     
 if True:
@@ -52,6 +52,6 @@ if True:
     trainer = model_trainer(model=model, genTrain=genTrain, genVal=genVal, genTest=genTest, task=cfg.task)
     trainer.compileModel(cfg)
     trainer.trainModel(cfg)
-    trainer.saveLog(cfg)
-    accs, mP, mR, F1, nb_zeros = trainer.evaluateModel(genTest)
-    print("F1:", F1, "nb_zeros", nb_zeros)
+    trainer.saveHistory(cfg)
+    res = trainer.evaluateModel(genTest)
+    print("F1:", res.F1, "nb_zeros", res.nb_zeros)

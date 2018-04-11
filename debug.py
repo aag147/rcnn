@@ -38,8 +38,8 @@ if True:
 #    imagesID = list(imagesMeta.keys())
 #    imagesID.sort()
     
-    trainMeta = utils.load_obj(cfg.data_path+'_train')
-    testMeta = utils.load_obj(cfg.data_path+'_test') 
+    trainMeta = utils.load_dict(cfg.data_path+'_train')
+    testMeta = utils.load_dict(cfg.data_path+'_test') 
 #    trainMeta, valMeta = utils.splitData(list(trainMeta.keys()), trainMeta)
     
 import sys

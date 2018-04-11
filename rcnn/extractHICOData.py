@@ -107,7 +107,7 @@ if __name__ == "__main__":
 #    images = pp.loadImages(imagesID, imagesMeta, url+"images/train2015/")
 #    [dataXP, dataXB, dataY, dataMeta] = pp.getData(imagesID, imagesMeta, images, (224,244))
 #    trainYMatrix = pp.getMatrixLabels(len(actions), dataY)
-#    utils.save_obj(imagesMeta, url+'HICO_test')
+#    utils.save_dict(imagesMeta, url+'HICO_test')
 #    sampleMeta = imagesMeta[imagesID[0]]
 #    i = 0
 #    pdata.drawImages(imagesID[i*9:(i+1)*9], imagesMeta, url+'images/train2015/', False)

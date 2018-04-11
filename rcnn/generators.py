@@ -23,6 +23,7 @@ class DataGenerator():
           g_cfg = cfg.val_cfg
       else:
           g_cfg = cfg.test_cfg
+          
       self.gen_type = g_cfg.type
       self.batch_size = g_cfg.batch_size
       self.shuffle = g_cfg.shuffle
@@ -146,6 +147,7 @@ class DataGenerator():
             self.batch_size = self.batch_size
             self.nb_batches = m.ceil(len(self.gt_label) / self.batch_size)
             self.nb_samples = len(self.gt_label)
+            self.nb_batches = 3
             
             
     def getSinglePairWiseStream(self, thisBB, thatBB, width, height, newWidth, newHeight):

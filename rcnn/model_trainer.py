@@ -7,36 +7,18 @@ Created on Thu Mar 15 21:12:41 2018
 
 import metrics as m, \
        losses as l, \
-       callbacks as cb
+       callbacks as cb, \
+       utils
 
 
 import numpy as np
 import cv2 as cv
 import random as r
+import copy as cp
 import os
 
 from keras.callbacks import EarlyStopping, LearningRateScheduler, Callback
 from keras.optimizers import SGD, Adam
-
-def _evaluate(model, gen):
-  evalYHat = np.zeros([gen.nb_samples, gen.nb_classes])
-  Y = np.zeros([gen.nb_samples, gen.nb_classes])
-  iterGen = gen.begin()
-  for i in range(gen.nb_batches):
-      batch, y = next(iterGen)
-#          print(batch[0].shape)
-#          print(y.shape)
-      y_hat = model.predict_on_batch(x=batch)
-      s_idx = i * gen.batch_size
-      f_idx = min(gen.nb_samples,s_idx+gen.batch_size)
-      evalYHat[s_idx:f_idx, :] = y_hat
-      Y[s_idx:f_idx, :] = y
-#      print(self.evalYHat)
-#      print(self.evalYHat.shape)
-
-  accs, mP, mR, F1 = m.computeMultiLabelLoss(Y, evalYHat)
-  nb_zeros = np.count_nonzero(accs[:,1] == 0)
-  return accs, mP, mR, F1, nb_zeros
 
 class model_trainer:
     def __init__(self, model, genTrain=None, genVal=None, genTest=None, task='multi-class'):
@@ -44,25 +26,26 @@ class model_trainer:
         self.model = model
         self.genTrain = genTrain
         self.genVal = genVal
-        self.eval = cb.EvaluateTest(genTest, _evaluate)
+        self.eval = cb.EvaluateTest(genTest, m.EvalResults)
         self.log = cb.LogHistory()
         
-    def saveLog(self, cfg):
-#        multilabel = np.array(self.eval.multilabel)
-#        mP = np.array(self.eval.mP)
-#        mR = np.array(self.eval.mR)
-#        F1 = np.array(self.eval.F1)
-        train_loss = np.array(self.log.train_loss)
-#        train_acc = np.array(self.log.train_acc)
-        val_loss = np.array(self.log.val_loss)
-#        val_acc = np.array(self.log.val_acc)
+    def saveHistory(self, cfg):
+        res = cp.copy(self.eval.epochs)
+        log = cp.copy(self.log.hist)
+        log.train_loss = np.array(log.train_loss)
+        log.train_acc = np.array(log.train_acc)
+        log.val_loss = np.array(log.val_loss)
+        log.val_acc = np.array(log.val_acc)
         
         for fid in range(100):
-            if not os.path.exists(cfg.results_path + 'val_loss%d.out' % fid):
-                np.savetxt(cfg.results_path + 'val_loss%d.out' % fid, val_loss, fmt='%.4f')
-                np.savetxt(cfg.results_path + 'train_loss%d.out' % fid, train_loss, fmt='%.4f')
+            path = cfg.results_path
+            if not os.path.exists(path + 'log%d.json' % fid):
+#                np.savetxt(cfg.results_path + 'val_loss%d.out' % fid, val_loss, fmt='%.4f')
+#                np.savetxt(cfg.results_path + 'train_loss%d.out' % fid, train_loss, fmt='%.4f')
+                utils.save_obj(log, path + 'log%d' % fid)
+                utils.save_obj(res, path + 'res%d' % fid)
                 break
-        return val_loss, train_loss
+        return log
     
     def compileModel(self, cfg):
         if cfg.optimizer == 'adam':
@@ -93,4 +76,4 @@ class model_trainer:
                     epochs = cfg.epoch_end, initial_epoch=cfg.epoch_begin, callbacks=callbacks)
 
     def evaluateModel(self, gen):
-        return _evaluate(self.model, gen)
+        return m.EvalResults(self.model, gen)

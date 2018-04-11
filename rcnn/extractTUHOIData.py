@@ -235,7 +235,7 @@ if __name__ == "__main__":
     objects, allObjects = extractObjectData()
     unique_labels = getUniqueLabels()
     imagesMeta, imagesBadOnes = getBoundingBoxes(imagesMeta, objects, unique_labels)
-    imagesMeta = utils.load_obj('TU_PPMI', url)
+    imagesMeta = utils.load_dict('TU_PPMI', url)
     images = list(imagesMeta.keys())
     images.sort()
     

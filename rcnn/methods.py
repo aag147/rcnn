@@ -17,14 +17,14 @@ def _final_stop(inputs, outputs, my_weights, cfg):
         outputs = Activation("softmax",name="predictions")(outputs)
 
     model = Model(inputs=inputs, outputs=outputs)
-    if type(my_weights)==str and len(my_weights) > 0:
-        model.load_weights(cfg.weights_path+my_weights)
+    if type(cfg.my_weights)==str and len(cfg.my_weights) > 0:
+        model.load_weights(cfg.weights_path+cfg.my_weights)
     return model
         
 def HO_RCNN_Weights(cfg):
     return cfg.weights_path + "alexnet_weights.h5"
 
-def HO_RCNN(cfg, my_weights=None):
+def HO_RCNN(cfg):
     weights = HO_RCNN_Weights(cfg) if cfg.pretrained_weights == True else False
     modelPrs = AlexNet(weights, cfg.nb_classes, include='fc')
     modelObj = AlexNet(weights, cfg.nb_classes, include='fc')
@@ -32,7 +32,7 @@ def HO_RCNN(cfg, my_weights=None):
     outputs = Add()([modelPrs.output, modelObj.output, modelPar.output])
     
     inputs = [modelPrs.input, modelObj.input, modelPar.input]
-    final_model = _final_stop(inputs, outputs, my_weights, cfg)
+    final_model = _final_stop(inputs, outputs, cfg)
     return final_model
         
 def HO_RCNN_2(cfg, my_weights=None):
@@ -42,5 +42,5 @@ def HO_RCNN_2(cfg, my_weights=None):
     outputs = Add()([modelPrs.output, modelObj.output])
     
     inputs = [modelPrs.input, modelObj.input]
-    final_model = _final_stop(inputs, outputs, my_weights, cfg)
+    final_model = _final_stop(inputs, outputs, cfg)
     return final_model

@@ -37,6 +37,7 @@ class config:
        #model
        self.task = 'multi-label'
        self.pretrained_weights = True
+       self.my_weights = None
        
        #model compile
        self.optimizer = 'sgd'

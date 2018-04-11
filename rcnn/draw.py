@@ -13,6 +13,17 @@ import copy as cp
 import os
 import glob
 
+def plotLosses(log):
+    # summarize history for loss
+    f, spl = plt.subplots(1)
+    spl = spl.ravel()
+    plt.plot(history.history['loss'])
+    plt.plot(history.history['val_loss'])
+    plt.title('model loss')
+    plt.ylabel('loss')
+    plt.xlabel('epoch')
+    plt.legend(['train', 'test'], loc='upper left')
+    plt.show()
 
 def drawCrops(imagesID, imagesMeta, imagesCrops, images):
     f, spl = plt.subplots(2,2)
