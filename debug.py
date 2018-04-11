@@ -43,11 +43,17 @@ if True:
 #    trainMeta, valMeta = utils.splitData(list(trainMeta.keys()), trainMeta)
     
     
-if False:
-    for imageID, metaData in testMeta.items():
-        oldPath = cfg.part_data_path + 'TU_PPMI_images/' + metaData['imageID']
-        newPath = cfg.part_data_path + 'TU_PPMI_images/test/' + metaData['imageID']
-        os.rename(oldPath, newPath)
+if True:
+    for imageID, metaData in trainMeta.items():
+        oldPath = cfg.part_data_path + 'TU_PPMI_images/train/' + metaData['imageID']
+        image = cv.imread(oldPath)
+        for relID, rel in metaData['rels'].items():
+            #print(imageID, relID)
+            relCrops = utils.cropImageFromRel(rel['prsBB'], rel['objBB'], image)
+            relCrops = utils.preprocessRel(relCrops['prsCrop'], relCrops['objCrop'], image, (227,227))
+        if image is None:
+            print(imageID)
+#        os.rename(oldPath, newPath)
 
     
 if False:
