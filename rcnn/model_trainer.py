@@ -40,8 +40,6 @@ class model_trainer:
         for fid in range(100):
             path = cfg.results_path
             if not os.path.exists(path + 'log%d.json' % fid):
-#                np.savetxt(cfg.results_path + 'val_loss%d.out' % fid, val_loss, fmt='%.4f')
-#                np.savetxt(cfg.results_path + 'train_loss%d.out' % fid, train_loss, fmt='%.4f')
                 utils.save_obj(log, path + 'log%d' % fid)
                 utils.save_obj(res, path + 'res%d' % fid)
                 break

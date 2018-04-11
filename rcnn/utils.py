@@ -10,7 +10,8 @@ import sklearn.model_selection as skmodel
 import json
 import glob, os
 import pickle
-
+import copy as cp
+import random as r
 
 def save_obj(obj, path):
     with open(path + '.pkl', 'wb') as f:
@@ -54,10 +55,70 @@ def spliceXData(XData, s_idx, f_idx):
         newXData.append(XData[i][s_idx:f_idx])
     return newXData
 
+def createBackgroundBBs(imageMeta, nb_bgs, data_path):
+    if 0 == nb_bgs:
+        return []
+    
+    image = cv.imread(data_path + imageMeta['imageID'])
+    corners = [[2, 0], [2, 1], [3, 1], [3, 0]]
+    coors = []
+    for relID, rel in imageMeta['rels'].items():
+        xmin = rel['objBB']['xmin']
+        xmax = rel['objBB']['xmax']
+        ymin = rel['objBB']['ymin']
+        ymax = rel['objBB']['ymax']
+        coors.append([xmin, xmax, ymin, ymax])
+        xmin = rel['prsBB']['xmin']
+        xmax = rel['prsBB']['xmax']
+        ymin = rel['prsBB']['ymin']
+        ymax = rel['prsBB']['ymax']
+        coors.append([xmin, xmax, ymin, ymax])
+    coors = np.array(coors)
+    bbs = []
+    for corner in corners:
+        coor_mask = np.array([1 for i in range(len(coors))])
+        init_x = 0 if corner[1]==0 else image.shape[1]
+        init_y = 0 if corner[0]==2 else image.shape[0]
+        final_x = init_x; final_y = init_y
+        for coor in range(10, 100, 5):
+            x = coor if corner[1]==0 else image.shape[1] - coor
+            y = coor if corner[0]==2 else image.shape[0] - coor
+            idx = isPointInsideBoxes([x,y], coors[coor_mask.astype(np.bool)])
+            if idx > 0:
+                break
+                
+            final_x = x
+            final_y = y
+#        print('new corner', image.shape, final_x, final_y, init_x, init_y)    
+        if abs(init_x-final_x) > 10 and abs(init_y-final_y) > 10:
+            bb = {'xmin': min(init_x, final_x), 'xmax':max(init_x, final_x), 'ymin': min(init_y, final_y), 'ymax': max(init_y, final_y)}
+            bbs.append(bb)
+            
+        if len(bbs) == nb_bgs*2:
+            break
+        
+    while len(bbs) < nb_bgs*2:
+        length = 25
+        xmin, xmax = (0, length) if r.choice([0, 1]) else (image.shape[1]-length, image.shape[1])
+        ymin, ymax = (0, length) if r.choice([0, 1]) else (image.shape[0]-length, image.shape[0])
+        bb = {'xmin': xmin, 'xmax': xmax, 'ymin': ymin, 'ymax': ymax}
+        bbs.append(bb)
+                
+        
+    return bbs
+
+def isPointInsideBoxes(point, boxes):
+    for idx, box in enumerate(boxes):
+        if point[0] > box[0] and point[0] < box[1] and point[1] > box[2] and point[1] < box[3]:
+            return idx
+    return 0
+
 def concatXData(XMain, XSub):
     newXData = []
     if len(XMain) == 0:
         return XSub
+    if len(XSub) == 0:
+        return XMain
     for i in range(len(XMain)):
         newXData.append(np.append(XMain[i], XSub[i], axis=0))
     return newXData

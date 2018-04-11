@@ -18,6 +18,7 @@ from generators import DataGenerator
 from matplotlib import pyplot as plt
 import cv2 as cv, numpy as np
 import os
+import sys
 
 
 plt.close("all")
@@ -25,7 +26,7 @@ cfg = config()
 cfg = set_config(cfg)
 
 # Read data
-if True:
+if False:
     # Load data 
     
 #    imagesMeta, rawImagesMeta, garbage = tuhoi.extractMetaData()
@@ -41,10 +42,16 @@ if True:
     trainMeta = utils.load_dict(cfg.data_path+'_train')
     testMeta = utils.load_dict(cfg.data_path+'_test') 
 #    trainMeta, valMeta = utils.splitData(list(trainMeta.keys()), trainMeta)
-    
-import sys
+
     
 if True:
+    # Create batch generators
+    genTrain = DataGenerator(imagesMeta=trainMeta, cfg=cfg, data_type='train')
+#    genVal = DataGenerator(imagesMeta=valMeta, cfg=cfg, data_type='val')
+    genTest = DataGenerator(imagesMeta=testMeta, cfg=cfg, data_type='test')
+
+
+if False:
     i = 0
     c = 0.0
     end = len(testMeta)
@@ -77,21 +84,15 @@ if False:
         relCrops = utils.cropImageFromRel(rel['prsBB'], rel['objBB'], image)
         relCrops = utils.preprocessRel(relCrops['prsCrop'], relCrops['objCrop'], image, (227,227))
         i += 1
-    
-if False:
-    # Create batch generators
-    genTrain = DataGenerator(imagesMeta=trainMeta, cfg=cfg, gen_type=cfg.train_type)
-#    genVal = DataGenerator(imagesMeta=valMeta, cfg=cfg, gen_type=cfg.val_type)
-    genTest = DataGenerator(imagesMeta=testMeta, cfg=cfg, gen_type=cfg.test_type)
 
 if False:
     imagesID = list(trainMeta.keys())
     imagesID.sort()
     draw.drawImages(imagesID[26960:26969], trainMeta, cfg.data_path+'_images/train/', False)
 
-if False:
+if True:
     i = 0
-    idx = 0
+    idx = 19
     for sample in genTrain.begin():
         print(np.argmax(sample[1][idx]))
         win = sample[0][2][idx]

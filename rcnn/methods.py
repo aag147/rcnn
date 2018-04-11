@@ -10,7 +10,7 @@ from keras.layers import Add, Activation
 from keras.models import Model
 import numpy as np
 
-def _final_stop(inputs, outputs, my_weights, cfg):
+def _final_stop(inputs, outputs, cfg):
     if cfg.task == 'multi-label':
         outputs = Activation("sigmoid",name="predictions")(outputs)
     else:
