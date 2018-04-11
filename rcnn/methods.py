@@ -8,6 +8,7 @@ Created on Sat Apr  7 13:30:30 2018
 from models import AlexNet, PairWiseStream
 from keras.layers import Add, Activation
 from keras.models import Model
+import numpy as np
 
 def _final_stop(inputs, outputs, my_weights, cfg):
     if cfg.task == 'multi-label':
@@ -16,7 +17,7 @@ def _final_stop(inputs, outputs, my_weights, cfg):
         outputs = Activation("softmax",name="predictions")(outputs)
 
     model = Model(inputs=inputs, outputs=outputs)
-    if type(my_weights)=='str' and len(my_weights) > 0:
+    if type(my_weights)==str and len(my_weights) > 0:
         model.load_weights(cfg.weights_path+my_weights)
     return model
         

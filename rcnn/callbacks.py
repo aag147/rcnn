@@ -18,8 +18,9 @@ def MyEarlyStopping(cfg):
 
 def MyModelCheckpoint(cfg):
     for fid in range(100):
-        if not os.path.exists(cfg.weights_path + cfg.modelnamekey + '%d/' % fid):
-            path = cfg.weights_path + cfg.modelnamekey + '%d/' % fid
+        if not os.path.exists(cfg.weights_path + cfg.modelnamekey + 'weights%d/' % fid):
+            path = cfg.weights_path + cfg.modelnamekey + 'weights%d/' % fid
+            os.mkdir(path)
             break
     path = path + 'weights.{epoch:02d}-{val_loss:.2f}.h5'
     return ModelCheckpoint(path, monitor='val_loss', verbose=0, save_best_only=True, save_weights_only=True, mode='auto', period=1)
