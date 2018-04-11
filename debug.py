@@ -45,8 +45,10 @@ if True:
     
 if True:
     for imageID, metaData in trainMeta.items():
-        oldPath = cfg.part_data_path + 'TU_PPMI_images/train/' + metaData['imageID']
+        oldPath = cfg.part_data_path + 'HICO_images/train/' + metaData['imageID']
         image = cv.imread(oldPath)
+        if image is None:
+            print(imageID)
         for relID, rel in metaData['rels'].items():
             #print(imageID, relID)
             relCrops = utils.cropImageFromRel(rel['prsBB'], rel['objBB'], image)
