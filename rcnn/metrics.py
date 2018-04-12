@@ -52,7 +52,7 @@ class EvalResults():
           batch, y = next(iterGen)
           y_hat = self.model.predict_on_batch(x=batch)
           s_idx = i * self.gen.batch_size
-          f_idx = min(self.gen.nb_samples,s_idx+self.gen.batch_size)
+          f_idx = s_idx + len(batch[0])
           evalYHat[s_idx:f_idx, :] = y_hat
           Y[s_idx:f_idx, :] = y
     
