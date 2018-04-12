@@ -56,7 +56,7 @@ class EvalResults():
           f_idx = s_idx + len(batch[0])
           evalYHat[s_idx:f_idx, :] = y_hat
           Y[s_idx:f_idx, :] = y
-      utils.update_progress(i / self.gen.nb_batches)
+      utils.update_progress(self.gen.nb_batches)
       accs, self.mP, self.mR, self.F1 = computeMultiLabelLoss(Y, evalYHat)
       self.tp = accs[:,1]
       self.fp = accs[:,2]
@@ -94,7 +94,7 @@ def computeMultiLabelLoss(Y, Y_hat):
     Y_hat = cp.copy(Y_hat)
     Y_hat[Y_hat>=0.5] = 1
     Y_hat[Y_hat<0.5] = 0
-    accs = np.zeros((16,6))
+    accs = np.zeros((nb_classes,6))
     for x in range(nb_classes):
         y_total = 0
         tp = 0
