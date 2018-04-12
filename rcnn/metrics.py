@@ -43,19 +43,20 @@ class EvalResults():
       self.gen=gen
       
       self._evaluate()
-    
+
     def _evaluate(self):
       evalYHat = np.zeros([self.gen.nb_samples, self.gen.nb_classes])
       Y = np.zeros([self.gen.nb_samples, self.gen.nb_classes])
       iterGen = self.gen.begin()
       for i in range(self.gen.nb_batches):
+          utils.update_progress(i / self.gen.nb_batches)
           batch, y = next(iterGen)
           y_hat = self.model.predict_on_batch(x=batch)
           s_idx = i * self.gen.batch_size
           f_idx = s_idx + len(batch[0])
           evalYHat[s_idx:f_idx, :] = y_hat
           Y[s_idx:f_idx, :] = y
-    
+      utils.update_progress(i / self.gen.nb_batches)
       accs, self.mP, self.mR, self.F1 = computeMultiLabelLoss(Y, evalYHat)
       self.tp = accs[:,1]
       self.fp = accs[:,2]

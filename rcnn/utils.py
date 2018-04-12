@@ -12,6 +12,7 @@ import glob, os
 import pickle
 import copy as cp
 import random as r
+import sys
 
 def save_obj(obj, path):
     with open(path + '.pkl', 'wb') as f:
@@ -28,6 +29,25 @@ def save_dict(obj, path):
 def load_dict(path):
     with open(path + '.json', 'r') as f:
         return json.load(f)
+    
+def update_progress(progress):
+    barLength = 10 # Modify this to change the length of the progress bar
+    status = ""
+    if isinstance(progress, int):
+        progress = float(progress)
+    if not isinstance(progress, float):
+        progress = 0
+        status = "error: progress var must be float\r\n"
+    if progress < 0:
+        progress = 0
+        status = "Halt...\r\n"
+    if progress >= 1:
+        progress = 1
+        status = "Done...\r\n"
+    block = int(round(barLength*progress))
+    text = "\rPercent: [{0}] {1}% {2}".format( "#"*block + "-"*(barLength-block), progress*100, status)
+    sys.stdout.write(text)
+    sys.stdout.flush()
 
 ## Load images ##
 def loadImages(imagesID, imagesMeta, data_path):
@@ -191,6 +211,7 @@ def getGTDataRel(rel):
 def preprocessImage(image, shape):
     image = cv.resize(image, shape).astype(np.float32)
 #    image = (image - np.mean(image)) / np.std(image)
+    print(np.max(image))
     image = (image - np.min(image)) / np.max(image)
     image = image.transpose([2,0,1])
     return image
