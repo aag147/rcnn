@@ -211,7 +211,7 @@ def getGTDataRel(rel):
 def preprocessImage(image, shape):
     image = cv.resize(image, shape).astype(np.float32)
 #    image = (image - np.mean(image)) / np.std(image)
-    print(np.max(image))
+#    print(np.max(image))
     image = (image - np.min(image)) / np.max(image)
     image = image.transpose([2,0,1])
     return image
