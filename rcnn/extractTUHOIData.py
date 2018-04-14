@@ -25,27 +25,14 @@ import scipy.io as sio
 from matplotlib import pyplot as plt
 import numpy as np
 
-
-def getURL():
-    return url
-
 def getUniqueLabels(cfg):
-    labels = np.array([['play'+i, 'hold'+i] for i in instruments if i not in nonactive_instruments])
+    labels = np.array([[{'pred':'play', 'pred_ing':'playing', 'obj':i}, {'pred':'hold', 'pred_ing': 'holding', 'obj':i}] for i in instruments if i not in nonactive_instruments])
     labels = labels.reshape([2*8])
+    labels = list(labels)
     #labels = np.append(labels, 'other')
     
-    labels = dict(zip(iter(labels), range(len(labels))))
+#    labels = dict(zip(iter(labels), range(len(labels))))
     return labels
-
-def getLabelStats(imagesMeta):
-    stats = {i:{'play':0, 'hold': 0} for i in instruments}
-    stats['total'] = 0
-    for imageID, imageMeta in imagesMeta.items():
-        for relID, rel in imageMeta['rels'].items():
-            for name in rel['names']:
-                stats[name['obj']][name['pred']] += 1
-                stats['total'] += 1
-    return stats
 
 def extractObjectData():
     objectData = sio.loadmat(url + 'meta_det.mat', struct_as_record=False, squeeze_me=True)['synsets']

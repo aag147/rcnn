@@ -41,6 +41,7 @@ class EvalResults():
       
       self.model=model
       self.gen=gen
+      self.Y_hat = None
       
       self._evaluate()
 
@@ -57,6 +58,7 @@ class EvalResults():
           evalYHat[s_idx:f_idx, :] = y_hat
           Y[s_idx:f_idx, :] = y
       utils.update_progress(self.gen.nb_batches)
+      print()
       accs, self.mP, self.mR, self.F1 = computeMultiLabelLoss(Y, evalYHat)
       self.tp = accs[:,1]
       self.fp = accs[:,2]
@@ -64,7 +66,7 @@ class EvalResults():
       self.precision = accs[:,4]
       self.recall = accs[:,5]
       self.nb_zeros = np.count_nonzero(accs[:,1] == 0)
-      
+      self.Y_hat = Y
 
 
 #%% COMPUTE ACCURACY
@@ -121,7 +123,7 @@ def computeMultiLabelLoss(Y, Y_hat):
         
     mP = np.mean(accs[:,4])
     mR = np.mean(accs[:,5])
-    F1 = 2 * ((mP * mR) / (mP + mR))
+    F1 = 0.0 if mP+mR==0 else 2 * ((mP * mR) / (mP + mR))
     return accs, mP, mR, F1
 
 def computeIndividualLabelLoss(Y, Y_hat):

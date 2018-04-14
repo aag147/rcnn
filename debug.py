@@ -10,6 +10,7 @@ sys.path.append('..')
 sys.path.append('rcnn/')
 
 import extractTUHOIData as tuhoi
+import extractHICOData as hico
 import utils, draw
 from config import config
 from config_helper import set_config
@@ -26,7 +27,7 @@ cfg = config()
 cfg = set_config(cfg)
 
 # Read data
-if False:
+if True:
     # Load data 
     
 #    imagesMeta, rawImagesMeta, garbage = tuhoi.extractMetaData()
@@ -39,9 +40,10 @@ if False:
 #    imagesID = list(imagesMeta.keys())
 #    imagesID.sort()
     
-    trainMeta = utils.load_dict(cfg.data_path+'_train')
-    testMeta = utils.load_dict(cfg.data_path+'_test') 
+    trainMeta = utils.load_dict(cfg.data_path + 'train')
+    testMeta = utils.load_dict(cfg.data_path + 'test') 
 #    trainMeta, valMeta = utils.splitData(list(trainMeta.keys()), trainMeta)
+    labels = utils.load_dict(cfg.data_path + 'labels')
 
     
 if True:
@@ -52,6 +54,25 @@ if True:
 
 
 if False:
+    # Save labels in file
+    annotations = hico.getUniqueLabels(cfg)
+    labels = []
+    for annot in annotations:
+        obj = annot.nname; pred = annot.vname; pred_ing = annot.vname_ing
+        label = {'obj': obj, 'pred': pred, 'pred_ing': pred_ing}
+        labels.append(label)
+        
+    utils.save_dict(labels, cfg.part_data_path + 'HICO_labels')
+    labels = utils.load_dict(cfg.part_data_path + 'HICO_labels')
+    
+    stats, counts = utils.getLabelStats(trainMeta, labels)
+    reduced_trainMeta, reduced_idxs = utils.reduceTrainData(trainMeta, counts, 25)
+    reduced_testMeta = utils.reduceTestData(testMeta, reduced_idxs)
+    reduced_labels = utils.idxs2labels(reduced_idxs, labels)
+    reduced_stats, reduced_counts = utils.getLabelStats(reduced_trainMeta, reduced_labels)
+
+if False:
+    # Test if all images can be loaded and cropped successfully
     i = 0
     c = 0.0
     end = len(testMeta)
@@ -74,6 +95,7 @@ if False:
 
 
 if False:
+    # Debug problems with images/bounding boxes (like a wrongly rotated image)
     imageID = 'HICO_train2015_00027301.jpg'
     imageMeta = trainMeta[imageID]
     oldPath = cfg.part_data_path + 'HICO_images/train/' + imageMeta['imageID']
@@ -86,14 +108,23 @@ if False:
         i += 1
 
 if False:
+    # Plot images in range
     imagesID = list(trainMeta.keys())
     imagesID.sort()
-    draw.drawImages(imagesID[26960:26969], trainMeta, cfg.data_path+'_images/train/', False)
+    draw.drawImages(imagesID[26960:26969], trainMeta, labels, cfg.data_path+'_images/train/', False)
 
 if True:
+    # Test generators by plotting data
+    genTrain = DataGenerator(imagesMeta=trainMeta, cfg=cfg, data_type='train')
     i = 0
     idx = 19
+    j = 0
     for sample in genTrain.begin():
+        utils.update_progress(j / len(trainMeta))
+#        print(len(sample))
+        for ys in sample[1]:
+            j += 1
+        continue
         print(np.argmax(sample[1][idx]))
         win = sample[0][2][idx]
         prs = sample[0][0][idx].transpose([1,2,0])
@@ -109,12 +140,29 @@ if True:
             break
 
 if False:
+    # Check tu-ppmi images manually
     imagesMeta = utils.load_obj('TU_PPMI', url)
     stats = tuhoi.getLabelStats(imagesMeta)
     i = 100
     print("i",i*9)
     draw.drawImages(imagesID[i*9:i*9+9], imagesMeta, url+'images/', imagesBadOnes)
-
+    
+    
+if False:
+    # Change tu-ppmi dict
+    new_imagesMeta = {}
+    for imageID, imageMeta in testMeta.items():
+        new_rels = {}
+        for relID, rel in imageMeta['rels'].items():
+            new_rel = {'objBB':rel['objBB'], 'prsBB':rel['prsBB'], 'labels':rel['labels']}
+            new_rels[relID] = new_rel
+        new_imagesMeta[imageID] = {'imageName': imageMeta['imageID'], 'rels': new_rels}
+        
+    imagesID = list(new_imagesMeta.keys())
+    imagesID.sort()
+#    utils.save_dict(new_imagesMeta, cfg.data_path + 'test')
+#    new_imagesMeta = utils.load_dict(cfg.data_path + 'test')
+#    draw.drawImages(imagesID[50:59], new_imagesMeta, labels, cfg.data_path+'images/test/', False)
 #
 #imageID = trainMeta[1]
 #X, y = next(genTrain)

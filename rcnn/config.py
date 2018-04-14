@@ -16,7 +16,7 @@ class config:
            self.shuffle = False
     
    def get_data_path(self):
-       return self.part_data_path + self.dataset
+       return self.part_data_path + self.dataset + "/"
    
    def get_nb_classes(self):
        return utils.getUniqueClasses(self)
@@ -24,6 +24,7 @@ class config:
    def __init__(self):
        #basics
        self.dataset = 'TU_PPMI'
+       self.max_classes = None
        self.results_path = ''
        self.weights_path = ''
        self.part_data_path  = ''

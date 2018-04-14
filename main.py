@@ -9,12 +9,10 @@ import sys
 sys.path.append('..')
 sys.path.append('rcnn/')
 
-import extractTUHOIData as tuhoi
 import utils, draw
 from model_trainer import model_trainer
 from config import config
 from config_helper import set_config
-from models import AlexNet, PairWiseStream
 from generators import DataGenerator
 from methods import HO_RCNN, HO_RCNN_2
 
@@ -22,11 +20,8 @@ from matplotlib import pyplot as plt
 import cv2 as cv, numpy as np
 import copy as cp
 
-from keras.callbacks import EarlyStopping, LearningRateScheduler
-from keras.optimizers import SGD
-from keras.layers import Add, Activation
-from keras.models import Sequential, Model
 
+np.seterr(all='raise')
 
 plt.close("all")
 cfg = config()
@@ -34,9 +29,18 @@ cfg = set_config(cfg)
 
 # Read data
 if True:
-    # Load data 
-    trainMeta = utils.load_dict(cfg.data_path+'_train')
-    testMeta = utils.load_dict(cfg.data_path+'_test') 
+    # Load data    
+    trainMeta = utils.load_dict(cfg.data_path + 'train')
+    testMeta = utils.load_dict(cfg.data_path + 'test') 
+    labels = utils.load_dict(cfg.data_path + 'labels') 
+    
+    if cfg.max_classes is not None:
+        # Reduce data to include only max_classes number of different classes
+        trainStats, counts = utils.getLabelStats(trainMeta, labels)
+        trainMeta, reduced_idxs = utils.reduceTrainData(trainMeta, counts, cfg.max_classes)
+        testMeta = utils.reduceTestData(testMeta, reduced_idxs)
+        labels = utils.idxs2labels(reduced_idxs, labels)
+        
     trainMeta, valMeta = utils.splitData(list(trainMeta.keys()), trainMeta)
     
 if True:

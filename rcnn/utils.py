@@ -53,11 +53,76 @@ def update_progress(progress):
 def loadImages(imagesID, imagesMeta, data_path):
     images = {}
     for imageID in imagesID:
-        image = cv.imread(data_path+'_images/' + imagesMeta[imageID]['imageID'])
+        image = cv.imread(data_path+'/images/' + imagesMeta[imageID]['imageName'])
         if image is None:
             print(imageID)
         images[imageID] = image
     return images
+
+
+def getBareBonesStats(labels):
+    stats = {}
+    for label in labels:
+        obj = label['obj']; pred = label['pred']
+        if obj not in stats:
+            stats[obj] = {'total': 0}
+        if pred not in stats[obj]:
+            stats[obj][pred] =  (0,0)
+#            stats[obj][pred+'conf'] =  0 
+    return stats
+
+
+def getLabelStats(imagesMeta, labels):
+    counts = np.zeros(len(labels))
+    stats = getBareBonesStats(labels)
+    stats['total'] = 0
+    stats['nb_samples'] = 0
+    stats['nb_images'] = 0
+    for imageID, imageMeta in imagesMeta.items():
+        stats['nb_images'] += 1
+        for relID, rel in imageMeta['rels'].items():
+            stats['nb_samples'] += 1
+            for idx in rel['labels']:
+                name = labels[idx]
+                (p,c) = stats[name['obj']][name['pred']]
+                stats[name['obj']][name['pred']] = (p+1, c+min(1,len(rel['labels'])-1))
+                stats[name['obj']]['total'] += 1
+                stats['total'] += 1
+                
+                counts[idx] += 1
+    return stats, counts
+
+def idxs2labels(idxs, labels):
+    reduced_labels = []
+    for idx in idxs:
+        reduced_labels.append(labels[idx])
+    return reduced_labels
+
+def _reduceData(imagesMeta, reduced_idxs):
+    reduced_imagesMeta = {}
+    for imageID, imageMeta in imagesMeta.items():
+        new_rels = {}
+        for relID, rel in imageMeta['rels'].items():
+            new_labels = []
+            for idx in rel['labels']:
+                if idx in reduced_idxs:
+                    new_labels.append(np.where(reduced_idxs==idx)[0][0])
+            if len(new_labels) > 0:
+                rel['labels'] = new_labels
+                new_rels[relID] = rel
+        if len(new_rels) > 0:
+            reduced_imagesMeta[imageID] = {'imageName':imageMeta['imageName'], 'rels':new_rels}
+    return reduced_imagesMeta    
+
+def reduceTrainData(imagesMeta, counts, nb_classes):
+    reduced_idxs = counts.argsort()[-nb_classes:][::-1]
+    reduced_imagesMeta = _reduceData(imagesMeta, reduced_idxs)
+    return reduced_imagesMeta, reduced_idxs
+
+def reduceTestData(imagesMeta, reduced_idxs):
+    return _reduceData(imagesMeta, reduced_idxs)
+
+
 
 ## Split data (IDs) ##
 def splitData(imagesID, imagesMeta):
@@ -79,7 +144,7 @@ def createBackgroundBBs(imageMeta, nb_bgs, data_path):
     if 0 == nb_bgs:
         return []
     
-    image = cv.imread(data_path + imageMeta['imageID'])
+    image = cv.imread(data_path + imageMeta['imageName'])
     corners = [[2, 0], [2, 1], [3, 1], [3, 0]]
     coors = []
     for relID, rel in imageMeta['rels'].items():
@@ -148,7 +213,7 @@ def getXData(imagesID, imagesMeta, data_path, shape):
     dataX = []
     for imageID in imagesID:
         imageMeta = imagesMeta[imageID]
-        image = cv.imread(data_path + imageMeta['imageID'])
+        image = cv.imread(data_path + imageMeta['imageName'])
         image = cv.cvtColor(image, cv.COLOR_BGR2RGB)
         imageClean = preprocessImage(image, shape)
         dataX.append(imageClean)
@@ -158,12 +223,12 @@ def getXData(imagesID, imagesMeta, data_path, shape):
 def getX2Data(imagesID, imagesMeta, data_path, shape):
     dataXP = []
     dataXB = []
+#    print(imagesID, imagesMeta)
     for imageID in imagesID:
         imageMeta = imagesMeta[imageID]
-        image = cv.imread(data_path + imageMeta['imageID'])
+        image = cv.imread(data_path + imageMeta['imageName'])
         image = cv.cvtColor(image, cv.COLOR_BGR2RGB)
         for relID, rel in imageMeta['rels'].items():
-            #print(imageID, relID)
             relCrops = cropImageFromRel(rel['prsBB'], rel['objBB'], image)
             relCrops = preprocessRel(relCrops['prsCrop'], relCrops['objCrop'], image, shape)
             dataXP.append(relCrops['prsCrop'])
@@ -212,6 +277,7 @@ def preprocessImage(image, shape):
     image = cv.resize(image, shape).astype(np.float32)
 #    image = (image - np.mean(image)) / np.std(image)
 #    print(np.max(image))
+#    print('im', np.min(image), np.max(image), np.isfinite(image).all())
     image = (image - np.min(image)) / np.max(image)
     image = image.transpose([2,0,1])
     return image

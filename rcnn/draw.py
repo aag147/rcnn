@@ -60,14 +60,14 @@ def drawBoundingBox(bb):
     box = np.array([[xmin, xmax, xmax, xmin, xmin], [ymin, ymin, ymax, ymax, ymin]])
     return box
 
-def drawImages(imagesID, imagesMeta, url, imagesBadOnes):
+def drawImages(imagesID, imagesMeta, labels, url, imagesBadOnes):
     f, spl = plt.subplots(3,3)
     spl = spl.ravel()
     i = 0
     for imageID in imagesID:
         print(imageID)
         imageMeta = imagesMeta[imageID]
-        image = cv.imread(url + imageMeta['imageID'])
+        image = cv.imread(url + imageMeta['imageName'])
         image = cv.cvtColor(image, cv.COLOR_BGR2RGB)
         # + '.JPEG'
         spl[i].imshow(image)
@@ -91,7 +91,8 @@ def drawImages(imagesID, imagesMeta, url, imagesBadOnes):
             spl[i].plot(personBB[0,:], personBB[1,:], c=c[0])
             spl[i].plot(objectBB[0,:], objectBB[1,:], c=c[1])
             
-            for name in rel['names']:
+            for idx in rel['labels']:
+                name = labels[idx]
                 pred = name['pred']
                 obj = name['obj']
                 if relID not in titlesub.keys():

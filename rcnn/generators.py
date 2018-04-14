@@ -39,6 +39,8 @@ class DataGenerator():
       self.winShape = (64, 64)
       
       self.data_path = cfg.data_path
+      self.images_path = self.data_path + 'images/'
+      self.images_path = self.images_path + 'test/' if self.data_type == 'test' else self.images_path + 'train/'
       self.nb_classes = cfg.nb_classes
 
       self.dataID = list(imagesMeta.keys())
@@ -58,6 +60,7 @@ class DataGenerator():
     def begin(self):
         'Generates batches of samples'
         if self.gen_type == 'rand':
+            print('rand')
             g = self._generateRandomBatches
         else:
             g = self._generateIterativeBatches
@@ -65,25 +68,22 @@ class DataGenerator():
     
     def _generateBatchFromIDs(self, batchID):
         batchID = [self.dataID[idx] for idx in batchID]
-        data_path = self.data_path + '_images/'
-        data_path = data_path + 'test/' if self.data_type == 'test' else data_path + 'train/'
-        [dataXP, dataXB] = utils.getX2Data(batchID, self.imagesMeta, data_path, self.shape)
+#        print(batchID)
+        [dataXP, dataXB] = utils.getX2Data(batchID, self.imagesMeta, self.images_path, self.shape)
         dataXW = self.getDataPairWiseStream(batchID, self.imagesMeta)
         X = [dataXP, dataXB, dataXW]
         y, _ = utils.getYData(batchID, self.imagesMeta, self.nb_classes)
         return X, y
     
     def _generateBatchFromBGs(self, imageMeta, bbs):
-        data_path = self.data_path + '_images/'
-        data_path = data_path + 'test/' if self.data_type == 'test' else data_path + 'train/'
         imageID = 'id'
-        imagesMeta = {imageID: {'imageID': imageMeta['imageID']}}
+        imagesMeta = {imageID: {'imageName': imageMeta['imageName']}}
         rels = {}
         for i in range(0, len(bbs), 2):
             rels = {str(i): {'objBB': bbs[i], 'prsBB': bbs[i+1], 'labels': [0]}}
         imagesMeta[imageID]['rels'] = rels
         
-        [dataXP, dataXB] = utils.getX2Data([imageID], imagesMeta, data_path, self.shape)
+        [dataXP, dataXB] = utils.getX2Data([imageID], imagesMeta, self.images_path, self.shape)
         dataXW = self.getDataPairWiseStream([imageID], imagesMeta)
         X = [dataXP, dataXB, dataXW]
         y = np.zeros([int(len(bbs)/2), self.nb_classes])
@@ -92,14 +92,12 @@ class DataGenerator():
     #%% Different forms of generators
     def _generateRandomBatches(self):
         'Generates random batches of samples'
-        data_path = self.data_path + '_images/'
-        data_path = data_path + 'test/' if self.data_type == 'test' else data_path + 'train/'
         while 1:
           # Generate batches
               
           X = []
           y = np.zeros([self.batch_size, self.nb_classes])
-          imageIdxs = r.sample(range(0,self.nb_images), self.images_per_batch)     
+          imageIdxs = r.sample(range(0,self.nb_images), self.images_per_batch)
           for idx, imageIdx in enumerate(imageIdxs):
               imageX, imageY = self._generateBatchFromIDs([imageIdx])
               # Variables
@@ -111,7 +109,7 @@ class DataGenerator():
               imageXCut = utils.spliceXData(imageX, s_idx, f_idx)
               imageYCut = imageY[s_idx:f_idx, :]
               if nb_bgs > 0:
-                  bbs  = utils.createBackgroundBBs(imageMeta, nb_bgs, data_path)
+                  bbs  = utils.createBackgroundBBs(imageMeta, nb_bgs, self.images_path)
                   imageXBG, imageYBG  = self._generateBatchFromBGs(imageMeta, bbs)
                   imageXCmb = utils.concatXData(imageXCut, imageXBG)
 #                  print(y.shape, idx, self.nb_samples_per_image, len(imageIdxs))
@@ -132,7 +130,9 @@ class DataGenerator():
           # Generate batches
           for i in range(self.nb_batches):
               X = []; y = []
+              imageIdxs = []
               for imageIdx in range(imageIdx-1, self.nb_images):
+                  imageIdxs.append(imageIdx)
                   imageX, imageY = self._generateBatchFromIDs([imageIdx])
                   s_idx = 0; f_idx = len(imageY)
                   if hoiinimageidx > 0:
