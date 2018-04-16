@@ -16,14 +16,13 @@ from config_helper import set_config
 from generators import DataGenerator
 from methods import HO_RCNN, HO_RCNN_2
 
-from matplotlib import pyplot as plt
 import cv2 as cv, numpy as np
 import copy as cp
 
 
 np.seterr(all='raise')
 
-plt.close("all")
+#plt.close("all")
 cfg = config()
 cfg = set_config(cfg)
 
