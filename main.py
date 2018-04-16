@@ -9,7 +9,7 @@ import sys
 sys.path.append('..')
 sys.path.append('rcnn/')
 
-import utils, draw
+import utils
 from model_trainer import model_trainer
 from config import config
 from config_helper import set_config
