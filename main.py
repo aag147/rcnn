@@ -23,15 +23,16 @@ import copy as cp
 np.seterr(all='raise')
 
 #plt.close("all")
-cfg = config()
-cfg = set_config(cfg)
 
 # Read data
 if True:
-    # Load data    
+    # Load data
+    cfg = config()
+    cfg = set_config(cfg)
     trainMeta = utils.load_dict(cfg.data_path + 'train')
     testMeta = utils.load_dict(cfg.data_path + 'test') 
-    labels = utils.load_dict(cfg.data_path + 'labels') 
+    labels = utils.load_dict(cfg.data_path + 'labels')
+    cfg.nb_classes = len(labels)
     
     if cfg.max_classes is not None:
         # Reduce data to include only max_classes number of different classes
