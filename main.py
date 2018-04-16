@@ -32,7 +32,6 @@ if True:
     trainMeta = utils.load_dict(cfg.data_path + 'train')
     testMeta = utils.load_dict(cfg.data_path + 'test') 
     labels = utils.load_dict(cfg.data_path + 'labels')
-    cfg.nb_classes = len(labels)
     
     if cfg.max_classes is not None:
         # Reduce data to include only max_classes number of different classes
@@ -41,6 +40,8 @@ if True:
         testMeta = utils.reduceTestData(testMeta, reduced_idxs)
         labels = utils.idxs2labels(reduced_idxs, labels)
         
+        
+    cfg.nb_classes = len(labels)        
     trainMeta, valMeta = utils.splitData(list(trainMeta.keys()), trainMeta)
     
 if True:
