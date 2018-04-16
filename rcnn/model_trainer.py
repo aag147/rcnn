@@ -75,3 +75,12 @@ class model_trainer:
 
     def evaluateModel(self, gen):
         return m.EvalResults(self.model, gen)
+    
+    def saveModel(self, cfg):
+        for fid in range(100):
+            path = cfg.weights_path + cfg.modelnamekey + cfg.dataset + 'weights%d/'
+            if not os.path.exists(path  % fid):
+                path = path % (fid-1)
+                break
+        path = path + 'weights.%d-theend.h5' % len(self.log.hist.train_loss)
+        self.model.save_weights(path)
