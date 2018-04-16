@@ -39,9 +39,8 @@ cfg = set_config(cfg)
 cfg = get_args(cfg)
 
 # Load data 
-trainMeta = utils.load_dict(cfg.data_path+'_train')
-testMeta = utils.load_dict(cfg.data_path+'_test') 
-trainMeta, valMeta = utils.splitData(list(trainMeta.keys()), trainMeta)
+trainMeta = utils.load_dict(cfg.data_path + 'train')
+testMeta = utils.load_dict(cfg.data_path + 'test') 
 labels = utils.load_dict(cfg.data_path + 'labels')
 cfg.nb_classes = len(labels)
 
@@ -52,7 +51,8 @@ if cfg.max_classes is not None:
     testMeta = utils.reduceTestData(testMeta, reduced_idxs)
     labels = utils.idxs2labels(reduced_idxs, labels)
     cfg.nb_classes = len(labels)
-    
+
+trainMeta, valMeta = utils.splitData(list(trainMeta.keys()), trainMeta)
 
 # Create batch generators
 genTrain = DataGenerator(imagesMeta=trainMeta, cfg=cfg, data_type='train')
