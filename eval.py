@@ -9,16 +9,13 @@ import sys
 sys.path.append('..')
 sys.path.append('rcnn/')
 
-import extractTUHOIData as tuhoi
-import utils, draw
+import utils
 from model_trainer import model_trainer
 from config import config
 from config_helper import set_config
-from models import AlexNet, PairWiseStream
 from generators import DataGenerator
 from methods import HO_RCNN, HO_RCNN_2
 
-from matplotlib import pyplot as plt
 import numpy as np
 import copy as cp
 import sys, getopt
@@ -37,7 +34,6 @@ def get_args(cfg):
          cfg.my_model = arg
    return cfg
 
-plt.close("all")
 cfg = config()
 cfg = set_config(cfg)
 cfg = get_args(cfg)
@@ -46,6 +42,17 @@ cfg = get_args(cfg)
 trainMeta = utils.load_dict(cfg.data_path+'_train')
 testMeta = utils.load_dict(cfg.data_path+'_test') 
 trainMeta, valMeta = utils.splitData(list(trainMeta.keys()), trainMeta)
+labels = utils.load_dict(cfg.data_path + 'labels')
+cfg.nb_classes = len(labels)
+
+if cfg.max_classes is not None:
+    # Reduce data to include only max_classes number of different classes
+    trainStats, counts = utils.getLabelStats(trainMeta, labels)
+    trainMeta, reduced_idxs = utils.reduceTrainData(trainMeta, counts, cfg.max_classes)
+    testMeta = utils.reduceTestData(testMeta, reduced_idxs)
+    labels = utils.idxs2labels(reduced_idxs, labels)
+    cfg.nb_classes = len(labels)
+    
 
 # Create batch generators
 genTrain = DataGenerator(imagesMeta=trainMeta, cfg=cfg, data_type='train')
