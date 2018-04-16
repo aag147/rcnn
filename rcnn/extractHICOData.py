@@ -125,6 +125,8 @@ def combineSimilarBBs(imagesMeta):
             prsIdx = data['prsBBsims'][relID]
             objIdx = data['objBBsims'][relID]
             label = data['labels'][relID]
+            if imageID == 'HICO_test2015_00000007.jpg':
+                print(prsIdx, objIdx, label)
             if prsIdx not in tmp_rels:
                 tmp_rels[prsIdx] = {}
             if objIdx not in tmp_rels[prsIdx]:
@@ -135,8 +137,8 @@ def combineSimilarBBs(imagesMeta):
         relID = 0
         for prsIdx, sub_rels in tmp_rels.items():
             for objIdx, labels in sub_rels.items():
-                prsBB = data['prsBB'][relID]
-                objBB = data['objBB'][relID]
+                prsBB = data['prsBB'][prsIdx]
+                objBB = data['objBB'][objIdx]
                 rel = {'prsBB': prsBB, 'objBB': objBB, 'labels': labels}
                 rels[relID] = rel
                 relID += 1
@@ -148,21 +150,21 @@ def combineSimilarBBs(imagesMeta):
 if __name__ == "__main__":
     plt.close("all")
 #    metaData = sio.loadmat(url + 'anno.mat', struct_as_record=False, squeeze_me=True)
-    bbData = sio.loadmat(url + 'anno_bbox.mat', struct_as_record=False, squeeze_me=True)
+#    bbData = sio.loadmat(url + 'anno_bbox.mat', struct_as_record=False, squeeze_me=True)
 #    actions = bbData['list_action']
 #    trainYMatrix = metaData['anno_train']
     bbDataTrain   = bbData['bbox_train']
     print("Extract meta data")
-    newTrainMeta = extractMetaData(bbDataTrain)
+    tmpTrainMeta = extractMetaData(bbDataTrain)
     print("Combine similar BBs")
-    newTrainMeta = combineSimilarBBs(newTrainMeta)
+    newTrainMeta = combineSimilarBBs(tmpTrainMeta)
     newTrainMetaID = list(newTrainMeta.keys())
     newTrainMetaID.sort()
 #    imagesID = imagesID[6490:7000]
 #    images = pp.loadImages(imagesID, imagesMeta, url+"images/train2015/")
 #    [dataXP, dataXB, dataY, dataMeta] = pp.getData(imagesID, imagesMeta, images, (224,244))
 #    trainYMatrix = pp.getMatrixLabels(len(actions), dataY)
-#    utils.save_dict(newTrainMeta, url+'HICO_train')
+    utils.save_dict(newTrainMeta, url+'HICO_train')
 #    sampleMeta = imagesMeta[imagesID[0]]
 #    i = 0
 #    pdata.drawImages(imagesID[i*9:(i+1)*9], imagesMeta, url+'images/train2015/', False)
