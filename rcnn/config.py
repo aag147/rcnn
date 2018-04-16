@@ -17,10 +17,7 @@ class config:
     
    def get_data_path(self):
        return self.part_data_path + self.dataset + "/"
-   
-   def get_nb_classes(self):
-       return utils.getUniqueClasses(self)
-   
+      
    def __init__(self):
        #basics
        self.dataset = 'TU_PPMI'
