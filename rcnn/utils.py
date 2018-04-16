@@ -252,15 +252,6 @@ def getYData(imagesID, imagesMeta, nb_classes):
     return dataLabels, dataBBs
 
 
-def getUniqueClasses(cfg):
-    if cfg.dataset == 'TU_PPMI':
-        from extractTUHOIData import getUniqueLabels
-    else:
-        from extractHICOData import getUniqueLabels
-    unique_labels = getUniqueLabels(cfg)
-    return len(unique_labels)
-
-
 def getGTData(bb):
     xmin = bb['xmin']; xmax = bb['xmax']
     ymin = bb['ymin']; ymax = bb['ymax']
