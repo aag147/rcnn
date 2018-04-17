@@ -65,25 +65,6 @@ def VGG_16(weights_path=None, nb_classes=1000, include='all'):
 
     return model
 
-def PairWiseStream(weights_path=None, nb_classes=1000, include = 'all'):
-    inputs = Input(shape=(2,64,64))
-    model = Sequential()
-    conv_1 = Conv2D(64, (5, 5), activation='relu')(inputs)
-    conv_1 = MaxPooling2D((2,2), strides=(2,2))(conv_1)
-    
-    conv_2 = Conv2D(32, (5, 5), activation='relu')(conv_1)
-    conv_2 = MaxPooling2D((2,2), strides=(2,2))(conv_2)
-    
-    fc = Flatten()(conv_2)
-    fc = Dense(256, activation='relu')(fc)
-    fc = Dense(1000, activation='relu')(fc)
-    
-    model = Model(inputs=inputs, outputs=fc)
-    
-    model = final_model(model, weights_path, nb_classes, include)
-    return model
-
-
 
 def AlexNet(weights_path=None, nb_classes=1000, include = 'all'):
     #https://github.com/duggalrahul/AlexNet-Experiments-Keras/blob/master/convnets-keras/convnetskeras/convnets.py
@@ -123,11 +104,29 @@ def AlexNet(weights_path=None, nb_classes=1000, include = 'all'):
     dense_2 = Dropout(0.5)(dense_1)
     dense_2 = Dense(4096, activation='relu', kernel_initializer='TruncatedNormal')(dense_2)
     dense_3 = Dropout(0.5)(dense_2)
-    dense_3 = Dense(1000, activation='relu', kernel_initializer='TruncatedNormal')(dense_3)
+    dense_3 = Dense(1000, kernel_initializer='TruncatedNormal')(dense_3)
     model = Model(inputs=inputs, outputs=dense_3)
 
     model = final_model(model, weights_path, nb_classes, include)
 
+    return model
+
+def PairWiseStream(weights_path=None, nb_classes=1000, include = 'all'):
+    inputs = Input(shape=(2,64,64))
+    model = Sequential()
+    conv_1 = Conv2D(64, (5, 5), activation='relu')(inputs)
+    conv_1 = MaxPooling2D((2,2), strides=(2,2))(conv_1)
+    
+    conv_2 = Conv2D(32, (5, 5), activation='relu')(conv_1)
+    conv_2 = MaxPooling2D((2,2), strides=(2,2))(conv_2)
+    
+    fc = Flatten()(conv_2)
+    fc = Dense(256, activation='relu')(fc)
+    fc = Dense(nb_classes)(fc)
+    
+    model = Model(inputs=inputs, outputs=fc)
+    
+    model = final_model(model, weights_path, nb_classes, include)
     return model
 
 def final_model(model, weights_path, nb_classes, include):    
@@ -146,6 +145,10 @@ def final_model(model, weights_path, nb_classes, include):
         model = Model(inputs=model.input, outputs=output)
     return model
 
+def input_rois():
+    input_rois = Input(shape=(None, 4))
+    return input_rois
+
 def rpn(base_layers, num_anchors):
     x = Conv2D(256, (3, 3), padding='same', activation='relu', kernel_initializer='normal', name='rpn_conv1')(
         base_layers)
@@ -156,7 +159,7 @@ def rpn(base_layers, num_anchors):
     return [x_class, x_regr, base_layers]
 
 
-def classifier(base_layers, input_rois, num_rois, nb_classes=21):
+def classifier(base_layers, input_rois, num_rois=10, nb_classes=21):
     # compile times on theano tend to be very high, so we use smaller ROI pooling regions to workaround
 
     pooling_regions = 7
@@ -169,12 +172,11 @@ def classifier(base_layers, input_rois, num_rois, nb_classes=21):
     dense_2 = Dense(4096, activation='relu', kernel_initializer='TruncatedNormal')(dense_2)
     dense_3 = Dropout(0.5)(dense_2)
 
-
-    out_class = Dense(nb_classes, activation='sigmoid', kernel_initializer='uniform')(dense_3)
+    out_class = Dense(nb_classes, kernel_initializer='uniform')(dense_3)
     # note: no regression target for bg class
-    out_regr = Dense(4 * (nb_classes - 1), activation='linear', kernel_initializer='zero')(dense_3)
+#    out_regr = Dense(4 * (nb_classes - 1), activation='linear', kernel_initializer='zero')(dense_3)
 
-    return [out_class, out_regr]
+    return [out_class]
 
 
 class RoiPoolingConv(Layer):
@@ -210,11 +212,12 @@ class RoiPoolingConv(Layer):
 
     def build(self, input_shape):
         self.nb_channels = input_shape[0][3]
+#        super([RoiPoolingConv], self).build()
 
     def compute_output_shape(self, input_shape):
         return None, self.num_rois, self.pool_size, self.pool_size, self.nb_channels
 
-    def call(self, x, mask=None):
+    def call(self, x):
 
         assert(len(x) == 2)
 

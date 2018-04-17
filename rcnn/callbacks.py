@@ -17,12 +17,7 @@ def MyEarlyStopping(cfg):
 
 
 def MyModelCheckpoint(cfg):
-    for fid in range(100):
-        path = cfg.weights_path + cfg.modelnamekey + cfg.dataset + 'weights%d/' % fid
-        if not os.path.exists(path):
-            os.mkdir(path)
-            break
-    path = path + 'weights.{epoch:02d}-{val_loss:.2f}.h5'
+    path = cfg.my_weights_path + 'weights.{epoch:02d}-{val_loss:.2f}.h5'
     return ModelCheckpoint(path, monitor='val_loss', verbose=0, save_best_only=True, save_weights_only=True, mode='auto', period=1)
 
 def MyLearningRateScheduler(cfg):
@@ -38,6 +33,17 @@ def MyLearningRateScheduler(cfg):
 class PrintCallBack(Callback):
    def on_epoch_begin(self, epoch, logs=None):
       print("learning rate", K.eval(self.model.optimizer.lr))
+      
+class SaveLog2File(Callback):
+   def __init__(self, cfg):
+      self.cfg = cfg
+      f= open(cfg.my_results_path + "history.txt","w+")
+      f.close()
+   def on_epoch_end(self, epoch, logs=None):
+       newline = '%.4f, %.4f, %.4f, %.4f\n' % \
+         (logs.get('loss'), logs.get('acc'), logs.get('val_loss'), logs.get('val_acc'))
+       with open(self.cfg.my_results_path + "history.txt", 'a') as file:
+           file.write(newline)
 		
 class LogHistory(Callback):
    def __init__(self):

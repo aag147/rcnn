@@ -14,7 +14,7 @@ from model_trainer import model_trainer
 from config import config
 from config_helper import set_config
 from generators import DataGenerator
-from methods import HO_RCNN
+from methods import HO_RCNN, HO_RCNN_2, INDIVIDUAL_HO_RCNN
 
 import cv2 as cv, numpy as np
 import copy as cp
@@ -52,9 +52,9 @@ if True:
 
 if True:    
     # Create model
-    model = HO_RCNN(cfg)
+    modelPrs, modelObj, modelPar = INDIVIDUAL_HO_RCNN(cfg)
     # train model
-    trainer = model_trainer(model=model, genTrain=genTrain, genVal=genVal, genTest=genTest, task=cfg.task)
+    trainer = model_trainer(model=modelPrs, genTrain=genTrain, genVal=genVal, genTest=genTest, task=cfg.task)
     trainer.compileModel(cfg)
     trainer.trainModel(cfg)
     trainer.saveHistory(cfg)

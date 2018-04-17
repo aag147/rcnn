@@ -14,9 +14,10 @@ import copy as cp
 import random as r
 import sys
 
-def save_obj(obj, path):
+
+def save_obj(obj, path, protocol = 2):
     with open(path + '.pkl', 'wb') as f:
-        pickle.dump(obj, f, pickle.HIGHEST_PROTOCOL)
+        pickle.dump(obj, f, protocol)
 
 def load_obj(path):
     with open(path + '.pkl', 'rb') as f:

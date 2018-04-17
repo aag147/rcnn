@@ -5,7 +5,7 @@ Created on Sat Apr  7 13:30:30 2018
 @author: aag14
 """
 
-from models import AlexNet, PairWiseStream
+from models import AlexNet, PairWiseStream, classifier, input_rois
 from keras.layers import Add, Activation
 from keras.models import Model
 import numpy as np
@@ -29,18 +29,32 @@ def HO_RCNN(cfg):
     modelPrs = AlexNet(weights, cfg.nb_classes, include='fc')
     modelObj = AlexNet(weights, cfg.nb_classes, include='fc')
     modelPar = PairWiseStream(nb_classes = cfg.nb_classes, include='fc')             
+    
+    models = [modelPrs, modelObj, modelPar]
+    models = [models[i] for i in range(len(models)) if cfg.inputs[i]]
+    
+    assert len(models)>0, 'minimum one model must be included in method'
+    if len(models) == 1:
+        outputs = models[0].output
+    else:
+        outputs = Add()([model.output for model in models])
+    inputs = [model.input for model in models]
+    
+    final_model = _final_stop(inputs, outputs, cfg)
+    return final_model
+
+
+def Fast_HO_RCNN(cfg):
+    weights = HO_RCNN_Weights(cfg) if cfg.pretrained_weights == True else False
+    modelShr = AlexNet(weights, cfg.nb_classes, include='none')
+    prsRoI   = input_rois()
+    objRoI   = input_rois()
+    modelPrs = classifier(modelShr, prsRoI, cfg.nb_classes)
+    modelObj = classifier(modelShr, objRoI, cfg.nb_classes)
+    modelPar = PairWiseStream(nb_classes = cfg.nb_classes, include='fc')             
     outputs = Add()([modelPrs.output, modelObj.output, modelPar.output])
     
-    inputs = [modelPrs.input, modelObj.input, modelPar.input]
+    inputs = [modelShr.input, prsRoI, objRoI, modelPar.input]
     final_model = _final_stop(inputs, outputs, cfg)
     return final_model
-        
-def HO_RCNN_2(cfg, my_weights=None):
-    weights = HO_RCNN_Weights(cfg) if cfg.pretrained_weights else False
-    modelPrs = AlexNet(weights, cfg.nb_classes, include='fc')
-    modelObj = AlexNet(weights, cfg.nb_classes, include='fc')            
-    outputs = Add()([modelPrs.output, modelObj.output])
-    
-    inputs = [modelPrs.input, modelObj.input]
-    final_model = _final_stop(inputs, outputs, cfg)
-    return final_model
+

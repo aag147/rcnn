@@ -35,6 +35,7 @@ class DataGenerator():
       self.ydim = cfg.ydim
       self.cdim = cfg.cdim
       self.shape = (cfg.ydim, cfg.xdim)
+      self.inputs = cfg.inputs
       self.cIdx = 0
       self.winShape = (64, 64)
       
@@ -72,6 +73,7 @@ class DataGenerator():
         [dataXP, dataXB] = utils.getX2Data(batchID, self.imagesMeta, self.images_path, self.shape)
         dataXW = self.getDataPairWiseStream(batchID, self.imagesMeta)
         X = [dataXP, dataXB, dataXW]
+        X = [X[i] for i in range(len(X)) if self.inputs[i]]
         y, _ = utils.getYData(batchID, self.imagesMeta, self.nb_classes)
         return X, y
     

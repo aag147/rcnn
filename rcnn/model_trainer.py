@@ -28,22 +28,6 @@ class model_trainer:
         self.genVal = genVal
         self.eval = cb.EvaluateTest(genTest, m.EvalResults)
         self.log = cb.LogHistory()
-        
-    def saveHistory(self, cfg):
-        res = cp.copy(self.eval.epochs)
-        log = cp.copy(self.log.hist)
-        log.train_loss = np.array(log.train_loss)
-        log.train_acc = np.array(log.train_acc)
-        log.val_loss = np.array(log.val_loss)
-        log.val_acc = np.array(log.val_acc)
-        
-        for fid in range(100):
-            path = cfg.results_path
-            if not os.path.exists(path + 'log%d.json' % fid):
-                utils.save_obj(log, path + 'log%d' % fid)
-                utils.save_obj(res, path + 'res%d' % fid)
-                break
-        return log
     
     def compileModel(self, cfg):
         if cfg.optimizer == 'adam':
@@ -62,6 +46,7 @@ class model_trainer:
                      cb.MyEarlyStopping(cfg), \
                      cb.MyModelCheckpoint(cfg), \
                      cb.MyLearningRateScheduler(cfg), \
+                     cb.SaveLog2File(cfg), \
                      cb.PrintCallBack()]
         
         if cfg.include_eval:
@@ -76,11 +61,34 @@ class model_trainer:
     def evaluateModel(self, gen):
         return m.EvalResults(self.model, gen)
     
-    def saveModel(self, cfg):
+    def saveConfig(self, cfg):
+        
+       obj = vars(cfg)
+       obj['train_cfg'] = vars(obj['train_cfg'])
+       obj['val_cfg'] = vars(obj['val_cfg'])
+       obj['test_cfg'] = vars(obj['test_cfg'])
+       print(obj)
+       for fid in range(100):
+            path = cfg.my_results_path
+            if not os.path.exists(path + 'cfg%d.json' % fid):
+                utils.save_dict(obj, path + 'cfg%d' % fid)
+                break 
+
+    def saveHistory(self, cfg):
+        res = cp.copy(self.eval.epochs)
+        log = cp.copy(self.log.hist)
+        log.train_loss = np.array(log.train_loss)
+        log.train_acc = np.array(log.train_acc)
+        log.val_loss = np.array(log.val_loss)
+        log.val_acc = np.array(log.val_acc)
+        
         for fid in range(100):
-            path = cfg.weights_path + cfg.modelnamekey + cfg.dataset + 'weights%d/'
-            if not os.path.exists(path  % fid):
-                path = path % (fid-1)
+            path = cfg.my_results_path
+            if not os.path.exists(path + 'log%d.pkl' % fid):
+                utils.save_obj(log, path + 'log%d' % fid)
+                utils.save_obj(res, path + 'res%d' % fid)
                 break
-        path = path + 'weights.%d-theend.h5' % len(self.log.hist.train_loss)
+    
+    def saveModel(self, cfg):
+        path = self.my_weights_path + 'weights.%d-theend.h5' % len(self.log.hist.train_loss)
         self.model.save_weights(path)
