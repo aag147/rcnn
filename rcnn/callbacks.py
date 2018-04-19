@@ -16,9 +16,13 @@ def MyEarlyStopping(cfg):
     return EarlyStopping(monitor='val_loss', patience=cfg.patience, verbose=0, mode='auto')
 
 
-def MyModelCheckpoint(cfg):
-    path = cfg.my_weights_path + 'weights.{epoch:02d}-{val_loss:.2f}.h5'
+def MyModelCheckpointBest(cfg):
+    path = cfg.my_weights_path + 'weights-best.h5'
     return ModelCheckpoint(path, monitor='val_loss', verbose=0, save_best_only=True, save_weights_only=True, mode='auto', period=1)
+
+def MyModelCheckpointInterval(cfg):
+    path = cfg.my_weights_path + 'weights-{epoch:03d}.h5'
+    return ModelCheckpoint(path, monitor='val_loss', verbose=0, save_best_only=True, save_weights_only=True, mode='auto', period=10)
 
 def MyLearningRateScheduler(cfg):
    epoch_splits = cfg.epoch_splits
@@ -40,8 +44,8 @@ class SaveLog2File(Callback):
       f= open(cfg.my_results_path + "history.txt","w+")
       f.close()
    def on_epoch_end(self, epoch, logs=None):
-       newline = '%.4f, %.4f, %.4f, %.4f\n' % \
-         (logs.get('loss'), logs.get('acc'), logs.get('val_loss'), logs.get('val_acc'))
+       newline = '%.03d, %.4f, %.4f, %.4f, %.4f\n' % \
+         (epoch, logs.get('loss'), logs.get('acc'), logs.get('val_loss'), logs.get('val_acc'))
        with open(self.cfg.my_results_path + "history.txt", 'a') as file:
            file.write(newline)
 		

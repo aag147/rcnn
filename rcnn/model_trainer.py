@@ -44,7 +44,8 @@ class model_trainer:
     def trainModel(self, cfg):
         callbacks = [self.log, \
                      cb.MyEarlyStopping(cfg), \
-                     cb.MyModelCheckpoint(cfg), \
+                     cb.MyModelCheckpointBest(cfg), \
+                     cb.MyModelCheckpointInterval(cfg), \
                      cb.MyLearningRateScheduler(cfg), \
                      cb.SaveLog2File(cfg), \
                      cb.PrintCallBack()]
@@ -62,12 +63,10 @@ class model_trainer:
         return m.EvalResults(self.model, gen)
     
     def saveConfig(self, cfg):
-        
        obj = vars(cfg)
        obj['train_cfg'] = vars(obj['train_cfg'])
        obj['val_cfg'] = vars(obj['val_cfg'])
        obj['test_cfg'] = vars(obj['test_cfg'])
-       print(obj)
        for fid in range(100):
             path = cfg.my_results_path
             if not os.path.exists(path + 'cfg%d.json' % fid):
@@ -90,5 +89,6 @@ class model_trainer:
                 break
     
     def saveModel(self, cfg):
-        path = self.my_weights_path + 'weights.%d-theend.h5' % len(self.log.hist.train_loss)
-        self.model.save_weights(path)
+        path = cfg.my_weights_path + 'weights-%03d-end.h5' % len(self.log.hist.train_loss)
+        if not os.path.exists(path):
+            self.model.save_weights(path)

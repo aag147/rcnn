@@ -26,12 +26,14 @@ np.seterr(all='raise')
 
 # Read data
 if True:
+    print('Loading data...')
     # Load data
     cfg = config()
     cfg = set_config(cfg)
     trainMeta = utils.load_dict(cfg.data_path + 'train')
     testMeta = utils.load_dict(cfg.data_path + 'test') 
     labels = utils.load_dict(cfg.data_path + 'labels')
+    print('Path:', cfg.my_results_path)
     
     if cfg.max_classes is not None:
         # Reduce data to include only max_classes number of different classes
@@ -52,11 +54,17 @@ if True:
 
 if True:    
     # Create model
+    print('Creating model...')
     model = HO_RCNN(cfg)
-    # train model
     trainer = model_trainer(model=model, genTrain=genTrain, genVal=genVal, genTest=genTest, task=cfg.task)
     trainer.compileModel(cfg)
+    
+    # train model
+    print('Training model...')
     trainer.trainModel(cfg)
-    trainer.saveHistory(cfg)
+    
+    print('Saving final model...')
+    trainer.saveModel(cfg)
+    print('Testing model...')
     res = trainer.evaluateModel(genTest)
     print("F1:", res.F1, "nb_zeros", res.nb_zeros)
