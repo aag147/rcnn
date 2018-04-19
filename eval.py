@@ -14,7 +14,7 @@ from model_trainer import model_trainer
 from config import config
 from config_helper import set_config
 from generators import DataGenerator
-from methods import HO_RCNN, HO_RCNN_2
+from methods import HO_RCNN
 
 import numpy as np
 import copy as cp
@@ -31,7 +31,7 @@ def get_args(cfg):
  
    for opt, arg in opts:
       if opt == '-m':
-         cfg.my_model = arg
+         cfg.my_weights = arg
    return cfg
 
 cfg = config()
@@ -64,7 +64,7 @@ model = HO_RCNN(cfg)
 # Evaluate model
 trainer = model_trainer(model=model, task=cfg.task)
 trainer.compileModel(cfg)
-print('Evaluate model...')
+print('Evaluating model...')
 res = trainer.evaluateModel(genTest)
 print("F1:", res.F1, "nb_zeros", res.nb_zeros)
 

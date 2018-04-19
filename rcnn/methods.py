@@ -9,6 +9,7 @@ from models import AlexNet, PairWiseStream, classifier, input_rois
 from keras.layers import Add, Activation
 from keras.models import Model
 import numpy as np
+import os
 
 def _final_stop(inputs, outputs, cfg):
     if cfg.task == 'multi-label':
@@ -18,7 +19,10 @@ def _final_stop(inputs, outputs, cfg):
 
     model = Model(inputs=inputs, outputs=outputs)
     if type(cfg.my_weights)==str and len(cfg.my_weights) > 0:
-        model.load_weights(cfg.weights_path+cfg.my_weights)
+        print('Loading my weights...')
+        path = cfg.part_results_path + cfg.my_weights
+        assert os.path.exists(path), 'invalid path: %s' % path
+        model.load_weights(path)         
     return model
         
 def HO_RCNN_Weights(cfg):
