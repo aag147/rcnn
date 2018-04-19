@@ -62,6 +62,7 @@ class config:
        self.epoch_splits = [5]
        self.init_lr = 0.001
        self.include_eval = False
+       self.checkpoint_interval = 10
        
        # model training
        self.epoch_begin = 0
