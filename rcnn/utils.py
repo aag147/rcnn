@@ -30,6 +30,18 @@ def save_dict(obj, path):
 def load_dict(path):
     with open(path + '.json', 'r') as f:
         return json.load(f)
+
+def saveConfig(cfg):
+   obj = vars(cfg)
+   obj['train_cfg'] = vars(obj['train_cfg'])
+   obj['val_cfg'] = vars(obj['val_cfg'])
+   obj['test_cfg'] = vars(obj['test_cfg'])
+   for fid in range(100):
+        path = cfg.my_results_path
+        if not os.path.exists(path + 'cfg%d.json' % fid):
+            save_dict(obj, path + 'cfg%d' % fid)
+            break 
+
     
 def update_progress(progress):
     barLength = 10 # Modify this to change the length of the progress bar

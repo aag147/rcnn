@@ -61,17 +61,6 @@ class model_trainer:
 
     def evaluateModel(self, gen):
         return m.EvalResults(self.model, gen)
-    
-    def saveConfig(self, cfg):
-       obj = vars(cfg)
-       obj['train_cfg'] = vars(obj['train_cfg'])
-       obj['val_cfg'] = vars(obj['val_cfg'])
-       obj['test_cfg'] = vars(obj['test_cfg'])
-       for fid in range(100):
-            path = cfg.my_results_path
-            if not os.path.exists(path + 'cfg%d.json' % fid):
-                utils.save_dict(obj, path + 'cfg%d' % fid)
-                break 
 
     def saveHistory(self, cfg):
         res = cp.copy(self.eval.epochs)

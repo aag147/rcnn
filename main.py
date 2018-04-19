@@ -53,6 +53,9 @@ if True:
     genTest = DataGenerator(imagesMeta=testMeta, cfg=cfg, data_type='test')  
 
 if True:    
+    # Save config
+    utils.saveConfig(cfg)
+    
     # Create model
     print('Creating model...')
     model = HO_RCNN(cfg)
