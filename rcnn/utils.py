@@ -41,6 +41,11 @@ def saveConfig(cfg):
         if not os.path.exists(path + 'cfg%d.json' % fid):
             save_dict(obj, path + 'cfg%d' % fid)
             break 
+        
+def saveSplit(cfg, trainID, valID):
+    path = cfg.my_results_path
+    save_obj(trainID, path + 'trainIDs')
+    save_obj(valID, path + 'valIDs')
 
     
 def update_progress(progress):

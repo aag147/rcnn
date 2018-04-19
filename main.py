@@ -55,6 +55,7 @@ if True:
 if True:    
     # Save config
     utils.saveConfig(cfg)
+    utils.saveSplit(cfg, list(trainMeta.keys()), list(valMeta.keys()))
     
     # Create model
     print('Creating model...')
