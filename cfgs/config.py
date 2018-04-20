@@ -101,7 +101,7 @@ class basic_config:
              self.my_weights = arg
           if opt == '-c':
              assert hasattr(mcfg, arg), 'method cfg needs to exist'
-             self = getattr(mcfg, arg)()
+             self = getattr(mcfg, arg)(self)
           if opt == '-x':
               self.max_classes = arg
           if opt == '-d':
