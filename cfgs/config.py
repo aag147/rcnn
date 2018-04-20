@@ -91,9 +91,9 @@ class basic_config:
    def get_args(self):
        try:
           argv = sys.argv[1:]
-          opts, args = getopt.getopt(argv,"m:c:x:")
+          opts, args = getopt.getopt(argv,"m:c:x:d:")
        except getopt.GetoptError:
-          print('.py -m <my_model>')
+          print('.py -m <my_model> -c <my_method> -x <max_classes> -d <dataset>')
           sys.exit(2)
      
        for opt, arg in opts:
