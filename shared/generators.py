@@ -10,10 +10,11 @@ import random as r
 import math as m
 import cv2 as cv
 import utils
+import image
 
 class DataGenerator():
     
-    def __init__(self, imagesMeta, cfg, data_type='train'):
+    def __init__(self, imagesMeta, GTMeta, cfg, data_type='train'):
       'Initialization'
       self.mean  = [103.939, 116.779, 123.68]
       self.data_type = data_type
@@ -43,6 +44,7 @@ class DataGenerator():
       self.images_path = self.data_path + 'images/'
       self.images_path = self.images_path + 'test/' if self.data_type == 'test' else self.images_path + 'train/'
       self.nb_classes = cfg.nb_classes
+      self.cfg = cfg
 
       self.dataID = list(imagesMeta.keys())
       self.dataID.sort()
@@ -50,7 +52,8 @@ class DataGenerator():
           r.shuffle(self.dataID)
       
       self.imagesMeta = imagesMeta
-      self.gt_label, self.gt_bb = utils.getYData(self.dataID, self.imagesMeta, self.nb_classes)
+      self.GTMeta     = GTMeta
+      self.gt_label, self.gt_bb = image.getYData(self.dataID, self.imagesMeta, self.GTMeta, self.cfg)
       self.nb_images = len(self.dataID)
       self.nb_samples = len(self.gt_label)
       if self.nb_batches is None:
@@ -70,11 +73,11 @@ class DataGenerator():
     def _generateBatchFromIDs(self, batchID):
         batchID = [self.dataID[idx] for idx in batchID]
 #        print(batchID)
-        [dataXP, dataXB] = utils.getX2Data(batchID, self.imagesMeta, self.images_path, self.shape)
+        [dataXP, dataXB] = image.getX2Data(batchID, self.imagesMeta, self.images_path, self.shape)
         dataXW = self.getDataPairWiseStream(batchID, self.imagesMeta)
         X = [dataXP, dataXB, dataXW]
         X = [X[i] for i in range(len(X)) if self.inputs[i]]
-        y, _ = utils.getYData(batchID, self.imagesMeta, self.nb_classes)
+        y, _ = image.getYData(batchID, self.imagesMeta, self.GTMeta, self.cfg)
         return X, y
     
     def _generateBatchFromBGs(self, imageMeta, bbs):
@@ -85,7 +88,7 @@ class DataGenerator():
             rels = {str(i): {'objBB': bbs[i], 'prsBB': bbs[i+1], 'labels': [0]}}
         imagesMeta[imageID]['rels'] = rels
         
-        [dataXP, dataXB] = utils.getX2Data([imageID], imagesMeta, self.images_path, self.shape)
+        [dataXP, dataXB] = image.getX2Data([imageID], imagesMeta, self.images_path, self.shape)
         dataXW = self.getDataPairWiseStream([imageID], imagesMeta)
         X = [dataXP, dataXB, dataXW]
         y = np.zeros([int(len(bbs)/2), self.nb_classes])

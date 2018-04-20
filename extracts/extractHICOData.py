@@ -4,9 +4,17 @@ Created on Wed Mar  7 17:03:10 2018
 
 @author: aag14
 """
-import draw, utils
-import csv
+
+import sys 
+sys.path.append('../shared/')
+sys.path.append('../../')
+
 url = 'C:/Users/aag14/Documents/Skole/Speciale/HICO/'
+
+import utils
+from config import basic_config
+from config_helper import set_config
+import csv
 
 
 import glob
@@ -14,7 +22,6 @@ import os
 import cv2 as cv
 import xml.etree.ElementTree as ET  
 import scipy.io as sio
-from matplotlib import pyplot as plt
 import matplotlib.gridspec as gridspec
 
 import numpy as np
@@ -27,6 +34,7 @@ def getUniqueLabels(cfg):
 
 def extractMetaData(metaData):
     imagesMeta = {}
+    mlk = 0
     for line in metaData:
         imageID = line.filename
         rels = {}
@@ -40,6 +48,8 @@ def extractMetaData(metaData):
             subrels = np.array(rel.connection).tolist()
             #print(subrels)
             if rel.invis:
+#                print(imageID)
+                mlk += 1
                 continue
             if not isinstance(subrels[0], list):
                 subrels = [subrels]
@@ -48,7 +58,7 @@ def extractMetaData(metaData):
             prsBBs = np.array(rel.bboxhuman).tolist()
             for subrel in subrels:
                 idxsIntoAnnoLists = {'prsBB': subrel[0], 'objBB': subrel[1]}
-                rels[relID] = {'labels': [hoiID]}
+                rels[relID] = {'label': hoiID}
                 for key, bbObject in {'objBB': objBBs, 'prsBB': prsBBs}.items():
                     ## BB coordinates
                     try:
@@ -64,19 +74,20 @@ def extractMetaData(metaData):
 
         if rels:
             imagesMeta[imageID] = {'imageName': imageID, 'rels': rels}
-            
+#    print(mlk)
     return imagesMeta
 
 
-def combineSimilarBBs(imagesMeta):
+def combineSimilarBBs(imagesMeta, labels, minIoU = 0.4):
     new_imagesMeta = {}
     for imageID, imageMeta in imagesMeta.items():
+#        print('ID', imageID)
         data = {'prsBB':[], 'objBB':[], 'labels':[]}
         nb_rels = 0
         for relID, rel in imageMeta['rels'].items():
             data['prsBB'].append(rel['prsBB'])
             data['objBB'].append(rel['objBB'])
-            data['labels'].extend(rel['labels'])
+            data['labels'].append(rel['label'])
             nb_rels += 1
         
         for key in ['prsBB', 'objBB']:
@@ -91,9 +102,20 @@ def combineSimilarBBs(imagesMeta):
                         continue   
                     for secID, secBB in enumerate(bbData[fstID+1:]):
                         secID += fstID+1
+#                        print(data['labels'])
+#                        print(data['labels'][fstID])
+                        fstNames = labels[data['labels'][fstID]]
+                        secNames = labels[data['labels'][secID]]
+                        if key == 'objBB' and \
+                           (fstNames['pred'] == secNames['pred'] or \
+                            fstNames['obj'] != secNames['obj']):
+#                            print(fstNames, secNames)   
+                            continue
                         if secID in disabled:
                             continue
-                        if utils.get_iou(fstBB, secBB) > 0.4:
+#                        print('bbs',key, fstBB, secBB)
+#                        print(utils.get_iou(fstBB, secBB, weight=True))
+                        if utils.get_iou(fstBB, secBB, weight=True) > minIoU:
                             if similars[secID] != secID:
                                 
                                 similars[similars==fstID] = similars[secID]
@@ -136,10 +158,10 @@ def combineSimilarBBs(imagesMeta):
         rels = {}
         relID = 0
         for prsIdx, sub_rels in tmp_rels.items():
-            for objIdx, labels in sub_rels.items():
+            for objIdx, insLabels in sub_rels.items():
                 prsBB = data['prsBB'][prsIdx]
                 objBB = data['objBB'][objIdx]
-                rel = {'prsBB': prsBB, 'objBB': objBB, 'labels': labels}
+                rel = {'prsBB': prsBB, 'objBB': objBB, 'labels': insLabels}
                 rels[relID] = rel
                 relID += 1
         new_imagesMeta[imageID] = {'imageName': imageMeta['imageName'], 'rels': rels}
@@ -148,23 +170,29 @@ def combineSimilarBBs(imagesMeta):
 
                 
 if __name__ == "__main__":
-    plt.close("all")
 #    metaData = sio.loadmat(url + 'anno.mat', struct_as_record=False, squeeze_me=True)
-#    bbData = sio.loadmat(url + 'anno_bbox.mat', struct_as_record=False, squeeze_me=True)
+    bbData = sio.loadmat(url + 'anno_bbox.mat', struct_as_record=False, squeeze_me=True)
 #    actions = bbData['list_action']
 #    trainYMatrix = metaData['anno_train']
     bbDataTrain   = bbData['bbox_train']
+    cfg = basic_config()
+    cfg = set_config(cfg)
+    cfg.dataset = 'HICO'
+    cfg.get_data_path()
+    cfg.get_results_paths()
+    labels = utils.load_dict(cfg.data_path + 'labels')
     print("Extract meta data")
     tmpTrainMeta = extractMetaData(bbDataTrain)
     print("Combine similar BBs")
-    newTrainMeta = combineSimilarBBs(tmpTrainMeta)
+    newTrainMeta = combineSimilarBBs(tmpTrainMeta, labels, 0.4)
     newTrainMetaID = list(newTrainMeta.keys())
     newTrainMetaID.sort()
 #    imagesID = imagesID[6490:7000]
 #    images = pp.loadImages(imagesID, imagesMeta, url+"images/train2015/")
 #    [dataXP, dataXB, dataY, dataMeta] = pp.getData(imagesID, imagesMeta, images, (224,244))
 #    trainYMatrix = pp.getMatrixLabels(len(actions), dataY)
-    utils.save_dict(newTrainMeta, url+'HICO_train')
+    utils.save_dict(tmpTrainMeta, url+'HICO_train_GT')
+    utils.save_dict(newTrainMeta, url+'HICO_train_P')
 #    sampleMeta = imagesMeta[imagesID[0]]
 #    i = 0
 #    pdata.drawImages(imagesID[i*9:(i+1)*9], imagesMeta, url+'images/train2015/', False)

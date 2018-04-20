@@ -4,9 +4,12 @@ Created on Sat Apr  7 13:08:31 2018
 
 @author: aag14
 """
-import os
+import method_configs as mcfg
 
-class config:
+import os
+import sys, getopt
+
+class basic_config:
    class gen_config:
        def __init__(self):
            self.type = 'itr'
@@ -29,41 +32,77 @@ class config:
       self.my_weights_path = path + 'weights/'
       
    def __init__(self):
-       #basics
-       self.dataset = 'TU_PPMI'
-       self.inputs  = [1,1,1]
-       self.max_classes = None
+       self.setBasicValues()
+       self.rcnn_config() #standard
+       
+   def setBasicValues(self):
+       #paths
        self.part_results_path = ''
        self.part_data_path  = ''
        self.weights_path = ''
        self.my_results_path = ''
        self.my_weights_path = ''
        
+       #basics
+       self.dataset = 'HICO'
+       self.inputs  = None
+       self.max_classes = None
+       
        #generator
        self.train_cfg = self.gen_config()
        self.test_cfg = self.gen_config()
        self.val_cfg = self.gen_config()
-       self.xdim=227
-       self.ydim=227
-       self.cdim=3
+       self.xdim= None
+       self.ydim= None
+       self.cdim= None
+       self.minIoU = 0.5
        
        #model
-       self.task = 'multi-label'
+       self.task = None
        self.pretrained_weights = True
        self.my_weights = None
        
        #model compile
        self.optimizer = 'sgd'
-       self.wp = 20
+       self.wp = None
        
        #model callbacks
-       self.patience = 0
+       self.patience = None
        self.modelnamekey = ''
-       self.epoch_splits = [5]
-       self.init_lr = 0.001
+       self.epoch_splits = None
+       self.init_lr = None
        self.include_eval = False
        self.checkpoint_interval = 10
        
        # model training
-       self.epoch_begin = 0
-       self.epoch_end = 5
+       self.epoch_begin = None
+       self.epoch_end = None
+       
+   def rcnn_config(self):
+       self.xdim=227
+       self.ydim=227
+       self.cdim=3
+       
+   def fast_rcnn_config(self):
+       self.xdim=227
+       self.ydim=227
+       self.cdim=3
+       
+   def get_args(self):
+       try:
+          argv = sys.argv[1:]
+          opts, args = getopt.getopt(argv,"m:c:x:")
+       except getopt.GetoptError:
+          print('.py -m <my_model>')
+          sys.exit(2)
+     
+       for opt, arg in opts:
+          if opt == '-m':
+             self.my_weights = arg
+          if opt == '-c':
+             assert hasattr(mcfg, arg), 'method cfg needs to exist'
+             self = getattr(mcfg, arg)()
+          if opt == '-x':
+              self.max_classes = arg
+          if opt == '-d':
+              self.dataset = arg

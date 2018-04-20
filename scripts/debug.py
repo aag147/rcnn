@@ -42,8 +42,9 @@ if True:
     
     trainMeta = utils.load_dict(cfg.data_path + 'train')
     testMeta = utils.load_dict(cfg.data_path + 'test') 
-#    trainMeta, valMeta = utils.splitData(list(trainMeta.keys()), trainMeta)
     labels = utils.load_dict(cfg.data_path + 'labels')
+    cfg.nb_classes = len(labels)        
+#    trainMeta, valMeta = utils.splitData(list(trainMeta.keys()), trainMeta)
 
     
 if True:
@@ -113,7 +114,7 @@ if False:
     imagesID.sort()
     draw.drawImages(imagesID[26960:26969], trainMeta, labels, cfg.data_path+'_images/train/', False)
 
-if True:
+if False:
     # Test generators by plotting data
     genTrain = DataGenerator(imagesMeta=trainMeta, cfg=cfg, data_type='train')
     i = 0
@@ -139,13 +140,23 @@ if True:
         if i == 5:
             break
 
-if False:
+if True:
+    from extractHICOData import combineSimilarBBs
     # Check tu-ppmi images manually
-    imagesMeta = utils.load_obj('TU_PPMI', url)
-    stats = tuhoi.getLabelStats(imagesMeta)
-    i = 100
-    print("i",i*9)
-    draw.drawImages(imagesID[i*9:i*9+9], imagesMeta, url+'images/', imagesBadOnes)
+#    oldStats, oldCounts = utils.getLabelStats(trainMeta, labels)
+#    newStats, newCounts = utils.getLabelStats(newTrainMeta, labels)
+    
+    
+    imagesMeta = trainMeta
+    imagesID = list(imagesMeta.keys())
+    imagesID.sort()
+    i = 50
+    n = 4
+    imagesID = imagesID[i*n+2:i*n+n+2]
+#    tmpMeta = {imageID: imageMeta for imageID, imageMeta in imagesMeta.items() if imageID in imagesID}
+#    somethingelse = combineSimilarBBs(tmpMeta, labels, 0.4)
+    print("i",i*n)
+    draw.drawImages(imagesID, imagesMeta, labels, cfg.data_path +'images/train/', False)
     
     
 if False:

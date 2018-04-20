@@ -4,6 +4,7 @@ Created on Thu Mar 15 13:45:39 2018
 
 @author: aag14
 """
+
 import cv2 as cv
 import numpy as np
 import sklearn.model_selection as skmodel
@@ -14,7 +15,7 @@ import copy as cp
 import random as r
 import sys
 
-
+#%% Save / load
 def save_obj(obj, path, protocol = 2):
     with open(path + '.pkl', 'wb') as f:
         pickle.dump(obj, f, protocol)
@@ -46,8 +47,10 @@ def saveSplit(cfg, trainID, valID):
     path = cfg.my_results_path
     save_obj(trainID, path + 'trainIDs')
     save_obj(valID, path + 'valIDs')
-
     
+
+
+# %% Process loading
 def update_progress(progress):
     barLength = 10 # Modify this to change the length of the progress bar
     status = ""
@@ -67,17 +70,8 @@ def update_progress(progress):
     sys.stdout.write(text)
     sys.stdout.flush()
 
-## Load images ##
-def loadImages(imagesID, imagesMeta, data_path):
-    images = {}
-    for imageID in imagesID:
-        image = cv.imread(data_path+'/images/' + imagesMeta[imageID]['imageName'])
-        if image is None:
-            print(imageID)
-        images[imageID] = image
-    return images
 
-
+# %% Statistics
 def getBareBonesStats(labels):
     stats = {}
     for label in labels:
@@ -85,7 +79,7 @@ def getBareBonesStats(labels):
         if obj not in stats:
             stats[obj] = {'total': 0}
         if pred not in stats[obj]:
-            stats[obj][pred] =  (0,0)
+            stats[obj][pred] =  0
 #            stats[obj][pred+'conf'] =  0 
     return stats
 
@@ -100,37 +94,46 @@ def getLabelStats(imagesMeta, labels):
         stats['nb_images'] += 1
         for relID, rel in imageMeta['rels'].items():
             stats['nb_samples'] += 1
-            for idx in rel['labels']:
-                name = labels[idx]
-                (p,c) = stats[name['obj']][name['pred']]
-                stats[name['obj']][name['pred']] = (p+1, c+min(1,len(rel['labels'])-1))
-                stats[name['obj']]['total'] += 1
-                stats['total'] += 1
+            idx = rel['label']
+            name = labels[idx]
+            stats[name['obj']][name['pred']] += 1
+            stats[name['obj']]['total'] += 1
+            stats['total'] += 1
                 
-                counts[idx] += 1
+            counts[idx] += 1
     return stats, counts
 
-def idxs2labels(idxs, labels):
-    reduced_labels = []
-    for idx in idxs:
-        reduced_labels.append(labels[idx])
-    return reduced_labels
-
+# %% Reduce data
 def _reduceData(imagesMeta, reduced_idxs):
     reduced_imagesMeta = {}
     for imageID, imageMeta in imagesMeta.items():
         new_rels = {}
         for relID, rel in imageMeta['rels'].items():
-            new_labels = []
-            for idx in rel['labels']:
+            if 'labels' in rel:
+                # Proposals
+                new_labels = []
+                for idx in rel['labels']:
+                    if idx in reduced_idxs:
+                        new_labels.append(np.where(reduced_idxs==idx)[0][0])
+                if len(new_labels) > 0:
+                    rel['labels'] = new_labels
+                    new_rels[relID] = rel
+            else:
+                # GT
+                idx = rel['label']
                 if idx in reduced_idxs:
-                    new_labels.append(np.where(reduced_idxs==idx)[0][0])
-            if len(new_labels) > 0:
-                rel['labels'] = new_labels
-                new_rels[relID] = rel
+                    new_label = np.where(reduced_idxs==idx)[0][0]
+                    rel['label'] = new_label
+                    new_rels[relID] = rel
         if len(new_rels) > 0:
             reduced_imagesMeta[imageID] = {'imageName':imageMeta['imageName'], 'rels':new_rels}
-    return reduced_imagesMeta    
+    return reduced_imagesMeta   
+
+def idxs2labels(idxs, labels):
+    reduced_labels = []
+    for idx in idxs:
+        reduced_labels.append(labels[idx])
+    return reduced_labels 
 
 def reduceTrainData(imagesMeta, counts, nb_classes):
     reduced_idxs = counts.argsort()[-nb_classes:][::-1]
@@ -142,7 +145,7 @@ def reduceTestData(imagesMeta, reduced_idxs):
 
 
 
-## Split data (IDs) ##
+# %% Split and concat data
 def splitData(imagesID, imagesMeta):
     [trainID, testID] = skmodel.train_test_split(imagesID, test_size=0.2)
 #    [trainID, valID] = skmodel.train_test_split(trainID, test_size=0.2)
@@ -158,6 +161,17 @@ def spliceXData(XData, s_idx, f_idx):
         newXData.append(XData[i][s_idx:f_idx])
     return newXData
 
+def concatXData(XMain, XSub):
+    newXData = []
+    if len(XMain) == 0:
+        return XSub
+    if len(XSub) == 0:
+        return XMain
+    for i in range(len(XMain)):
+        newXData.append(np.append(XMain[i], XSub[i], axis=0))
+    return newXData
+
+# %% Random background bbs
 def createBackgroundBBs(imageMeta, nb_bgs, data_path):
     if 0 == nb_bgs:
         return []
@@ -216,103 +230,8 @@ def isPointInsideBoxes(point, boxes):
             return idx
     return 0
 
-def concatXData(XMain, XSub):
-    newXData = []
-    if len(XMain) == 0:
-        return XSub
-    if len(XSub) == 0:
-        return XMain
-    for i in range(len(XMain)):
-        newXData.append(np.append(XMain[i], XSub[i], axis=0))
-    return newXData
 
-## Get model ready data ##
-def getXData(imagesID, imagesMeta, data_path, shape):
-    dataX = []
-    for imageID in imagesID:
-        imageMeta = imagesMeta[imageID]
-        image = cv.imread(data_path + imageMeta['imageName'])
-        image = cv.cvtColor(image, cv.COLOR_BGR2RGB)
-        imageClean = preprocessImage(image, shape)
-        dataX.append(imageClean)
-    dataX = np.array(dataX)
-    return dataX    
-
-def getX2Data(imagesID, imagesMeta, data_path, shape):
-    dataXP = []
-    dataXB = []
-#    print(imagesID, imagesMeta)
-    for imageID in imagesID:
-        imageMeta = imagesMeta[imageID]
-        image = cv.imread(data_path + imageMeta['imageName'])
-        image = cv.cvtColor(image, cv.COLOR_BGR2RGB)
-        for relID, rel in imageMeta['rels'].items():
-            relCrops = cropImageFromRel(rel['prsBB'], rel['objBB'], image)
-            relCrops = preprocessRel(relCrops['prsCrop'], relCrops['objCrop'], image, shape)
-            dataXP.append(relCrops['prsCrop'])
-            dataXB.append(relCrops['objCrop'])
-    dataXP = np.array(dataXP)
-    dataXB = np.array(dataXB)
-    return [dataXP, dataXB]
-
-def getYData(imagesID, imagesMeta, nb_classes):
-    dataLabels = []
-    dataBBs    = []
-    for imageID in imagesID:
-        imageMeta = imagesMeta[imageID]
-        for relID, rel in imageMeta['rels'].items():
-            labels, prsGT, objGT = getGTDataRel(rel)
-            dataLabels.append(labels)
-            dataBBs.append(prsGT + objGT)
-    dataLabels = (dataLabels)
-    dataBBs = np.array(dataBBs)
-    dataLabels = getMatrixLabels(nb_classes, dataLabels)
-    return dataLabels, dataBBs
-
-
-def getGTData(bb):
-    xmin = bb['xmin']; xmax = bb['xmax']
-    ymin = bb['ymin']; ymax = bb['ymax']
-    return [xmin, xmax, ymin, ymax]
-
-def getGTDataRel(rel):
-    labels = rel['labels']
-    prsGT = getGTData(rel['prsBB'])
-    objGT = getGTData(rel['objBB'])
-    return labels, prsGT, objGT
-
-## Resize and normalize image ##
-def preprocessImage(image, shape):
-    image = cv.resize(image, shape).astype(np.float32)
-#    image = (image - np.mean(image)) / np.std(image)
-#    print(np.max(image))
-#    print('im', np.min(image), np.max(image), np.isfinite(image).all())
-    image = (image - np.min(image)) / np.max(image)
-    image = image.transpose([2,0,1])
-    return image
-
-def preprocessRel(prsCrop, objCrop, image, shape):
-    prsCrop = preprocessImage(prsCrop, shape)
-    objCrop = preprocessImage(objCrop, shape)
-    return {'prsCrop': prsCrop, 'objCrop': objCrop}
-
-## Crop image ##
-def cropImageFromBB(bb, image):
-    # Single image, half relation
-    xmin = bb['xmin']; xmax = bb['xmax']
-    ymin = bb['ymin']; ymax = bb['ymax']
-#    print(image.shape, [ymin, ymax, xmin, xmax])
-    crop = image[ymin:ymax, xmin:xmax, :]
-    return crop
-
-def cropImageFromRel(prsBB, objBB, image):
-    # Single image, single relation
-    prsCrop = cropImageFromBB(prsBB, image)
-    objCrop = cropImageFromBB(objBB, image)
-    crops = {'prsCrop': prsCrop, 'objCrop': objCrop}
-    return crops
-
-## Convert label int to list ##
+# %% Y Matrix to Y Vector, and opposite
 def getMatrixLabels(nb_classes, Y):
     YMatrix = np.zeros((len(Y), nb_classes))
     sIdx = 0
@@ -330,23 +249,9 @@ def getVectorLabels(YMatrix):
         Y[sIdx] = y
     return Y
 
-def deleteFillerFiles(keepers, path, ext):
-    i = 0
-    for filepath in glob.iglob(path +'*.' + ext):
-        filename = os.path.splitext(os.path.basename(filepath))[0]
-        if filename not in keepers:
-            os.remove(filepath)
-            i += 1
-    return i
 
-def meanBB(bb1, bb2):
-    xmin = int((bb1['xmin'] + bb2['xmin']) / 2)
-    xmax = int((bb1['xmax'] + bb2['xmax']) / 2)
-    ymin = int((bb1['ymin'] + bb2['ymin']) / 2)
-    ymax = int((bb1['ymax'] + bb2['ymax']) / 2)
-    return {'xmin':xmin, 'xmax':xmax, 'ymin':ymin, 'ymax':ymax}
-    
-def get_iou(bb1, bb2, include_union = True):
+#%% IOU 
+def get_iou(bb1, bb2, include_union = True, weight=False):
     """
     https://stackoverflow.com/questions/25349178/calculating-percentage-of-bounding-box-overlap-for-image-detector-evaluation
     Calculate the Intersection over Union (IoU) of two bounding boxes.
@@ -388,7 +293,7 @@ def get_iou(bb1, bb2, include_union = True):
     # compute the area of both AABBs
     bb1_area = (bb1['xmax'] - bb1['xmin']) * (bb1['ymax'] - bb1['ymin'])
     bb2_area = (bb2['xmax'] - bb2['xmin']) * (bb2['ymax'] - bb2['ymin'])
-
+#    print('areas', bb1_area, bb2_area)
     # compute the intersection over union by taking the intersection
     # area and dividing it by the sum of prediction + ground-truth
     # areas - the interesection area
