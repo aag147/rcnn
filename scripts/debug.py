@@ -6,11 +6,13 @@ Created on Thu Mar 15 13:49:30 2018
 """
 
 import sys 
-sys.path.append('..')
-sys.path.append('rcnn/')
+sys.path.append('../../')
+sys.path.append('../shared/')
+sys.path.append('../models/')
+sys.path.append('../cfgs/')
 
-import extractTUHOIData as tuhoi
-import extractHICOData as hico
+#import extractTUHOIData as tuhoi
+#import extractHICOData as hico
 import utils, draw
 from config import config
 from config_helper import set_config

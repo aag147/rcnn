@@ -104,6 +104,10 @@ class basic_config:
              assert hasattr(mcfg, arg), 'method cfg needs to exist'
              self = getattr(mcfg, arg)(self)
           if opt == '-x':
-              self.max_classes = arg
+              assert isinstance(arg, int), 'max_classes must be int'
+              self.max_classes = int(arg)
           if opt == '-d':
               self.dataset = arg
+          if opt == '-w':
+              assert isinstance(arg, int), 'weight must be int'
+              self.wp = arg
