@@ -97,6 +97,7 @@ class basic_config:
           sys.exit(2)
      
        for opt, arg in opts:
+          print(opt, arg)
           if opt == '-m':
              self.my_weights = arg
           if opt == '-c':
