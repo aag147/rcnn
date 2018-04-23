@@ -91,7 +91,7 @@ class basic_config:
    def get_args(self):
        try:
           argv = sys.argv[1:]
-          opts, args = getopt.getopt(argv,"m:c:x:d:")
+          opts, args = getopt.getopt(argv,"m:c:x:d:w:")
        except getopt.GetoptError:
           print('.py -m <my_model> -c <my_method> -x <max_classes> -d <dataset>')
           sys.exit(2)
@@ -104,10 +104,10 @@ class basic_config:
              assert hasattr(mcfg, arg), 'method cfg needs to exist'
              self = getattr(mcfg, arg)(self)
           if opt == '-x':
-              assert isinstance(arg, int), 'max_classes must be int'
+              assert arg.isdigit(), 'max_classes must be int'
               self.max_classes = int(arg)
           if opt == '-d':
               self.dataset = arg
           if opt == '-w':
-              assert isinstance(arg, int), 'weight must be int'
-              self.wp = arg
+              assert arg.isdigit(), 'weight must be int'
+              self.wp = int(arg)

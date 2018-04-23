@@ -19,7 +19,6 @@ def rcnn_hoi_classes(cfg):
 
 def rcnn_hoi_labels(cfg):
    # OVERWRITE
-   print("TYPE: RCNN HOI LABELS")   
    cfg.inputs = [1,1,1]
    cfg.task = 'multi-label'
    cfg.patience = 1000
