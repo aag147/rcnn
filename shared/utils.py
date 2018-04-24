@@ -55,7 +55,7 @@ def saveConfig(cfg):
    obj['train_cfg'] = vars(obj['train_cfg'])
    obj['val_cfg'] = vars(obj['val_cfg'])
    obj['test_cfg'] = vars(obj['test_cfg'])
-   obj['wp'] = obj['wp'] if obj['wp'].isdigit() else obj['wp'].tolist()
+   obj['wp'] = obj['wp'] if type(obj['wp']) is int else obj['wp'].tolist()
    for fid in range(100):
         path = cfg.my_results_path
         if not os.path.exists(path + 'cfg%d.json' % fid):
