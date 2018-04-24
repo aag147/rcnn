@@ -5,6 +5,7 @@ Created on Sat Apr  7 13:08:31 2018
 @author: aag14
 """
 import method_configs as mcfg
+import utils
 
 import os
 import sys, getopt
@@ -22,6 +23,9 @@ class basic_config:
        self.data_path = self.part_data_path + self.dataset + "/"
    
    def get_results_paths(self):
+      if len(self.my_results_path) > 0:
+          return
+      
       for fid in range(100):
         path = self.part_results_path + self.dataset + "/" + self.modelnamekey + '%d/' % fid
         if not os.path.exists(path):
@@ -30,6 +34,11 @@ class basic_config:
             break
       self.my_results_path = path
       self.my_weights_path = path + 'weights/'
+      
+      
+   def update_paths(self):
+       self.get_data_path()
+       self.get_results_paths()
       
    def __init__(self):
        self.setBasicValues()
@@ -56,6 +65,7 @@ class basic_config:
        self.ydim= None
        self.cdim= None
        self.minIoU = 0.5
+       self.testdata = 'genTest'
        
        #model
        self.task = None
@@ -91,13 +101,17 @@ class basic_config:
    def get_args(self):
        try:
           argv = sys.argv[1:]
-          opts, args = getopt.getopt(argv,"m:c:x:d:w:")
+          opts, args = getopt.getopt(argv,"m:c:x:d:w:v:t:")
        except getopt.GetoptError:
           print('.py -m <my_model> -c <my_method> -x <max_classes> -d <dataset>')
           sys.exit(2)
      
        for opt, arg in opts:
           print(opt, arg)
+          if opt == '-v':
+             path = self.part_results_path + arg
+             self.my_results_path = path
+             self.my_weights_path = path + 'weights/'
           if opt == '-m':
              self.my_weights = arg
           if opt == '-c':
@@ -111,3 +125,13 @@ class basic_config:
           if opt == '-w':
               assert arg.isdigit(), 'weight must be int'
               self.wp = int(arg)
+          if opt == '-t':
+              self.testdata = arg
+              
+   def set_class_weights(self, labels, imagesMeta):
+       if self.wp >= 0: 
+           return
+       stats, counts = utils.getLabelStats(imagesMeta, labels)
+       p = counts / sum(counts)
+       wp = 1 / p
+       self.wp = wp

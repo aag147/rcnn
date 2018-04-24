@@ -22,8 +22,9 @@ class data:
 
     def load_data(self):
         cfg = basic_config()
-        cfg.get_args()
         cfg = set_config(cfg)
+        cfg.get_args()
+        cfg.update_paths()
         
         trainMeta = utils.load_dict(cfg.data_path + 'train')
         testMeta = utils.load_dict(cfg.data_path + 'test')
@@ -44,6 +45,7 @@ class data:
             
             
         cfg.nb_classes = len(labels)
+        cfg.set_class_weights(labels, trainGTMeta)
         trainMeta, valMeta = utils.splitData(list(trainMeta.keys()), trainMeta)
         self.cfg = cfg
         self.labels = labels

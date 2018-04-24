@@ -13,49 +13,44 @@ sys.path.append('../cfgs/')
 
 #import extractTUHOIData as tuhoi
 #import extractHICOData as hico
-import utils, draw
-from config import config
-from config_helper import set_config
+import utils
 from generators import DataGenerator
+from load_data import data
 
-from matplotlib import pyplot as plt
+#from matplotlib import pyplot as plt
 import cv2 as cv, numpy as np
 import os
 import sys
+import time
 
+#plt.close("all")
 
-plt.close("all")
-cfg = config()
-cfg = set_config(cfg)
-
-# Read data
-if True:
-    # Load data 
-    
-#    imagesMeta, rawImagesMeta, garbage = tuhoi.extractMetaData()
-#    print(garbage)
-#    objects, allObjects = tuhoi.extractObjectData()
-#    imagesMeta, imagesBadOnes = tuhoi.getBoundingBoxes(imagesMeta, objects, unique_labels)
-#    
-#    trainMeta = utils.load_obj(cfg.data_path+'_train')
-#    testMeta = utils.load_obj(cfg.data_path+'_test')
-#    imagesID = list(imagesMeta.keys())
-#    imagesID.sort()
-    
-    trainMeta = utils.load_dict(cfg.data_path + 'train')
-    testMeta = utils.load_dict(cfg.data_path + 'test') 
-    labels = utils.load_dict(cfg.data_path + 'labels')
-    cfg.nb_classes = len(labels)        
-#    trainMeta, valMeta = utils.splitData(list(trainMeta.keys()), trainMeta)
+print('Loading data...')
+# Load data
+data = data()
+cfg = data.cfg
 
     
 if True:
     # Create batch generators
-    genTrain = DataGenerator(imagesMeta=trainMeta, cfg=cfg, data_type='train')
-#    genVal = DataGenerator(imagesMeta=valMeta, cfg=cfg, data_type='val')
-    genTest = DataGenerator(imagesMeta=testMeta, cfg=cfg, data_type='test')
+    genTrain = DataGenerator(imagesMeta=data.trainMeta, GTMeta = data.trainGTMeta, cfg=cfg, data_type='train')
+    genVal = DataGenerator(imagesMeta=data.valMeta, GTMeta = data.trainGTMeta, cfg=cfg, data_type='val')
+    genTest = DataGenerator(imagesMeta=data.testMeta, GTMeta = data.testGTMeta, cfg=cfg, data_type='test')  
 
 
+
+if True:    
+    i = 0
+    start = time.time()
+    print('Begin...')
+    for sample in genTrain.begin():
+        if i > genTrain.nb_batches:
+            break
+        i += 1
+    end = time.time()
+    print('End:', end - start)
+    
+    
 if False:
     # Save labels in file
     annotations = hico.getUniqueLabels(cfg)
@@ -142,7 +137,7 @@ if False:
         if i == 5:
             break
 
-if True:
+if False:
     from extractHICOData import combineSimilarBBs
     # Check tu-ppmi images manually
 #    oldStats, oldCounts = utils.getLabelStats(trainMeta, labels)

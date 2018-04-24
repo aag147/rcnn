@@ -13,12 +13,38 @@ import copy as cp
 import os
 import glob
 
+def drawConfusionMatrixLabels(Y, Y_hat):
+    Y_hat = cp.copy(Y_hat)
+    Y_hat[Y_hat>=0.5] = 1
+    Y_hat[Y_hat<0.5] = 0
+    
+    print(Y_hat.shape)
+    (smax,cmax) = Y_hat.shape
+    colour_map = np.zeros([cmax+1,cmax+1])
+    
+    for sidx in range(smax):
+        
+        gt_classes = np.where(Y[sidx,:]==1)[0]
+        pred_classes = np.where(Y_hat[sidx,:]==1)[0]
+        if len(gt_classes) == 0:
+            gt_classes = np.array([-1])
+        for gt in gt_classes:
+            if len(pred_classes) == 0:
+                colour_map[gt+1,0] += 1
+            for pred in pred_classes:
+                if pred not in gt_classes or gt==pred:
+                    colour_map[gt+1,pred+1] += 1
+    return colour_map
+            
+    
+    
+
 def plotLosses(log):
     # summarize history for loss
     f, spl = plt.subplots(1)
     spl = spl.ravel()
-    plt.plot(history.history['loss'])
-    plt.plot(history.history['val_loss'])
+    plt.plot(log.history['loss'])
+    plt.plot(log.history['val_loss'])
     plt.title('model loss')
     plt.ylabel('loss')
     plt.xlabel('epoch')

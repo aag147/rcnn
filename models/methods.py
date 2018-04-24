@@ -20,7 +20,7 @@ def _final_stop(inputs, outputs, cfg):
     model = Model(inputs=inputs, outputs=outputs)
     if type(cfg.my_weights)==str and len(cfg.my_weights) > 0:
         print('Loading my weights...')
-        path = cfg.part_results_path + cfg.my_weights
+        path = cfg.my_weights_path + cfg.my_weights
         assert os.path.exists(path), 'invalid path: %s' % path
         model.load_weights(path)         
     return model

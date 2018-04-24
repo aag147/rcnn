@@ -66,7 +66,7 @@ class EvalResults():
       self.precision = accs[:,4]
       self.recall = accs[:,5]
       self.nb_zeros = np.count_nonzero(accs[:,1] == 0)
-      self.Y_hat = Y
+      self.Y_hat = evalYHat
 
 
 #%% COMPUTE ACCURACY
