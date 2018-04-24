@@ -27,7 +27,7 @@ import time
 
 print('Loading data...')
 # Load data
-data = data()
+data = data(newDir=False)
 cfg = data.cfg
 
     
@@ -44,7 +44,7 @@ if True:
     start = time.time()
     print('Begin...')
     for sample in genTrain.begin():
-        utils.update_progress(i / genTrain.nb_batches)
+#        utils.update_progress(i / genTrain.nb_batches)
         if i > genTrain.nb_batches:
             break
         i += 1
