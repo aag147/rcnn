@@ -24,14 +24,12 @@ np.seterr(all='raise')
 
 #plt.close("all")
 
-# Read data
 if True:
-    print('Loading data...')
     # Load data
+    print('Loading data...')
     data = data()
     cfg = data.cfg
     
-if True:
     # Create batch generators
     genTrain = DataGenerator(imagesMeta=data.trainMeta, GTMeta = data.trainGTMeta, cfg=cfg, data_type='train')
     genVal = DataGenerator(imagesMeta=data.valMeta, GTMeta = data.trainGTMeta, cfg=cfg, data_type='val')
