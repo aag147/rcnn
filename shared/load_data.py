@@ -9,7 +9,8 @@ from config_helper import set_config
 import utils
 
 class data:
-    def __init__(self):
+    def __init__(self, newDir=True):
+        self.newDir = newDir
         self.cfg = None
         self.labels = None
         self.trainMeta = None
@@ -21,7 +22,7 @@ class data:
         self.load_data()
 
     def load_data(self):
-        cfg = basic_config()
+        cfg = basic_config(self.newDir)
         cfg = set_config(cfg)
         cfg.get_args()
         cfg.update_paths()

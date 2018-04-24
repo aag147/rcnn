@@ -23,7 +23,7 @@ class basic_config:
        self.data_path = self.part_data_path + self.dataset + "/"
    
    def get_results_paths(self):
-      if len(self.my_results_path) > 0:
+      if len(self.my_results_path) > 0 or not self.newDir:
           return
       
       for fid in range(100):
@@ -40,7 +40,8 @@ class basic_config:
        self.get_data_path()
        self.get_results_paths()
       
-   def __init__(self):
+   def __init__(self, newDir = True):
+       self.newDir = newDir
        self.setBasicValues()
        self.rcnn_config() #standard
        
