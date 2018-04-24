@@ -16,7 +16,7 @@ from keras.engine.topology import Layer
 from keras.initializers import TruncatedNormal
 
 from keras import backend as K
-K.set_image_dim_ordering('th')
+#K.set_image_dim_ordering('th')
 
 from keras.layers import Flatten, Dense, Dropout, Reshape, Permute, Activation, \
     Input, merge
@@ -25,6 +25,8 @@ from keras.layers.convolutional import Convolution2D, MaxPooling2D, ZeroPadding2
 from keras.utils.layer_utils import convert_all_kernels_in_model
 
 import tensorflow as tf
+
+import alexnet as alex
 
 def VGG_16(weights_path=None, nb_classes=1000, include='all'):
     #https://gist.github.com/baraldilorenzo/07d7802847aaad0a35d3
@@ -65,6 +67,12 @@ def VGG_16(weights_path=None, nb_classes=1000, include='all'):
 
     return model
 
+
+def AlexNet2(weights_path=None, nb_classes=1000, include = 'all'):
+    inputs = Input(shape=(227,227,3))
+    alexmodel = alex.AlexNet(x=inputs, keep_prob=0.5, num_classes=1000)
+    model = final_model(model, weights_path, nb_classes, include)
+    return model
 
 def AlexNet(weights_path=None, nb_classes=1000, include = 'all'):
     #https://github.com/duggalrahul/AlexNet-Experiments-Keras/blob/master/convnets-keras/convnetskeras/convnets.py
@@ -203,7 +211,7 @@ class RoiPoolingConv(Layer):
     def __init__(self, pool_size, num_rois, **kwargs):
 
         self.dim_ordering = K.image_dim_ordering()
-        assert self.dim_ordering in {'tf'}, 'dim_ordering must be in {tf}'
+        assert self.dim_ordering in {'tf','th'}, 'dim_ordering must be in {tf}'
 
         self.pool_size = pool_size
         self.num_rois = num_rois
@@ -211,11 +219,11 @@ class RoiPoolingConv(Layer):
         super(RoiPoolingConv, self).__init__(**kwargs)
 
     def build(self, input_shape):
-        self.nb_channels = input_shape[0][3]
+        self.nb_channels = input_shape[0][1]
 #        super([RoiPoolingConv], self).build()
 
     def compute_output_shape(self, input_shape):
-        return None, self.num_rois, self.pool_size, self.pool_size, self.nb_channels
+        return None, self.num_rois, self.nb_channels, self.pool_size, self.pool_size
 
     def call(self, x):
 
@@ -245,7 +253,7 @@ class RoiPoolingConv(Layer):
 
         final_output = K.concatenate(outputs, axis=0)
         final_output = K.reshape(final_output, (1, self.num_rois, self.pool_size, self.pool_size, self.nb_channels))
-        final_output = K.permute_dimensions(final_output, (0, 1, 2, 3, 4))
+        final_output = K.permute_dimensions(final_output, (0, 1, 4, 2, 3))
 
         return final_output
 

@@ -51,6 +51,9 @@ def getGTDataRel(rel, GTMeta, cfg):
 ## Get model ready data ##
 def getXData(imagesID, imagesMeta, data_path, shape):
     dataX = []
+    dataH = []
+    dataO = []
+    IDs   = []
     for imageID in imagesID:
         imageMeta = imagesMeta[imageID]
         image = cv.imread(data_path + imageMeta['imageName'])
@@ -58,9 +61,24 @@ def getXData(imagesID, imagesMeta, data_path, shape):
 #        sys.stdout.flush()
         image = cv.cvtColor(image, cv.COLOR_BGR2RGB)
         imageClean = preprocessImage(image, shape)
-        dataX.append(imageClean)
+        
+        scaleX = imageClean.shape[2] / float(image.shape[1])
+        scaleY = imageClean.shape[1] / float(image.shape[0])
+        scales = [scaleX, scaleY]
+#        print(imageClean.shape, image.shape, scales)
+        
+        for relID, rel in imageMeta['rels'].items():
+            h, o = getDataFromRel(rel['prsBB'], rel['objBB'], scales)
+            dataX.append(imageClean)
+            dataH.append(h)
+            dataO.append(o)
+            IDs.append(imageID)
     dataX = np.array(dataX)
-    return dataX    
+    dataH = np.array(dataH)
+    dataO = np.array(dataO)
+    IDs = np.array(IDs)
+    
+    return [dataX, dataH, dataO], IDs
 
 def getX2Data(imagesID, imagesMeta, data_path, shape):
     dataXP = []
@@ -111,6 +129,19 @@ def cropImageFromRel(prsBB, objBB, image):
     objCrop = cropImageFromBB(objBB, image)
     crops = {'prsCrop': prsCrop, 'objCrop': objCrop}
     return crops
+
+## Get data bbs from rel ##
+def getDataFromBB(bb, scales):
+    x = int(bb['xmin'] * scales[0])
+    y = int(bb['ymin'] * scales[1])
+    w = int(bb['xmax'] * scales[0] - x)
+    h = int(bb['ymax'] * scales[1] - y)
+    return [x, y, w, h]
+    
+def getDataFromRel(prsBB, objBB, scales):
+    dataH = getDataFromBB(prsBB, scales)
+    dataO = getDataFromBB(objBB, scales)
+    return dataH, dataO
 
 
 #%% Special third stream data extraction

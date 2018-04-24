@@ -14,8 +14,8 @@ sys.path.append('../cfgs/')
 import utils
 from model_trainer import model_trainer
 from load_data import data
-from generators import DataGenerator
-from methods import FAST_HO_RCNN
+from fast_generators import DataGenerator
+from methods import Fast_HO_RCNN
 
 import numpy as np
 
@@ -42,7 +42,7 @@ if True:
     
     # Create model
     print('Creating model...')
-    model = FAST_HO_RCNN(cfg)
+    model = Fast_HO_RCNN(cfg)
     trainer = model_trainer(model=model, genTrain=genTrain, genVal=genVal, genTest=genTest, task=cfg.task)
     trainer.compileModel(cfg)
     

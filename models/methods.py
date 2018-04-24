@@ -5,7 +5,7 @@ Created on Sat Apr  7 13:30:30 2018
 @author: aag14
 """
 
-from models import AlexNet, PairWiseStream, classifier, input_rois
+from models import AlexNet, AlexNet2, PairWiseStream, classifier, input_rois
 from keras.layers import Add, Activation
 from keras.models import Model
 import numpy as np
@@ -53,8 +53,8 @@ def Fast_HO_RCNN(cfg):
     modelShr = AlexNet(weights, cfg.nb_classes, include='none')
     prsRoI   = input_rois()
     objRoI   = input_rois()
-    modelPrs = classifier(modelShr, prsRoI, cfg.nb_classes)
-    modelObj = classifier(modelShr, objRoI, cfg.nb_classes)
+    modelPrs = classifier(modelShr.output, prsRoI, cfg.nb_classes)
+    modelObj = classifier(modelShr.output, objRoI, cfg.nb_classes)
     modelPar = PairWiseStream(nb_classes = cfg.nb_classes, include='fc')             
     outputs = Add()([modelPrs.output, modelObj.output, modelPar.output])
     
