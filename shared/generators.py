@@ -74,7 +74,7 @@ class DataGenerator():
         batchID = [self.dataID[idx] for idx in batchID]
 #        print(batchID)
         [dataXP, dataXB] = image.getX2Data(batchID, self.imagesMeta, self.images_path, self.shape)
-        dataXW = self.getDataPairWiseStream(batchID, self.imagesMeta)
+        dataXW = image.getDataPairWiseStream(batchID, self.imagesMeta, self.winShape)
         X = [dataXP, dataXB, dataXW]
         X = [X[i] for i in range(len(X)) if self.inputs[i]]
         y, _ = image.getYData(batchID, self.imagesMeta, self.GTMeta, self.cfg)
@@ -89,7 +89,7 @@ class DataGenerator():
         imagesMeta[imageID]['rels'] = rels
         
         [dataXP, dataXB] = image.getX2Data([imageID], imagesMeta, self.images_path, self.shape)
-        dataXW = self.getDataPairWiseStream([imageID], imagesMeta)
+        dataXW = image.getDataPairWiseStream([imageID], self.imagesMeta, self.winShape)
         X = [dataXP, dataXB, dataXW]
         y = np.zeros([int(len(bbs)/2), self.nb_classes])
         return X, y
@@ -159,51 +159,4 @@ class DataGenerator():
               imageIdx += 1
               y = np.array(y)
               yield X, y
-            
-    #%% Special third stream data extraction
-    def _getSinglePairWiseStream(self, thisBB, thatBB, width, height, newWidth, newHeight):
-        xmin = max(0, thisBB['xmin'] - thatBB['xmin'])
-        xmax = width - max(0, thatBB['xmax'] - thisBB['xmax'])
-        ymin = max(0, thisBB['ymin'] - thatBB['ymin'])
-        ymax = height - max(0, thatBB['ymax'] - thisBB['ymax'])
-        
-        attWin = np.zeros([height,width])
-        attWin[ymin:ymax, xmin:xmax] = 1
-        attWin = cv.resize(attWin, (newWidth, newHeight), interpolation = cv.INTER_NEAREST)
-        attWin = attWin.astype(np.int)
-
-        xPad = int(abs(newWidth - self.winShape[0]) / 2)
-        yPad = int(abs(newHeight - self.winShape[0]) / 2)
-        attWinPad = np.zeros(self.winShape).astype(np.int)
-#        print(attWin.shape, attWinPad.shape, xPad, yPad)
-#        print(height, width, newHeight, newWidth)
-        attWinPad[yPad:yPad+newHeight, xPad:xPad+newWidth] = attWin
-        return attWinPad
-
-    def _getPairWiseStream(self, prsBB, objBB):
-        width = max(prsBB['xmax'], objBB['xmax']) - min(prsBB['xmin'], objBB['xmin'])
-        height = max(prsBB['ymax'], objBB['ymax']) - min(prsBB['ymin'], objBB['ymin'])
-        if width > height:
-            newWidth = self.winShape[0]
-            apr = newWidth / width
-            newHeight = int(height*apr) 
-        else:
-            newHeight = self.winShape[0]
-            apr = newHeight / height
-            newWidth = int(width*apr)
-            
-        prsWin = self._getSinglePairWiseStream(prsBB, objBB, width, height, newWidth, newHeight)
-        objWin = self._getSinglePairWiseStream(objBB, prsBB, width, height, newWidth, newHeight)
-        
-        return [prsWin, objWin]
-
-    def getDataPairWiseStream(self, imagesID, imagesMeta):
-        dataPar = []
-        for imageID in imagesID:
-            imageMeta = imagesMeta[imageID]
-            for relID, rel in imageMeta['rels'].items():
-                relWin = self._getPairWiseStream(rel['prsBB'], rel['objBB'])
-                dataPar.append(relWin)
-        dataPar = np.array(dataPar)
-        return dataPar
     

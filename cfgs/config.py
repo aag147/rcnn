@@ -75,7 +75,7 @@ class basic_config:
        
        #model compile
        self.optimizer = 'sgd'
-       self.wp = None
+       self.wp = 1
        
        #model callbacks
        self.patience = None

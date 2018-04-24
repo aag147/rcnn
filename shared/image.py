@@ -111,3 +111,51 @@ def cropImageFromRel(prsBB, objBB, image):
     objCrop = cropImageFromBB(objBB, image)
     crops = {'prsCrop': prsCrop, 'objCrop': objCrop}
     return crops
+
+
+#%% Special third stream data extraction
+def _getSinglePairWiseStream(thisBB, thatBB, width, height, newWidth, newHeight, winShape):
+    xmin = max(0, thisBB['xmin'] - thatBB['xmin'])
+    xmax = width - max(0, thatBB['xmax'] - thisBB['xmax'])
+    ymin = max(0, thisBB['ymin'] - thatBB['ymin'])
+    ymax = height - max(0, thatBB['ymax'] - thisBB['ymax'])
+    
+    attWin = np.zeros([height,width])
+    attWin[ymin:ymax, xmin:xmax] = 1
+    attWin = cv.resize(attWin, (newWidth, newHeight), interpolation = cv.INTER_NEAREST)
+    attWin = attWin.astype(np.int)
+
+    xPad = int(abs(newWidth - winShape[0]) / 2)
+    yPad = int(abs(newHeight - winShape[0]) / 2)
+    attWinPad = np.zeros(winShape).astype(np.int)
+#        print(attWin.shape, attWinPad.shape, xPad, yPad)
+#        print(height, width, newHeight, newWidth)
+    attWinPad[yPad:yPad+newHeight, xPad:xPad+newWidth] = attWin
+    return attWinPad
+
+def _getPairWiseStream(prsBB, objBB, winShape):
+    width = max(prsBB['xmax'], objBB['xmax']) - min(prsBB['xmin'], objBB['xmin'])
+    height = max(prsBB['ymax'], objBB['ymax']) - min(prsBB['ymin'], objBB['ymin'])
+    if width > height:
+        newWidth = winShape[0]
+        apr = newWidth / width
+        newHeight = int(height*apr) 
+    else:
+        newHeight = winShape[0]
+        apr = newHeight / height
+        newWidth = int(width*apr)
+        
+    prsWin = _getSinglePairWiseStream(prsBB, objBB, width, height, newWidth, newHeight, winShape)
+    objWin = _getSinglePairWiseStream(objBB, prsBB, width, height, newWidth, newHeight, winShape)
+    
+    return [prsWin, objWin]
+
+def getDataPairWiseStream(imagesID, imagesMeta, winShape):
+    dataPar = []
+    for imageID in imagesID:
+        imageMeta = imagesMeta[imageID]
+        for relID, rel in imageMeta['rels'].items():
+            relWin = _getPairWiseStream(rel['prsBB'], rel['objBB'], winShape)
+            dataPar.append(relWin)
+    dataPar = np.array(dataPar)
+    return dataPar
