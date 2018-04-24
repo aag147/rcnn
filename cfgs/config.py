@@ -124,7 +124,7 @@ class basic_config:
           if opt == '-d':
               self.dataset = arg
           if opt == '-w':
-              assert arg.isdigit(), 'weight must be int'
+              assert (arg.isdigit() or arg=='-1'), 'weight must be int'
               self.wp = int(arg)
           if opt == '-t':
               self.testdata = arg
@@ -132,6 +132,7 @@ class basic_config:
    def set_class_weights(self, labels, imagesMeta):
        if self.wp >= 0: 
            return
+       print('Using class-specific weights!')
        stats, counts = utils.getLabelStats(imagesMeta, labels)
        p = counts / sum(counts)
        wp = 1 / p
