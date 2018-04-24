@@ -43,11 +43,11 @@ def load_obj(path):
         return pickle.load(f)
 
 def save_dict(obj, path):
-    with open(path + '.json', 'w') as f:
+    with open(path + '.JSON', 'w') as f:
         json.dump(obj, f, sort_keys=True, indent=4)
 
 def load_dict(path):
-    with open(path + '.json', 'r') as f:
+    with open(path + '.JSON', 'r') as f:
         return json.load(f)
 
 def saveConfig(cfg):

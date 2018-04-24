@@ -44,6 +44,7 @@ if True:
     start = time.time()
     print('Begin...')
     for sample in genTrain.begin():
+        utils.update_progress(i / genTrain.nb_batches)
         if i > genTrain.nb_batches:
             break
         i += 1
