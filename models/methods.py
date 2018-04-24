@@ -5,7 +5,7 @@ Created on Sat Apr  7 13:30:30 2018
 @author: aag14
 """
 
-from models import AlexNet, AlexNet2, PairWiseStream, classifier, input_rois
+from models import AlexNet, VGG16, PairWiseStream, classifier, input_rois
 from keras.layers import Add, Activation
 from keras.models import Model
 import numpy as np

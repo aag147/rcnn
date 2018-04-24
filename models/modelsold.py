@@ -28,12 +28,12 @@ import tensorflow as tf
 
 import alexnet as alex
 
-def VGG16(weights_path=None, nb_classes=1000, include='all'):
+def VGG_16(weights_path=None, nb_classes=1000, include='all'):
     #https://gist.github.com/baraldilorenzo/07d7802847aaad0a35d3
     #https://github.com/fchollet/deep-learning-models/blob/master/vgg16.py
-    input_shape=(3,224,224)
+    input_shape=(224,224,3)
     model = Sequential(name='VGG16')
-    model.add(Conv2D(64, (3, 3), activation='relu', padding='same', input_shape=input_shape))
+    model.add(Conv2D(64, (3, 3), activation='relu', padding='same'), input_shape=input_shape)
     model.add(Conv2D(64, (3, 3), activation='relu', padding='same'))
     model.add(MaxPooling2D((2,2), strides=(2,2)))
 
@@ -41,19 +41,19 @@ def VGG16(weights_path=None, nb_classes=1000, include='all'):
     model.add(Conv2D(128, (3, 3), activation='relu', padding='same'))
     model.add(MaxPooling2D((2,2), strides=(2,2)))
 
-    model.add(Conv2D(256, (3, 3), activation='relu', padding='same'))
-    model.add(Conv2D(256, (3, 3), activation='relu', padding='same'))
-    model.add(Conv2D(256, (3, 3), activation='relu', padding='same'))
+    model.add(Conv2D(256, (3, 3), activation='relu'), padding='same')
+    model.add(Conv2D(256, (3, 3), activation='relu'), padding='same')
+    model.add(Conv2D(256, (3, 3), activation='relu'), padding='same')
     model.add(MaxPooling2D((2,2), strides=(2,2)))
 
-    model.add(Conv2D(512, (3, 3), activation='relu', padding='same'))
-    model.add(Conv2D(512, (3, 3), activation='relu', padding='same'))
-    model.add(Conv2D(512, (3, 3), activation='relu', padding='same'))
+    model.add(Conv2D(512, (3, 3), activation='relu'), padding='same')
+    model.add(Conv2D(512, (3, 3), activation='relu'), padding='same')
+    model.add(Conv2D(512, (3, 3), activation='relu'), padding='same')
     model.add(MaxPooling2D((2,2), strides=(2,2)))
 
-    model.add(Convolution2D(512, (3, 3), activation='relu', padding='same'))
-    model.add(Convolution2D(512, (3, 3), activation='relu', padding='same'))
-    model.add(Convolution2D(512, (3, 3), activation='relu', padding='same'))
+    model.add(Convolution2D(512, (3, 3), activation='relu'), padding='same')
+    model.add(Convolution2D(512, (3, 3), activation='relu'), padding='same')
+    model.add(Convolution2D(512, (3, 3), activation='relu'), padding='same')
     model.add(MaxPooling2D((2,2), strides=(2,2)))
 
     model.add(Flatten())
@@ -172,8 +172,7 @@ def classifier(base_layers, input_rois, num_rois=10, nb_classes=21):
     # compile times on theano tend to be very high, so we use smaller ROI pooling regions to workaround
 
     pooling_regions = 7
-    print(K.shape(base_layers))
-    print(K.shape(input_rois))
+
     out_roi_pool = RoiPoolingConv(pooling_regions, num_rois)([base_layers, input_rois])
 
     dense_1 = Flatten()(out_roi_pool)
@@ -211,9 +210,9 @@ class RoiPoolingConv(Layer):
         `(1, num_rois, channels, pool_size, pool_size)`
     '''
     def __init__(self, pool_size, num_rois, **kwargs):
-#        K.set_image_dim_ordering('tf')
+        K.set_image_dim_ordering('tf')
         self.dim_ordering = K.image_dim_ordering()
-        assert self.dim_ordering in {'tf','th'}, 'dim_ordering must be in {tf}'
+        assert self.dim_ordering in {'tf'}, 'dim_ordering must be in {tf}'
 
         self.pool_size = pool_size
         self.num_rois = num_rois
@@ -221,10 +220,11 @@ class RoiPoolingConv(Layer):
         super(RoiPoolingConv, self).__init__(**kwargs)
 
     def build(self, input_shape):
-        self.nb_channels = input_shape[0][1]
+        self.nb_channels = input_shape[0][3]
+#        super([RoiPoolingConv], self).build()
 
     def compute_output_shape(self, input_shape):
-        return None, self.num_rois, self.nb_channels, self.pool_size, self.pool_size
+        return None, self.num_rois, self.pool_size, self.pool_size, self.nb_channels
 
     def call(self, x):
 
@@ -254,7 +254,7 @@ class RoiPoolingConv(Layer):
 
         final_output = K.concatenate(outputs, axis=0)
         final_output = K.reshape(final_output, (1, self.num_rois, self.pool_size, self.pool_size, self.nb_channels))
-        final_output = K.permute_dimensions(final_output, (0, 1, 4, 2, 3))
+        final_output = K.permute_dimensions(final_output, (0, 1, 2, 3, 4))
 
         return final_output
 

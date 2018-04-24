@@ -1,198 +1,138 @@
-"""This is an TensorFLow implementation of AlexNet by Alex Krizhevsky at all.
-Paper:
-(http://papers.nips.cc/paper/4824-imagenet-classification-with-deep-convolutional-neural-networks.pdf)
-Explanation can be found in my blog post:
-https://kratzert.github.io/2017/02/24/finetuning-alexnet-with-tensorflow.html
-This script enables finetuning AlexNet on any given Dataset with any number of
-classes. The structure of this script is strongly inspired by the fast.ai
-Deep Learning class by Jeremy Howard and Rachel Thomas, especially their vgg16
-finetuning script:
-Link:
-- https://github.com/fastai/courses/blob/master/deeplearning1/nbs/vgg16.py
-The pretrained weights can be downloaded here and should be placed in the same
-folder as this file:
-- http://www.cs.toronto.edu/~guerzhoy/tf_alexnet/
-@author: Frederik Kratzert (contact: f.kratzert(at)gmail.com)
 """
+    Model Name:
+        AlexNet - using the Functional Keras API
+        Replicated from the Caffe Zoo Model Version.
+    Paper:
+         ImageNet classification with deep convolutional neural networks by Krizhevsky et al. in NIPS 2012
+    Alternative Example:
+        Available at: http://caffe.berkeleyvision.org/model_zoo.html
+        https://github.com/uoguelph-mlrg/theano_alexnet/tree/master/pretrained/alexnet
+    Original Dataset:
+        ILSVRC 2012
+"""
+from keras.layers import Convolution2D, MaxPooling2D, ZeroPadding2D
+from keras.layers import Flatten, Dense, Dropout
+from keras.layers import Input
+from keras.models import Model
+from keras import regularizers
+from custom_layers import LRN2D
 
-import tensorflow as tf
-import numpy as np
-
-
-class AlexNet(object):
-    """Implementation of the AlexNet."""
-
-    def __init__(self, x, keep_prob, num_classes, skip_layer = [],
-                 weights_path='DEFAULT'):
-        """Create the graph of the AlexNet model.
-        Args:
-            x: Placeholder for the input tensor.
-            keep_prob: Dropout probability.
-            num_classes: Number of classes in the dataset.
-            skip_layer: List of names of the layer, that get trained from
-                scratch
-            weights_path: Complete path to the pretrained weight file, if it
-                isn't in the same folder as this code
-        """
-        # Parse input arguments into class variables
-        self.X = x
-        self.NUM_CLASSES = num_classes
-        self.KEEP_PROB = keep_prob
-        self.SKIP_LAYER = skip_layer
-
-        if weights_path == 'DEFAULT':
-            self.WEIGHTS_PATH = 'bvlc_alexnet.npy'
-        else:
-            self.WEIGHTS_PATH = weights_path
-
-        # Call the create function to build the computational graph of AlexNet
-        self.create()
-
-    def create(self):
-        """Create the network graph."""
-        # 1st Layer: Conv (w ReLu) -> Lrn -> Pool
-        conv1 = conv(self.X, 11, 11, 96, 4, 4, padding='VALID', name='conv1')
-        norm1 = lrn(conv1, 2, 1e-05, 0.75, name='norm1')
-        pool1 = max_pool(norm1, 3, 3, 2, 2, padding='VALID', name='pool1')
-        
-        # 2nd Layer: Conv (w ReLu)  -> Lrn -> Pool with 2 groups
-        conv2 = conv(pool1, 5, 5, 256, 1, 1, groups=2, name='conv2')
-        norm2 = lrn(conv2, 2, 1e-05, 0.75, name='norm2')
-        pool2 = max_pool(norm2, 3, 3, 2, 2, padding='VALID', name='pool2')
-        
-        # 3rd Layer: Conv (w ReLu)
-        conv3 = conv(pool2, 3, 3, 384, 1, 1, name='conv3')
-
-        # 4th Layer: Conv (w ReLu) splitted into two groups
-        conv4 = conv(conv3, 3, 3, 384, 1, 1, groups=2, name='conv4')
-
-        # 5th Layer: Conv (w ReLu) -> Pool splitted into two groups
-        conv5 = conv(conv4, 3, 3, 256, 1, 1, groups=2, name='conv5')
-        pool5 = max_pool(conv5, 3, 3, 2, 2, padding='VALID', name='pool5')
-
-        # 6th Layer: Flatten -> FC (w ReLu) -> Dropout
-        flattened = tf.reshape(pool5, [-1, 6*6*256])
-        fc6 = fc(flattened, 6*6*256, 4096, name='fc6')
-        dropout6 = dropout(fc6, self.KEEP_PROB)
-
-        # 7th Layer: FC (w ReLu) -> Dropout
-        fc7 = fc(dropout6, 4096, 4096, name='fc7')
-        dropout7 = dropout(fc7, self.KEEP_PROB)
-
-        # 8th Layer: FC and return unscaled activations
-        self.fc8 = fc(dropout7, 4096, self.NUM_CLASSES, relu=False, name='fc8')
-
-    def load_initial_weights(self, session):
-        """Load weights from file into network.
-        As the weights from http://www.cs.toronto.edu/~guerzhoy/tf_alexnet/
-        come as a dict of lists (e.g. weights['conv1'] is a list) and not as
-        dict of dicts (e.g. weights['conv1'] is a dict with keys 'weights' &
-        'biases') we need a special load function
-        """
-        # Load the weights into memory
-        weights_dict = np.load(self.WEIGHTS_PATH, encoding='bytes').item()
-
-        # Loop over all layer names stored in the weights dict
-        for op_name in weights_dict:
-
-            # Check if layer should be trained from scratch
-            if op_name not in self.SKIP_LAYER:
-
-                with tf.variable_scope(op_name, reuse=True):
-
-                    # Assign weights/biases to their corresponding tf variable
-                    for data in weights_dict[op_name]:
-
-                        # Biases
-                        if len(data.shape) == 1:
-                            var = tf.get_variable('biases', trainable=False)
-                            session.run(var.assign(data))
-
-                        # Weights
-                        else:
-                            var = tf.get_variable('weights', trainable=False)
-                            session.run(var.assign(data))
+# global constants
+NB_CLASS = 1000         # number of classes
+LEARNING_RATE = 0.01
+MOMENTUM = 0.9
+ALPHA = 0.0001
+BETA = 0.75
+GAMMA = 0.1
+DROPOUT = 0.5
+WEIGHT_DECAY = 0.0005
+LRN2D_norm = True       # whether to use batch normalization
+# Theano - 'th' (channels, width, height)
+# Tensorflow - 'tf' (width, height, channels)
+DIM_ORDERING = 'tf'
 
 
-def conv(x, filter_height, filter_width, num_filters, stride_y, stride_x, name,
-         padding='SAME', groups=1):
-    """Create a convolution layer.
-    Adapted from: https://github.com/ethereon/caffe-tensorflow
-    """
-    # Get number of input channels
-    input_channels = int(x.get_shape()[-1])
-
-    # Create lambda function for the convolution
-    convolve = lambda i, k: tf.nn.conv2d(i, k,
-                                         strides=[1, stride_y, stride_x, 1],
-                                         padding=padding)
-
-    with tf.variable_scope(name) as scope:
-        # Create tf variables for the weights and biases of the conv layer
-        weights = tf.get_variable('weights', shape=[filter_height,
-                                                    filter_width,
-                                                    input_channels/groups,
-                                                    num_filters])
-        biases = tf.get_variable('biases', shape=[num_filters])
-
-    if groups == 1:
-        conv = convolve(x, weights)
-
-    # In the cases of multiple groups, split inputs & weights and
+def conv2D_lrn2d(x, nb_filter, nb_row, nb_col,
+                 border_mode='same', subsample=(1, 1),
+                 activation='relu', LRN2D_norm=True,
+                 weight_decay=WEIGHT_DECAY, dim_ordering=DIM_ORDERING):
+    '''
+        Info:
+            Function taken from the Inceptionv3.py script keras github
+            Utility function to apply to a tensor a module Convolution + lrn2d
+            with optional weight decay (L2 weight regularization).
+    '''
+    if weight_decay:
+        W_regularizer = regularizers.l2(weight_decay)
+        b_regularizer = regularizers.l2(weight_decay)
     else:
-        # Split input and weights and convolve them separately
-        input_groups = tf.split(axis=3, num_or_size_splits=groups, value=x)
-        weight_groups = tf.split(axis=3, num_or_size_splits=groups,
-                                 value=weights)
-        output_groups = [convolve(i, k) for i, k in zip(input_groups, weight_groups)]
+        W_regularizer = None
+        b_regularizer = None
 
-        # Concat the convolved output together again
-        conv = tf.concat(axis=3, values=output_groups)
+    x = Convolution2D(nb_filter, nb_row, nb_col,
+                      subsample=subsample,
+                      activation=activation,
+                      border_mode=border_mode,
+                      W_regularizer=W_regularizer,
+                      b_regularizer=b_regularizer,
+                      bias=False,
+                      dim_ordering=dim_ordering)(x)
+    x = ZeroPadding2D(padding=(1, 1), dim_ordering=DIM_ORDERING)(x)
 
-    # Add biases
-    bias = tf.reshape(tf.nn.bias_add(conv, biases), tf.shape(conv))
+    if LRN2D_norm:
 
-    # Apply relu function
-    relu = tf.nn.relu(bias, name=scope.name)
+        x = LRN2D(alpha=ALPHA, beta=BETA)(x)
+        x = ZeroPadding2D(padding=(1, 1), dim_ordering=DIM_ORDERING)(x)
 
-    return relu
+    return x
 
 
-def fc(x, num_in, num_out, name, relu=True):
-    """Create a fully connected layer."""
-    with tf.variable_scope(name) as scope:
-
-        # Create tf variables for the weights and biases
-        weights = tf.get_variable('weights', shape=[num_in, num_out],
-                                  trainable=True)
-        biases = tf.get_variable('biases', [num_out], trainable=True)
-
-        # Matrix multiply weights and inputs and add bias
-        act = tf.nn.xw_plus_b(x, weights, biases, name=scope.name)
-
-    if relu:
-        # Apply ReLu non linearity
-        relu = tf.nn.relu(act)
-        return relu
+def create_model(img_input):
+    # Define image input layer
+    if DIM_ORDERING == 'th':
+        INP_SHAPE = (3, 224, 224)  # 3 - Number of RGB Colours
+#        img_input = Input(shape=INP_SHAPE)
+        CONCAT_AXIS = 1
+    elif DIM_ORDERING == 'tf':
+        INP_SHAPE = (224, 224, 3)  # 3 - Number of RGB Colours
+#        img_input = Input(shape=INP_SHAPE)
+        CONCAT_AXIS = 3
     else:
-        return act
+        raise Exception('Invalid dim ordering: ' + str(DIM_ORDERING))
 
+    # Channel 1 - Convolution Net Layer 1
+    x = conv2D_lrn2d(
+        img_input, 3, 11, 11, subsample=(
+            1, 1), border_mode='same')
+    x = MaxPooling2D(
+        strides=(
+            4, 4), pool_size=(
+                4, 4), dim_ordering=DIM_ORDERING)(x)
+    x = ZeroPadding2D(padding=(1, 1), dim_ordering=DIM_ORDERING)(x)
 
-def max_pool(x, filter_height, filter_width, stride_y, stride_x, name,
-             padding='SAME'):
-    """Create a max pooling layer."""
-    return tf.nn.max_pool(x, ksize=[1, filter_height, filter_width, 1],
-                          strides=[1, stride_y, stride_x, 1],
-                          padding=padding, name=name)
+    # Channel 1 - Convolution Net Layer 2
+    x = conv2D_lrn2d(x, 48, 55, 55, subsample=(1, 1), border_mode='same')
+    x = MaxPooling2D(
+        strides=(
+            2, 2), pool_size=(
+                2, 2), dim_ordering=DIM_ORDERING)(x)
+    x = ZeroPadding2D(padding=(1, 1), dim_ordering=DIM_ORDERING)(x)
 
+    # Channel 1 - Convolution Net Layer 3
+    x = conv2D_lrn2d(x, 128, 27, 27, subsample=(1, 1), border_mode='same')
+    x = MaxPooling2D(
+        strides=(
+            2, 2), pool_size=(
+                2, 2), dim_ordering=DIM_ORDERING)(x)
+    x = ZeroPadding2D(padding=(1, 1), dim_ordering=DIM_ORDERING)(x)
 
-def lrn(x, radius, alpha, beta, name, bias=1.0):
-    """Create a local response normalization layer."""
-    return tf.nn.local_response_normalization(x, depth_radius=radius,
-                                              alpha=alpha, beta=beta,
-                                              bias=bias, name=name)
+    # Channel 1 - Convolution Net Layer 4
+    x = conv2D_lrn2d(x, 192, 13, 13, subsample=(1, 1), border_mode='same')
+    x = ZeroPadding2D(padding=(1, 1), dim_ordering=DIM_ORDERING)(x)
 
+    # Channel 1 - Convolution Net Layer 5
+    x = conv2D_lrn2d(x, 192, 13, 13, subsample=(1, 1), border_mode='same')
+    x = ZeroPadding2D(padding=(1, 1), dim_ordering=DIM_ORDERING)(x)
 
-def dropout(x, keep_prob):
-    """Create a dropout layer."""
-    return tf.nn.dropout(x, keep_prob)
+    # Channel 1 - Cov Net Layer 6
+    x = conv2D_lrn2d(x, 128, 27, 27, subsample=(1, 1), border_mode='same')
+    x = MaxPooling2D(
+        strides=(
+            2, 2), pool_size=(
+                2, 2), dim_ordering=DIM_ORDERING)(x)
+    x = ZeroPadding2D(padding=(1, 1), dim_ordering=DIM_ORDERING)(x)
+
+    # Channel 1 - Cov Net Layer 7
+    x = Flatten()(x)
+    x = Dense(2048, activation='relu')(x)
+    x = Dropout(DROPOUT)(x)
+
+    # Channel 1 - Cov Net Layer 8
+    x = Dense(2048, activation='relu')(x)
+    x = Dropout(DROPOUT)(x)
+
+    # Final Channel - Cov Net 9
+    x = Dense(output_dim=NB_CLASS)(x)
+
+    return x
+
