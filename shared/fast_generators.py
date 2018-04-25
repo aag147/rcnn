@@ -86,11 +86,11 @@ class DataGenerator():
     #%% Different forms of generators          
     def _generateIterativeBatches(self):
         'Generates iterative batches of samples'
-        hoiinimageidx = 0
         
 #        thisID = 'HICO_train2015_00016257.jpg'
         while 1:
           imageIdx = 1
+          hoiinimageidx = 0
           # Generate batches
           for i in range(self.nb_batches):
               X = []; y = []
