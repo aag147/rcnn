@@ -121,12 +121,25 @@ if True:
     i = 0
     idx = 0
     j = 0
+    
+    mu_counts = {}
+    my_counts = {}
+    for imageID, imageMeta in data.trainMeta.items():
+        if imageID not in mu_counts:
+            mu_counts[imageID] = 0
+            mu_counts[imageID] += len(imageMeta['rels'])
+    
     for sample in genTrain.begin():
 #        utils.update_progress(j / len(data.trainMeta))
 #        print(sample[1][idx])
         image = sample[0][0][idx]
         prsBB = sample[0][1][idx]
         objBB = sample[0][2][idx]
+        
+        for imageID in sample[1]:
+            if imageID not in my_counts:
+                my_counts[imageID] = 0
+            my_counts[imageID] += 1
 #        print(image.shape)
 #        print(prsBB)
 #        print(objBB)
@@ -134,6 +147,16 @@ if True:
         i += 1
         if genTrain.nb_batches == i:
             break
+
+if True:
+    for imageID, mucounts in mu_counts.items():
+        mu = mucounts
+        if imageID not in my_counts:
+            print(imageID, mu)
+            continue
+        my = my_counts[imageID]
+        if mu != my:
+            print(imageID, mu, my)
 
 
 if False:
@@ -161,6 +184,9 @@ if False:
         i += 1
         if i == 5:
             break
+
+
+
 
 if False:
     from extractHICOData import combineSimilarBBs

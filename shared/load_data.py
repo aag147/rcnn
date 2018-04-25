@@ -47,7 +47,7 @@ class data:
             
         cfg.nb_classes = len(labels)
         cfg.set_class_weights(labels, trainGTMeta)
-        trainMeta, valMeta = utils.splitData(list(trainMeta.keys()), trainMeta)
+        _, valMeta = utils.splitData(list(trainMeta.keys()), trainMeta)
         self.cfg = cfg
         self.labels = labels
         self.trainMeta = trainMeta
