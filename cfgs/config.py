@@ -102,7 +102,7 @@ class basic_config:
    def get_args(self):
        try:
           argv = sys.argv[1:]
-          opts, args = getopt.getopt(argv,"m:c:x:d:w:v:t:")
+          opts, args = getopt.getopt(argv,"m:c:x:d:w:v:t:b:")
        except getopt.GetoptError:
           print('.py -m <my_model> -c <my_method> -x <max_classes> -d <dataset>')
           sys.exit(2)
@@ -121,6 +121,10 @@ class basic_config:
           if opt == '-x':
               assert arg.isdigit(), 'max_classes must be int'
               self.max_classes = int(arg)
+          if opt == '-b':
+              assert arg.isdigit(), 'nb_batches must be int'
+              self.train_cfg.nb_batches = int(arg)
+              self.val_cfg.nb_batches = int(arg)
           if opt == '-d':
               self.dataset = arg
           if opt == '-w':

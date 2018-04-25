@@ -11,6 +11,7 @@ import math as m
 import cv2 as cv
 import utils
 import image
+import sys
 
 class DataGenerator():
     
@@ -57,7 +58,7 @@ class DataGenerator():
       self.nb_images = len(self.dataID)
       self.nb_samples = len(self.gt_label)
       if self.nb_batches is None:
-          self.nb_batches = m.ceil(self.nb_samples / self.batch_size)
+          self.nb_batches = m.floor(self.nb_samples / self.batch_size)
       
       
       
@@ -113,5 +114,7 @@ class DataGenerator():
               imageIdx += 1
               y = np.array(y)
 #              print(X[0].shape, X[1].shape, X[2].shape, X[3].shape)
+#              sys.stdout.write('\r' + str(X[0].shape) + str(X[1].shape) + ' - nbs: ' + str(i) + '-' + str(self.nb_batches))
+#              sys.stdout.flush()
               yield X, y
     
