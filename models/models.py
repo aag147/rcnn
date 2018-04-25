@@ -271,13 +271,13 @@ class RoiPoolingConv(Layer):
         box_ind = [i for i in range(batch_size)]
         rois = K.reshape(rois, (batch_size, 4))
         final_output = tf.image.crop_and_resize(img, boxes=rois, box_ind=box_ind, crop_size=(self.pool_size, self.pool_size))
+        final_output = tf.print(final_output, ['Value: ', tf.shape(final_output)])
 #        final_output = K.concatenate(outputs, axis=0)
 #        print('fo', final_output.shape)
         final_output = K.reshape(final_output, (batch_size, self.num_rois, self.pool_size, self.pool_size, self.nb_channels))
 #        all_outputs.append(final_output)
 #        final_outputs = K.concatenate(all_outputs, axis=0)
 #        print('fo', final_output.shape)
-        final_output = K.print_tensor(final_output, message='Value of final_output')
 #        final_outputs = K.permute_dimensions(final_output, (0, 1, 4, 2, 3))
         print('fo', final_output.shape)
 
