@@ -95,8 +95,8 @@ class basic_config:
        self.cdim=3
        
    def fast_rcnn_config(self):
-       self.xdim=227
-       self.ydim=227
+       self.xdim=224
+       self.ydim=224
        self.cdim=3
        
    def get_args(self):
@@ -134,6 +134,9 @@ class basic_config:
            return
        print('Using class-specific weights!')
        stats, counts = utils.getLabelStats(imagesMeta, labels)
+       print(labels)
+       print(counts)
+       print(stats)
        p = counts / sum(counts)
        wp = 1 / p
        self.wp = wp

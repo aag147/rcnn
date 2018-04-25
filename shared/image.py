@@ -49,7 +49,7 @@ def getGTDataRel(rel, GTMeta, cfg):
 
 #%% X DATA
 ## Get model ready data ##
-def getXData(imagesID, imagesMeta, data_path, shape):
+def getXData(imagesID, imagesMeta, data_path, cfg):
     dataX = []
     dataH = []
     dataO = []
@@ -60,7 +60,7 @@ def getXData(imagesID, imagesMeta, data_path, shape):
 #        sys.stdout.write('\r' + str(imageID))
 #        sys.stdout.flush()
         image = cv.cvtColor(image, cv.COLOR_BGR2RGB)
-        imageClean = preprocessImage(image, shape)
+        imageClean = preprocessImage(image, cfg)
         
         scaleX = imageClean.shape[2] / float(image.shape[1])
         scaleY = imageClean.shape[1] / float(image.shape[0])
@@ -68,7 +68,7 @@ def getXData(imagesID, imagesMeta, data_path, shape):
 #        print(imageClean.shape, image.shape, scales)
         
         for relID, rel in imageMeta['rels'].items():
-            h, o = getDataFromRel(rel['prsBB'], rel['objBB'], scales)
+            h, o = getDataFromRel(rel['prsBB'], rel['objBB'], scales, cfg)
             dataX.append(imageClean)
             dataH.append(h)
             dataO.append(o)
@@ -78,9 +78,12 @@ def getXData(imagesID, imagesMeta, data_path, shape):
     dataO = np.array(dataO)
     IDs = np.array(IDs)
     
+    dataH = np.expand_dims(dataH, axis=1)
+    dataO = np.expand_dims(dataO, axis=1)
+    
     return [dataX, dataH, dataO], IDs
 
-def getX2Data(imagesID, imagesMeta, data_path, shape):
+def getX2Data(imagesID, imagesMeta, data_path, cfg):
     dataXP = []
     dataXB = []
 #    print(imagesID, imagesMeta)
@@ -92,7 +95,7 @@ def getX2Data(imagesID, imagesMeta, data_path, shape):
         image = cv.cvtColor(image, cv.COLOR_BGR2RGB)
         for relID, rel in imageMeta['rels'].items():
             relCrops = cropImageFromRel(rel['prsBB'], rel['objBB'], image)
-            relCrops = preprocessRel(relCrops['prsCrop'], relCrops['objCrop'], image, shape)
+            relCrops = preprocessRel(relCrops['prsCrop'], relCrops['objCrop'], image, cfg)
             dataXP.append(relCrops['prsCrop'])
             dataXB.append(relCrops['objCrop'])
     dataXP = np.array(dataXP)
@@ -100,18 +103,18 @@ def getX2Data(imagesID, imagesMeta, data_path, shape):
     return [dataXP, dataXB]
 
 ## Resize and normalize image ##
-def preprocessImage(image, shape):
-    image = cv.resize(image, shape).astype(np.float32)
+def preprocessImage(image, cfg):
+    image = cv.resize(image, cfg.shape).astype(np.float32)
 #    image = (image - np.mean(image)) / np.std(image)
 #    print(np.max(image))
 #    print('im', np.min(image), np.max(image), np.isfinite(image).all())
     image = (image - np.min(image)) / np.max(image)
-    image = image.transpose([2,0,1])
+    image = image.transpose(cfg.order_of_dims)
     return image
 
-def preprocessRel(prsCrop, objCrop, image, shape):
-    prsCrop = preprocessImage(prsCrop, shape)
-    objCrop = preprocessImage(objCrop, shape)
+def preprocessRel(prsCrop, objCrop, image, cfg):
+    prsCrop = preprocessImage(prsCrop, cfg)
+    objCrop = preprocessImage(objCrop, cfg)
     return {'prsCrop': prsCrop, 'objCrop': objCrop}
 
 ## Crop image ##
@@ -131,21 +134,21 @@ def cropImageFromRel(prsBB, objBB, image):
     return crops
 
 ## Get data bbs from rel ##
-def getDataFromBB(bb, scales):
-    x = int(bb['xmin'] * scales[0])
-    y = int(bb['ymin'] * scales[1])
-    w = int(bb['xmax'] * scales[0] - x)
-    h = int(bb['ymax'] * scales[1] - y)
+def getDataFromBB(bb, scales, cfg):
+    x = int(bb['xmin'] * scales[0] * (1/cfg.img_out_reduction[0]))
+    y = int(bb['ymin'] * scales[1] * (1/cfg.img_out_reduction[1]))
+    w = int(bb['xmax'] * scales[0] * (1/cfg.img_out_reduction[0])  - x)
+    h = int(bb['ymax'] * scales[1] * (1/cfg.img_out_reduction[1]) - y)
     return [x, y, w, h]
     
-def getDataFromRel(prsBB, objBB, scales):
-    dataH = getDataFromBB(prsBB, scales)
-    dataO = getDataFromBB(objBB, scales)
+def getDataFromRel(prsBB, objBB, scales, cfg):
+    dataH = getDataFromBB(prsBB, scales, cfg)
+    dataO = getDataFromBB(objBB, scales, cfg)
     return dataH, dataO
 
 
 #%% Special third stream data extraction
-def _getSinglePairWiseStream(thisBB, thatBB, width, height, newWidth, newHeight, winShape):
+def _getSinglePairWiseStream(thisBB, thatBB, width, height, newWidth, newHeight, cfg):
     xmin = max(0, thisBB['xmin'] - thatBB['xmin'])
     xmax = width - max(0, thatBB['xmax'] - thisBB['xmax'])
     ymin = max(0, thisBB['ymin'] - thatBB['ymin'])
@@ -156,37 +159,38 @@ def _getSinglePairWiseStream(thisBB, thatBB, width, height, newWidth, newHeight,
     attWin = cv.resize(attWin, (newWidth, newHeight), interpolation = cv.INTER_NEAREST)
     attWin = attWin.astype(np.int)
 
-    xPad = int(abs(newWidth - winShape[0]) / 2)
-    yPad = int(abs(newHeight - winShape[0]) / 2)
-    attWinPad = np.zeros(winShape).astype(np.int)
+    xPad = int(abs(newWidth - cfg.winShape[0]) / 2)
+    yPad = int(abs(newHeight - cfg.winShape[0]) / 2)
+    attWinPad = np.zeros(cfg.winShape).astype(np.int)
 #        print(attWin.shape, attWinPad.shape, xPad, yPad)
 #        print(height, width, newHeight, newWidth)
     attWinPad[yPad:yPad+newHeight, xPad:xPad+newWidth] = attWin
     return attWinPad
 
-def _getPairWiseStream(prsBB, objBB, winShape):
+def _getPairWiseStream(prsBB, objBB, cfg):
     width = max(prsBB['xmax'], objBB['xmax']) - min(prsBB['xmin'], objBB['xmin'])
     height = max(prsBB['ymax'], objBB['ymax']) - min(prsBB['ymin'], objBB['ymin'])
     if width > height:
-        newWidth = winShape[0]
+        newWidth = cfg.winShape[0]
         apr = newWidth / width
         newHeight = int(height*apr) 
     else:
-        newHeight = winShape[0]
+        newHeight = cfg.winShape[0]
         apr = newHeight / height
         newWidth = int(width*apr)
         
-    prsWin = _getSinglePairWiseStream(prsBB, objBB, width, height, newWidth, newHeight, winShape)
-    objWin = _getSinglePairWiseStream(objBB, prsBB, width, height, newWidth, newHeight, winShape)
+    prsWin = _getSinglePairWiseStream(prsBB, objBB, width, height, newWidth, newHeight, cfg)
+    objWin = _getSinglePairWiseStream(objBB, prsBB, width, height, newWidth, newHeight, cfg)
     
     return [prsWin, objWin]
 
-def getDataPairWiseStream(imagesID, imagesMeta, winShape):
+def getDataPairWiseStream(imagesID, imagesMeta, cfg):
     dataPar = []
     for imageID in imagesID:
         imageMeta = imagesMeta[imageID]
         for relID, rel in imageMeta['rels'].items():
-            relWin = _getPairWiseStream(rel['prsBB'], rel['objBB'], winShape)
+            relWin = _getPairWiseStream(rel['prsBB'], rel['objBB'], cfg)
             dataPar.append(relWin)
     dataPar = np.array(dataPar)
+    dataPar = dataPar.transpose([0,2,3,1])
     return dataPar

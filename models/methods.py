@@ -25,11 +25,13 @@ def _final_stop(inputs, outputs, cfg):
         model.load_weights(path)         
     return model
         
-def HO_RCNN_Weights(cfg):
+def AlexNet_Weights(cfg):
     return cfg.weights_path + "alexnet_weights.h5"
+def VVG16_Weights(cfg):
+    return cfg.weights_path + "vgg16_weights_tf.h5"
 
 def HO_RCNN(cfg):
-    weights = HO_RCNN_Weights(cfg) if cfg.pretrained_weights == True else False
+    weights = AlexNet_Weights(cfg) if cfg.pretrained_weights == True else False
     modelPrs = AlexNet(weights, cfg.nb_classes, include='fc')
     modelObj = AlexNet(weights, cfg.nb_classes, include='fc')
     modelPar = PairWiseStream(nb_classes = cfg.nb_classes, include='fc')             
@@ -49,16 +51,19 @@ def HO_RCNN(cfg):
 
 
 def Fast_HO_RCNN(cfg):
-    weights = HO_RCNN_Weights(cfg) if cfg.pretrained_weights == True else False
-    modelShr = AlexNet(weights, cfg.nb_classes, include='none')
+    weights = VVG16_Weights(cfg) if cfg.pretrained_weights == True else False
+#    modelShr = AlexNet(weights, cfg.nb_classes, include='none')
+    modelShr = VGG16((224, 224, 3), weights, cfg.nb_classes, include='none')
     prsRoI   = input_rois()
     objRoI   = input_rois()
-    modelPrs = classifier(modelShr.output, prsRoI, cfg.nb_classes)
-    modelObj = classifier(modelShr.output, objRoI, cfg.nb_classes)
-    modelPar = PairWiseStream(nb_classes = cfg.nb_classes, include='fc')             
-    outputs = Add()([modelPrs.output, modelObj.output, modelPar.output])
+    print(modelShr.layers[-1].output_shape)
+    modelPrs = classifier(modelShr.output, prsRoI, nb_classes=cfg.nb_classes)
+    modelObj = classifier(modelShr.output, objRoI, nb_classes=cfg.nb_classes)
+    modelPar = PairWiseStream(input_shape=(64,64,2), nb_classes = cfg.nb_classes, include='fc')             
+    outputs = Add()([modelPrs, modelObj, modelPar.output])
     
     inputs = [modelShr.input, prsRoI, objRoI, modelPar.input]
     final_model = _final_stop(inputs, outputs, cfg)
+    
     return final_model
 
