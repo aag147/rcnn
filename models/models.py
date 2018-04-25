@@ -267,7 +267,7 @@ class RoiPoolingConv(Layer):
 #            rs = tf.Print(rs, [tf.shape(rs)])
 #            rs = K.print_tensor(rs, message='Value of rs')
 #            outputs.append(rs)
-        batch_size = 64
+        batch_size = 32
         box_ind = [i for i in range(batch_size)]
         rois = K.reshape(rois, (batch_size, 4))
         final_output = tf.image.crop_and_resize(img, boxes=rois, box_ind=box_ind, crop_size=(self.pool_size, self.pool_size))
