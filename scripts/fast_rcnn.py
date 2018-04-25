@@ -58,3 +58,4 @@ if True:
     res = trainer.evaluateModel(genTest)
     print("F1:", res.F1, "nb_zeros", res.nb_zeros)
     utils.save_obj_nooverwrite(res.Y_hat, cfg.my_results_path + 'y_hat')
+    print('Path:', cfg.my_results_path)

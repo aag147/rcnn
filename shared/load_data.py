@@ -33,7 +33,6 @@ class data:
         trainGTMeta = utils.load_dict(cfg.data_path + 'train_GT')
         testGTMeta = utils.load_dict(cfg.data_path + 'test_GT')
         labels = utils.load_dict(cfg.data_path + 'labels')
-        print('Path:', cfg.my_results_path)
         
         if cfg.max_classes is not None:
             # Reduce data to include only max_classes number of different classes
