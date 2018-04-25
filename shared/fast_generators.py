@@ -34,10 +34,10 @@ class DataGenerator():
 
       self.shuffle = g_cfg.shuffle
       self.inputs = cfg.inputs
-      self.winShape = (64, 64)
       
       cfg.shape = (cfg.ydim, cfg.xdim)
       cfg.order_of_dims = [0,1,2]
+      cfg.par_order_of_dims = [0,2,3,1]
       cfg.winShape = (64, 64)
       cfg.img_out_reduction = (16, 16)
       
@@ -51,6 +51,8 @@ class DataGenerator():
       self.dataID.sort()
       if self.shuffle:
           r.shuffle(self.dataID)
+      else:
+          self.dataID.sort()
       
       self.imagesMeta = imagesMeta
       self.GTMeta     = GTMeta
@@ -105,12 +107,17 @@ class DataGenerator():
                   if len(imageY) + len(y) >= self.batch_size:
                       hoiinimageidx = len(imageY) - ((len(imageY) + len(y)) - self.batch_size)
                       f_idx = hoiinimageidx
-                      
+                  if s_idx > 0 or f_idx != len(imageY):
+                      print('ID', imageIdx, str(s_idx) + '/' + str(f_idx) + '/' + str(len(imageY)))
+                  if imageIdx > 1500:
+                      print(self.dataID[imageIdx])
                   imageXCut = utils.spliceXData(imageX, s_idx, f_idx)
                   X = utils.concatXData(X, imageXCut)
                   y.extend(imageY[s_idx:f_idx, :])
                   if len(y) == self.batch_size:
                       break
+              if imageIdx > 1500:
+                  print('lengh', len(y))
               imageIdx += 1
               y = np.array(y)
 #              print(X[0].shape, X[1].shape, X[2].shape, X[3].shape)

@@ -32,13 +32,13 @@ class DataGenerator():
       self.nb_samples_per_image = int(self.batch_size / self.images_per_batch)
 
       self.shuffle = g_cfg.shuffle
-      self.xdim = cfg.xdim
-      self.ydim = cfg.ydim
-      self.cdim = cfg.cdim
-      self.shape = (cfg.ydim, cfg.xdim)
       self.inputs = cfg.inputs
-      self.cIdx = 0
-      self.winShape = (64, 64)
+      
+      cfg.shape = (cfg.ydim, cfg.xdim)
+      cfg.order_of_dims = [2,0,1]
+      cfg.par_order_of_dims = [0,1,2,3]
+      cfg.winShape = (64, 64)
+      cfg.img_out_reduction = (1, 1)
       
       self.data_path = cfg.data_path
       self.images_path = self.data_path + 'images/'
@@ -73,8 +73,8 @@ class DataGenerator():
     def _generateBatchFromIDs(self, batchID):
         batchID = [self.dataID[idx] for idx in batchID]
 #        print(batchID)
-        [dataXP, dataXB] = image.getX2Data(batchID, self.imagesMeta, self.images_path, self.shape)
-        dataXW = image.getDataPairWiseStream(batchID, self.imagesMeta, self.winShape)
+        [dataXP, dataXB] = image.getX2Data(batchID, self.imagesMeta, self.images_path, self.cfg)
+        dataXW = image.getDataPairWiseStream(batchID, self.imagesMeta, self.cfg)
         X = [dataXP, dataXB, dataXW]
         X = [X[i] for i in range(len(X)) if self.inputs[i]]
         y, _ = image.getYData(batchID, self.imagesMeta, self.GTMeta, self.cfg)
@@ -88,8 +88,8 @@ class DataGenerator():
             rels = {str(i): {'objBB': bbs[i], 'prsBB': bbs[i+1], 'labels': [0]}}
         imagesMeta[imageID]['rels'] = rels
         
-        [dataXP, dataXB] = image.getX2Data([imageID], imagesMeta, self.images_path, self.shape)
-        dataXW = image.getDataPairWiseStream([imageID], self.imagesMeta, self.winShape)
+        [dataXP, dataXB] = image.getX2Data([imageID], imagesMeta, self.images_path, self.cfg)
+        dataXW = image.getDataPairWiseStream([imageID], self.imagesMeta, self.cfg)
         X = [dataXP, dataXB, dataXW]
         y = np.zeros([int(len(bbs)/2), self.nb_classes])
         return X, y

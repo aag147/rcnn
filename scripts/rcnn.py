@@ -29,6 +29,7 @@ if True:
     print('Loading data...')
     data = data()
     cfg = data.cfg
+    cfg.rcnn_config()
     
     # Create batch generators
     genTrain = DataGenerator(imagesMeta=data.trainMeta, GTMeta = data.trainGTMeta, cfg=cfg, data_type='train')

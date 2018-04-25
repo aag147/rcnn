@@ -119,20 +119,20 @@ if True:
     import matplotlib.pyplot as plt
     import draw
     i = 0
-    idx = 29
+    idx = 0
     j = 0
     for sample in genTrain.begin():
 #        utils.update_progress(j / len(data.trainMeta))
-        print(sample[1][idx])
+#        print(sample[1][idx])
         image = sample[0][0][idx]
         prsBB = sample[0][1][idx]
         objBB = sample[0][2][idx]
 #        print(image.shape)
 #        print(prsBB)
 #        print(objBB)
-        draw.drawHOI(image, prsBB, objBB)
+#        draw.drawHOI(image, prsBB, objBB)
         i += 1
-        if i == 5:
+        if genTrain.nb_batches == i:
             break
 
 

@@ -192,5 +192,5 @@ def getDataPairWiseStream(imagesID, imagesMeta, cfg):
             relWin = _getPairWiseStream(rel['prsBB'], rel['objBB'], cfg)
             dataPar.append(relWin)
     dataPar = np.array(dataPar)
-    dataPar = dataPar.transpose([0,2,3,1])
+    dataPar = dataPar.transpose(cfg.par_order_of_dims)
     return dataPar

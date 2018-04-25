@@ -74,9 +74,9 @@ def AlexNet2(weights_path=None, nb_classes=1000, include = 'all'):
     model = final_model(model, weights_path, nb_classes, include)
     return model
 
-def AlexNet(weights_path=None, nb_classes=1000, include = 'all'):
+def AlexNet(input_shape, weights_path=None, nb_classes=1000, include = 'all'):
     #https://github.com/duggalrahul/AlexNet-Experiments-Keras/blob/master/convnets-keras/convnetskeras/convnets.py
-    inputs = Input(shape=(3,227,227))
+    inputs = Input(shape=input_shape)
     conv_1 = Conv2D(96, (11, 11), strides=(4,4), activation='relu', kernel_initializer='TruncatedNormal')(inputs)
     conv_2 = MaxPooling2D((3, 3), strides=(2,2))(conv_1)
     conv_2 = crosschannelnormalization()(conv_2)

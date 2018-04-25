@@ -10,6 +10,8 @@ from keras.layers import Add, Activation
 from keras.models import Model
 import numpy as np
 import os
+from keras import backend as K
+
 
 def _final_stop(inputs, outputs, cfg):
     if cfg.task == 'multi-label':
@@ -31,10 +33,11 @@ def VVG16_Weights(cfg):
     return cfg.weights_path + "vgg16_weights_tf.h5"
 
 def HO_RCNN(cfg):
+    K.set_image_dim_ordering('th')
     weights = AlexNet_Weights(cfg) if cfg.pretrained_weights == True else False
-    modelPrs = AlexNet(weights, cfg.nb_classes, include='fc')
-    modelObj = AlexNet(weights, cfg.nb_classes, include='fc')
-    modelPar = PairWiseStream(nb_classes = cfg.nb_classes, include='fc')             
+    modelPrs = AlexNet((3, 227, 227), weights, cfg.nb_classes, include='fc')
+    modelObj = AlexNet((3, 227, 227), weights, cfg.nb_classes, include='fc')
+    modelPar = PairWiseStream(input_shape=(2,64,64), nb_classes = cfg.nb_classes, include='fc')             
     
     models = [modelPrs, modelObj, modelPar]
     models = [models[i] for i in range(len(models)) if cfg.inputs[i]]
