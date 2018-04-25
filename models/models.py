@@ -34,7 +34,7 @@ def VGG16(input_shape, weights_path=None, nb_classes=1000, include='all'):
     model.add(Conv2D(64, (3, 3), activation='relu', padding='same', input_shape=input_shape))
     model.add(Conv2D(64, (3, 3), activation='relu', padding='same'))
     model.add(MaxPooling2D((2,2), strides=(2,2)))
-
+    
     model.add(Conv2D(128, (3, 3), activation='relu', padding='same'))
     model.add(Conv2D(128, (3, 3), activation='relu', padding='same'))
     model.add(MaxPooling2D((2,2), strides=(2,2)))
@@ -235,7 +235,7 @@ class RoiPoolingConv(Layer):
         img = x[0]
         rois = x[1]
 
-        outputs = []
+#        outputs = []
 #        print('act_img', img.shape)
 #        print('act_rois', rois.shape)
 #        for spl_idx in range(imgs.shape[0]):

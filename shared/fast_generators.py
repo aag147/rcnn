@@ -88,7 +88,7 @@ class DataGenerator():
         'Generates iterative batches of samples'
         hoiinimageidx = 0
         
-        thisID = 'HICO_train2015_00016257.jpg'
+#        thisID = 'HICO_train2015_00016257.jpg'
         while 1:
           imageIdx = 1
           # Generate batches
@@ -98,7 +98,7 @@ class DataGenerator():
               for imageIdx in range(imageIdx-1, self.nb_images):
                   imageIdxs.append(imageIdx)
                   imageX, imageY = self._generateBatchFromIDs([imageIdx])
-                  imageY = np.array([self.dataID[imageIdx] for i in range(len(imageY))])
+#                  imageY = np.array([self.dataID[imageIdx] for i in range(len(imageY))])
                   s_idx = 0; f_idx = len(imageY)
                   if hoiinimageidx > 0:
                       s_idx = hoiinimageidx
@@ -113,17 +113,17 @@ class DataGenerator():
 #                      hoiinimageidx += tmp_hoiinimageidx
                   else:
                      hoiinimageidx = 0
-                  if s_idx > 0 or f_idx != len(imageY):
-                      print('ID', self.dataID[imageIdx][18:], str(s_idx) + '/' + str(f_idx) + '/' + str(len(imageY)))
+#                  if s_idx > 0 or f_idx != len(imageY):
+#                      print('ID', self.dataID[imageIdx][18:], str(s_idx) + '/' + str(f_idx) + '/' + str(len(imageY)))
 #                  if imageIdx > 1500:
 #                      print(self.dataID[imageIdx])
                   imageXCut = utils.spliceXData(imageX, s_idx, f_idx)
                   X = utils.concatXData(X, imageXCut)
-                  y.extend(imageY[s_idx:f_idx])
+                  y.extend(imageY[s_idx:f_idx,:])
                   if len(y) == self.batch_size:
                       break
-              if imageIdx > 1500:
-                  print('lengh', len(y))
+#              if imageIdx > 1500:
+#                  print('lengh', len(y))
               imageIdx += 1
               y = np.array(y)
 #              print(X[0].shape, X[1].shape, X[2].shape, X[3].shape)

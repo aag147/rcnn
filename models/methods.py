@@ -54,6 +54,7 @@ def HO_RCNN(cfg):
 
 
 def Fast_HO_RCNN(cfg):
+    K.set_image_dim_ordering('tf')
     weights = VVG16_Weights(cfg) if cfg.pretrained_weights == True else False
 #    modelShr = AlexNet(weights, cfg.nb_classes, include='none')
     modelShr = VGG16((224, 224, 3), weights, cfg.nb_classes, include='none')
