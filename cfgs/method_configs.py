@@ -68,3 +68,18 @@ def rcnn_i_labels(cfg):
    cfg.wp = 10
    
    return cfg
+
+def fast_rcnn_hoi_labels(cfg):
+   # OVERWRITE
+   cfg.inputs = [1,1,1,1]
+   cfg.task = 'multi-label'
+   cfg.patience = 1000
+   cfg.epoch_begin = 0
+   cfg.epoch_end = 60
+   cfg.epoch_splits = [30]
+   cfg.init_lr = 0.0001
+   cfg.wp = 10
+   
+   cfg.fast_rcnn_config()
+   
+   return cfg
