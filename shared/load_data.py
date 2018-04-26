@@ -34,10 +34,10 @@ class data:
             return
         
         if os.path.exists(to_path):
-            self.remove_data()
-        
-        print('Moving data...')
-        utils.moveData(from_path, to_path)
+#            self.remove_data()        
+            print('Moving data...')
+            utils.moveData(from_path, to_path)
+        print('Data already moved...')
         self.cfg.data_path = to_path+'/'
 
     def load_data(self):
