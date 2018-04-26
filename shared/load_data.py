@@ -33,7 +33,7 @@ class data:
         if to_path is None:
             return
         
-        if os.path.exists(to_path):
+        if not os.path.exists(to_path):
 #            self.remove_data()        
             print('Moving data...')
             utils.moveData(from_path, to_path)
