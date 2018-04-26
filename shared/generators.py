@@ -34,10 +34,6 @@ class DataGenerator():
       self.shuffle = g_cfg.shuffle
       self.inputs = cfg.inputs
       
-      cfg.shape = (cfg.ydim, cfg.xdim)
-      cfg.order_of_dims = [2,0,1]
-      cfg.par_order_of_dims = [0,1,2,3]
-      cfg.winShape = (64, 64)
       cfg.img_out_reduction = (1, 1)
       
       self.data_path = cfg.data_path

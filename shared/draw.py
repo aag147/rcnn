@@ -90,11 +90,28 @@ def drawProposalBox(bb):
     xmin = bb[0]; xmax = xmin + bb[2]
     ymin = bb[1]; ymax = ymin + bb[3]
     
+    xmin = bb[1]; xmax = bb[3]
+    ymin = bb[0]; ymax = bb[2]
+    
     box = np.array([[xmin, xmax, xmax, xmin, xmin], [ymin, ymin, ymax, ymax, ymin]])
     return box
 
 
 def drawHOI(image, prsBB, objBB):
+    colours = [['#FE5757', '#e44e4e'], ['#57FE57', '#4ee44e'], ['#5757FE', '#4e4ee4'], ['#AB57FE', '#994ee4']]
+    c = colours[0]
+    f, spl = plt.subplots(1,2)
+    spl = spl.ravel()
+    
+#    image = image.transpose([1,2,0])
+    spl[0].imshow(image)
+    
+    personBB = drawProposalBox(prsBB)
+    objectBB = drawProposalBox(objBB)
+    spl[0].plot(personBB[0,:], personBB[1,:], c=c[0])
+    spl[0].plot(objectBB[0,:], objectBB[1,:], c=c[1])
+
+def drawCropxResize(image, prsBB, objBB):
     colours = [['#FE5757', '#e44e4e'], ['#57FE57', '#4ee44e'], ['#5757FE', '#4e4ee4'], ['#AB57FE', '#994ee4']]
     c = colours[0]
     f, spl = plt.subplots(1,2)
@@ -108,7 +125,9 @@ def drawHOI(image, prsBB, objBB):
     spl[0].plot(personBB[0,:], personBB[1,:], c=c[0])
     spl[0].plot(objectBB[0,:], objectBB[1,:], c=c[1])
 
-def drawImages(imagesID, imagesMeta, labels, path, imagesBadOnes):
+
+
+def drawImages(imagesID, imagesMeta, labels, path, imagesBadOnes = False):
     f, spl = plt.subplots(2,2)
     spl = spl.ravel()
     i = 0

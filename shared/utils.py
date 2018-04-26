@@ -51,7 +51,8 @@ def load_dict(path):
         return json.load(f)
 
 def saveConfig(cfg):
-   obj = vars(cfg)
+   obj = cp.copy(cfg)
+   obj = vars(obj)
    obj['train_cfg'] = vars(obj['train_cfg'])
    obj['val_cfg'] = vars(obj['val_cfg'])
    obj['test_cfg'] = vars(obj['test_cfg'])

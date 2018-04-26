@@ -94,10 +94,22 @@ class basic_config:
        self.ydim=227
        self.cdim=3
        
+       self.shape = (self.ydim, self.xdim)
+       self.order_of_dims = [2,0,1]
+       self.par_order_of_dims = [0,1,2,3]
+       self.winShape = (64, 64)
+       
    def fast_rcnn_config(self):
        self.xdim=224
        self.ydim=224
        self.cdim=3
+       
+       self.pool_size = 7
+       
+       self.shape = (self.ydim, self.xdim)
+       self.order_of_dims = [0,1,2]
+       self.par_order_of_dims = [0,2,3,1]
+       self.winShape = (64, 64)
        
    def get_args(self):
        try:

@@ -62,13 +62,13 @@ def getXData(imagesID, imagesMeta, data_path, cfg):
         image = cv.cvtColor(image, cv.COLOR_BGR2RGB)
         imageClean = preprocessImage(image, cfg)
         
-        scaleX = imageClean.shape[2] / float(image.shape[1])
-        scaleY = imageClean.shape[1] / float(image.shape[0])
+        scaleX = imageClean.shape[1] / float(image.shape[1])
+        scaleY = imageClean.shape[0] / float(image.shape[0])
         scales = [scaleX, scaleY]
 #        print(imageClean.shape, image.shape, scales)
         
         for relID, rel in imageMeta['rels'].items():
-            h, o = getDataFromRel(rel['prsBB'], rel['objBB'], scales, cfg)
+            h, o = getDataFromRel(rel['prsBB'], rel['objBB'], scales, imageClean.shape, cfg)
             dataX.append(imageClean)
             dataH.append(h)
             dataO.append(o)
@@ -78,8 +78,8 @@ def getXData(imagesID, imagesMeta, data_path, cfg):
     dataO = np.array(dataO)
     IDs = np.array(IDs)
     
-    dataH = np.expand_dims(dataH, axis=1)
-    dataO = np.expand_dims(dataO, axis=1)
+#    dataH = np.expand_dims(dataH, axis=1)
+#    dataO = np.expand_dims(dataO, axis=1)
     
     return [dataX, dataH, dataO], IDs
 
@@ -134,16 +134,26 @@ def cropImageFromRel(prsBB, objBB, image):
     return crops
 
 ## Get data bbs from rel ##
-def getDataFromBB(bb, scales, cfg):
-    x = int(bb['xmin'] * scales[0] * (1/cfg.img_out_reduction[0]))
-    y = int(bb['ymin'] * scales[1] * (1/cfg.img_out_reduction[1]))
-    w = int(bb['xmax'] * scales[0] * (1/cfg.img_out_reduction[0])  - x)
-    h = int(bb['ymax'] * scales[1] * (1/cfg.img_out_reduction[1]) - y)
+def getDataFromBBOld(bb, scales, cfg):
+    x = (bb['xmin'] * scales[0] * (1/cfg.img_out_reduction[0]))
+    y = (bb['ymin'] * scales[1] * (1/cfg.img_out_reduction[1]))
+    w = (bb['xmax'] * scales[0] * (1/cfg.img_out_reduction[0])  - x)
+    h = (bb['ymax'] * scales[1] * (1/cfg.img_out_reduction[1]) - y)
     return [x, y, w, h]
+
+def getDataFromBB(bb, scales, shape, cfg):
+    xmin = bb['xmin'] * scales[0] #* (1/cfg.img_out_reduction[0]))
+    ymin = bb['ymin'] * scales[1] #* (1/cfg.img_out_reduction[1]))
+    xmax = bb['xmax'] * scales[0] #* (1/cfg.img_out_reduction[0]))
+    ymax = bb['ymax'] * scales[1] #* (1/cfg.img_out_reduction[1]))
     
-def getDataFromRel(prsBB, objBB, scales, cfg):
-    dataH = getDataFromBB(prsBB, scales, cfg)
-    dataO = getDataFromBB(objBB, scales, cfg)
+    xmin = xmin / float(shape[1]); xmax = xmax / float(shape[1])
+    ymin = ymin / float(shape[0]); ymax = ymax / float(shape[0])
+    return [ymin, xmin, ymax, xmax]
+    
+def getDataFromRel(prsBB, objBB, scales, shape, cfg):
+    dataH = getDataFromBB(prsBB, scales, shape, cfg)
+    dataO = getDataFromBB(objBB, scales, shape, cfg)
     return dataH, dataO
 
 

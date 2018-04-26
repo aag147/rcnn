@@ -35,10 +35,6 @@ class DataGenerator():
       self.shuffle = g_cfg.shuffle
       self.inputs = cfg.inputs
       
-      cfg.shape = (cfg.ydim, cfg.xdim)
-      cfg.order_of_dims = [0,1,2]
-      cfg.par_order_of_dims = [0,2,3,1]
-      cfg.winShape = (64, 64)
       cfg.img_out_reduction = (16, 16)
       
       self.data_path = cfg.data_path
@@ -73,8 +69,8 @@ class DataGenerator():
             g = self._generateIterativeBatches
         return g()
     
-    def _generateBatchFromIDs(self, batchID):
-        batchID = [self.dataID[idx] for idx in batchID]
+    def _generateBatchFromIDs(self, imageIdx):
+        batchID = [self.dataID[idx] for idx in imageIdx]
 #        print(batchID)
         [dataXI, dataXH, dataXO], _ = image.getXData(batchID, self.imagesMeta, self.images_path, self.cfg)
         dataXW = image.getDataPairWiseStream(batchID, self.imagesMeta, self.cfg)
@@ -95,6 +91,7 @@ class DataGenerator():
           for i in range(self.nb_batches):
               X = []; y = []
               imageIdxs = []
+              batchIdx = 0
               for imageIdx in range(imageIdx-1, self.nb_images):
                   imageIdxs.append(imageIdx)
                   imageX, imageY = self._generateBatchFromIDs([imageIdx])
@@ -120,6 +117,7 @@ class DataGenerator():
                   imageXCut = utils.spliceXData(imageX, s_idx, f_idx)
                   X = utils.concatXData(X, imageXCut)
                   y.extend(imageY[s_idx:f_idx,:])
+                  batchIdx += 1
                   if len(y) == self.batch_size:
                       break
 #              if imageIdx > 1500:
@@ -129,5 +127,9 @@ class DataGenerator():
 #              print(X[0].shape, X[1].shape, X[2].shape, X[3].shape)
 #              sys.stdout.write('\r' + str(X[0].shape) + str(X[1].shape) + ' - nbs: ' + str(i) + '-' + str(self.nb_batches))
 #              sys.stdout.flush()
+              
+              X[1] = np.insert(X[1], 0, [idx for idx in range(self.batch_size)], axis=1)
+              X[2] = np.insert(X[2], 0, [idx for idx in range(self.batch_size)], axis=1)
+#              print('fin',min(X[1][:,0]), max(X[1][:,0]))
               yield X, y
     

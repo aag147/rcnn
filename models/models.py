@@ -152,7 +152,7 @@ def final_model(model, weights_path, nb_classes, include):
     return model
 
 def input_rois():
-    input_rois = Input(shape=(None, 4))
+    input_rois = Input(shape=(5,))
     return input_rois
 
 def rpn(base_layers, num_anchors):
@@ -165,13 +165,13 @@ def rpn(base_layers, num_anchors):
     return [x_class, x_regr, base_layers]
 
 
-def classifier(base_layers, input_rois, num_rois=1, nb_classes=21):
+def classifier(base_layers, input_rois, cfg, nb_classes=21):
     # compile times on theano tend to be very high, so we use smaller ROI pooling regions to workaround
 
-    pooling_regions = 7
+    cfg.pooling_regions = 7
 #    print(K.shape(base_layers))
 #    print(K.shape(input_rois))
-    out_roi_pool = RoiPoolingConv(pooling_regions, num_rois)([base_layers, input_rois])
+    out_roi_pool = RoiPoolingConv(cfg)([base_layers, input_rois])
 
     dense_1 = Flatten()(out_roi_pool)
     dense_1 = Dense(4096, activation='relu', kernel_initializer='TruncatedNormal')(dense_1)
@@ -207,26 +207,21 @@ class RoiPoolingConv(Layer):
         3D tensor with shape:
         `(1, num_rois, channels, pool_size, pool_size)`
     '''
-    def __init__(self, pool_size, num_rois, **kwargs):
+    def __init__(self, cfg, **kwargs):
 #        K.set_image_dim_ordering('tf')
         self.dim_ordering = K.image_dim_ordering()
         assert self.dim_ordering in {'tf'}, 'dim_ordering must be in {tf}'
-#        print('dim_ordering', self.dim_ordering)
-        self.pool_size = pool_size
-        self.num_rois = num_rois
-#        print('num_rois', self.num_rois)
+        self.pool_size = cfg.pool_size
+#        self.num_rois = cfg.num_rois
+        self.batch_size = cfg.train_cfg.batch_size
 
         super(RoiPoolingConv, self).__init__(**kwargs)
 
     def build(self, input_shape):
-#        print('nb_channels', input_shape[0])
-#        self.nb_channels = input_shape[0][1]
         self.nb_channels = input_shape[0][3]
 
     def compute_output_shape(self, input_shape):
-#        print('output', [None, self.num_rois, self.nb_channels, self.pool_size, self.pool_size])
-#        return None, self.num_rois, self.nb_channels, self.pool_size, self.pool_size
-        return None, self.num_rois, self.pool_size, self.pool_size, self.nb_channels
+        return None, self.pool_size, self.pool_size, self.nb_channels
 
     def call(self, x):
 
@@ -267,26 +262,31 @@ class RoiPoolingConv(Layer):
 #            rs = tf.Print(rs, [tf.shape(rs)])
 #            rs = K.print_tensor(rs, message='Value of rs')
 #            outputs.append(rs)
-        batch_size = 32
-        box_ind = [i for i in range(batch_size)]
 #        rois = tf.Print(rois, ['val: ', tf.shape(rois)])
-        rois = K.reshape(rois, (batch_size, 4))
-        final_output = tf.image.crop_and_resize(img, boxes=rois, box_ind=box_ind, crop_size=(self.pool_size, self.pool_size))
+        
 #        final_output = tf.Print(final_output, ['Value: ', tf.shape(final_output)])
 #        final_output = K.concatenate(outputs, axis=0)
 #        print('fo', final_output.shape)
-        final_output = K.reshape(final_output, (batch_size, self.num_rois, self.pool_size, self.pool_size, self.nb_channels))
 #        all_outputs.append(final_output)
 #        final_outputs = K.concatenate(all_outputs, axis=0)
 #        print('fo', final_output.shape)
 #        final_outputs = K.permute_dimensions(final_output, (0, 1, 4, 2, 3))
-        print('fo', final_output.shape)
+#        print('fo', final_output.shape)
+
+#        batch_size = self.batch_size
+#        rois = K.reshape(rois, (batch_size, 5))
+        box_ind = K.cast(rois[:,0], 'int32')
+        rois    = rois[:,1:]
+        final_output = tf.image.crop_and_resize(img, boxes=rois, box_ind=box_ind, crop_size=(self.pool_size, self.pool_size))
+#        print('fo', final_output.shape)
+#        final_output = tf.Print(final_output, ['Value: ', tf.shape(final_output)])
+#        final_output = K.reshape(final_output, (batch_size, self.pool_size, self.pool_size, self.nb_channels))
 
         return final_output
 
     def get_config(self):
         config = {'pool_size': self.pool_size,
-                  'num_rois': self.num_rois}
+                  'batch_size': self.batch_size}
         base_config = super(RoiPoolingConv, self).get_config()
         return dict(list(base_config.items()) + list(config.items()))
 

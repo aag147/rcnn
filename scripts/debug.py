@@ -13,7 +13,7 @@ sys.path.append('../cfgs/')
 
 #import extractTUHOIData as tuhoi
 #import extractHICOData as hico
-import utils
+import utils, image
 from generators import DataGenerator
 from load_data import data
 
@@ -29,6 +29,7 @@ print('Loading data...')
 # Load data
 data = data(newDir=False)
 cfg = data.cfg
+cfg.fast_rcnn_config()
 
     
 if True:
@@ -50,7 +51,80 @@ if False:
         i += 1
     end = time.time()
     print('End:', end - start)
+  
     
+if True:
+    # test tf crop_and_resize    
+    from keras.models import Sequential, Model
+    from keras.layers import Flatten, Dense, Dropout, Reshape, Permute, Activation, \
+        Input, merge
+    from matplotlib import pyplot as plt
+
+    import tensorflow as tf  
+    from models import RoiPoolingConv
+    import draw
+    
+    imagesMeta = data.trainMeta
+    imagesID = list(imagesMeta.keys())
+    imagesID.sort()
+    imageMeta = imagesMeta[imagesID[0]]
+    path = cfg.data_path+'images/train/'
+#    print(path + imageMeta['imageName'])
+#    img = cv.imread(cfg.data_path+'images/train/' + imageMeta['imageName'])
+#    img = cv.cvtColor(img, cv.COLOR_BGR2RGB)
+#    
+#    rel = imageMeta['rels']['0']
+#    prsBB = rel['prsBB']
+#    objBB = rel['objBB']
+    
+    cfg.img_out_reduction = (16,16)
+    cfg.pool_size = 7
+    print('cfg', cfg.order_of_dims)
+    
+    def unnormCoords(box, shape):
+        xmin = box[1] * shape[1]; xmax = box[3] * shape[1]
+        ymin = box[0] * shape[0]; ymax = box[2] * shape[0]
+        return [ymin, xmin, ymax, xmax]
+    
+    def normCoords(box, shape):
+        xmin = box[1] / shape[1]; xmax = box[3] / shape[1]
+        ymin = box[0] / shape[0]; ymax = box[2] / shape[0]
+        return [ymin, xmin, ymax, xmax]
+    
+    def getBoxes(h, o, shape):        
+#        boxes = [normCoords(h, shape), normCoords(o, shape)]   
+        boxes = [h, o]
+        boxes = np.array(boxes)
+        print(h.shape)
+        boxes = np.insert(boxes, 0, [0,0], axis=1)
+        return boxes
+    
+    
+    [img, h, o], _ = image.getXData(imagesID[0:1], imagesMeta, path, cfg)
+    img = img[0]; h = h[1]; o = o[1]
+    img = cv.resize(img, (14,14)).astype(np.float32)
+    boxes = getBoxes(h, o, img.shape)
+    imgs = np.expand_dims(img, axis=0)
+    imgs = np.append(imgs, imgs, axis=0)
+    
+    
+    draw.drawHOI(img, unnormCoords(h, img.shape), unnormCoords(o, img.shape))
+#    draw.drawHOI(img[0], h, o)
+    draw.drawImages(imagesID[0:1], imagesMeta, data.labels, path)
+    
+    cfg.pool_size = 7
+    image_input = Input(shape=(14,14,3))
+    boxes_input = Input(shape=(5,))
+#    final_output = tf.image.crop_and_resize(image_input, boxes=boxes_input, box_ind=idxs_input, crop_size=(pool_size, pool_size))    
+    roi_output = RoiPoolingConv(cfg)([image_input, boxes_input])
+    model = Model(inputs=[image_input, boxes_input], outputs=roi_output)  
+    
+    pred = model.predict([imgs, boxes])
+    
+    f, spl = plt.subplots(2,2)
+    spl = spl.ravel()
+    spl[0].imshow(pred[0])
+    spl[1].imshow(pred[1])
     
 if False:
     # Save labels in file
@@ -112,7 +186,7 @@ if False:
     imagesID.sort()
     draw.drawImages(imagesID[26960:26969], trainMeta, labels, cfg.data_path+'_images/train/', False)
 
-if True:
+if False:
     # Test fast-generators by plotting data
     from fast_generators import DataGenerator
     genTrain = DataGenerator(imagesMeta=data.trainMeta, GTMeta = data.trainGTMeta, cfg=cfg, data_type='train')
@@ -148,7 +222,8 @@ if True:
         if genTrain.nb_batches == i:
             break
 
-if True:
+if False:
+    # Count instances of classes
     for imageID, mucounts in mu_counts.items():
         mu = mucounts
         if imageID not in my_counts:
