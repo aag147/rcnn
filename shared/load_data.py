@@ -70,6 +70,8 @@ class data:
         
         if cfg.move:
             self.move_data()
+            
+        print('Path:', cfg.my_results_path)
         
         self.labels = labels
         self.trainMeta = trainMeta

@@ -40,7 +40,6 @@ if True:
     # Save config
     utils.saveConfig(cfg)
     utils.saveSplit(cfg, list(data.trainMeta.keys()), list(data.valMeta.keys()))
-    print('Path:', cfg.my_results_path)
     
     # Create model
     print('Creating model...')

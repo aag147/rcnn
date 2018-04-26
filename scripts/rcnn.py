@@ -57,3 +57,4 @@ if True:
     print('Testing model...')
     res = trainer.evaluateModel(genTest)
     print("F1:", res.F1, "nb_zeros", res.nb_zeros)
+    print('Path:', cfg.my_results_path)
