@@ -52,6 +52,8 @@ class basic_config:
        self.weights_path = ''
        self.my_results_path = ''
        self.my_weights_path = ''
+       self.move_path = None
+       self.move = 0
        
        #basics
        self.dataset = 'HICO'
@@ -114,7 +116,7 @@ class basic_config:
    def get_args(self):
        try:
           argv = sys.argv[1:]
-          opts, args = getopt.getopt(argv,"m:c:x:d:w:v:t:b:")
+          opts, args = getopt.getopt(argv,"m:c:x:d:w:v:t:b:s:")
        except getopt.GetoptError:
           print('.py -m <my_model> -c <my_method> -x <max_classes> -d <dataset>')
           sys.exit(2)
@@ -144,6 +146,9 @@ class basic_config:
               self.wp = int(arg)
           if opt == '-t':
               self.testdata = arg
+          if opt == '-s':
+              assert arg.isdigit(), 'move must be int'
+              self.move = int(arg)
               
    def set_class_weights(self, labels, imagesMeta):
        if self.wp >= 0: 

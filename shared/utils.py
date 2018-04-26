@@ -14,6 +14,7 @@ import pickle
 import copy as cp
 import random as r
 import sys
+import shutil
 
 #%% Save / load
 def load_hist(path):
@@ -68,6 +69,12 @@ def saveSplit(cfg, trainID, valID):
     save_obj(trainID, path + 'trainIDs')
     save_obj(valID, path + 'valIDs')
     
+    
+def moveData(from_path, to_path):
+    shutil.copytree(from_path, to_path)
+    
+def removeData(to_path):
+    shutil.rmtree(to_path)
 
 
 # %% Process loading

@@ -20,6 +20,18 @@ class data:
         self.testGTMeta = None
         
         self.load_data()
+        
+        
+    def remove_data(self):
+        to_path = self.cfg.move_path
+        utils.removeData(to_path)
+        
+    def move_data(self):
+        from_path = self.cfg.data_path
+        to_path   = self.cfg.move_path
+        if to_path is not None:
+            utils.moveData(from_path, to_path)
+        self.cfg.data_path = to_path
 
     def load_data(self):
         cfg = basic_config(self.newDir)
@@ -48,6 +60,10 @@ class data:
         cfg.set_class_weights(labels, trainGTMeta)
         trainMeta, valMeta = utils.splitData(list(trainMeta.keys()), trainMeta)
         self.cfg = cfg
+        
+        if cfg.move:
+            self.move_data()
+        
         self.labels = labels
         self.trainMeta = trainMeta
         self.valMeta = valMeta

@@ -32,7 +32,7 @@ cfg = data.cfg
 cfg.fast_rcnn_config()
 
     
-if True:
+if False:
     # Create batch generators
     genTrain = DataGenerator(imagesMeta=data.trainMeta, GTMeta = data.trainGTMeta, cfg=cfg, data_type='train')
     genVal = DataGenerator(imagesMeta=data.valMeta, GTMeta = data.trainGTMeta, cfg=cfg, data_type='val')
@@ -53,7 +53,12 @@ if False:
     print('End:', end - start)
   
     
-if True:
+def unnormCoords(box, shape):
+    xmin = box[1] * shape[1]; xmax = box[3] * shape[1]
+    ymin = box[0] * shape[0]; ymax = box[2] * shape[0]
+    return [ymin, xmin, ymax, xmax]    
+
+if False:
     # test tf crop_and_resize    
     from keras.models import Sequential, Model
     from keras.layers import Flatten, Dense, Dropout, Reshape, Permute, Activation, \
@@ -80,11 +85,6 @@ if True:
     cfg.img_out_reduction = (16,16)
     cfg.pool_size = 7
     print('cfg', cfg.order_of_dims)
-    
-    def unnormCoords(box, shape):
-        xmin = box[1] * shape[1]; xmax = box[3] * shape[1]
-        ymin = box[0] * shape[0]; ymax = box[2] * shape[0]
-        return [ymin, xmin, ymax, xmax]
     
     def normCoords(box, shape):
         xmin = box[1] / shape[1]; xmax = box[3] / shape[1]
@@ -193,6 +193,32 @@ if False:
     import matplotlib.pyplot as plt
     import draw
     i = 0
+    idx = 1
+    j = 0
+    
+    for sample in genTrain.begin():
+#        utils.update_progress(j / len(data.trainMeta))
+#        print(sample[1][idx])
+        image = sample[0][0][idx]
+        prsBB = sample[0][1][idx]
+        objBB = sample[0][2][idx]
+#        print(prsBB)
+        prsBB = unnormCoords(prsBB[1:], image.shape)
+        objBB = unnormCoords(objBB[1:], image.shape)
+        draw.drawHOI(image, prsBB, objBB)
+        
+        i += 1
+        if i >= 5:
+            break
+        
+
+if False:
+    # Test fast-generators by plotting data
+    from fast_generators import DataGenerator
+    genTrain = DataGenerator(imagesMeta=data.trainMeta, GTMeta = data.trainGTMeta, cfg=cfg, data_type='train')
+    import matplotlib.pyplot as plt
+    import draw
+    i = 0
     idx = 0
     j = 0
     
@@ -285,16 +311,17 @@ if False:
 if False:
     # Change tu-ppmi dict
     new_imagesMeta = {}
-    for imageID, imageMeta in testMeta.items():
+    for imageID, imageMeta in data.testMeta.items():
         new_rels = {}
         for relID, rel in imageMeta['rels'].items():
-            new_rel = {'objBB':rel['objBB'], 'prsBB':rel['prsBB'], 'labels':rel['labels']}
+            [label] = rel['labels']
+            new_rel = {'objBB':rel['objBB'], 'prsBB':rel['prsBB'], 'label':label}
             new_rels[relID] = new_rel
-        new_imagesMeta[imageID] = {'imageName': imageMeta['imageID'], 'rels': new_rels}
+        new_imagesMeta[imageID] = {'imageName': imageMeta['imageName'], 'rels': new_rels}
         
     imagesID = list(new_imagesMeta.keys())
     imagesID.sort()
-#    utils.save_dict(new_imagesMeta, cfg.data_path + 'test')
+    utils.save_dict(new_imagesMeta, cfg.data_path + 'testreal')
 #    new_imagesMeta = utils.load_dict(cfg.data_path + 'test')
 #    draw.drawImages(imagesID[50:59], new_imagesMeta, labels, cfg.data_path+'images/test/', False)
 #

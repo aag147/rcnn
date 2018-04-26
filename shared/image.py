@@ -56,6 +56,7 @@ def getXData(imagesID, imagesMeta, data_path, cfg):
     IDs   = []
     for imageID in imagesID:
         imageMeta = imagesMeta[imageID]
+#        print(data_path + imageMeta['imageName'])
         image = cv.imread(data_path + imageMeta['imageName'])
 #        sys.stdout.write('\r' + str(imageID))
 #        sys.stdout.flush()
