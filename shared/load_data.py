@@ -31,7 +31,7 @@ class data:
         to_path   = self.cfg.move_path
         if to_path is not None:
             utils.moveData(from_path, to_path)
-        self.cfg.data_path = to_path
+        self.cfg.data_path = to_path + self.dataset+'/'
 
     def load_data(self):
         cfg = basic_config(self.newDir)
