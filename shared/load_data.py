@@ -7,6 +7,7 @@ Created on Fri Apr 20 09:30:24 2018
 from config import basic_config
 from config_helper import set_config
 import utils
+import os
 
 class data:
     def __init__(self, newDir=True):
@@ -29,9 +30,15 @@ class data:
     def move_data(self):
         from_path = self.cfg.data_path
         to_path   = self.cfg.move_path
-        if to_path is not None:
-            utils.moveData(from_path, to_path)
-        self.cfg.data_path = to_path + self.dataset+'/'
+        if to_path is None:
+            return
+        
+        if os.path.exists(to_path):
+            self.remove_data()
+        
+        print('Moving data...')
+        utils.moveData(from_path, to_path)
+        self.cfg.data_path = to_path+'/'
 
     def load_data(self):
         cfg = basic_config(self.newDir)
