@@ -117,7 +117,7 @@ class basic_config:
    def get_args(self):
        try:
           argv = sys.argv[1:]
-          opts, args = getopt.getopt(argv,"m:c:x:d:w:v:t:b:s:")
+          opts, args = getopt.getopt(argv,"m:c:x:d:w:v:t:b:s:f:h:")
        except getopt.GetoptError:
           print('.py -m <my_model> -c <my_method> -x <max_classes> -d <dataset>')
           sys.exit(2)
@@ -150,6 +150,12 @@ class basic_config:
           if opt == '-s':
               assert arg.isdigit(), 'move must be int'
               self.move = int(arg)
+          if opt == '-f':
+              assert arg.isdigit(), 'final epoch must be int'
+              self.epoch_end = int(arg)
+          if opt == '-h':
+              assert arg.isdigit(), 'epoch learning split must be int'
+              self.epoch_splits = [int(arg)]
               
    def set_class_weights(self, labels, imagesMeta):
        if self.wp >= 0: 
