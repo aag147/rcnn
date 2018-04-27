@@ -14,7 +14,7 @@ sys.path.append('../cfgs/')
 #import extractTUHOIData as tuhoi
 #import extractHICOData as hico
 import utils, image
-from generators import DataGenerator
+from fast_generators import DataGenerator
 from load_data import data
 
 #from matplotlib import pyplot as plt
@@ -32,7 +32,7 @@ cfg = data.cfg
 cfg.fast_rcnn_config()
 
     
-if False:
+if True:
     # Create batch generators
     genTrain = DataGenerator(imagesMeta=data.trainMeta, GTMeta = data.trainGTMeta, cfg=cfg, data_type='train')
     genVal = DataGenerator(imagesMeta=data.valMeta, GTMeta = data.trainGTMeta, cfg=cfg, data_type='val')
@@ -58,7 +58,7 @@ def unnormCoords(box, shape):
     ymin = box[0] * shape[0]; ymax = box[2] * shape[0]
     return [ymin, xmin, ymax, xmax]    
 
-if False:
+if True:
     # test tf crop_and_resize    
     from keras.models import Sequential, Model
     from keras.layers import Flatten, Dense, Dropout, Reshape, Permute, Activation, \
@@ -72,7 +72,7 @@ if False:
     imagesMeta = data.trainMeta
     imagesID = list(imagesMeta.keys())
     imagesID.sort()
-    imageMeta = imagesMeta[imagesID[0]]
+#    imageMeta = imagesMeta[imagesID[0]]
     path = cfg.data_path+'images/train/'
 #    print(path + imageMeta['imageName'])
 #    img = cv.imread(cfg.data_path+'images/train/' + imageMeta['imageName'])
@@ -99,9 +99,15 @@ if False:
         boxes = np.insert(boxes, 0, [0,0], axis=1)
         return boxes
     
+    idx = 0
+    for sample in genTrain.begin():
+        img = sample[0][0][idx]
+        h   = sample[0][1][idx]
+        o   = sample[0][2][idx]
+        win = sample[0][3][idx]
+        break
     
-    [img, h, o], _ = image.getXData(imagesID[0:1], imagesMeta, path, cfg)
-    img = img[0]; h = h[1]; o = o[1]
+    img = img; h = h[1:]; o = o[1:]
     img = cv.resize(img, (14,14)).astype(np.float32)
     boxes = getBoxes(h, o, img.shape)
     imgs = np.expand_dims(img, axis=0)
@@ -113,7 +119,7 @@ if False:
     draw.drawImages(imagesID[0:1], imagesMeta, data.labels, path)
     
     cfg.pool_size = 7
-    image_input = Input(shape=(14,14,3))
+    image_input = Input(shape=(None,None,3))
     boxes_input = Input(shape=(5,))
 #    final_output = tf.image.crop_and_resize(image_input, boxes=boxes_input, box_ind=idxs_input, crop_size=(pool_size, pool_size))    
     roi_output = RoiPoolingConv(cfg)([image_input, boxes_input])

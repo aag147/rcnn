@@ -57,16 +57,29 @@ def Fast_HO_RCNN(cfg):
     K.set_image_dim_ordering('tf')
     weights = VVG16_Weights(cfg) if cfg.pretrained_weights == True else False
 #    modelShr = AlexNet(weights, cfg.nb_classes, include='none')
-    modelShr = VGG16((224, 224, 3), weights, cfg.nb_classes, include='none')
+    modelShr = VGG16((cfg.ydim, cfg.xdim, cfg.cdim), weights, cfg.nb_classes, include='none')
     prsRoI   = input_rois()
     objRoI   = input_rois()
     print(modelShr.layers[-1].output_shape)
     modelPrs = classifier(modelShr.output, prsRoI, cfg, nb_classes=cfg.nb_classes)
     modelObj = classifier(modelShr.output, objRoI, cfg, nb_classes=cfg.nb_classes)
-    modelPar = PairWiseStream(input_shape=(64,64,2), nb_classes = cfg.nb_classes, include='fc')             
-    outputs = Add()([modelPrs, modelObj, modelPar.output])
+    modelPar = PairWiseStream(input_shape=(64,64,2), nb_classes = cfg.nb_classes, include='fc')      
     
-    inputs = [modelShr.input, prsRoI, objRoI, modelPar.input]
+    outputs = [modelPrs, modelObj, modelPar.output]
+    outputs = [outputs[i] for i in range(len(outputs)) if cfg.inputs[i]]
+    
+    if sum(cfg.inputs) == 1:
+        outputs = outputs[0]
+    else:
+        
+        outputs = Add()(outputs)
+        
+    inputs = [prsRoI, objRoI, modelPar.input]
+    inputs = [inputs[i] for i in range(len(inputs)) if cfg.inputs[i]]
+    
+    if cfg.inputs[0] or cfg.inputs[1]:
+        inputs = [modelShr.input] + inputs    
+    
     final_model = _final_stop(inputs, outputs, cfg)
     
     return final_model

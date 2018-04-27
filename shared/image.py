@@ -61,15 +61,15 @@ def getXData(imagesID, imagesMeta, data_path, cfg):
 #        sys.stdout.write('\r' + str(imageID))
 #        sys.stdout.flush()
         image = cv.cvtColor(image, cv.COLOR_BGR2RGB)
-        imageClean = preprocessImage(image, cfg)
+        imageClean, scale, padds = preprocessImage(image, cfg)
         
-        scaleX = imageClean.shape[1] / float(image.shape[1])
-        scaleY = imageClean.shape[0] / float(image.shape[0])
-        scales = [scaleX, scaleY]
+#        scaleX = imageClean.shape[1] / float(image.shape[1])
+#        scaleY = imageClean.shape[0] / float(image.shape[0])
+#        scales = [scaleX, scaleY]
 #        print(imageClean.shape, image.shape, scales)
         
         for relID, rel in imageMeta['rels'].items():
-            h, o = getDataFromRel(rel['prsBB'], rel['objBB'], scales, imageClean.shape, cfg)
+            h, o = getDataFromRel(rel['prsBB'], rel['objBB'], scale, padds, imageClean.shape, cfg)
             dataX.append(imageClean)
             dataH.append(h)
             dataO.append(o)
@@ -104,8 +104,61 @@ def getX2Data(imagesID, imagesMeta, data_path, cfg):
     dataXB = np.array(dataXB)
     return [dataXP, dataXB]
 
+#%% Fast rcnn
 ## Resize and normalize image ##
 def preprocessImage(image, cfg):
+    shape = image.shape
+    if shape[0] > shape[1]:
+        newHeight = cfg.mindim
+        scale = float(newHeight) / shape[0]
+        newWidth = int(shape[1] * scale)
+#        if newWidth > cfg.maxdim:
+#            newWidth = cfg.maxdim
+#            scale = newWidth / shape[1]
+#            newHeight = shape[0] * scale
+    else:
+        newWidth = cfg.mindim
+        scale = float(newWidth) / shape[1]
+        newHeight = int(shape[0] * scale)
+#        if newHeight > cfg.maxdim:
+#            newHeight = cfg.maxdim
+#            scale = newHeight / shape[0]
+#            newWidth = shape[1] * scale
+            
+#    print('shape', image.shape)
+    newWidth = cfg.xdim
+    newHeight = cfg.ydim
+    scaleWidth = float(newWidth) / image.shape[1]
+    scaleHeight = float(newHeight) / image.shape[0]
+    scales = [scaleHeight, scaleWidth]
+    image = cv.resize(image, (newWidth, newHeight)).astype(np.float32)
+    image = (image - np.min(image)) / np.max(image)
+#    print('shape', image.shape)
+#    padWidth = int((cfg.maxdim - newWidth) / 2.0)
+#    padHeight = int((cfg.maxdim - newHeight) / 2.0)
+#    padding = np.zeros([cfg.maxdim, cfg.maxdim, cfg.cdim])
+#    padding[padHeight:padHeight+newHeight, padWidth:padWidth+newWidth, :] = image
+#    print('finalshape', padding.shape)
+    image = image.transpose(cfg.order_of_dims)
+    return image, scales, [0, 0]
+    
+def getDataFromBB(bb, scales, padds, shape, cfg):
+    xmin = bb['xmin'] * scales[1] + padds[1] #* (1/cfg.img_out_reduction[0]))
+    ymin = bb['ymin'] * scales[0] + padds[0] #* (1/cfg.img_out_reduction[1]))
+    xmax = bb['xmax'] * scales[1] + padds[1] #* (1/cfg.img_out_reduction[0]))
+    ymax = bb['ymax'] * scales[0] + padds[0] #* (1/cfg.img_out_reduction[1]))
+    
+    xmin = xmin / float(shape[1]); xmax = xmax / float(shape[1])
+    ymin = ymin / float(shape[0]); ymax = ymax / float(shape[0])
+    return [ymin, xmin, ymax, xmax]
+    
+def getDataFromRel(prsBB, objBB, scales, padds, shape, cfg):
+    dataH = getDataFromBB(prsBB, scales, padds, shape, cfg)
+    dataO = getDataFromBB(objBB, scales, padds, shape, cfg)
+    return dataH, dataO
+
+#%% rcnn
+def preprocessCrop(image, cfg):
     image = cv.resize(image, cfg.shape).astype(np.float32)
 #    image = (image - np.mean(image)) / np.std(image)
 #    print(np.max(image))
@@ -115,8 +168,8 @@ def preprocessImage(image, cfg):
     return image
 
 def preprocessRel(prsCrop, objCrop, image, cfg):
-    prsCrop = preprocessImage(prsCrop, cfg)
-    objCrop = preprocessImage(objCrop, cfg)
+    prsCrop = preprocessCrop(prsCrop, cfg)
+    objCrop = preprocessCrop(objCrop, cfg)
     return {'prsCrop': prsCrop, 'objCrop': objCrop}
 
 ## Crop image ##
@@ -134,29 +187,6 @@ def cropImageFromRel(prsBB, objBB, image):
     objCrop = cropImageFromBB(objBB, image)
     crops = {'prsCrop': prsCrop, 'objCrop': objCrop}
     return crops
-
-## Get data bbs from rel ##
-def getDataFromBBOld(bb, scales, cfg):
-    x = (bb['xmin'] * scales[0] * (1/cfg.img_out_reduction[0]))
-    y = (bb['ymin'] * scales[1] * (1/cfg.img_out_reduction[1]))
-    w = (bb['xmax'] * scales[0] * (1/cfg.img_out_reduction[0])  - x)
-    h = (bb['ymax'] * scales[1] * (1/cfg.img_out_reduction[1]) - y)
-    return [x, y, w, h]
-
-def getDataFromBB(bb, scales, shape, cfg):
-    xmin = bb['xmin'] * scales[0] #* (1/cfg.img_out_reduction[0]))
-    ymin = bb['ymin'] * scales[1] #* (1/cfg.img_out_reduction[1]))
-    xmax = bb['xmax'] * scales[0] #* (1/cfg.img_out_reduction[0]))
-    ymax = bb['ymax'] * scales[1] #* (1/cfg.img_out_reduction[1]))
-    
-    xmin = xmin / float(shape[1]); xmax = xmax / float(shape[1])
-    ymin = ymin / float(shape[0]); ymax = ymax / float(shape[0])
-    return [ymin, xmin, ymax, xmax]
-    
-def getDataFromRel(prsBB, objBB, scales, shape, cfg):
-    dataH = getDataFromBB(prsBB, scales, shape, cfg)
-    dataO = getDataFromBB(objBB, scales, shape, cfg)
-    return dataH, dataO
 
 
 #%% Special third stream data extraction

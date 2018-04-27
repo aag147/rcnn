@@ -75,7 +75,9 @@ class DataGenerator():
         [dataXI, dataXH, dataXO], _ = image.getXData(batchID, self.imagesMeta, self.images_path, self.cfg)
         dataXW = image.getDataPairWiseStream(batchID, self.imagesMeta, self.cfg)
         X = [dataXI, dataXH, dataXO, dataXW]
-#        X = [X[i] for i in range(len(X)) if self.inputs[i]]
+        X = [X[i+1] for i in range(len(X)-1) if self.inputs[i]]
+        if self.inputs[0] or self.inputs[1]:
+            X = [dataXI] + X
         y, _ = image.getYData(batchID, self.imagesMeta, self.GTMeta, self.cfg)
         return X, y
 
@@ -128,8 +130,10 @@ class DataGenerator():
 #              sys.stdout.write('\r' + str(X[0].shape) + str(X[1].shape) + ' - nbs: ' + str(i) + '-' + str(self.nb_batches))
 #              sys.stdout.flush()
               
-              X[1] = np.insert(X[1], 0, [idx for idx in range(self.batch_size)], axis=1)
-              X[2] = np.insert(X[2], 0, [idx for idx in range(self.batch_size)], axis=1)
+              if self.inputs[0] or self.inputs[1]:
+                  X[1] = np.insert(X[1], 0, [idx for idx in range(self.batch_size)], axis=1)
+              if self.inputs[0] and self.inputs[1]:
+                  X[2] = np.insert(X[2], 0, [idx for idx in range(self.batch_size)], axis=1)
 #              print('fin',min(X[1][:,0]), max(X[1][:,0]))
               yield X, y
     
