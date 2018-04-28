@@ -54,6 +54,7 @@ class basic_config:
        self.weights_path = ''
        self.my_results_path = ''
        self.my_weights_path = ''
+       self.my_results_dir = ''
        self.move_path = None
        self.move = 0
        
