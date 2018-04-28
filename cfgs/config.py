@@ -25,13 +25,15 @@ class basic_config:
    def get_results_paths(self):
       if len(self.my_results_path) > 0 or not self.newDir:
           return
-      
-      for fid in range(100):
-        path = self.part_results_path + self.dataset + "/" + self.modelnamekey + '%d/' % fid
-        if not os.path.exists(path):
-            os.mkdir(path)
-            os.mkdir(path + 'weights/')
-            break
+      if len(self.my_results_dir) > 0:
+          path = self.part_results_path + self.dataset + "/" + self.my_results_dir + '/'
+      else:
+          for fid in range(100):
+            path = self.part_results_path + self.dataset + "/" + self.modelnamekey + '%d/' % fid
+            if not os.path.exists(path):
+                os.mkdir(path)
+                os.mkdir(path + 'weights/')
+                break
       self.my_results_path = path
       self.my_weights_path = path + 'weights/'
       
@@ -125,9 +127,10 @@ class basic_config:
        for opt, arg in opts:
           print(opt, arg)
           if opt == '-v':
-             path = self.part_results_path + arg
-             self.my_results_path = path
-             self.my_weights_path = path + 'weights/'
+#             path = self.part_results_path + arg
+             self.my_results_dir = arg
+#             self.my_results_path = path
+#             self.my_weights_path = path + 'weights/'
           if opt == '-m':
              self.my_weights = arg
           if opt == '-c':
