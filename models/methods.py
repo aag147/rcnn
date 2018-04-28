@@ -91,19 +91,19 @@ def Pretrained_HO_RCNN(cfg):
     modelObj = AlexNet((3, 227, 227), weights, cfg.nb_classes, include='fc')
     modelPar = PairWiseStream(input_shape=(2,64,64), nb_classes = cfg.nb_classes, include='fc')             
     
-    my_actual_weight_path = cfg.my_weight_path
+    my_actual_weights_path = cfg.my_weights_path
     
-    cfg.my_weigth_path = cfg.prs_weigth_path
+    cfg.my_weights_path = cfg.prs_weights_path
     cfg.my_weights     = cfg.prs_weigths
     modelPrs = _final_stop(modelPrs.input, modelPrs.output, cfg)
-    cfg.my_weigth_path = cfg.obj_weigth_path
+    cfg.my_weights_path = cfg.obj_weights_path
     cfg.my_weights     = cfg.obj_weigths
     modelObj = _final_stop(modelObj.input, modelObj.output, cfg)
-    cfg.my_weigth_path = cfg.par_weigth_path
+    cfg.my_weights_path = cfg.par_weights_path
     cfg.my_weights     = cfg.par_weigths
     modelPar = _final_stop(modelPar.input, modelPar.output, cfg)
     
-    cfg.my_weight_path = my_actual_weight_path
+    cfg.my_weights_path = my_actual_weights_path
     cfg.my_weights = None
     
     models = [modelPrs, modelObj, modelPar]
