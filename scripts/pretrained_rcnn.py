@@ -15,7 +15,7 @@ import utils
 from model_trainer import model_trainer
 from load_data import data
 from generators import DataGenerator
-from methods import HO_RCNN
+from methods import Pretrained_HO_RCNN
 
 import numpy as np
 
@@ -51,7 +51,7 @@ if True:
     
     # Create model
     print('Creating model...')
-    model = HO_RCNN(cfg)
+    model = Pretrained_HO_RCNN(cfg)
     trainer = model_trainer(model=model, genTrain=genTrain, genVal=genVal, genTest=genTest, task=cfg.task)
     trainer.compileModel(cfg)
     
