@@ -31,12 +31,12 @@ if True:
     cfg = data.cfg
     cfg.rcnn_config()
     
-    cfg.prs_weight_path = '' 
-    cfg.prs_weights     = ''
-    cfg.obj_weight_path = '' 
-    cfg.obj_weights     = ''
-    cfg.par_weight_path = '' 
-    cfg.par_weights     = ''
+#    cfg.prs_weight_path = '' 
+#    cfg.prs_weights     = ''
+#    cfg.obj_weight_path = '' 
+#    cfg.obj_weights     = ''
+#    cfg.par_weight_path = '' 
+#    cfg.par_weights     = ''
     
     # Create batch generators
     genTrain = DataGenerator(imagesMeta=data.trainMeta, GTMeta = data.trainGTMeta, cfg=cfg, data_type='train')

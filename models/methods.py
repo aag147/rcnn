@@ -20,6 +20,7 @@ def _final_stop(inputs, outputs, cfg):
         outputs = Activation("softmax",name="predictions")(outputs)
 
     model = Model(inputs=inputs, outputs=outputs)
+    print('weights', cfg.my_weights)
     if type(cfg.my_weights)==str and len(cfg.my_weights) > 0:
         print('Loading my weights...')
         path = cfg.my_weights_path + cfg.my_weights
@@ -107,7 +108,8 @@ def Pretrained_HO_RCNN(cfg):
     cfg.my_weights = None
     
     models = [modelPrs, modelObj, modelPar]
-    outputs = Add()([model.output for model in models])
+    outputs = [model.layers[-2].output for model in models]
+    outputs = Add()(outputs)
     inputs = [model.input for model in models]
     
     final_model = _final_stop(inputs, outputs, cfg)
