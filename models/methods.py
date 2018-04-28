@@ -94,13 +94,13 @@ def Pretrained_HO_RCNN(cfg):
     my_actual_weights_path = cfg.my_weights_path
     
     cfg.my_weights_path = cfg.prs_weights_path
-    cfg.my_weights     = cfg.prs_weigths
+    cfg.my_weights     = cfg.prs_weights
     modelPrs = _final_stop(modelPrs.input, modelPrs.output, cfg)
     cfg.my_weights_path = cfg.obj_weights_path
-    cfg.my_weights     = cfg.obj_weigths
+    cfg.my_weights     = cfg.obj_weights
     modelObj = _final_stop(modelObj.input, modelObj.output, cfg)
     cfg.my_weights_path = cfg.par_weights_path
-    cfg.my_weights     = cfg.par_weigths
+    cfg.my_weights     = cfg.par_weights
     modelPar = _final_stop(modelPar.input, modelPar.output, cfg)
     
     cfg.my_weights_path = my_actual_weights_path
