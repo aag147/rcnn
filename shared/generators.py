@@ -153,8 +153,8 @@ class DataGenerator():
                       
                   imageXCut = utils.spliceXData(imageX, s_idx, f_idx)
                   X = utils.concatXData(X, imageXCut)
-#                  y.extend(imageY[s_idx:f_idx, :])
-                  y.extend([self.dataID[imageIdx] for i in range(s_idx, f_idx)])
+                  y.extend(imageY[s_idx:f_idx, :])
+#                  y.extend([self.dataID[imageIdx] for i in range(s_idx, f_idx)])
                   if len(y) == self.batch_size:
                       break
               imageIdx += 1
