@@ -125,9 +125,11 @@ class DataGenerator():
           
     def _generateIterativeBatches(self):
         'Generates iterative batches of samples'
-        hoiinimageidx = 0
+        
+        
         while 1:
           imageIdx = 1
+          hoiinimageidx = 0
           # Generate batches
           for i in range(self.nb_batches):
               X = []; y = []
@@ -141,15 +143,18 @@ class DataGenerator():
                       if hoiinimageidx == len(imageY):
                           hoiinimageidx = 0
                           continue
-                      hoiinimageidx = 0
+#                      hoiinimageidx = 0
                       
-                  if len(imageY) + len(y) >= self.batch_size:
-                      hoiinimageidx = len(imageY) - ((len(imageY) + len(y)) - self.batch_size)
+                  if (len(imageY) - hoiinimageidx) + len(y) >= self.batch_size:
+                      hoiinimageidx = hoiinimageidx + len(imageY) - ((len(imageY) + len(y)) - self.batch_size)
                       f_idx = hoiinimageidx
+                  else:
+                     hoiinimageidx = 0
                       
                   imageXCut = utils.spliceXData(imageX, s_idx, f_idx)
                   X = utils.concatXData(X, imageXCut)
-                  y.extend(imageY[s_idx:f_idx, :])
+#                  y.extend(imageY[s_idx:f_idx, :])
+                  y.extend([self.dataID[imageIdx] for i in range(s_idx, f_idx)])
                   if len(y) == self.batch_size:
                       break
               imageIdx += 1

@@ -58,7 +58,7 @@ def unnormCoords(box, shape):
     ymin = box[0] * shape[0]; ymax = box[2] * shape[0]
     return [ymin, xmin, ymax, xmax]    
 
-if True:
+if False:
     # test tf crop_and_resize    
     from keras.models import Sequential, Model
     from keras.layers import Flatten, Dense, Dropout, Reshape, Permute, Activation, \
@@ -218,9 +218,9 @@ if False:
             break
         
 
-if False:
+if True:
     # Test fast-generators by plotting data
-    from fast_generators import DataGenerator
+    from generators import DataGenerator
     genTrain = DataGenerator(imagesMeta=data.trainMeta, GTMeta = data.trainGTMeta, cfg=cfg, data_type='train')
     import matplotlib.pyplot as plt
     import draw
@@ -254,7 +254,7 @@ if False:
         if genTrain.nb_batches == i:
             break
 
-if False:
+if True:
     # Count instances of classes
     for imageID, mucounts in mu_counts.items():
         mu = mucounts
