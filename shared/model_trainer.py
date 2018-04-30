@@ -26,7 +26,6 @@ class model_trainer:
         self.model = model
         self.genTrain = genTrain
         self.genVal = genVal
-        self.eval = cb.EvaluateTest(genTest, m.EvalResults)
         self.log = cb.LogHistory()
     
     def compileModel(self, cfg):
@@ -49,7 +48,7 @@ class model_trainer:
                      cb.PrintCallBack()]
         
         if cfg.include_eval:
-            callbacks.append(self.eval)
+            callbacks.append(cb.EvaluateTest(self.genTest, m.EvalResults, cfg))
             
             
             
