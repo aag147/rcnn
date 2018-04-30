@@ -87,7 +87,8 @@ class basic_config:
        self.modelnamekey = ''
        self.epoch_splits = None
        self.init_lr = None
-       self.include_eval = False
+       self.include_eval = True
+       self.include_validation = False
        self.checkpoint_interval = 10
        
        # model training

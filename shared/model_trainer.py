@@ -52,12 +52,20 @@ class model_trainer:
         
         if cfg.include_eval:
             callbacks.append(self.eval)
-        
-        self.model.fit_generator(generator = self.genTrain.begin(), \
+            
+            
+            
+        if cfg.include_validation:        
+            self.model.fit_generator(generator = self.genTrain.begin(), \
                     steps_per_epoch = self.genTrain.nb_batches, \
                     validation_data = self.genVal.begin(), \
                     validation_steps = self.genVal.nb_batches, \
                     epochs = cfg.epoch_end, initial_epoch=cfg.epoch_begin, callbacks=callbacks)
+        else:
+            self.model.fit_generator(generator = self.genTrain.begin(), \
+                    steps_per_epoch = self.genTrain.nb_batches, \
+                    epochs = cfg.epoch_end, initial_epoch=cfg.epoch_begin, callbacks=callbacks)
+
 
     def evaluateModel(self, gen):
         return m.EvalResults(self.model, gen)
