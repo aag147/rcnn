@@ -43,8 +43,6 @@ class model_trainer:
         
     def trainModel(self, cfg):
         callbacks = [self.log, \
-                     cb.MyEarlyStopping(cfg), \
-                     cb.MyModelCheckpointBest(cfg), \
                      cb.MyModelCheckpointInterval(cfg), \
                      cb.MyLearningRateScheduler(cfg), \
                      cb.SaveLog2File(cfg), \
@@ -55,7 +53,9 @@ class model_trainer:
             
             
             
-        if cfg.include_validation:        
+        if cfg.include_validation:
+            callbacks.append(cb.MyEarlyStopping(cfg))
+            callbacks.append(cb.MyModelCheckpointBest(cfg))
             self.model.fit_generator(generator = self.genTrain.begin(), \
                     steps_per_epoch = self.genTrain.nb_batches, \
                     validation_data = self.genVal.begin(), \

@@ -55,6 +55,7 @@ if True:
     print('Path:', cfg.my_results_path)
     print('Saving final model...')
     trainer.saveModel(cfg)
+    trainer.saveHistory(cfg)
     print('Testing model on test...')
     resTest = trainer.evaluateModel(genTest)
     print("F1 (test!):", resTest.F1, "nb_zeros", resTest.nb_zeros)
