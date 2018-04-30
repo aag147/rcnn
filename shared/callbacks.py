@@ -59,16 +59,23 @@ class LogHistory(Callback):
       self.hist.newEpoch(logs)
 	
 class EvaluateTest(Callback):
-   def __init__(self, gen, f):
+   def __init__(self, gen, f, cfg):
       self.gen = gen
       self.f = f  
       self.epochs = []
+      self.cfg = cfg
+      f= open(cfg.my_results_path + "evals.txt","w+")
+      f.close()
    def on_train_begin(self, logs=None):
        return
 		
    def on_epoch_end(self, epoch, logs={}):
        results = self.f(self.model, self.gen)
        self.epochs.append(results)
+       with open(self.cfg.my_results_path + "evals.txt", 'a') as file:
+           newline = '%.03d, %.4f, %.03d' % \
+             (epoch, results.F1, results.nb_zeros)
+           file.write(newline)
       
    def on_epoch_begin(self, epoch, logs={}):
        if len(self.epochs) > 0:
