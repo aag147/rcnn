@@ -78,7 +78,7 @@ class EvaluateTest(Callback):
            file.write(newline)
       
    def on_epoch_begin(self, epoch, logs={}):
-       if len(self.epochs) > 0:
+       if epoch > 0:
            print('test_f1:', self.epochs[-1].F1)
 		
 			

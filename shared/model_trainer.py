@@ -26,6 +26,7 @@ class model_trainer:
         self.model = model
         self.genTrain = genTrain
         self.genVal = genVal
+        self.genTest = genTest
         self.log = cb.LogHistory()
     
     def compileModel(self, cfg):
