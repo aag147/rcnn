@@ -44,8 +44,10 @@ class SaveLog2File(Callback):
       f= open(cfg.my_results_path + "history.txt","w+")
       f.close()
    def on_epoch_end(self, epoch, logs=None):
+       val_loss = logs.get('val_loss') if type(logs.get('val_loss')) is float else 0.0
+       val_acc  = logs.get('val_acc') if type(logs.get('val_acc')) is float else 0.0
        newline = '%.03d, %.4f, %.4f, %.4f, %.4f\n' % \
-         (epoch, logs.get('loss'), logs.get('acc'), logs.get('val_loss'), logs.get('val_acc'))
+         (epoch, logs.get('loss'), logs.get('acc'), val_loss, val_acc)
        with open(self.cfg.my_results_path + "history.txt", 'a') as file:
            file.write(newline)
 		
@@ -69,6 +71,7 @@ class EvaluateTest(Callback):
        self.epochs.append(results)
       
    def on_epoch_begin(self, epoch, logs={}):
+       return
        if len(self.epochs) > 0:
            print('test_f1:', self.epochs[-1].F1)
 		
