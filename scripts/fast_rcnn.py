@@ -30,6 +30,7 @@ if True:
     data = data()
     cfg = data.cfg
     cfg.fast_rcnn_config()
+    cfg.inputs = [1,0,0]
     
     # Create batch generators
     genTrain = DataGenerator(imagesMeta=data.trainMeta, GTMeta = data.trainGTMeta, cfg=cfg, data_type='train')
@@ -48,14 +49,14 @@ if True:
     trainer.compileModel(cfg)
     
     # Train model
-    print('Training model...')
-    trainer.trainModel(cfg)
-    
-    # Save stuff
-    print('Saving final model...')
-    trainer.saveModel(cfg)
-    print('Testing model...')
-    res = trainer.evaluateModel(genTest)
-    print("F1:", res.F1, "nb_zeros", res.nb_zeros)
-    utils.save_obj_nooverwrite(res.Y_hat, cfg.my_results_path + 'y_hat')
-    print('Path:', cfg.my_results_path)
+#    print('Training model...')
+#    trainer.trainModel(cfg)
+#    
+#    # Save stuff
+#    print('Saving final model...')
+#    trainer.saveModel(cfg)
+#    print('Testing model...')
+#    res = trainer.evaluateModel(genTest)
+#    print("F1:", res.F1, "nb_zeros", res.nb_zeros)
+#    utils.save_obj_nooverwrite(res.Y_hat, cfg.my_results_path + 'y_hat')
+#    print('Path:', cfg.my_results_path)

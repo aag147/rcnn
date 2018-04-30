@@ -20,7 +20,6 @@ def _final_stop(inputs, outputs, cfg):
         outputs = Activation("softmax",name="predictions")(outputs)
 
     model = Model(inputs=inputs, outputs=outputs)
-    print('weights', cfg.my_weights)
     if type(cfg.my_weights)==str and len(cfg.my_weights) > 0:
         print('Loading my weights...')
         path = cfg.my_weights_path + cfg.my_weights
