@@ -71,7 +71,6 @@ class EvaluateTest(Callback):
        self.epochs.append(results)
       
    def on_epoch_begin(self, epoch, logs={}):
-       return
        if len(self.epochs) > 0:
            print('test_f1:', self.epochs[-1].F1)
 		
