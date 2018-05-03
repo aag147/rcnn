@@ -14,6 +14,7 @@ from keras import backend as K
 from keras.layers.core import Lambda
 from keras.engine.topology import Layer
 from keras.initializers import TruncatedNormal
+import keras.applications as keras_models
 
 #K.set_image_dim_ordering('th')
 
@@ -26,6 +27,18 @@ from keras.utils.layer_utils import convert_all_kernels_in_model
 import tensorflow as tf
 
 import alexnet as alex
+
+def VGG16_keras():
+    def f(x):
+        y = keras_models.VGG16(
+            include_top=False,
+            weights='imagenet',
+            input_tensor=x
+        )
+
+        return y.layers[-2].output
+
+    return f   
 
 def VGG16(input_shape, weights_path=None, nb_classes=1000, include='all'):
     #https://gist.github.com/baraldilorenzo/07d7802847aaad0a35d3
@@ -49,18 +62,20 @@ def VGG16(input_shape, weights_path=None, nb_classes=1000, include='all'):
     model.add(Conv2D(512, (3, 3), activation='relu', padding='same'))
     model.add(MaxPooling2D((2,2), strides=(2,2)))
 
-    model.add(Convolution2D(512, (3, 3), activation='relu', padding='same'))
-    model.add(Convolution2D(512, (3, 3), activation='relu', padding='same'))
-    model.add(Convolution2D(512, (3, 3), activation='relu', padding='same'))
+    model.add(Conv2D(512, (3, 3), activation='relu', padding='same'))
+    model.add(Conv2D(512, (3, 3), activation='relu', padding='same'))
+    model.add(Conv2D(512, (3, 3), activation='relu', padding='same'))
     
-    model.add(MaxPooling2D((2,2), strides=(2,2)))
-
-    model.add(Flatten())
-    model.add(Dense(4096, activation='relu'))
-    model.add(Dropout(0.5))
-    model.add(Dense(4096, activation='relu'))
-    model.add(Dropout(0.5))
-    model.add(Dense(1000))
+    
+    if include == 'fc':
+        model.add(MaxPooling2D((2,2), strides=(2,2)))
+    
+        model.add(Flatten())
+        model.add(Dense(4096, activation='relu'))
+        model.add(Dropout(0.5))
+        model.add(Dense(4096, activation='relu'))
+        model.add(Dropout(0.5))
+        model.add(Dense(1000))
 
     model = final_model(model, weights_path, nb_classes, include)
 
@@ -143,16 +158,17 @@ def final_model(model, weights_path, nb_classes, include):
     if K.backend() == 'tensorflow':
        convert_all_kernels_in_model(model)
     
-    if include not in {'fc', 'all'}:
+    if include == 'none':
         output = model.layers[-8].output
         model = Model(inputs=model.input, outputs=output)
-    else:
+    elif include == 'fc':
         output = Dense(nb_classes)(model.layers[-2].output)
         model = Model(inputs=model.input, outputs=output)
+
     return model
 
 def input_rois():
-    input_rois = Input(shape=(5,))
+    input_rois = Input(shape=(None, 5))
     return input_rois
 
 def rpn(base_layers, num_anchors):
@@ -228,7 +244,7 @@ class RoiPoolingConv(Layer):
         assert(len(x) == 2)
 
         img = x[0]
-        rois = x[1]
+        rois = x[1][0]
 
 #        outputs = []
 #        print('act_img', img.shape)
@@ -277,7 +293,10 @@ class RoiPoolingConv(Layer):
 #        rois = K.reshape(rois, (batch_size, 5))
         box_ind = K.cast(rois[:,0], 'int32')
         rois    = rois[:,1:]
-        final_output = tf.image.crop_and_resize(img, boxes=rois, box_ind=box_ind, crop_size=(self.pool_size, self.pool_size))
+        
+        rois = tf.stop_gradient(rois)
+        box_ind = tf.stop_gradient(box_ind)
+        final_output = tf.image.crop_and_resize(img, boxes=rois, box_ind=box_ind, crop_size=(self.pool_size, self.pool_size), method="bilinear")
 #        print('fo', final_output.shape)
 #        final_output = tf.Print(final_output, ['Value: ', tf.shape(final_output)])
 #        final_output = K.reshape(final_output, (batch_size, self.pool_size, self.pool_size, self.nb_channels))

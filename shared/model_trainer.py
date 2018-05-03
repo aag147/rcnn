@@ -31,6 +31,7 @@ class model_trainer:
     
     def compileModel(self, cfg):
         if cfg.optimizer == 'adam':
+            print('Optimzer: adam')
             opt = Adam(lr=0.001, decay=0.0)
         else:
             opt = SGD(lr = 0.001, momentum = 0.9, decay = 0.0, nesterov=False)

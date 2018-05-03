@@ -52,11 +52,11 @@ class DataGenerator():
       
       self.imagesMeta = imagesMeta
       self.GTMeta     = GTMeta
-      self.gt_label, self.gt_bb = image.getYData(self.dataID, self.imagesMeta, self.GTMeta, self.cfg)
+      self.gt_label, _, _ = image.getYData(self.dataID, self.imagesMeta, self.GTMeta, self.cfg)
       self.nb_images = len(self.dataID)
-      self.nb_samples = len(self.gt_label)
+      self.nb_samples = None
       if self.nb_batches is None:
-          self.nb_batches = m.floor(self.nb_samples / self.batch_size)
+          self.nb_batches = self.nb_images
       
       
       
@@ -66,22 +66,43 @@ class DataGenerator():
             print('rand')
             g = self._generateRandomBatches
         else:
-            g = self._generateIterativeBatches
+            g = self._generateIterativeImageCentricBatches
         return g()
     
-    def _generateBatchFromIDs(self, imageIdx):
+    def _generateBatchFromIDs(self, imageIdx, batchIdx):
         batchID = [self.dataID[idx] for idx in imageIdx]
 #        print(batchID)
-        [dataXI, dataXH, dataXO], _ = image.getXData(batchID, self.imagesMeta, self.images_path, self.cfg)
+        [dataXI, dataXH, dataXO], _ = image.getXData(batchID, self.imagesMeta, self.images_path, self.cfg, batchIdx)
         dataXW = image.getDataPairWiseStream(batchID, self.imagesMeta, self.cfg)
         X = [dataXI, dataXH, dataXO, dataXW]
         X = [X[i+1] for i in range(len(X)-1) if self.inputs[i]]
         if self.inputs[0] or self.inputs[1]:
             X = [dataXI] + X
-        y, _ = image.getYData(batchID, self.imagesMeta, self.GTMeta, self.cfg)
+        y, _, _ = image.getYData(batchID, self.imagesMeta, self.GTMeta, self.cfg)
         return X, y
 
-    #%% Different forms of generators          
+    #%% Different forms of generators     
+    def _generateIterativeImageCentricBatches(self):
+        'Generates iterative batches of samples'
+        
+        while 1:
+          imageIdx = 1
+          # Generate batches
+          for i in range(self.nb_batches):
+              X = []; y = []
+              batchIdx = 0
+              for imageIdx in range(imageIdx-1, self.nb_images):
+                  imageX, imageY = self._generateBatchFromIDs([imageIdx], batchIdx)  
+                  X = utils.concatXData(X, imageX)
+                  y.extend(imageY)
+                  batchIdx += 1
+                  if len(y) == self.images_per_batch or True:
+                      break
+                  
+              y = np.array(y)
+              yield X, y
+
+     
     def _generateIterativeBatches(self):
         'Generates iterative batches of samples'
         
@@ -96,7 +117,7 @@ class DataGenerator():
               batchIdx = 0
               for imageIdx in range(imageIdx-1, self.nb_images):
                   imageIdxs.append(imageIdx)
-                  imageX, imageY = self._generateBatchFromIDs([imageIdx])
+                  imageX, imageY = self._generateBatchFromIDs([imageIdx], batchIdx)
 #                  imageY = np.array([self.dataID[imageIdx] for i in range(len(imageY))])
                   s_idx = 0; f_idx = len(imageY)
                   if hoiinimageidx > 0:
@@ -130,10 +151,11 @@ class DataGenerator():
 #              sys.stdout.write('\r' + str(X[0].shape) + str(X[1].shape) + ' - nbs: ' + str(i) + '-' + str(self.nb_batches))
 #              sys.stdout.flush()
               
-              if self.inputs[0] or self.inputs[1]:
-                  X[1] = np.insert(X[1], 0, [idx for idx in range(self.batch_size)], axis=1)
-              if self.inputs[0] and self.inputs[1]:
-                  X[2] = np.insert(X[2], 0, [idx for idx in range(self.batch_size)], axis=1)
+#              if self.inputs[0] or self.inputs[1]:
+#                  X[1] = np.insert(X[1], 0, [idx for idx in range(self.batch_size)], axis=1)
+#              if self.inputs[0] and self.inputs[1]:
+#                  X[2] = np.insert(X[2], 0, [idx for idx in range(self.batch_size)], axis=1)
 #              print('fin',min(X[1][:,0]), max(X[1][:,0]))
+#              print(X[0].shape, y.shape)
               yield X, y
     

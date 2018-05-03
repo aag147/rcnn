@@ -106,8 +106,8 @@ class basic_config:
        self.winShape = (64, 64)
        
    def fast_rcnn_config(self):
-       self.mindim = 400
-       self.maxdim = 600
+       self.mindim = 600
+       self.maxdim = 1000
        self.xdim = 224
        self.ydim = 224
        self.cdim  = 3
@@ -118,10 +118,14 @@ class basic_config:
        self.par_order_of_dims = [0,2,3,1]
        self.winShape = (64, 64)
        
+       self.train_cfg.batch_size = 1
+       self.val_cfg.batch_size = 1
+       self.test_cfg.batch_size = 1
+       
    def get_args(self):
        try:
           argv = sys.argv[1:]
-          opts, args = getopt.getopt(argv,"m:c:x:d:w:v:t:b:s:f:h:")
+          opts, args = getopt.getopt(argv,"m:c:x:d:w:v:t:b:s:f:h:o:")
        except getopt.GetoptError:
           print('.py -m <my_model> -c <my_method> -x <max_classes> -d <dataset>')
           sys.exit(2)
@@ -161,6 +165,8 @@ class basic_config:
           if opt == '-h':
               assert arg.isdigit(), 'epoch learning split must be int'
               self.epoch_splits = [int(arg)]
+          if opt == '-o':
+              self.optimizer = arg
               
    def set_class_weights(self, labels, imagesMeta):
        if self.wp >= 0: 

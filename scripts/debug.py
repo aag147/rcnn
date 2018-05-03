@@ -58,7 +58,7 @@ def unnormCoords(box, shape):
     ymin = box[0] * shape[0]; ymax = box[2] * shape[0]
     return [ymin, xmin, ymax, xmax]    
 
-if True:
+if False:
     # test tf crop_and_resize    
     from keras.models import Sequential, Model
     from keras.layers import Flatten, Dense, Dropout, Reshape, Permute, Activation, \
@@ -86,19 +86,6 @@ if True:
     cfg.pool_size = 7
     print('cfg', cfg.order_of_dims)
     
-    def normCoords(box, shape):
-        xmin = box[1] / shape[1]; xmax = box[3] / shape[1]
-        ymin = box[0] / shape[0]; ymax = box[2] / shape[0]
-        return [ymin, xmin, ymax, xmax]
-    
-    def getBoxes(h, o, shape):        
-#        boxes = [normCoords(h, shape), normCoords(o, shape)]   
-        boxes = [h, o]
-        boxes = np.array(boxes)
-        print(h.shape)
-        boxes = np.insert(boxes, 0, [0,0], axis=1)
-        return boxes
-    
     idx = 0
     for sample in genTrain.begin():
         img = sample[0][0][idx]
@@ -106,15 +93,26 @@ if True:
         o   = sample[0][2][idx]
         win = sample[0][3][idx]
         break
+    print(img.shape)
+    padding = np.zeros([300, 300, 3])
+    padding[38:262,38:262,:] = img
+    h[1] = (h[1] * 244 + 38) / 300
+    h[2] = (h[2] * 244 + 38) / 300
+    h[3] = h[3] * 244 / 300
+    h[4] = h[4] * 244 / 300
+    o[1] = (o[1] * 244 + 38) / 300
+    o[2] = (o[2] * 244 + 38) / 300
+    o[3] = o[3] * 244 / 300
+    o[4] = o[4] * 244 / 300
     
-    img = img; h = h[1:]; o = o[1:]
-    img = cv.resize(img, (14,14)).astype(np.float32)
-    boxes = getBoxes(h, o, img.shape)
+#    shape = tuple([x//16 for x in img.shape[0:2]])
+    img = cv.resize(padding, shape).astype(np.float32)
+    boxes = np.array([h, o])
     imgs = np.expand_dims(img, axis=0)
     imgs = np.append(imgs, imgs, axis=0)
     
     
-    draw.drawHOI(img, unnormCoords(h, img.shape), unnormCoords(o, img.shape))
+    draw.drawHOI(img, unnormCoords(h[1:], img.shape), unnormCoords(o[1:], img.shape))
 #    draw.drawHOI(img[0], h, o)
     draw.drawImages(imagesID[0:1], imagesMeta, data.labels, path)
     
@@ -192,23 +190,24 @@ if False:
     imagesID.sort()
     draw.drawImages(imagesID[26960:26969], trainMeta, labels, cfg.data_path+'_images/train/', False)
 
-if False:
+if True:
     # Test fast-generators by plotting data
     from fast_generators import DataGenerator
     genTrain = DataGenerator(imagesMeta=data.trainMeta, GTMeta = data.trainGTMeta, cfg=cfg, data_type='train')
     import matplotlib.pyplot as plt
     import draw
     i = 0
-    idx = 1
+    idx = 0
     j = 0
     
     for sample in genTrain.begin():
 #        utils.update_progress(j / len(data.trainMeta))
 #        print(sample[1][idx])
         image = sample[0][0][idx]
-        prsBB = sample[0][1][idx]
-        objBB = sample[0][2][idx]
-#        print(prsBB)
+        prsBB = sample[0][1][idx][0]
+        objBB = sample[0][2][idx][0]
+        y     = sample[1][idx]
+        print(y)
         prsBB = unnormCoords(prsBB[1:], image.shape)
         objBB = unnormCoords(objBB[1:], image.shape)
         draw.drawHOI(image, prsBB, objBB)

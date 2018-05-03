@@ -126,6 +126,31 @@ def computeMultiLabelLoss(Y, Y_hat):
     F1 = 0.0 if mP+mR==0 else 2 * ((mP * mR) / (mP + mR))
     return accs, mP, mR, F1
 
+
+def computeConfusionMatrixLabels(Y, Y_hat):
+    Y_hat = cp.copy(Y_hat)
+    Y_hat[Y_hat>=0.5] = 1
+    Y_hat[Y_hat<0.5] = 0
+    
+    print(Y_hat.shape)
+    (smax,cmax) = Y_hat.shape
+    colour_map = np.zeros([cmax+1,cmax+1])
+    
+    for sidx in range(smax):
+        
+        gt_classes = np.where(Y[sidx,:]==1)[0]
+        pred_classes = np.where(Y_hat[sidx,:]==1)[0]
+        if len(gt_classes) == 0:
+            gt_classes = np.array([-1])
+        for gt in gt_classes:
+            if len(pred_classes) == 0:
+                colour_map[gt+1,0] += 1
+            for pred in pred_classes:
+                if pred not in gt_classes or gt==pred:
+                    colour_map[gt+1,pred+1] += 1
+    colour_map.astype(np.int)
+    return colour_map
+
 def computeIndividualLabelLoss(Y, Y_hat):
     accs = np.zeros(16)
     for x in range(16):

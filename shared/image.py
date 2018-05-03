@@ -13,17 +13,27 @@ import sys
 #%% Y DATA
 def getYData(imagesID, imagesMeta, GTMeta, cfg):
     dataLabels = []
-    dataBBs    = []
+    dataHumanBBs    = []
+    dataObjectBBs    = []
     for imageID in imagesID:
         imageMeta = imagesMeta[imageID]
+        relsY = []
+        relsH = []
+        relsO = []
         for relID, rel in imageMeta['rels'].items():
             labels, prsGT, objGT = getGTDataRel(rel, GTMeta[imageID], cfg)
-            dataLabels.append(labels)
-            dataBBs.append(prsGT + objGT)
-    dataLabels = (dataLabels)
-    dataBBs = np.array(dataBBs)
-    dataLabels = utils.getMatrixLabels(cfg.nb_classes, dataLabels)
-    return dataLabels, dataBBs
+            relsY.append(labels)
+            relsH.append(prsGT)
+            relsO.append(objGT)
+            
+        relsY = utils.getMatrixLabels(cfg.nb_classes, relsY)
+        dataLabels.append(relsY)
+        dataHumanBBs.append(relsH)
+        dataObjectBBs.append(relsO)
+    dataLabels = np.array(dataLabels)
+    dataHumanBBs = np.array(dataHumanBBs)
+    dataObjectBBs = np.array(dataObjectBBs)
+    return dataLabels, dataHumanBBs, dataObjectBBs
 
 
 def getGTLabels(myRel, GTMeta, cfg):
@@ -49,7 +59,7 @@ def getGTDataRel(rel, GTMeta, cfg):
 
 #%% X DATA
 ## Get model ready data ##
-def getXData(imagesID, imagesMeta, data_path, cfg):
+def getXData(imagesID, imagesMeta, data_path, cfg, batchIdx):
     dataX = []
     dataH = []
     dataO = []
@@ -62,21 +72,23 @@ def getXData(imagesID, imagesMeta, data_path, cfg):
 #        sys.stdout.flush()
         image = cv.cvtColor(image, cv.COLOR_BGR2RGB)
         imageClean, scale, padds = preprocessImage(image, cfg)
-        
-#        scaleX = imageClean.shape[1] / float(image.shape[1])
-#        scaleY = imageClean.shape[0] / float(image.shape[0])
-#        scales = [scaleX, scaleY]
-#        print(imageClean.shape, image.shape, scales)
-        
+
+        tmpH = []
+        tmpO = []
         for relID, rel in imageMeta['rels'].items():
             h, o = getDataFromRel(rel['prsBB'], rel['objBB'], scale, padds, imageClean.shape, cfg)
-            dataX.append(imageClean)
-            dataH.append(h)
-            dataO.append(o)
-            IDs.append(imageID)
+            tmpH.append([batchIdx] + h)
+            tmpO.append([batchIdx] + o)
+            
+        dataX.append(imageClean)
+        dataH.append(tmpH)
+        dataO.append(tmpO)
+        IDs.append(imageID)
+        batchIdx += 1
     dataX = np.array(dataX)
     dataH = np.array(dataH)
     dataO = np.array(dataO)
+#    print(dataX.shape, dataH.shape, dataO.shape)
     IDs = np.array(IDs)
     
 #    dataH = np.expand_dims(dataH, axis=1)
@@ -112,22 +124,22 @@ def preprocessImage(image, cfg):
         newHeight = cfg.mindim
         scale = float(newHeight) / shape[0]
         newWidth = int(shape[1] * scale)
-#        if newWidth > cfg.maxdim:
-#            newWidth = cfg.maxdim
-#            scale = newWidth / shape[1]
-#            newHeight = shape[0] * scale
+        if newWidth > cfg.maxdim:
+            newWidth = cfg.maxdim
+            scale = newWidth / shape[1]
+            newHeight = shape[0] * scale
     else:
         newWidth = cfg.mindim
         scale = float(newWidth) / shape[1]
         newHeight = int(shape[0] * scale)
-#        if newHeight > cfg.maxdim:
-#            newHeight = cfg.maxdim
-#            scale = newHeight / shape[0]
-#            newWidth = shape[1] * scale
+        if newHeight > cfg.maxdim:
+            newHeight = cfg.maxdim
+            scale = newHeight / shape[0]
+            newWidth = shape[1] * scale
             
 #    print('shape', image.shape)
-    newWidth = cfg.xdim
-    newHeight = cfg.ydim
+#    newWidth = cfg.xdim
+#    newHeight = cfg.ydim
     scaleWidth = float(newWidth) / image.shape[1]
     scaleHeight = float(newHeight) / image.shape[0]
     scales = [scaleHeight, scaleWidth]

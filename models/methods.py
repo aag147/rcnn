@@ -29,8 +29,8 @@ def _final_stop(inputs, outputs, cfg):
         
 def AlexNet_Weights(cfg):
     return cfg.weights_path + "alexnet_weights.h5"
-def VVG16_Weights(cfg):
-    return cfg.weights_path + "vgg16_weights_tf.h5"
+def VGG16_Weights(cfg):
+    return cfg.weights_path + "vgg16_weights_tf_notop.h5"
 
 def HO_RCNN(cfg):
     K.set_image_dim_ordering('th')
@@ -55,9 +55,9 @@ def HO_RCNN(cfg):
 
 def Fast_HO_RCNN(cfg):
     K.set_image_dim_ordering('tf')
-    weights = VVG16_Weights(cfg) if cfg.pretrained_weights == True else False
+    weights = VGG16_Weights(cfg) if cfg.pretrained_weights == True else False
 #    modelShr = AlexNet(weights, cfg.nb_classes, include='none')
-    modelShr = VGG16((cfg.ydim, cfg.xdim, cfg.cdim), weights, cfg.nb_classes, include='none')
+    modelShr = VGG16((None, None, cfg.cdim), weights, cfg.nb_classes, include='basic')
     prsRoI   = input_rois()
     objRoI   = input_rois()
     print(modelShr.layers[-1].output_shape)
@@ -65,13 +65,18 @@ def Fast_HO_RCNN(cfg):
     modelObj = classifier(modelShr.output, objRoI, cfg, nb_classes=cfg.nb_classes)
     modelPar = PairWiseStream(input_shape=(64,64,2), nb_classes = cfg.nb_classes, include='fc')      
     
+    # Only train from conv3_1
+    for i, layer in enumerate(modelShr.layers):
+        layer.trainable = False
+        if i > 6:
+            break
+    
     outputs = [modelPrs, modelObj, modelPar.output]
     outputs = [outputs[i] for i in range(len(outputs)) if cfg.inputs[i]]
     
     if sum(cfg.inputs) == 1:
         outputs = outputs[0]
-    else:
-        
+    else:    
         outputs = Add()(outputs)
         
     inputs = [prsRoI, objRoI, modelPar.input]
