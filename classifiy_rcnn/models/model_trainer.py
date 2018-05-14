@@ -49,7 +49,7 @@ class model_trainer:
                      cb.SaveLog2File(cfg), \
                      cb.PrintCallBack()]
         
-        if cfg.include_eval:
+        if cfg.include_eval and False:
             callbacks.append(cb.EvaluateTest(self.genTest, m.EvalResults, cfg))
             
             

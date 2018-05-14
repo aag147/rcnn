@@ -17,6 +17,16 @@ import tensorflow as tf
 
 import numpy as np
 
+
+def rpn(base_layers, num_anchors):
+    x = Conv2D(256, (3, 3), padding='same', activation='relu', kernel_initializer='normal', name='rpn_conv1')(
+        base_layers)
+
+    x_class = Conv2D(num_anchors, (1, 1), activation='sigmoid', kernel_initializer='uniform', name='rpn_out_class')(x)
+    x_regr = Conv2D(num_anchors * 4, (1, 1), activation='linear', kernel_initializer='zero', name='rpn_out_regress')(x)
+
+    return [x_class, x_regr, base_layers]
+
 def fullyConnected(x):
     assert(len(x) == 1)
     rois = x[0]
@@ -25,17 +35,17 @@ def fullyConnected(x):
     dense_1 = TimeDistributed(
         Dense(4096, activation='relu', kernel_initializer='TruncatedNormal')
     )(dense_1)
-    dense_2 = Dropout(0.5)(dense_1)
+    dense_1 = Dropout(0.5)(dense_1)
     dense_2 = TimeDistributed(
         Dense(4096, activation='relu', kernel_initializer='TruncatedNormal')
-    )(dense_2)
-    dense_3 = Dropout(0.5)(dense_2)
+    )(dense_1)
+    dense_2 = Dropout(0.5)(dense_2)
 
 #    out_class = Dense(nb_classes, kernel_initializer='uniform')(dense_3)
     # note: no regression target for bg class
 #    out_regr = Dense(4 * (nb_classes - 1), activation='linear', kernel_initializer='zero')(dense_3)
 
-    return dense_3
+    return dense_2
 
 
 class RoiPoolingConv(Layer):

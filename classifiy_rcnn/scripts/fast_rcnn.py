@@ -6,10 +6,11 @@ Created on Thu Mar 15 13:49:30 2018
 """
 
 import sys 
-sys.path.append('../../')
-sys.path.append('../shared/')
+sys.path.append('../../../')
+sys.path.append('../../shared/')
 sys.path.append('../models/')
 sys.path.append('../cfgs/')
+sys.path.append('../data/')
 
 import utils
 from model_trainer import model_trainer
@@ -44,9 +45,9 @@ if True:
     
     # Create model
     print('Creating model...')
-    model = Fast_HO_RCNN(cfg)
-    trainer = model_trainer(model=model, genTrain=genTrain, genVal=genVal, genTest=genTest, task=cfg.task)
-    trainer.compileModel(cfg)
+#    model = Fast_HO_RCNN(cfg)
+#    trainer = model_trainer(model=model, genTrain=genTrain, genVal=genVal, genTest=genTest, task=cfg.task)
+#    trainer.compileModel(cfg)
     
     # Train model
     print('Training model...')

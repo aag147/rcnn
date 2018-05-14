@@ -57,6 +57,19 @@ def getGTDataRel(rel, GTMeta, cfg):
     return labels, prsGT, objGT
 
 
+#%% Fast DATA
+def getImage(imageMeta, data_path, cfg):
+    image = cv.imread(data_path + imageMeta['imageName'])
+    image = cv.cvtColor(image, cv.COLOR_BGR2RGB)
+    imageClean, scale, padds = preprocessImage(image, cfg)
+    return imageClean, scale
+
+def getBoxes(imageMeta, cfg):
+    image = cv.imread(data_path + imageMeta['imageName'])
+    image = cv.cvtColor(image, cv.COLOR_BGR2RGB)
+    imageClean, scale, padds = preprocessImage(image, cfg)
+    return imageClean, scale
+
 #%% X DATA
 ## Get model ready data ##
 def getXData(imagesID, imagesMeta, data_path, cfg, batchIdx):
@@ -80,9 +93,9 @@ def getXData(imagesID, imagesMeta, data_path, cfg, batchIdx):
             tmpH.append([batchIdx] + h)
             tmpO.append([batchIdx] + o)
             
-        dataX.append(imageClean)
-        dataH.append(tmpH)
-        dataO.append(tmpO)
+            dataX.append(imageClean)
+            dataH.append([[batchIdx] + h])
+            dataO.append([[batchIdx] + o])
         IDs.append(imageID)
         batchIdx += 1
     dataX = np.array(dataX)
@@ -120,7 +133,7 @@ def getX2Data(imagesID, imagesMeta, data_path, cfg):
 ## Resize and normalize image ##
 def preprocessImage(image, cfg):
     shape = image.shape
-    if shape[0] > shape[1]:
+    if shape[0] < shape[1]:
         newHeight = cfg.mindim
         scale = float(newHeight) / shape[0]
         newWidth = int(shape[1] * scale)

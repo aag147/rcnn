@@ -278,7 +278,7 @@ def getVectorLabels(YMatrix):
 
 
 #%% IOU 
-def get_iou(bb1, bb2, include_union = True, weight=False):
+def get_iou(bb1, bb2, include_union = True):
     """
     https://stackoverflow.com/questions/25349178/calculating-percentage-of-bounding-box-overlap-for-image-detector-evaluation
     Calculate the Intersection over Union (IoU) of two bounding boxes.

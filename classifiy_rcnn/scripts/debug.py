@@ -32,13 +32,22 @@ cfg = data.cfg
 cfg.fast_rcnn_config()
 
     
-if True:
+if False:
     # Create batch generators
     genTrain = DataGenerator(imagesMeta=data.trainMeta, GTMeta = data.trainGTMeta, cfg=cfg, data_type='train')
     genVal = DataGenerator(imagesMeta=data.valMeta, GTMeta = data.trainGTMeta, cfg=cfg, data_type='val')
     genTest = DataGenerator(imagesMeta=data.testMeta, GTMeta = data.testGTMeta, cfg=cfg, data_type='test')  
 
 
+if True:
+    # object labels
+    object_mapping = {'bg': 0}
+    for rel in labels:
+        objname = rel['obj']
+        if objname not in object_mapping:
+            object_mapping[objname] = len(object_mapping)
+
+    utils.save_dict(object_mapping, cfg.part_results_path)
 
 if False:    
     i = 0
@@ -190,7 +199,7 @@ if False:
     imagesID.sort()
     draw.drawImages(imagesID[26960:26969], trainMeta, labels, cfg.data_path+'_images/train/', False)
 
-if True:
+if False:
     # Test fast-generators by plotting data
     from fast_generators import DataGenerator
     genTrain = DataGenerator(imagesMeta=data.trainMeta, GTMeta = data.trainGTMeta, cfg=cfg, data_type='train')

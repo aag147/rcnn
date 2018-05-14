@@ -101,8 +101,8 @@ def drawProposalBox(bb):
     xmin = bb[0]; xmax = xmin + bb[2]
     ymin = bb[1]; ymax = ymin + bb[3]
     
-    xmin = bb[1]; xmax = bb[3]
-    ymin = bb[0]; ymax = bb[2]
+    xmin = bb[0]; xmax = bb[1]
+    ymin = bb[2]; ymax = bb[3]
     
     box = np.array([[xmin, xmax, xmax, xmin, xmin], [ymin, ymin, ymax, ymax, ymin]])
     return box

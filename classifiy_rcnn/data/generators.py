@@ -11,7 +11,6 @@ import math as m
 import cv2 as cv
 import utils
 import image
-import sys
 
 class DataGenerator():
     
@@ -35,7 +34,7 @@ class DataGenerator():
       self.shuffle = g_cfg.shuffle
       self.inputs = cfg.inputs
       
-      cfg.img_out_reduction = (16, 16)
+      cfg.img_out_reduction = (1, 1)
       
       self.data_path = cfg.data_path
       self.images_path = self.data_path + 'images/'
@@ -47,16 +46,14 @@ class DataGenerator():
       self.dataID.sort()
       if self.shuffle:
           r.shuffle(self.dataID)
-      else:
-          self.dataID.sort()
       
       self.imagesMeta = imagesMeta
       self.GTMeta     = GTMeta
       self.gt_label, _, _ = image.getYData(self.dataID, self.imagesMeta, self.GTMeta, self.cfg)
       self.nb_images = len(self.dataID)
-      self.nb_samples = None
+      self.nb_samples = len(self.gt_label)
       if self.nb_batches is None:
-          self.nb_batches = self.nb_images
+          self.nb_batches = m.ceil(self.nb_samples / self.batch_size)
       
       
       
@@ -66,47 +63,71 @@ class DataGenerator():
             print('rand')
             g = self._generateRandomBatches
         else:
-            g = self._generateIterativeImageCentricBatches
+            g = self._generateIterativeBatches
         return g()
     
-    def _generateBatchFromIDs(self, imageIdx, batchIdx):
-        batchID = [self.dataID[idx] for idx in imageIdx]
+    def _generateBatchFromIDs(self, batchID):
+        batchID = [self.dataID[idx] for idx in batchID]
 #        print(batchID)
-        [dataXI, dataXH, dataXO], _ = image.getXData(batchID, self.imagesMeta, self.images_path, self.cfg, batchIdx)
+        [dataXP, dataXB] = image.getX2Data(batchID, self.imagesMeta, self.images_path, self.cfg)
         dataXW = image.getDataPairWiseStream(batchID, self.imagesMeta, self.cfg)
-        X = [dataXI, dataXH, dataXO, dataXW]
-        X = [X[i+1] for i in range(len(X)-1) if self.inputs[i]]
-        if self.inputs[0] or self.inputs[1]:
-            X = [dataXI] + X
+        X = [dataXP, dataXB, dataXW]
+        X = [X[i] for i in range(len(X)) if self.inputs[i]]
         y, _, _ = image.getYData(batchID, self.imagesMeta, self.GTMeta, self.cfg)
+        y = np.squeeze(y, axis=0)
+        return X, y
+    
+    def _generateBatchFromBGs(self, imageMeta, bbs):
+        imageID = 'id'
+        imagesMeta = {imageID: {'imageName': imageMeta['imageName']}}
+        rels = {}
+        for i in range(0, len(bbs), 2):
+            rels = {str(i): {'objBB': bbs[i], 'prsBB': bbs[i+1], 'labels': [0]}}
+        imagesMeta[imageID]['rels'] = rels
+        
+        [dataXP, dataXB] = image.getX2Data([imageID], imagesMeta, self.images_path, self.cfg)
+        dataXW = image.getDataPairWiseStream([imageID], self.imagesMeta, self.cfg)
+        X = [dataXP, dataXB, dataXW]
+        y = np.zeros([int(len(bbs)/2), self.nb_classes])
         return X, y
 
-    #%% Different forms of generators     
-    def _generateIterativeImageCentricBatches(self):
-        'Generates iterative batches of samples'
-        
+    #%% Different forms of generators
+    def _generateRandomBatches(self):
+        'Generates random batches of samples'
         while 1:
-          imageIdx = 1
           # Generate batches
-          for i in range(self.nb_batches):
-              X = []; y = []
-              batchIdx = 0
-              for imageIdx in range(imageIdx-1, self.nb_images):
-                  imageX, imageY = self._generateBatchFromIDs([imageIdx], batchIdx)  
-                  X = utils.concatXData(X, imageX)
-                  y.extend(imageY)
-                  batchIdx += 1
-                  if len(y) == self.images_per_batch or True:
-                      break
+              
+          X = []
+          y = np.zeros([self.batch_size, self.nb_classes])
+          imageIdxs = r.sample(range(0,self.nb_images), self.images_per_batch)
+          for idx, imageIdx in enumerate(imageIdxs):
+              imageX, imageY = self._generateBatchFromIDs([imageIdx])
+              # Variables
+              s_idx = 0; f_idx = min(2,len(imageY))
+              nb_bgs = self.nb_samples_per_image - f_idx
+              idx = idx*self.nb_samples_per_image
+              # Data
+              imageMeta = self.imagesMeta[self.dataID[imageIdx]]
+              imageXCut = utils.spliceXData(imageX, s_idx, f_idx)
+              imageYCut = imageY[s_idx:f_idx, :]
+              if nb_bgs > 0:
+                  bbs  = utils.createBackgroundBBs(imageMeta, nb_bgs, self.images_path)
+                  imageXBG, imageYBG  = self._generateBatchFromBGs(imageMeta, bbs)
+                  imageXCmb = utils.concatXData(imageXCut, imageXBG)
+#                  print(y.shape, idx, self.nb_samples_per_image, len(imageIdxs))
+                  imageYCmb = np.append(imageYCut, imageYBG, 0)
                   
-              y = np.array(y)
-              yield X, y
-
-     
+              else:
+                  imageXCmb = imageXCut
+                  imageYCmb = imageYCut
+              X = utils.concatXData(X, imageXCmb)
+              y[idx:idx+self.nb_samples_per_image, :] = imageYCmb
+          yield X, y
+          
     def _generateIterativeBatches(self):
         'Generates iterative batches of samples'
         
-#        thisID = 'HICO_train2015_00016257.jpg'
+        
         while 1:
           imageIdx = 1
           hoiinimageidx = 0
@@ -114,11 +135,9 @@ class DataGenerator():
           for i in range(self.nb_batches):
               X = []; y = []
               imageIdxs = []
-              batchIdx = 0
               for imageIdx in range(imageIdx-1, self.nb_images):
                   imageIdxs.append(imageIdx)
-                  imageX, imageY = self._generateBatchFromIDs([imageIdx], batchIdx)
-#                  imageY = np.array([self.dataID[imageIdx] for i in range(len(imageY))])
+                  imageX, imageY = self._generateBatchFromIDs([imageIdx])
                   s_idx = 0; f_idx = len(imageY)
                   if hoiinimageidx > 0:
                       s_idx = hoiinimageidx
@@ -130,32 +149,16 @@ class DataGenerator():
                   if (len(imageY) - hoiinimageidx) + len(y) >= self.batch_size:
                       hoiinimageidx = hoiinimageidx + len(imageY) - ((len(imageY) + len(y)) - self.batch_size)
                       f_idx = hoiinimageidx
-#                      hoiinimageidx += tmp_hoiinimageidx
                   else:
                      hoiinimageidx = 0
-#                  if s_idx > 0 or f_idx != len(imageY):
-#                      print('ID', self.dataID[imageIdx][18:], str(s_idx) + '/' + str(f_idx) + '/' + str(len(imageY)))
-#                  if imageIdx > 1500:
-#                      print(self.dataID[imageIdx])
+                      
                   imageXCut = utils.spliceXData(imageX, s_idx, f_idx)
                   X = utils.concatXData(X, imageXCut)
-                  y.extend(imageY[s_idx:f_idx,:])
-                  batchIdx += 1
+                  y.extend(imageY[s_idx:f_idx, :])
+#                  y.extend([self.dataID[imageIdx] for i in range(s_idx, f_idx)])
                   if len(y) == self.batch_size:
                       break
-#              if imageIdx > 1500:
-#                  print('lengh', len(y))
               imageIdx += 1
               y = np.array(y)
-#              print(X[0].shape, X[1].shape, X[2].shape, X[3].shape)
-#              sys.stdout.write('\r' + str(X[0].shape) + str(X[1].shape) + ' - nbs: ' + str(i) + '-' + str(self.nb_batches))
-#              sys.stdout.flush()
-              
-#              if self.inputs[0] or self.inputs[1]:
-#                  X[1] = np.insert(X[1], 0, [idx for idx in range(self.batch_size)], axis=1)
-#              if self.inputs[0] and self.inputs[1]:
-#                  X[2] = np.insert(X[2], 0, [idx for idx in range(self.batch_size)], axis=1)
-#              print('fin',min(X[1][:,0]), max(X[1][:,0]))
-#              print(X[0].shape, y.shape)
               yield X, y
     

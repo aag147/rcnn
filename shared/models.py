@@ -16,7 +16,7 @@ from keras.engine.topology import Layer
 from keras.initializers import TruncatedNormal
 import keras.applications as keras_models
 
-#K.set_image_dim_ordering('th')
+K.set_image_dim_ordering('tf')
 
 from keras.layers import Flatten, Dense, Dropout, Reshape, Permute, Activation, \
     Input, merge
@@ -26,7 +26,6 @@ from keras.utils.layer_utils import convert_all_kernels_in_model
 
 import tensorflow as tf
 
-import alexnet as alex
 
 def VGG16_keras():
     def f(x):
@@ -35,7 +34,6 @@ def VGG16_keras():
             weights='imagenet',
             input_tensor=x
         )
-
         return y.layers[-2].output
 
     return f   
@@ -82,12 +80,6 @@ def VGG16(input_shape, weights_path=None, nb_classes=1000, include='all'):
     return model
 
 
-def AlexNet2(weights_path=None, nb_classes=1000, include = 'all'):
-    inputs = Input(shape=(227,227,3))
-    outputs = alex.create_model(inputs)
-    model = Model(inputs=inputs, outputs=outputs)
-    model = final_model(model, weights_path, nb_classes, include)
-    return model
 
 def AlexNet(input_shape, weights_path=None, nb_classes=1000, include = 'all'):
     #https://github.com/duggalrahul/AlexNet-Experiments-Keras/blob/master/convnets-keras/convnetskeras/convnets.py
