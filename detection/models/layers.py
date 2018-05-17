@@ -94,10 +94,10 @@ class RoiPoolingConv(Layer):
         final_output = K.expand_dims(final_output, axis=0)
         return final_output
     
-    def get_config(self):
-        configuration = {
-            "pool_size": self.pool_size,
-            "nb_channels": self.nb_channels
-        }
-
-        return {**super(RoiPoolingConv, self).get_config(), **configuration}
+#    def get_config(self):
+#        configuration = {
+#            "pool_size": self.pool_size,
+#            "nb_channels": self.nb_channels
+#        }
+#
+#        return {**super(RoiPoolingConv, self).get_config(), **configuration}

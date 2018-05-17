@@ -342,6 +342,10 @@ def preprocessImage(img, cfg):
             scale = newHeight / shape[0]
             newWidth = shape[1] * scale
 
+
+    newWidth = round(newWidth)
+    newHeight = round(newHeight)
+
     scaleWidth = float(newWidth) / img.shape[1]
     scaleHeight = float(newHeight) / img.shape[0]
     scales = [scaleHeight, scaleWidth]
