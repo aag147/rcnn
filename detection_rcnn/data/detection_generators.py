@@ -65,8 +65,8 @@ class DataGenerator():
 #        batchIdx = 0
         for imageID in imageIDs:
             imageMeta = self.imagesMeta[imageID]
-            img, imageDims = filters_rpn.rpn_inputs(imageMeta, self.images_path, self.cfg)
-            y_rpn_cls, y_rpn_regr = filters_rpn.rpn_ground_truths(imageMeta, imageDims, self.cfg)
+            img, imageDims = filters_rpn.prepareInputs(imageMeta, self.images_path, self.cfg)
+            y_rpn_cls, y_rpn_regr = filters_rpn.prepareTargets(imageMeta, imageDims, self.cfg)
             
         return img, [y_rpn_cls, y_rpn_regr], imageMeta, imageDims
 

@@ -122,6 +122,32 @@ class basic_config:
        self.val_cfg.batch_size = 1
        self.test_cfg.batch_size = 1
        
+       #rpn filters
+       self.rpn_stride = 16
+        
+       self.anchor_sizes = [128, 256, 512]
+       self.anchor_ratios = [[1, 1], [1, 2], [2, 1]]
+        
+       self.rpn_min_overlap = 0.1
+       self.rpn_max_overlap = 0.5
+        
+       # detection filters
+       self.detection_max_overlap = 0.5
+       self.detection_min_overlap = 0.1
+       self.nb_detection_rois = 32
+       self.detection_nms_max_boxes=256
+       self.detection_nms_overlap_thresh=0.9
+        
+       # hoi filters
+       self.hoi_bbox_threshold = 0.5
+       self.hoi_nms_overlap_thresh=0.9
+        
+       # model
+       self.nb_anchors = len(self.anchor_sizes) * len(self.anchor_ratios)
+       self.pool_size = 7
+       self.nb_object_classes = 81
+       self.nb_hoi_classes = 601
+       
    def get_args(self):
        try:
           argv = sys.argv[1:]

@@ -7,45 +7,57 @@ Created on Tue May  8 12:26:50 2018
 import sys 
 sys.path.append('../../')
 sys.path.append('../shared/')
-sys.path.append('../fast_rcnn/')
-sys.path.append('../cfgs/')
-sys.path.append('../layers/')
+sys.path.append('../detection_rcnn/data/')
+sys.path.append('../detection_rcnn/filters/')
+sys.path.append('../detection_rcnn/models/')
 
-from config import basic_config
-import utils
+import utils,\
+       extract_data,\
+       methods,\
+       losses,\
+       filters_detection,\
+       filters_hoi,\
+       filters_helper as helper
 from detection_generators import DataGenerator
 import numpy as np
+from keras.optimizers import Adam, SGD, RMSprop
 
 
-# Config
-cfg = basic_config(False)
-cfg.fast_rcnn_config()
-cfg.dataset = 'COCO'
-cfg.part_results_path = 'C:/Users/aag14/Documents/Skole/Speciale/results/'
-cfg.part_data_path  = 'C:/Users/aag14/Documents/Skole/Speciale/data/'
-cfg.weights_path  = 'C:/Users/aag14/Documents/Skole/Speciale/weights/'
-cfg.update_paths()
+if True:
+    ### Config ###
+    data = extract_data.object_data(False)
+    cfg = data.cfg
+    class_mapping = data.class_mapping    
 
+### test ###
+# Get data, image and anchor ground truths
+genVal = DataGenerator(imagesMeta = data.valGTMeta, cfg=cfg, data_type='val').begin()
+X, [Y1,Y2], imageMeta, imageDims = next(genVal)
 
-cfg.nb_classes = 81
+# filter
+X = X[0]
+rpn_props = Y1[:,:,:,9:]
+rpn_deltas = Y2[:,:,:,36:]
 
-cfg.rpn_stride = 16
+# post preprocessing
+pred_anchors = helper.deltas2Anchors(rpn_props, rpn_deltas, cfg, imageDims)
+pred_anchors = helper.non_max_suppression_fast(pred_anchors, overlap_thresh=cfg.detection_nms_overlap_thresh)
+pred_anchors = pred_anchors[:, 0: -1]
 
-cfg.anchor_sizes = [128, 256, 512]
-cfg.anchor_ratios = [[1, 1], [1, 2], [2, 1]]
+# get inputs and targets
+rois, true_labels, true_boxes, IouS = filters_detection.prepareTargets(pred_anchors, imageMeta, imageDims, class_mapping, cfg)
+norm_rois = filters_detection.prepareInputs(rois, imageDims)
 
-cfg.rpn_min_overlap = 0.1
-cfg.rpn_max_overlap = 0.5
+# reduce and filter
+samples = helper.reduce_rois(true_labels, cfg)
+rois = rois[samples, :]
+norm_rois = norm_rois[:, samples, :]
+det_props = true_labels[:, samples, :]
+det_deltas = true_boxes[:, samples, 320:]
 
-# Data
-valGTMeta = utils.load_dict(cfg.data_path + 'val_GT')
-class_mapping = utils.load_dict(cfg.data_path + 'class_mapping')
-
-# Create batch generators
-genVal = DataGenerator(imagesMeta = valGTMeta, cfg=cfg, data_type='val').begin()
-
-
-# test
-deltas_to_roi(rpn_layer, regr_layer, cfg)
-reduce_rois(true_labels, cfg)
-detection_ground_truths(rois, imageMeta, imageDims, cfg, class_mapping)
+# post preprocessing
+pred_boxes = helper.deltas2Boxes(det_props, det_deltas, rois, cfg)
+#pred_boxes = helper.non_max_suppression_boxes(pred_boxes, cfg)
+import draw
+anchors = draw.drawPositiveRois(X, pred_boxes)
+bboxes = draw.drawGTBoxes(X, imageMeta, imageDims)

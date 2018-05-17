@@ -12,15 +12,16 @@ import filters_helper as helper
 import utils
 
 
-def rpn_inputs(imageMeta, images_path, cfg):
+def prepareInputs(imageMeta, images_path, cfg):
     img = cv.imread(images_path + imageMeta['imageName'])
     img = cv.cvtColor(img, cv.COLOR_BGR2RGB)
     imgRedux, scale = helper.preprocessImage(img, cfg)
-    imgDims = {'shape': img.shape, 'redux_shape':imgRedux.shape, 'scale':scale}
+    output_shape = [imgRedux.shape[0] / cfg.rpn_stride, imgRedux.shape[1] / cfg.rpn_stride]
+    imgDims = {'shape': img.shape, 'redux_shape':imgRedux.shape, 'output_shape':output_shape, 'scale':scale}
     imgRedux = np.expand_dims(imgRedux, axis=0)
     return imgRedux, imgDims
 
-def rpn_ground_truths(imageMeta, imageDims, cfg):
+def prepareTargets(imageMeta, imageDims, cfg):
 
     #############################
     ########## Image ############
@@ -66,7 +67,7 @@ def rpn_ground_truths(imageMeta, imageDims, cfg):
     #############################
     ##### Ground truth boxes ####
     #############################
-    gta = helper.normalizeGTboxes(bboxes, scale=scale)
+    gta = helper.normalizeGTboxes(bboxes, scale=scale, roundoff=True)
     
 #    draw.drawHOI(image, gta[0,:], gta[0,:])
      
@@ -99,21 +100,13 @@ def rpn_ground_truths(imageMeta, imageDims, cfg):
                         gt = gta[gtidx]
                         curr_iou = utils.get_iou(gt, at)
                         if curr_iou > best_iou_for_gtbox[gtidx] or curr_iou > rpn_max_overlap:
-                            # Centered coordinates
-                            cxg = (gt['xmin'] + gt['xmax']) / 2.0
-                            cyg = (gt['ymin'] + gt['ymax']) / 2.0
-                            cxa = (at['xmin'] + at['xmax']) / 2.0
-                            cya = (at['ymin'] + at['ymax']) / 2.0
-                            # Widths and heights
-                            wg  = gt['xmax'] - gt['xmin']
-                            hg  = gt['ymax'] - gt['ymin']
-                            wa  = at['xmax'] - at['xmin']
-                            ha  = at['ymax'] - at['ymin']
-                            #Target ground truth
-                            tx = (cxg - cxa) / wa
-                            ty = (cyg - cya) / ha
-                            tw = np.log(wg / wa)
-                            th = np.log(hg / ha)
+                            tx, ty, tw, th = helper.get_GT_deltas(gt, at)
+                            
+                            bxmin, bymin, bw, bh = helper.apply_regr([at['xmin'],at['ymin'],at['xmax']-at['xmin'],at['ymax']-at['ymin']], [tx,ty,tw,th])
+#                            print(curr_iou)
+#                            print('at',at['xmin'], at['ymin'], at['xmax'], at['ymax'])
+#                            print('gt',gt['xmin'], gt['ymin'], gt['xmax'], gt['ymax'])
+#                            print('bb',bxmin, bymin, bxmin + bw, bymin + bh)
     						
     					# all GT boxes should be mapped to an anchor box, so we keep track of which anchor box was best
                         if curr_iou > best_iou_for_gtbox[gtidx]:

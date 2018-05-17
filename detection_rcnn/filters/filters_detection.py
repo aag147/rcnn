@@ -10,6 +10,134 @@ import utils
 
 import filters_helper as helper
 
+
+def prepareInputs(rois, imageDims):
+    #(xmin,ymin,xmax,ymax) -> (ymin,xmin,ymax,xmax)
+    
+    new_rois = np.zeros_like(rois)
+    new_rois[:,0] = rois[:,1]
+    new_rois[:,1] = rois[:,0]
+    new_rois[:,2] = rois[:,1] + rois[:,3]
+    new_rois[:,3] = rois[:,0] + rois[:,2]
+    
+#    new_rois = helper.normalizeRoIs(new_rois, imageDims)
+    
+    new_rois = np.insert(new_rois, 0, 0, axis=1)
+    new_rois = np.expand_dims(new_rois, axis=0)
+    
+    return new_rois
+
+
+def prepareTargets(rois, imageMeta, imageDims, class_mapping, cfg):    
+    #############################
+    ########## Image ############
+    #############################
+    bboxes = imageMeta['objects']
+    
+    scale = imageDims['scale']
+#    shape = imageDims['shape']
+
+    #############################
+    ###### Set Parameters #######
+    #############################    
+    rpn_stride            = cfg.rpn_stride
+    detection_max_overlap = cfg.detection_max_overlap
+    detection_min_overlap = cfg.detection_min_overlap
+    
+    #############################
+    #### Initialize matrices ####
+    #############################    
+    x_roi = []
+    y_class_num = []
+    y_class_regr_coords = []
+    y_class_regr_label = []
+    IoUs = []  # for debugging only
+
+    #############################
+    ##### Ground truth boxes ####
+    #############################
+    gta = helper.normalizeGTboxes(bboxes, scale=scale, rpn_stride=rpn_stride)
+
+    #############################
+    #### Ground truth objects ###
+    #############################
+    for ix in range(rois.shape[0]):
+        (xmin, ymin, width, height) = rois[ix, :]
+#        xmin = int(round(xmin))
+#        ymin = int(round(ymin))
+#        xmax = int(round(xmax))
+#        ymax = int(round(ymax))
+        
+        rt = {'xmin': xmin, 'ymin': ymin, 'xmax': xmin+width, 'ymax': ymin+height}
+
+        best_iou = 0.0
+        best_bbox = -1
+        for bbidx, gt in enumerate(gta):
+            curr_iou = utils.get_iou(gt, rt)
+            if curr_iou > best_iou:
+#                print(curr_iou)
+                best_iou = curr_iou
+                best_bbox = bbidx
+
+        if best_iou < detection_min_overlap:
+            continue
+        else:
+            x_roi.append([xmin, ymin, width, height])
+            IoUs.append(best_iou)
+
+            if detection_min_overlap <= best_iou < detection_max_overlap:
+                # hard negative example
+                cls_name = 'bg'
+            elif detection_max_overlap <= best_iou:
+                cls_name = bboxes[best_bbox]['label']                
+                tx, ty, tw, th = helper.get_GT_deltas(gta[best_bbox], rt)
+                
+#                bxmin, bymin, bw, bh = helper.apply_regr([xmin,ymin,width,height], [tx,ty,tw,th])
+#                print(best_iou)
+#                print('rt',rt['xmin'], rt['ymin'], rt['xmax'], rt['ymax'])
+#                print('gt',gta[best_bbox]['xmin'], gta[best_bbox]['ymin'], gta[best_bbox]['xmax'], gta[best_bbox]['ymax'])
+#                print('bb',bxmin, bymin, bxmin + bw, bymin + bh)
+            else:
+                print('roi = {}'.format(best_iou))
+                raise RuntimeError
+
+        # Classification ground truth
+        class_num = class_mapping[cls_name]
+        class_label = len(class_mapping) * [0]
+        class_label[class_num] = 1
+        y_class_num.append(copy.deepcopy(class_label))
+        
+        # Regression ground truth
+        coords = [0] * 4 * (len(class_mapping) - 1)
+        labels = [0] * 4 * (len(class_mapping) - 1)
+        if cls_name != 'bg':
+            label_pos = 4 * class_num
+#            sx, sy, sw, sh = C.classifier_regr_std
+            coords[label_pos:4 + label_pos] = [tx, ty, tw, th]
+#            coords[label_pos+0] * sx; coords[label_pos+1] * sy
+#            coords[label_pos+2] * sw; coords[label_pos+3] * sh
+            labels[label_pos:4 + label_pos] = [1, 1, 1, 1]
+            y_class_regr_coords.append(copy.deepcopy(coords))
+            y_class_regr_label.append(copy.deepcopy(labels))
+        else:
+            y_class_regr_coords.append(copy.deepcopy(coords))
+            y_class_regr_label.append(copy.deepcopy(labels))
+
+    if len(x_roi) == 0:
+        return None, None, None, None
+
+    rois = np.array(x_roi)
+    
+    true_labels = np.array(y_class_num)
+    true_boxes = np.concatenate([np.array(y_class_regr_label), np.array(y_class_regr_coords)], axis=1)
+
+    return rois, np.expand_dims(true_labels, axis=0), np.expand_dims(true_boxes, axis=0), IoUs
+
+
+########################
+###### OUT DATED #######
+########################
+
 def apply_regr_np(X, T):
     try:
         x = X[0, :, :]
@@ -98,7 +226,8 @@ def non_max_suppression_fast(boxes, overlap_thresh=0.9, max_boxes=300):
 
 
 def deltas_to_roi(rpn_layer, regr_layer, cfg):
-#    regr_layer = regr_layer / cfg.std_scaling
+    # regr_layer = regr_layer / cfg.std_scaling
+    # [dx,dy,dw,dh] -> (xmin,ymin,xmax,ymax)
     
     #############################
     ######## Parameters #########
@@ -161,158 +290,8 @@ def deltas_to_roi(rpn_layer, regr_layer, cfg):
 
     # I guess boxes and prob are all 2d array, I will concat them
     all_boxes = np.hstack((all_boxes, np.array([[p] for p in all_probs])))
+    
     result = non_max_suppression_fast(all_boxes, overlap_thresh=overlap_thresh, max_boxes=max_boxes)
     # omit the last column which is prob
     result = result[:, 0: -1]
     return result
-
-
-def reduce_rois(true_labels, cfg):
-    #############################
-    ######## Parameters #########
-    #############################    
-    nb_detection_rois = cfg.nb_detection_rois
-    
-    neg_samples = np.where(true_labels[0, :, 0] == 1)
-    pos_samples = np.where(true_labels[0, :, 0] == 0)
-
-    if len(neg_samples) > 0:
-        neg_samples = neg_samples[0]
-    else:
-        neg_samples = []
-
-    if len(pos_samples) > 0:
-        pos_samples = pos_samples[0]
-    else:
-        pos_samples = []
-
-    # Half positives, half negatives
-    if len(pos_samples) < nb_detection_rois // 2:
-        selected_pos_samples = pos_samples.tolist()
-    else:
-        selected_pos_samples = np.random.choice(pos_samples, nb_detection_rois // 2, replace=False).tolist()
-    try:
-        selected_neg_samples = np.random.choice(neg_samples, nb_detection_rois - len(selected_pos_samples),
-                                                replace=False).tolist()
-    except:
-        selected_neg_samples = np.random.choice(neg_samples, nb_detection_rois - len(selected_pos_samples),
-                                                replace=True).tolist()
-
-    sel_samples = selected_pos_samples + selected_neg_samples
-    return sel_samples
-
-
-
-def detection_ground_truths(rois, imageMeta, imageDims, class_mapping, cfg):    
-    #############################
-    ########## Image ############
-    #############################
-    bboxes = imageMeta['objects']
-    
-    scale = imageDims['scale']
-    shape = imageDims['shape']
-
-    #############################
-    ###### Set Parameters #######
-    #############################    
-    rpn_stride             = cfg.rpn_stride
-    detection_max_overlap = cfg.detection_max_overlap
-    detection_min_overlap = cfg.detection_min_overlap
-    
-    #############################
-    #### Initialize matrices ####
-    #############################    
-    x_roi = []
-    y_class_num = []
-    y_class_regr_coords = []
-    y_class_regr_label = []
-    IoUs = []  # for debugging only
-
-    #############################
-    ##### Ground truth boxes ####
-    #############################
-    gta = helper.normalizeGTboxes(bboxes, scale=scale, rpn_stride=rpn_stride)
-
-
-    #############################
-    #### Ground truth objects ###
-    #############################
-    for ix in range(rois.shape[0]):
-        (xmin, ymin, xmax, ymax) = rois[ix, :]
-        xmin = int(round(xmin))
-        ymin = int(round(ymin))
-        xmax = int(round(xmax))
-        ymax = int(round(ymax))
-        
-        rt = {'xmin': xmin, 'ymin': ymin, 'xmax': xmax, 'ymax': ymax}
-
-        best_iou = 0.0
-        best_bbox = -1
-        for bbidx, gt in enumerate(gta):
-            curr_iou = utils.get_iou(gt, rt)
-            if curr_iou > best_iou:
-                best_iou = curr_iou
-                best_bbox = bbidx
-
-        if best_iou < detection_min_overlap:
-            continue
-        else:
-            wr = rt['xmax'] - rt['xmin']
-            hr = rt['ymax'] - rt['ymin']
-            x_roi.append([rt['ymin']/shape[0], rt['xmin']/shape[1], rt['ymax']/shape[0], rt['xmax']/shape[1]])
-            IoUs.append(best_iou)
-
-            if detection_min_overlap <= best_iou < detection_max_overlap:
-                # hard negative example
-                cls_name = 'bg'
-            elif detection_max_overlap <= best_iou:
-                cls_name = bboxes[best_bbox]['label']
-                cxg = (gt['xmin'] + gt['xmax']) / 2.0
-                cyg = (gt['ymin'] + gt['ymax']) / 2.0
-
-                cxr = (rt['xmin'] + rt['xmax']) / 2.0
-                cyr = (rt['ymin'] + rt['ymax']) / 2.0
-                
-                wg = gt['xmax'] - gt['xmin']
-                hg = gt['ymax'] - gt['ymin']
-
-                tx = (cxg - cxr) / float(wr)
-                ty = (cyg - cyr) / float(hr)
-                tw = np.log(wg / float(wr))
-                th = np.log(hg / float(hr))
-            else:
-                print('roi = {}'.format(best_iou))
-                raise RuntimeError
-
-        # Classification ground truth
-        class_num = class_mapping[cls_name]
-        class_label = len(class_mapping) * [0]
-        class_label[class_num] = 1
-        y_class_num.append(copy.deepcopy(class_label))
-        
-        # Regression ground truth
-        coords = [0] * 4 * (len(class_mapping) - 1)
-        labels = [0] * 4 * (len(class_mapping) - 1)
-        if cls_name != 'bg':
-            label_pos = 4 * class_num
-#            sx, sy, sw, sh = C.classifier_regr_std
-            coords[label_pos:4 + label_pos] = [tx, ty, tw, th]
-#            coords[label_pos+0] * sx; coords[label_pos+1] * sy
-#            coords[label_pos+2] * sw; coords[label_pos+3] * sh
-            labels[label_pos:4 + label_pos] = [1, 1, 1, 1]
-            y_class_regr_coords.append(copy.deepcopy(coords))
-            y_class_regr_label.append(copy.deepcopy(labels))
-        else:
-            y_class_regr_coords.append(copy.deepcopy(coords))
-            y_class_regr_label.append(copy.deepcopy(labels))
-
-    if len(x_roi) == 0:
-        return None, None, None, None
-
-    rois = np.array(x_roi)
-    rois = np.insert(rois, 0, 0, axis=1)    
-    
-    true_labels = np.array(y_class_num)
-    true_boxes = np.concatenate([np.array(y_class_regr_label), np.array(y_class_regr_coords)], axis=1)
-
-    return np.expand_dims(rois, axis=0), np.expand_dims(true_labels, axis=0), np.expand_dims(true_boxes, axis=0), IoUs

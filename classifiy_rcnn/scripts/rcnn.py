@@ -6,10 +6,11 @@ Created on Thu Mar 15 13:49:30 2018
 """
 
 import sys 
-sys.path.append('../../')
-sys.path.append('../shared/')
+sys.path.append('../../../')
+sys.path.append('../../shared/')
 sys.path.append('../models/')
 sys.path.append('../cfgs/')
+sys.path.append('../data/')
 
 import utils
 from model_trainer import model_trainer

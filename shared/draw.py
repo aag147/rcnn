@@ -13,6 +13,7 @@ import copy as cp
 import os
 import glob
 import itertools
+import filters_helper
 
 def plot_confusion_matrix(cm, classes,
                           normalize=False,
@@ -89,6 +90,44 @@ def drawCrops(imagesID, imagesMeta, imagesCrops, images):
         spl[i].imshow(image)
         spl[i+1].imshow(prsCropFull)
         #spl[i+1].imshow(objCrop)
+        
+        
+def drawPositiveAnchors(img, anchorsGT):
+    f, spl = plt.subplots(1)
+    spl.imshow(img)
+    bboxes = []
+    for anchor in anchorsGT:
+        objectiveness = anchor[4]
+        if objectiveness==1:
+            bb = anchor[0:4]*16
+            bbox = drawProposalBox(bb)
+            spl.plot(bbox[0,:], bbox[1,:])
+            bboxes.append(bb)
+    return np.array(bboxes)
+
+def drawPositiveRois(img, rois):
+    f, spl = plt.subplots(1)
+    spl.imshow(img)
+    bboxes = []
+    for roi in rois:
+        labelID = roi[5]
+        if labelID>0:
+            bb = roi[0:4]*16
+            bbox = drawProposalBox(bb)
+            spl.plot(bbox[0,:], bbox[1,:])
+            bboxes.append(bb)
+    return np.array(bboxes)
+            
+def drawGTBoxes(img, imageMeta, imageDims):
+    f, spl = plt.subplots(1)
+    spl.imshow(img)
+    
+    bboxes = filters_helper.normalizeGTboxes(imageMeta['objects'], scale=imageDims['scale'], roundoff=True)
+    
+    for bb in bboxes:
+        bbox = drawBoundingBox(bb)
+        spl.plot(bbox[0,:], bbox[1,:])
+    return bboxes
 
 def drawBoundingBox(bb):
     xmin = bb['xmin']; xmax = bb['xmax']
@@ -97,12 +136,15 @@ def drawBoundingBox(bb):
     box = np.array([[xmin, xmax, xmax, xmin, xmin], [ymin, ymin, ymax, ymax, ymin]])
     return box
 
-def drawProposalBox(bb):
-    xmin = bb[0]; xmax = xmin + bb[2]
-    ymin = bb[1]; ymax = ymin + bb[3]
-    
+def drawProposalBox(bb):    
     xmin = bb[0]; xmax = bb[1]
     ymin = bb[2]; ymax = bb[3]
+    
+    xmin = bb[0]; ymin = bb[1]
+    xmax = bb[2]; ymax = bb[3]
+
+    xmin = bb[0]; xmax = xmin + bb[2]
+    ymin = bb[1]; ymax = ymin + bb[3]
     
     box = np.array([[xmin, xmax, xmax, xmin, xmin], [ymin, ymin, ymax, ymax, ymin]])
     return box

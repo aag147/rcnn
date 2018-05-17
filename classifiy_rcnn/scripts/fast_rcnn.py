@@ -45,9 +45,9 @@ if True:
     
     # Create model
     print('Creating model...')
-#    model = Fast_HO_RCNN(cfg)
-#    trainer = model_trainer(model=model, genTrain=genTrain, genVal=genVal, genTest=genTest, task=cfg.task)
-#    trainer.compileModel(cfg)
+    model = Fast_HO_RCNN(cfg)
+    trainer = model_trainer(model=model, genTrain=genTrain, genVal=genVal, genTest=genTest, task=cfg.task)
+    trainer.compileModel(cfg)
     
     # Train model
     print('Training model...')

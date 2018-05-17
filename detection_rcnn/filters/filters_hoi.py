@@ -20,71 +20,7 @@ import math
 import utils
 import filters_helper as helper
 
-def apply_regr(x, y, w, h, tx, ty, tw, th):
-    try:
-        cx = x + w / 2.
-        cy = y + h / 2.
-        cx1 = tx * w + cx
-        cy1 = ty * h + cy
-        w1 = math.exp(tw) * w
-        h1 = math.exp(th) * h
-        x1 = cx1 - w1 / 2.
-        y1 = cy1 - h1 / 2.
-        x1 = int(round(x1))
-        y1 = int(round(y1))
-        w1 = int(round(w1))
-        h1 = int(round(h1))
-
-        return x1, y1, w1, h1
-
-    except ValueError:
-        return x, y, w, h
-    except OverflowError:
-        return x, y, w, h
-    except Exception as e:
-        print(e)
-        return x, y, w, h
-
-def deltas_to_bb(object_scores, object_deltas, rois, cfg):
-    bbox_threshold = cfg.hoi_bbox_threshold
-    nb_rois_in_batch = object_scores.shape[1]
-    bboxes = []
-    labels = []
-    
-    for ii in range(nb_rois_in_batch):
-        if np.max(object_scores[0, ii, :]) < bbox_threshold or np.argmax(object_scores[0, ii, :]) == 0:
-            continue
-
-        labelID = np.argmax(object_scores[0, ii, :])
-        prop = np.max(object_scores[0, ii, :])
-        (batchID, x, y, w, h) = rois[0, ii, :]
-        try:
-            (tx, ty, tw, th) = object_deltas[0, ii, 4 * labelID:4 * (labelID + 1)]
-#            tx /= cfg.classifier_regr_std[0]
-#            ty /= cfg.classifier_regr_std[1]
-#            tw /= cfg.classifier_regr_std[2]
-#            th /= cfg.classifier_regr_std[3]
-            x, y, w, h = apply_regr(x, y, w, h, tx, ty, tw, th)
-        except Exception as e:
-            print(e)
-            pass
-        bboxes.append([x, y, (x + w), (y + h)])
-        labels.append([labelID, prop])
-        
-    labels = np.array(labels)
-    bboxes = np.array(bboxes)
-    return labels, bboxes
-    # add some nms to reduce many boxes
-#    for cls_num, box in boxes.items():
-#        boxes_nms = roi_helpers.non_max_suppression_fast(box, overlap_thresh=0.5)
-#        boxes[cls_num] = boxes_nms
-#        print(class_mapping[cls_num] + ":")
-#        for b in boxes_nms:
-#            b[0], b[1], b[2], b[3] = get_real_coordinates(ratio, b[0], b[1], b[2], b[3])
-#            print('{} prob: {}'.format(b[0: 4], b[-1]))
-
-
-def hoi_ground_truths(objpreds, bboxes, imageMeta, imageDims, cfg):    
+def prepareTargets(objpreds, bboxes, imageMeta, imageDims, cfg):    
     #############################
     ########## Image ############
     #############################
@@ -272,3 +208,72 @@ def hoi_ground_truths(objpreds, bboxes, imageMeta, imageDims, cfg):
     
     
     return valid_human_boxes, valid_object_boxes, Xi, valid_labels
+
+
+
+########################
+###### OUT DATED #######
+########################
+
+def apply_regr(x, y, w, h, tx, ty, tw, th):
+    try:
+        cx = x + w / 2.
+        cy = y + h / 2.
+        cx1 = tx * w + cx
+        cy1 = ty * h + cy
+        w1 = math.exp(tw) * w
+        h1 = math.exp(th) * h
+        x1 = cx1 - w1 / 2.
+        y1 = cy1 - h1 / 2.
+        x1 = int(round(x1))
+        y1 = int(round(y1))
+        w1 = int(round(w1))
+        h1 = int(round(h1))
+
+        return x1, y1, w1, h1
+
+    except ValueError:
+        return x, y, w, h
+    except OverflowError:
+        return x, y, w, h
+    except Exception as e:
+        print(e)
+        return x, y, w, h
+
+def deltas_to_bb(object_scores, object_deltas, rois, cfg):
+    bbox_threshold = cfg.hoi_bbox_threshold
+    nb_rois_in_batch = object_scores.shape[1]
+    bboxes = []
+    labels = []
+    
+    for ii in range(nb_rois_in_batch):
+        if np.max(object_scores[0, ii, :]) < bbox_threshold or np.argmax(object_scores[0, ii, :]) == 0:
+            continue
+
+        labelID = np.argmax(object_scores[0, ii, :])
+        prop = np.max(object_scores[0, ii, :])
+        (batchID, x, y, w, h) = rois[0, ii, :]
+        try:
+            (tx, ty, tw, th) = object_deltas[0, ii, 4 * labelID:4 * (labelID + 1)]
+#            tx /= cfg.classifier_regr_std[0]
+#            ty /= cfg.classifier_regr_std[1]
+#            tw /= cfg.classifier_regr_std[2]
+#            th /= cfg.classifier_regr_std[3]
+            x, y, w, h = apply_regr(x, y, w, h, tx, ty, tw, th)
+        except Exception as e:
+            print(e)
+            pass
+        bboxes.append([x, y, (x + w), (y + h)])
+        labels.append([labelID, prop])
+        
+    labels = np.array(labels)
+    bboxes = np.array(bboxes)
+    return labels, bboxes
+    # add some nms to reduce many boxes
+#    for cls_num, box in boxes.items():
+#        boxes_nms = roi_helpers.non_max_suppression_fast(box, overlap_thresh=0.5)
+#        boxes[cls_num] = boxes_nms
+#        print(class_mapping[cls_num] + ":")
+#        for b in boxes_nms:
+#            b[0], b[1], b[2], b[3] = get_real_coordinates(ratio, b[0], b[1], b[2], b[3])
+#            print('{} prob: {}'.format(b[0: 4], b[-1]))
