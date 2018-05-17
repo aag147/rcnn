@@ -51,7 +51,7 @@ if True:
     
     # Train model
     print('Training model...')
-#    trainer.trainModel(cfg)
+    trainer.trainModel(cfg)
     
     # Save stuff
     print('Saving final model...')

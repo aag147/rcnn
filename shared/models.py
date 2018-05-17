@@ -19,7 +19,7 @@ import keras.applications as keras_models
 K.set_image_dim_ordering('tf')
 
 from keras.layers import Flatten, Dense, Dropout, Reshape, Permute, Activation, \
-    Input, merge
+    Input, merge, TimeDistributed
 from keras.layers.merge import concatenate
 from keras.layers.convolutional import Convolution2D, MaxPooling2D, ZeroPadding2D
 from keras.utils.layer_utils import convert_all_kernels_in_model
@@ -193,6 +193,25 @@ def classifier(base_layers, input_rois, cfg, nb_classes=21):
 
     return out_class
 
+def fastClassifier(base_layers, input_rois, cfg, nb_classes=21):    
+    cfg.pooling_regions = 7
+#    print(K.shape(base_layers))
+#    print(K.shape(input_rois))
+    out_roi_pool = RoiPoolingConv(cfg)([base_layers, input_rois])
+    
+    dense_1 = TimeDistributed(Flatten())(out_roi_pool)
+    dense_1 = TimeDistributed(
+        Dense(4096, activation='relu', kernel_initializer='TruncatedNormal')
+    )(dense_1)
+    dense_1 = Dropout(0.5)(dense_1)
+    dense_2 = TimeDistributed(
+        Dense(4096, activation='relu', kernel_initializer='TruncatedNormal')
+    )(dense_1)
+    dense_2 = Dropout(0.5)(dense_2)
+    
+    out_class = TimeDistributed(Dense(nb_classes, kernel_initializer='uniform'))(dense_2)
+
+    return out_class
 
 class RoiPoolingConv(Layer):
     '''ROI pooling layer for 2D inputs.
@@ -229,7 +248,7 @@ class RoiPoolingConv(Layer):
         self.nb_channels = input_shape[0][3]
 
     def compute_output_shape(self, input_shape):
-        return None, self.pool_size, self.pool_size, self.nb_channels
+        return 1, None, self.pool_size, self.pool_size, self.nb_channels
 
     def call(self, x):
 
@@ -292,7 +311,7 @@ class RoiPoolingConv(Layer):
 #        print('fo', final_output.shape)
 #        final_output = tf.Print(final_output, ['Value: ', tf.shape(final_output)])
 #        final_output = K.reshape(final_output, (batch_size, self.pool_size, self.pool_size, self.nb_channels))
-
+        final_output = K.expand_dims(final_output, axis=0)
         return final_output
 
     def get_config(self):
@@ -300,6 +319,9 @@ class RoiPoolingConv(Layer):
                   'batch_size': self.batch_size}
         base_config = super(RoiPoolingConv, self).get_config()
         return dict(list(base_config.items()) + list(config.items()))
+
+
+
 
 
 def crosschannelnormalization(alpha=1e-4, k=2, beta=0.75, n=5, **kwargs):

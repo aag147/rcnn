@@ -5,7 +5,7 @@ Created on Sat Apr  7 13:30:30 2018
 @author: aag14
 """
 
-from models import AlexNet, VGG16, PairWiseStream, classifier, input_rois
+from models import AlexNet, VGG16, PairWiseStream, classifier, input_rois, fastClassifier
 from keras.layers import Add, Activation
 from keras.models import Model
 import numpy as np
@@ -54,6 +54,7 @@ def HO_RCNN(cfg):
 
 
 def Fast_HO_RCNN(cfg):
+    
     K.set_image_dim_ordering('tf')
     weights = VGG16_Weights(cfg) if cfg.pretrained_weights == True else False
 #    modelShr = AlexNet(weights, cfg.nb_classes, include='none')
@@ -61,8 +62,8 @@ def Fast_HO_RCNN(cfg):
     prsRoI   = input_rois()
     objRoI   = input_rois()
     print(modelShr.layers[-1].output_shape)
-    modelPrs = classifier(modelShr.output, prsRoI, cfg, nb_classes=cfg.nb_classes)
-    modelObj = classifier(modelShr.output, objRoI, cfg, nb_classes=cfg.nb_classes)
+    modelPrs = fastClassifier(modelShr.output, prsRoI, cfg, nb_classes=cfg.nb_classes)
+    modelObj = fastClassifier(modelShr.output, objRoI, cfg, nb_classes=cfg.nb_classes)
     modelPar = PairWiseStream(input_shape=(64,64,2), nb_classes = cfg.nb_classes, include='fc')      
     
     # Only train from conv3_1

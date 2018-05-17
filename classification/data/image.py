@@ -93,9 +93,9 @@ def getXData(imagesID, imagesMeta, data_path, cfg, batchIdx):
             tmpH.append([batchIdx] + h)
             tmpO.append([batchIdx] + o)
             
-            dataX.append(imageClean)
-            dataH.append([[batchIdx] + h])
-            dataO.append([[batchIdx] + o])
+        dataX.append(imageClean)
+        dataH.append(tmpH)
+        dataO.append(tmpO)
         IDs.append(imageID)
         batchIdx += 1
     dataX = np.array(dataX)
