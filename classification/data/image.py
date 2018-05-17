@@ -153,6 +153,10 @@ def preprocessImage(image, cfg):
 #    print('shape', image.shape)
 #    newWidth = cfg.xdim
 #    newHeight = cfg.ydim
+        
+    newWidth = round(newWidth)
+    newHeight = round(newHeight)
+            
     scaleWidth = float(newWidth) / image.shape[1]
     scaleHeight = float(newHeight) / image.shape[0]
     scales = [scaleHeight, scaleWidth]

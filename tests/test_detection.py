@@ -7,9 +7,9 @@ Created on Tue May  8 12:26:50 2018
 import sys 
 sys.path.append('../../')
 sys.path.append('../shared/')
-sys.path.append('../detection_rcnn/data/')
-sys.path.append('../detection_rcnn/filters/')
-sys.path.append('../detection_rcnn/models/')
+sys.path.append('../detection/data/')
+sys.path.append('../detection/filters/')
+sys.path.append('../detection/models/')
 
 import utils,\
        extract_data,\

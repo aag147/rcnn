@@ -12,7 +12,6 @@ def rcnn_hoi_classes(cfg):
    cfg.epoch_begin = 0
    cfg.epoch_end = 100
    cfg.epoch_splits = [50]
-   cfg.init_lr = 0.0001
    cfg.wp = 20
    
    return cfg
@@ -25,7 +24,6 @@ def rcnn_hoi_labels(cfg):
    cfg.epoch_begin = 0
    cfg.epoch_end = 60
    cfg.epoch_splits = [30]
-   cfg.init_lr = 0.0001
    cfg.wp = 10
    
    return cfg
@@ -38,7 +36,6 @@ def rcnn_h_labels(cfg):
    cfg.epoch_begin = 0
    cfg.epoch_end = 60
    cfg.epoch_splits = [30]
-   cfg.init_lr = 0.0001
    cfg.wp = 10
    
    return cfg
@@ -51,7 +48,6 @@ def rcnn_o_labels(cfg):
    cfg.epoch_begin = 0
    cfg.epoch_end = 60
    cfg.epoch_splits = [30]
-   cfg.init_lr = 0.0001
    cfg.wp = 10
    
    return cfg
@@ -64,7 +60,6 @@ def rcnn_i_labels(cfg):
    cfg.epoch_begin = 0
    cfg.epoch_end = 60
    cfg.epoch_splits = [30]
-   cfg.init_lr = 0.0001
    cfg.wp = 10
    
    return cfg

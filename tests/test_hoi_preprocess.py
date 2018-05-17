@@ -7,9 +7,9 @@ Created on Tue May  8 12:26:50 2018
 import sys 
 sys.path.append('../../')
 sys.path.append('../shared/')
-sys.path.append('../fast_rcnn/')
-sys.path.append('../cfgs/')
-sys.path.append('../layers/')
+sys.path.append('../detection/data/')
+sys.path.append('../detection/filters/')
+sys.path.append('../detection/models/')
 
 from config import basic_config
 import groundtruths

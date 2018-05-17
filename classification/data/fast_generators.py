@@ -68,8 +68,15 @@ class DataGenerator():
     def _generateBatchFromIDs(self, imageIdxs, batchIdx):
         imagesID = [self.dataID[idx] for idx in imageIdxs]
         [dataXI, dataXH, dataXO], _ = image.getXData(imagesID, self.imagesMeta, self.images_path, self.cfg, batchIdx)
-        dataXW = image.getDataPairWiseStream(imagesID, self.imagesMeta, self.cfg)
-        X = [dataXI, dataXH, dataXO, dataXW]
+        dataXW = image.getDataPairWiseStream(imagesID, self.imagesMeta, self.cfg)            
+        
+        if dataXH.shape[0] > 32:
+            print(dataXH.shape)
+            dataXI = dataXI[:32,:]
+            dataXH = dataXH[:32,:]
+            dataXW = dataXW[:32,:]
+        
+        X = [dataXI, dataXH, dataXO, dataXW]        
         X = [X[i+1] for i in range(len(X)-1) if self.inputs[i]]
         if self.inputs[0] or self.inputs[1]:
             X = [dataXI] + X

@@ -105,6 +105,9 @@ class basic_config:
        self.par_order_of_dims = [0,1,2,3]
        self.winShape = (64, 64)
        
+       self.init_lr = 0.0001
+
+       
    def fast_rcnn_config(self):
        self.mindim = 600
        self.maxdim = 1000
@@ -113,6 +116,7 @@ class basic_config:
        self.cdim  = 3
        
        self.pool_size = 7
+       self.init_lr = 0.00001
        
        self.order_of_dims = [0,1,2]
        self.par_order_of_dims = [0,2,3,1]
@@ -193,6 +197,8 @@ class basic_config:
               self.epoch_splits = [int(arg)]
           if opt == '-o':
               self.optimizer = arg
+          if opt == '-l':
+              self.init_lr = float(arg)
               
    def set_class_weights(self, labels, imagesMeta):
        if self.wp >= 0: 
