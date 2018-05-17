@@ -15,7 +15,7 @@ import sys
 
 class DataGenerator():
     
-    def __init__(self, imagesMeta, GTMeta, cfg, data_type='train'):
+    def __init__(self, imagesMeta, GTMeta, labels, cfg, data_type='train'):
       'Initialization'
       self.mean  = [103.939, 116.779, 123.68]
       self.data_type = data_type
@@ -52,9 +52,11 @@ class DataGenerator():
       
       self.imagesMeta = imagesMeta
       self.GTMeta     = GTMeta
-      self.gt_label, _, _ = image.getYData(self.dataID, self.imagesMeta, self.GTMeta, self.cfg)
+#      self.gt_label, _, _ = image.getYData(self.dataID, self.imagesMeta, self.GTMeta, self.cfg)
       self.nb_images = len(self.dataID)
-      self.nb_samples = len(self.gt_label)
+#      self.nb_samples = len(self.gt_label)
+      stats, _ = utils.getLabelStats(GTMeta, labels)
+      self.nb_samples = stats['total']
       if self.nb_batches is None:
           self.nb_batches = self.nb_images
       
@@ -69,13 +71,13 @@ class DataGenerator():
         imagesID = [self.dataID[idx] for idx in imageIdxs]
         [dataXI, dataXH, dataXO], _ = image.getXData(imagesID, self.imagesMeta, self.images_path, self.cfg, batchIdx)
         dataXW = image.getDataPairWiseStream(imagesID, self.imagesMeta, self.cfg)            
-        
+        dataXW = np.expand_dims(dataXW, axis=0)
         y, _, _ = image.getYData(imagesID, self.imagesMeta, self.GTMeta, self.cfg)
         
         if dataXH.shape[1] > 32:
             dataXH = dataXH[:,:32,:]
             dataXO = dataXO[:,:32,:]
-            dataXW = dataXW[:,:32,:]
+            dataXW = dataXW[:,:32,:,:,:]
             y      = y[:,:32,:]
         
         X = [dataXI, dataXH, dataXO, dataXW]        

@@ -14,18 +14,17 @@ sys.path.append('../layers/')
 import numpy as np
 import keras
 
-import models,\
+import utils,\
+       extract_data,\
        methods,\
        losses,\
-       callbacks,\
-       utils,\
-       metrics,\
-       load_data,\
-       rois,\
-       groundtruths
+       filters_detection,\
+       filters_hoi,\
+       filters_helper as helper
+from fast_generators import DataGenerator
     
 # meta data
-data = load_data.data()
+data = extract_data.data()
 
 # config
 cfg = data.cfg
@@ -52,9 +51,9 @@ genTest = DataGenerator(imagesMeta=data.testMeta, GTMeta = data.testGTMeta, cfg=
 for epochidx in range(cfg.nb_epochs):
     for batchidx in range(cfg.nb_batches):
          
-        X, Y, img_data = next(genTrain)
+        X, [Y1,Y2], imageMeta, imageDims = next(genTrain)
 
-        loss_rpn = model_rpn.train_on_batch(X, Y)
+        loss_rpn = model_rpn.train_on_batch(X, [Y1,Y2])
 
         [x_class, x_deltas] = model_rpn.predict_on_batch(X)
 

@@ -357,6 +357,7 @@ def preprocessImage(img, cfg):
 def normalizeGTboxes(gtboxes, scale=[1,1], rpn_stride=1, shape=[1,1], roundoff=False):
     gtnormboxes = []
     for relID, bbox in enumerate(gtboxes):
+#        print(bbox)
         # get the GT box coordinates, and resize to account for image resizing
         xmin = ((bbox['xmin']-1) * scale[0] / rpn_stride) / shape[0]
         xmax = ((bbox['xmax']-1) * scale[0] / rpn_stride) / shape[0]

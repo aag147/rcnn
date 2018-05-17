@@ -31,7 +31,7 @@ cfg = data.cfg
 cfg.fast_rcnn_config()
 
 # Create batch generators
-genTrain = DataGenerator(imagesMeta=data.trainMeta, GTMeta = data.trainGTMeta, cfg=cfg, data_type='train')
+genTrain = DataGenerator(imagesMeta=data.trainMeta, GTMeta = data.trainGTMeta, labels = data.labels, cfg=cfg, data_type='train')
 
 
 trainIterator = genTrain.begin()
@@ -39,7 +39,7 @@ trainIterator = genTrain.begin()
 for i in range(genTrain.nb_batches):
     X, y = next(trainIterator)
 #    utils.update_progress(i / genTrain.nb_images)
-    print('t',X[0].shape, X[1].shape, y.shape)
+    print('t',X[0].shape, X[1].shape, X[3].shape, y.shape)
     
     if i > 100:
         break

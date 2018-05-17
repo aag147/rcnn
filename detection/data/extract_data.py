@@ -46,14 +46,14 @@ class object_data:
         cfg.get_args()
         cfg.update_paths()
         
-#        trainGTMeta = utils.load_dict(cfg.data_path + 'train_GT')
+        trainGTMeta = utils.load_dict(cfg.data_path + 'train_GT')
         valGTMeta = utils.load_dict(cfg.data_path + 'val_GT')
 #        testGTMeta = utils.load_dict(cfg.data_path + 'test_GT')
         class_mapping = utils.load_dict(cfg.data_path + 'class_mapping')
         
         if cfg.max_classes is not None:
             # Reduce data to include only max_classes number of different classes
-            _, counts = utils.getLabelStats(valGTMeta, class_mapping)
+            _, counts = utils.getLabelStats(trainGTMeta, class_mapping)
 #            trainGTMeta, reduced_idxs = utils.reduceTrainData(trainGTMeta, counts, cfg.max_classes)
 #            testGTMeta = utils.reduceTestData(testGTMeta, reduced_idxs)
 #            trainMeta = utils.reduceTestData(trainMeta, reduced_idxs)
@@ -77,5 +77,5 @@ class object_data:
 #        self.trainMeta = trainMeta
 #        self.valMeta = valMeta
 #        self.testMeta = testMeta
-#        self.trainGTMeta = trainGTMeta
+        self.trainGTMeta = trainGTMeta
 #        self.testGTMeta = testGTMeta

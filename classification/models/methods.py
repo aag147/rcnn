@@ -5,7 +5,7 @@ Created on Sat Apr  7 13:30:30 2018
 @author: aag14
 """
 
-from models import AlexNet, VGG16, PairWiseStream, classifier, input_rois, fastClassifier
+from models import AlexNet, VGG16, PairWiseStream, classifier, input_rois, fastClassifier, fastPairWiseStream, fastAlexNet
 from keras.layers import Add, Activation
 from keras.models import Model
 import numpy as np
@@ -53,6 +53,26 @@ def HO_RCNN(cfg):
     return final_model
 
 
+def Slow_HO_RCNN(cfg):
+    K.set_image_dim_ordering('th')
+    weights = AlexNet_Weights(cfg) if cfg.pretrained_weights == True else False
+    modelPrs = fastAlexNet((None, 3, 227, 227), weights, cfg.nb_classes, include='fc')
+    modelObj = fastAlexNet((None, 3, 227, 227), weights, cfg.nb_classes, include='fc')
+    modelPar = fastPairWiseStream(input_shape=(None,64,64,2), nb_classes = cfg.nb_classes, include='fc')      
+    
+    models = [modelPrs, modelObj, modelPar]
+    models = [models[i] for i in range(len(models)) if cfg.inputs[i]]
+    
+    assert len(models)>0, 'minimum one model must be included in method'
+    if len(models) == 1:
+        outputs = models[0].output
+    else:
+        outputs = Add()([model.output for model in models])
+    inputs = [model.input for model in models]
+    
+    final_model = _final_stop(inputs, outputs, cfg)
+    return final_model
+
 def Fast_HO_RCNN(cfg):
     
     K.set_image_dim_ordering('tf')
@@ -64,7 +84,7 @@ def Fast_HO_RCNN(cfg):
     print(modelShr.layers[-1].output_shape)
     modelPrs = fastClassifier(modelShr.output, prsRoI, cfg, nb_classes=cfg.nb_classes)
     modelObj = fastClassifier(modelShr.output, objRoI, cfg, nb_classes=cfg.nb_classes)
-    modelPar = PairWiseStream(input_shape=(64,64,2), nb_classes = cfg.nb_classes, include='fc')      
+    modelPar = fastPairWiseStream(input_shape=(None,64,64,2), nb_classes = cfg.nb_classes, include='fc')      
     
     # Only train from conv3_1
     for i, layer in enumerate(modelShr.layers):

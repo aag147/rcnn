@@ -16,7 +16,7 @@ import utils
 from model_trainer import model_trainer
 from load_data import data
 from fast_generators import DataGenerator
-from methods import Fast_HO_RCNN
+from methods import Slow_HO_RCNN
 
 import numpy as np
 
@@ -44,12 +44,10 @@ if True:
     
     # Create model
     print('Creating model...')
-    model = Fast_HO_RCNN(cfg)
+    model = Slow_HO_RCNN(cfg)
     trainer = model_trainer(model=model, genTrain=genTrain, genVal=genVal, genTest=genTest, task=cfg.task)
     trainer.compileModel(cfg)
     
-    from keras.utils import plot_model
-    plot_model(model, to_file='model.png')
     
 if False:
     # Train model
@@ -57,10 +55,12 @@ if False:
     trainer.trainModel(cfg)
     
     # Save stuff
+    print('Path:', cfg.my_results_path)
     print('Saving final model...')
     trainer.saveModel(cfg)
-    print('Testing model...')
-    res = trainer.evaluateModel(genTest)
-    print("F1:", res.F1, "nb_zeros", res.nb_zeros)
-    utils.save_obj_nooverwrite(res.Y_hat, cfg.my_results_path + 'y_hat')
-    print('Path:', cfg.my_results_path)
+    print('Testing model on test...')
+    resTest = trainer.evaluateModel(genTest)
+    print("F1 (test!):", resTest.F1, "nb_zeros", resTest.nb_zeros)
+    print('Testing model on training...')
+    resTrain = trainer.evaluateModel(genTrain)
+    print("F1 (train):", resTrain.F1, "nb_zeros", resTrain.nb_zeros)

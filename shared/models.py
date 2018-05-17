@@ -80,6 +80,49 @@ def VGG16(input_shape, weights_path=None, nb_classes=1000, include='all'):
     return model
 
 
+def fastAlexNet(input_shape, weights_path=None, nb_classes=1000, include = 'all'):
+    #https://github.com/duggalrahul/AlexNet-Experiments-Keras/blob/master/convnets-keras/convnetskeras/convnets.py
+    inputs = Input(shape=input_shape)
+    conv_1 = TimeDistributed(Conv2D(96, (11, 11), strides=(4,4), activation='relu', kernel_initializer='TruncatedNormal'))(inputs)
+    conv_2 = TimeDistributed(MaxPooling2D((3, 3), strides=(2,2)))(conv_1)
+    conv_2 = TimeDistributed(crosschannelnormalization())(conv_2)
+    conv_2 = TimeDistributed(ZeroPadding2D((2,2)))(conv_2)
+    conv_2 = concatenate([
+        TimeDistributed(Conv2D(128, (5,5), activation="relu", kernel_initializer='TruncatedNormal'))(
+            TimeDistributed(splittensor(ratio_split=2,id_split=i))(conv_2)
+        ) for i in range(2)], axis=1)
+
+    conv_3 = TimeDistributed(MaxPooling2D((3, 3), strides=(2, 2)))(conv_2)
+    conv_3 = TimeDistributed(crosschannelnormalization())(conv_3)
+    conv_3 = TimeDistributed(ZeroPadding2D((1,1)))(conv_3)
+    conv_3 = TimeDistributed(Conv2D(384, (3,3), activation='relu', kernel_initializer='TruncatedNormal'))(conv_3)
+
+    conv_4 = TimeDistributed(ZeroPadding2D((1,1)))(conv_3)
+    conv_4 = concatenate([
+        TimeDistributed(Conv2D(192, (3,3), activation="relu", kernel_initializer='TruncatedNormal'))(
+            TimeDistributed(splittensor(ratio_split=2,id_split=i))(conv_4)
+        ) for i in range(2)], axis=1)
+
+    conv_5 = TimeDistributed(ZeroPadding2D((1,1)))(conv_4)
+    conv_5 = concatenate([
+        TimeDistributed(Conv2D(128, (3,3), activation="relu", kernel_initializer='TruncatedNormal'))(
+            TimeDistributed(splittensor(ratio_split=2,id_split=i))(conv_5)
+        ) for i in range(2)], axis=1)
+
+    
+    dense_1 = TimeDistributed(MaxPooling2D((3, 3), strides=(2,2)))(conv_5)
+    dense_1 = TimeDistributed(Flatten())(dense_1)
+    dense_1 = TimeDistributed(Dense(4096, activation='relu', kernel_initializer='TruncatedNormal'))(dense_1)
+    dense_2 = Dropout(0.5)(dense_1)
+    dense_2 = TimeDistributed(Dense(4096, activation='relu', kernel_initializer='TruncatedNormal'))(dense_2)
+    dense_3 = Dropout(0.5)(dense_2)
+    dense_3 = TimeDistributed(Dense(1000))(dense_3)
+    model = Model(inputs=inputs, outputs=dense_3)
+
+    model = final_model(model, weights_path, nb_classes, include)
+
+    return model
+
 
 def AlexNet(input_shape, weights_path=None, nb_classes=1000, include = 'all'):
     #https://github.com/duggalrahul/AlexNet-Experiments-Keras/blob/master/convnets-keras/convnetskeras/convnets.py
@@ -122,6 +165,24 @@ def AlexNet(input_shape, weights_path=None, nb_classes=1000, include = 'all'):
 
     model = final_model(model, weights_path, nb_classes, include)
 
+    return model
+
+def fastPairWiseStream(input_shape, weights_path=None, nb_classes=1000, include = 'all'):
+    inputs = Input(shape=input_shape)
+    model = Sequential()
+    conv_1 = TimeDistributed(Conv2D(64, (5, 5), activation='relu'))(inputs)
+    conv_1 = TimeDistributed(MaxPooling2D((2,2), strides=(2,2)))(conv_1)
+    
+    conv_2 = TimeDistributed(Conv2D(32, (5, 5), activation='relu'))(conv_1)
+    conv_2 = TimeDistributed(MaxPooling2D((2,2), strides=(2,2)))(conv_2)
+    
+    fc = TimeDistributed(Flatten())(conv_2)
+    fc = TimeDistributed(Dense(256, activation='relu'))(fc)
+    fc = TimeDistributed(Dense(nb_classes))(fc)
+    
+    model = Model(inputs=inputs, outputs=fc)
+    
+    model = final_model(model, weights_path, nb_classes, include)
     return model
 
 def PairWiseStream(input_shape, weights_path=None, nb_classes=1000, include = 'all'):
@@ -355,6 +416,7 @@ def crosschannelnormalization(alpha=1e-4, k=2, beta=0.75, n=5, **kwargs):
 def splittensor(axis=1, ratio_split=1, id_split=0, **kwargs):
     def f(X):
         if K.backend()=='tensorflow':
+            print(X.get_shape())
             div = int(X.get_shape()[axis]) // ratio_split
         else:
             div = X.shape[axis] // ratio_split
