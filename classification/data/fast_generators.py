@@ -73,16 +73,16 @@ class DataGenerator():
         y, _, _ = image.getYData(imagesID, self.imagesMeta, self.GTMeta, self.cfg)
         
         if dataXH.shape[1] > 32:
-            dataXI = dataXI[:,:32,:]
             dataXH = dataXH[:,:32,:]
+            dataXO = dataXO[:,:32,:]
             dataXW = dataXW[:,:32,:]
             y      = y[:,:32,:]
         
-        print(dataXH.shape)
         X = [dataXI, dataXH, dataXO, dataXW]        
         X = [X[i+1] for i in range(len(X)-1) if self.inputs[i]]
         if self.inputs[0] or self.inputs[1]:
             X = [dataXI] + X
+            
         return X, y
 		
     #%% Different forms of generators     

@@ -37,5 +37,9 @@ genTrain = DataGenerator(imagesMeta=data.trainMeta, GTMeta = data.trainGTMeta, c
 trainIterator = genTrain.begin()
 
 for i in range(genTrain.nb_batches):
-    next(trainIterator)
-    utils.update_progress(i / genTrain.nb_images)
+    X, y = next(trainIterator)
+#    utils.update_progress(i / genTrain.nb_images)
+    print('t',X[0].shape, X[1].shape, y.shape)
+    
+    if i > 100:
+        break
