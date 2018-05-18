@@ -37,7 +37,7 @@ if True:
     genVal = DataGenerator(imagesMeta=data.valMeta, GTMeta = data.trainGTMeta, cfg=cfg, data_type='val')
     genTest = DataGenerator(imagesMeta=data.testMeta, GTMeta = data.testGTMeta, cfg=cfg, data_type='test')  
 
-if True:    
+if False:    
     # Save config
     utils.saveConfig(cfg)
     utils.saveSplit(cfg, list(data.trainMeta.keys()), list(data.valMeta.keys()))
@@ -47,7 +47,8 @@ if True:
     model = HO_RCNN(cfg)
     trainer = model_trainer(model=model, genTrain=genTrain, genVal=genVal, genTest=genTest, task=cfg.task)
     trainer.compileModel(cfg)
-    
+
+if False:    
     # Train model
     print('Training model...')
     trainer.trainModel(cfg)

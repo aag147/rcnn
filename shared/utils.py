@@ -16,6 +16,13 @@ import random as r
 import sys
 import shutil
 
+
+def getPascalObjects():
+    objs = ['airplane', 'bicycle', 'bird', 'boat', 'bottle', 'bus', 'car', 'cat', 'chair', 'cow', 'dining table',\
+     'dog', 'horse', 'motorcycle', 'person', 'potted plant', 'sheep', 'couch', 'train', 'tv']
+    return objs
+
+
 #%% Save / load
 def load_hist(path):
     hist = []
@@ -162,8 +169,16 @@ def idxs2labels(idxs, labels):
         reduced_labels.append(labels[idx])
     return reduced_labels 
 
-def reduceTrainData(imagesMeta, counts, nb_classes):
-    reduced_idxs = counts.argsort()[-nb_classes:][::-1]
+def reduceTrainData(imagesMeta, counts, nb_classes, labels):
+    if nb_classes > 0:
+        reduced_idxs = counts.argsort()[-nb_classes:][::-1]
+    else:
+        objs = getPascalObjects()
+    reduced_idxs = []
+    for idx, label in enumerate(labels):
+        if label['obj'] in objs:
+            reduced_idxs.append(idx)
+    reduced_idxs = np.array(reduced_idxs)
     reduced_imagesMeta = _reduceData(imagesMeta, reduced_idxs)
     return reduced_imagesMeta, reduced_idxs
 

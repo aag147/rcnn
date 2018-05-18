@@ -56,7 +56,7 @@ class data:
         if cfg.max_classes is not None:
             # Reduce data to include only max_classes number of different classes
             _, counts = utils.getLabelStats(trainGTMeta, labels)
-            trainGTMeta, reduced_idxs = utils.reduceTrainData(trainGTMeta, counts, cfg.max_classes)
+            trainGTMeta, reduced_idxs = utils.reduceTrainData(trainGTMeta, counts, cfg.max_classes, labels)
             testGTMeta = utils.reduceTestData(testGTMeta, reduced_idxs)
             trainMeta = utils.reduceTestData(trainMeta, reduced_idxs)
             testMeta = utils.reduceTestData(testMeta, reduced_idxs)

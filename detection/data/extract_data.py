@@ -8,6 +8,7 @@ from config import basic_config
 from config_helper import set_config
 import utils
 import os
+import numpy as np
 
 class object_data:
     def __init__(self, newDir=True):
@@ -53,8 +54,10 @@ class object_data:
         
         if cfg.max_classes is not None:
             # Reduce data to include only max_classes number of different classes
-            _, counts = utils.getLabelStats(trainGTMeta, class_mapping)
-#            trainGTMeta, reduced_idxs = utils.reduceTrainData(trainGTMeta, counts, cfg.max_classes)
+#            _, counts = utils.getLabelStats(trainGTMeta, class_mapping)
+            reduced_objs = self.getReduxIdxs(class_mapping)
+            trainGTMeta = self.reduceData(trainGTMeta, reduced_objs)
+            class_mapping = self.reduceMapping(reduced_objs)
 #            testGTMeta = utils.reduceTestData(testGTMeta, reduced_idxs)
 #            trainMeta = utils.reduceTestData(trainMeta, reduced_idxs)
 #            testMeta = utils.reduceTestData(testMeta, reduced_idxs)
@@ -62,7 +65,7 @@ class object_data:
 #            class_mapping = utils.idxs2labels(reduced_idxs, class_mapping)
             
             
-        cfg.nb_classes = len(class_mapping)
+        cfg.nb_object_classes = len(class_mapping)
 #        cfg.set_class_weights(class_mapping, trainGTMeta)
 #        _, valMeta = utils.splitData(list(trainMeta.keys()), trainMeta)
         self.cfg = cfg
@@ -79,3 +82,30 @@ class object_data:
 #        self.testMeta = testMeta
         self.trainGTMeta = trainGTMeta
 #        self.testGTMeta = testGTMeta
+        
+    def getReduxIdxs(self, class_mapping):
+        objs = utils.getPascalObjects()
+        reduced_idxs = []
+        for label, idx in class_mapping.items():
+            if label in objs:
+                reduced_idxs.append(idx)
+        return objs
+    
+    def reduceData(self, imagesMeta, reduced_objs):
+        reduced_imagesMeta = {}
+        for imageID, imageMeta in imagesMeta.items():
+            new_rels = []
+            for idx, obj in enumerate(imageMeta['objects']):
+                if obj['label'] in reduced_objs:
+                    new_rels.append(obj)
+            if len(new_rels) > 0:
+                reduced_imagesMeta[imageID] = {'imageName':imageMeta['imageName'], 'objects':new_rels}
+        return reduced_imagesMeta   
+
+    def reduceMapping(self, reduced_objs):
+        new_class_mapping = {'bg': 0, 'person': 1}
+        for obj in reduced_objs:
+            if obj == 'person':
+                continue
+            new_class_mapping[obj] = len(new_class_mapping)
+        return new_class_mapping

@@ -134,7 +134,7 @@ class basic_config:
        #rpn filters
        self.rpn_stride = 16
         
-       self.anchor_sizes = [128, 256, 512]
+       self.anchor_sizes = [64, 128, 256, 512]
        self.anchor_ratios = [[1, 1], [1, 2], [2, 1]]
         
        self.rpn_min_overlap = 0.1
@@ -154,7 +154,7 @@ class basic_config:
        # model
        self.nb_anchors = len(self.anchor_sizes) * len(self.anchor_ratios)
        self.pool_size = 3
-       self.nb_object_classes = 81
+#       self.nb_object_classes = 81
        self.nb_hoi_classes = 600
        
    def get_args(self):
