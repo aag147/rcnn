@@ -111,7 +111,7 @@ def get_hoi_rcnn_models(cfg):
                 units=4 * (nb_object_classes - 1),
                 activation="linear",
                 kernel_initializer="zero",
-                name="deltas2object"
+                name="det_out_class"
             )
         )(object_features)
 
@@ -120,7 +120,7 @@ def get_hoi_rcnn_models(cfg):
                 units=1 * nb_object_classes,
                 activation='softmax',
                 kernel_initializer="uniform",
-                name="scores2object"
+                name="det_out_regress"
             )
         )(object_features)
         
@@ -157,7 +157,7 @@ def get_hoi_rcnn_models(cfg):
                 units=1 * nb_hoi_classes,
                 activation=None,
                 kernel_initializer="uniform",
-                name="scores2human"
+                name="scores4human"
             )
         )(hoi_human_features)
             
@@ -177,7 +177,7 @@ def get_hoi_rcnn_models(cfg):
                 units=1 * nb_hoi_classes,
                 activation=None,
                 kernel_initializer="uniform",
-                name="scores2object"
+                name="scores4object"
             )
         )(hoi_object_features)
             

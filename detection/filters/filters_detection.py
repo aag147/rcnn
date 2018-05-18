@@ -129,6 +129,7 @@ def prepareTargets(rois, imageMeta, imageDims, class_mapping, cfg):
     rois = np.array(x_roi)
     
     true_labels = np.array(y_class_num)
+    print(np.array(y_class_regr_label).shape, np.array(y_class_regr_coords).shape)
     true_boxes = np.concatenate([np.array(y_class_regr_label), np.array(y_class_regr_coords)], axis=1)
 
     return rois, np.expand_dims(true_labels, axis=0), np.expand_dims(true_boxes, axis=0), IoUs

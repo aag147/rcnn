@@ -72,7 +72,7 @@ class DataGenerator():
             img, imageDims = filters_rpn.prepareInputs(imageMeta, self.images_path, self.cfg)
             y_rpn_cls, y_rpn_regr = filters_rpn.prepareTargets(imageMeta, imageDims, self.cfg)
             
-        return img, [y_rpn_cls, y_rpn_regr]#, imageMeta, imageDims
+        return img, [y_rpn_cls, y_rpn_regr], imageMeta, imageDims
 
     #%% Different forms of generators     
     def _generateIterativeImageCentricBatches(self):
