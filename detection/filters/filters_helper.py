@@ -352,7 +352,12 @@ def preprocessImage(img, cfg):
     # Rescale
     img = cv.resize(img, (newWidth, newHeight)).astype(np.float32)
     # Normalize
-    img = (img - np.min(img)) / np.max(img)
+    img[:, :, 0] -= cfg.img_channel_mean[0]
+    img[:, :, 1] -= cfg.img_channel_mean[1]
+    img[:, :, 2] -= cfg.img_channel_mean[2]
+    img /= cfg.img_scaling_factor
+
+#    img = (img - np.min(img)) / np.max(img)
     # Transpose
     img = img.transpose(cfg.order_of_dims)
     return img, scales

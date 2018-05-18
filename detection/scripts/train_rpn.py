@@ -38,11 +38,13 @@ if True:
 # models
 model_rpn, model_detection, model_hoi = methods.get_hoi_rcnn_models(cfg)
 
-
-opt = SGD(lr = 0.001, momentum = 0.9, decay = 0.0, nesterov=False)
+if cfg.optimizer == 'adam':
+    opt = Adam(lr = cfg.init_lr)
+else:
+    opt = SGD(lr = cfg.init_lr, momentum = 0.9, decay = 0.0, nesterov=False)
 
 model_rpn.compile(optimizer=opt,
-                  loss=[losses.rpn_loss_cls(cfg.nb_anchors), losses.rpn_loss_regr(cfg.nb_anchors)], metrics=['accuracy'])
+                  loss=[losses.rpn_loss_cls(cfg.nb_anchors), losses.rpn_loss_regr(cfg.nb_anchors)], metrics=['categorical_accuracy'])
 
 # data
 #genTrain = DataGenerator(imagesMeta = data.trainGTMeta, cfg=cfg, data_type='train')
@@ -52,7 +54,6 @@ genVal = DataGenerator(imagesMeta = data.valGTMeta, cfg=cfg, data_type='val')
 
 # train
 callbacks = [callbacks.MyModelCheckpointInterval(cfg), \
-             callbacks.MyLearningRateScheduler(cfg), \
              callbacks.SaveLog2File(cfg), \
              callbacks.PrintCallBack()]
 

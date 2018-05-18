@@ -73,6 +73,9 @@ class basic_config:
        self.minIoU = 0.5
        self.testdata = 'genTest'
        
+       self.img_channel_mean = [103.939, 116.779, 123.68]
+       self.img_scaling_factor = 1.0
+       
        #model
        self.task = None
        self.pretrained_weights = True
@@ -116,7 +119,9 @@ class basic_config:
        self.cdim  = 3
        
        self.pool_size = 7
-       self.init_lr = 0.000001
+       
+       if self.init_lr is None:
+           self.init_lr = 0.000001
        
        self.order_of_dims = [0,1,2]
        self.par_order_of_dims = [0,2,3,1]
