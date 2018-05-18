@@ -172,6 +172,7 @@ def prepareTargets(imageMeta, imageDims, cfg):
     
 #    y_rpn_regr = np.transpose(y_rpn_regr, (2, 0, 1))
     y_rpn_regr = np.expand_dims(y_rpn_regr, axis=0)
+    
     #############################
     ##### Reduce GT anchors #####
     #############################

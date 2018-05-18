@@ -153,14 +153,14 @@ class basic_config:
         
        # model
        self.nb_anchors = len(self.anchor_sizes) * len(self.anchor_ratios)
-       self.pool_size = 7
+       self.pool_size = 3
        self.nb_object_classes = 81
        self.nb_hoi_classes = 600
        
    def get_args(self):
        try:
           argv = sys.argv[1:]
-          opts, args = getopt.getopt(argv,"m:c:x:d:w:v:t:b:s:f:h:o:l:")
+          opts, args = getopt.getopt(argv,"m:c:x:d:w:v:t:b:s:f:h:o:l:g:")
        except getopt.GetoptError:
           print('.py -m <my_model> -c <my_method> -x <max_classes> -d <dataset>')
           sys.exit(2)
@@ -183,7 +183,7 @@ class basic_config:
           if opt == '-b':
               assert arg.isdigit(), 'nb_batches must be int'
               self.train_cfg.nb_batches = int(arg)
-              self.val_cfg.nb_batches = int(arg)
+#              self.val_cfg.nb_batches = int(arg)
           if opt == '-d':
               self.dataset = arg
           if opt == '-w':
@@ -204,6 +204,8 @@ class basic_config:
               self.optimizer = arg
           if opt == '-l':
               self.init_lr = float(arg)
+          if opt == '-g':
+              self.train_cfg.type = arg
               
    def set_class_weights(self, labels, imagesMeta):
        if self.wp >= 0: 

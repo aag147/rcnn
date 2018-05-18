@@ -55,7 +55,12 @@ class DataGenerator():
       
     def begin(self):
         'Generates batches of samples'
-        g = self._generateIterativeImageCentricBatches
+        if self.gen_type == 'rand':
+            print('Random images')
+            g = self._generateRandomImageCentricBatches
+        else:
+            print('Iterate images')
+            g = self._generateIterativeImageCentricBatches
         return g()
     
     def _generateBatchFromIDs(self, imageIdxs):
@@ -81,4 +86,12 @@ class DataGenerator():
               currImageIdx += len(imageIdxs)
               data = self._generateBatchFromIDs(imageIdxs)
               yield data
+              
+    def _generateRandomImageCentricBatches(self):
+        'Generates iterative batches of samples'
+        
+        while 1:
+          imageIdxs = [r.randint(0, self.nb_images)]
+          data = self._generateBatchFromIDs(imageIdxs)
+          yield data
     
