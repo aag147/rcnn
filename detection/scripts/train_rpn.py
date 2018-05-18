@@ -50,8 +50,9 @@ if True:
         print('SGD opt', 'lr:', cfg.init_lr)
         opt = SGD(lr = cfg.init_lr, momentum = 0.9, decay = 0.0005, nesterov=False)
     
-    model_rpn.compile(optimizer=opt,
-                      loss=[losses.rpn_loss_cls(cfg.nb_anchors), losses.rpn_loss_regr(cfg.nb_anchors)], metrics=['categorical_accuracy']) 
+    model_rpn.compile(optimizer=opt,\
+                      loss=[losses.rpn_loss_cls(cfg.nb_anchors), losses.rpn_loss_regr(cfg.nb_anchors)])
+#                      metrics={'rpn_out_class':'categorical_accuracy'}) 
     
     # train
     callbacks = [callbacks.MyModelCheckpointInterval(cfg), \
