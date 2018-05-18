@@ -73,7 +73,7 @@ class basic_config:
        self.minIoU = 0.5
        self.testdata = 'genTest'
        
-       self.img_channel_mean = [103.939, 116.779, 123.68]
+       self.img_channel_mean = [103.939, 116.779, 123.68] #BGR
        self.img_scaling_factor = 1.0
        
        #model

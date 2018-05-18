@@ -14,7 +14,10 @@ import utils
 
 def prepareInputs(imageMeta, images_path, cfg):
     img = cv.imread(images_path + imageMeta['imageName'])
-    img = cv.cvtColor(img, cv.COLOR_BGR2RGB)
+#    img = cv.cvtColor(img, cv.COLOR_BGR2RGB)
+    assert(img.shape[0] > 10)
+    assert(img.shape[1] > 10)
+    assert(img.shape[2] == 3)
     imgRedux, scale = helper.preprocessImage(img, cfg)
     output_shape = [imgRedux.shape[0] / cfg.rpn_stride, imgRedux.shape[1] / cfg.rpn_stride]
     imgDims = {'shape': img.shape, 'redux_shape':imgRedux.shape, 'output_shape':output_shape, 'scale':scale}
