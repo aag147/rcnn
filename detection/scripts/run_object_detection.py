@@ -90,3 +90,4 @@ if True:
             
             loss_class = model_detection.train_on_batch([X, norm_rois],
                                                         [det_props, det_deltas])
+        utils.update_progress_new(genTrain.nb_batches, genTrain.nb_batches)
