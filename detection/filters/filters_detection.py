@@ -14,6 +14,7 @@ import filters_helper as helper
 def prepareInputs(rois, imageDims):
     #(xmin,ymin,xmax,ymax) -> (ymin,xmin,ymax,xmax)
     
+    print(rois.shape)
     new_rois = np.zeros_like(rois)
     new_rois[:,0] = rois[:,1]
     new_rois[:,1] = rois[:,0]

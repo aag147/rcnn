@@ -5,11 +5,11 @@ Created on Mon May  7 15:40:50 2018
 @author: aag14
 """
 import sys 
-sys.path.append('../../')
-sys.path.append('../shared/')
-sys.path.append('../fast_rcnn/')
-sys.path.append('../cfgs/')
-sys.path.append('../layers/')
+sys.path.append('../../../')
+sys.path.append('../../shared/')
+sys.path.append('../filters/')
+sys.path.append('../data/')
+sys.path.append('../models/')
 
 import numpy as np
 import keras
@@ -65,7 +65,7 @@ if True:
     dataIterator = genTrain.begin()
     for epochidx in range(cfg.epoch_end):
         for batchidx in range(genTrain.nb_batches):
-            utils.update_progress(batchidx / genTrain.nb_batches)
+            utils.update_progress_new(batchidx, genTrain.nb_batches)
             X, [Y1,Y2], imageMeta, imageDims = next(dataIterator)
     
             loss_rpn = model_rpn.train_on_batch(X, [Y1,Y2])
