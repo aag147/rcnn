@@ -93,9 +93,6 @@ class object_data:
     
     def reduceData(self, imagesMeta, reduced_objs):
         reduced_imagesMeta = {}
-        i = 0
-        j = 0
-        k = 0
         for imageID, imageMeta in imagesMeta.items():
             new_rels = []
             new_prs = []
@@ -106,9 +103,7 @@ class object_data:
                     new_rels.append(obj)
                     
             if len(new_rels) > 0:
-                j += 1
                 reduced_imagesMeta[imageID] = {'imageName':imageMeta['imageName'], 'objects':new_prs+new_rels}
-        print(i,j,k)
         return reduced_imagesMeta   
 
     def reduceMapping(self, reduced_objs):
