@@ -109,10 +109,10 @@ def prepareTargets(rois, imageMeta, imageDims, class_mapping, cfg):
         y_class_num.append(copy.deepcopy(class_label))
         
         # Regression ground truth
-        coords = [0] * 4 * (len(class_mapping) - 1)
-        labels = [0] * 4 * (len(class_mapping) - 1)
+        coords = np.array([0] * 4 * (len(class_mapping) - 1))
+        labels = np.array([0] * 4 * (len(class_mapping) - 1))
         if cls_name != 'bg':
-            label_pos = 4 * class_num
+            label_pos = 4 * class_num - 4
 #            sx, sy, sw, sh = C.classifier_regr_std
             coords[label_pos:4 + label_pos] = [tx, ty, tw, th]
 #            coords[label_pos+0] * sx; coords[label_pos+1] * sy
@@ -125,15 +125,15 @@ def prepareTargets(rois, imageMeta, imageDims, class_mapping, cfg):
             y_class_regr_label.append(copy.deepcopy(labels))
 
     if len(x_roi) == 0:
+#        print('x roi none')
         return None, None, None, None
 
     rois = np.array(x_roi)
+    y_class_regr_label = np.array(y_class_regr_label)
+    y_class_regr_coords = np.array(y_class_regr_coords)
     
     true_labels = np.array(y_class_num)
-    print(np.array(y_class_regr_label).shape, np.array(y_class_regr_coords).shape)
-#    if np.array(y_class_regr_label).shape[0] == 126:
-#        print(np.array(y_class_regr_label))
-    true_boxes = np.concatenate([np.array(y_class_regr_label), np.array(y_class_regr_coords)], axis=1)
+    true_boxes = np.concatenate([y_class_regr_label, y_class_regr_coords], axis=1)
 
     return rois, np.expand_dims(true_labels, axis=0), np.expand_dims(true_boxes, axis=0), IoUs
 
