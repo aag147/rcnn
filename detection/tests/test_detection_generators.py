@@ -40,5 +40,5 @@ for i in range(genTrain.nb_batches):
     utils.update_progress(i / genTrain.nb_images)
 #    print('t',X[0].shape, X[1].shape, y[0].shape, y[1].shape)
 #    
-#    if i > 100:
-#        break
+    if i > 100:
+        break

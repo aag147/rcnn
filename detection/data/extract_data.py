@@ -93,13 +93,22 @@ class object_data:
     
     def reduceData(self, imagesMeta, reduced_objs):
         reduced_imagesMeta = {}
+        i = 0
+        j = 0
+        k = 0
         for imageID, imageMeta in imagesMeta.items():
             new_rels = []
+            new_prs = []
             for idx, obj in enumerate(imageMeta['objects']):
-                if obj['label'] in reduced_objs:
+                if obj['label'] == 'person':
+                    new_prs.append(obj)
+                elif obj['label'] in reduced_objs:
                     new_rels.append(obj)
+                    
             if len(new_rels) > 0:
-                reduced_imagesMeta[imageID] = {'imageName':imageMeta['imageName'], 'objects':new_rels}
+                j += 1
+                reduced_imagesMeta[imageID] = {'imageName':imageMeta['imageName'], 'objects':new_prs+new_rels}
+        print(i,j,k)
         return reduced_imagesMeta   
 
     def reduceMapping(self, reduced_objs):
@@ -109,3 +118,25 @@ class object_data:
                 continue
             new_class_mapping[obj] = len(new_class_mapping)
         return new_class_mapping
+    
+    def getBareBonesStats(self, class_mapping):
+        stats = {}
+        for label, idx in class_mapping.items():
+            if label not in stats:
+                stats[label] = 0
+        return stats
+    
+    
+    def getLabelStats(self, imagesMeta, class_mapping):
+        stats = self.getBareBonesStats(class_mapping)
+        stats['total'] = 0
+        stats['nb_samples'] = 0
+        stats['nb_images'] = 0
+        for imageID, imageMeta in imagesMeta.items():
+            stats['nb_images'] += 1
+            for rel in imageMeta['objects']:
+                stats['nb_samples'] += 1
+                stats['total'] += 1
+                stats[rel['label']] += 1
+                    
+        return stats
