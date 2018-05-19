@@ -50,8 +50,8 @@ if True:
     trainer = model_trainer(model=model, genTrain=genTrain, genVal=genVal, genTest=genTest, task=cfg.task)
     trainer.compileModel(cfg)
     
-    from keras.utils import plot_model
-    plot_model(model, to_file='model.png')
+#    from keras.utils import plot_model
+#    plot_model(model, to_file='model.png')
     
 if True:
     # Train model
