@@ -68,6 +68,7 @@ if True:
             utils.update_progress_new(batchidx, genTrain.nb_batches)
             X, [Y1,Y2], imageMeta, imageDims = next(dataIterator)
     
+            print(imageMeta['imageName'])
             loss_rpn = model_rpn.train_on_batch(X, [Y1,Y2])
     
             [x_class, x_deltas] = model_rpn.predict_on_batch(X)
