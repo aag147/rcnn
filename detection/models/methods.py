@@ -10,7 +10,7 @@ import keras
 import models,\
        layers
 
-def get_hoi_rcnn_models(cfg):
+def get_hoi_rcnn_models(cfg, mode='train'):
         ########################
         ###### Parameters ######
         ########################
@@ -26,6 +26,7 @@ def get_hoi_rcnn_models(cfg):
         roi_shape = (None, 5)
         human_shape = (None, 5)
         object_shape = (None, 5)
+        features_shape = (None, None, 512)
     
         ########################
         ######## Inputs ########
@@ -47,6 +48,11 @@ def get_hoi_rcnn_models(cfg):
             shape=object_shape,
             name="input_object"
         )
+        
+        features_input = keras.layers.Input(
+            shape=features_shape,
+            name="input_object"
+        )        
         
         ########################
         ####### Backbone #######
@@ -80,25 +86,40 @@ def get_hoi_rcnn_models(cfg):
             name='rpn_out_regress'
         )(rpn_features)
         
-        rpn_outputs = [
-            x_class,
-            x_deltas
-        ]
+        if mode=='test':
+            rpn_outputs = [
+                x_class,
+                x_deltas,
+                output_features
+            ]
+        else:
+            rpn_outputs = [
+                x_class,
+                x_deltas
+            ]
         
         model_rpn = keras.models.Model(inputs=rpn_inputs, outputs=rpn_outputs)
         
         ########################
         ###### Detection #######
         ########################
-        detection_inputs = [
-            img_input,
-            roi_input
-        ]
+        if mode=='test':    
+            detection_inputs = [
+                features_input,
+                roi_input
+            ]
+        else:
+            detection_inputs = [
+                img_input,
+                roi_input
+            ]
+            
+        pool_features_input = features_input if mode=='test' else output_features
             
         object_rois = layers.RoiPoolingConv(
-            pool_size=pool_size
+            pool_size=pool_size,
         )([
-            output_features,
+            pool_features_input,
             roi_input
         ])
         
@@ -195,4 +216,12 @@ def get_hoi_rcnn_models(cfg):
         model_hoi = keras.models.Model(inputs=hoi_inputs, outputs=hoi_outputs)
         
         
-        return model_rpn, model_detection, model_hoi
+        if mode=='test':
+            return model_rpn, model_detection, model_hoi    
+
+        ########################
+        ######### ALL ##########
+        ########################   
+        model_all = keras.models.Model([img_input,roi_input], rpn_outputs + detection_outputs)
+        
+        return model_rpn, model_detection, model_hoi, model_all

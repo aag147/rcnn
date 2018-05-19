@@ -13,6 +13,7 @@ sys.path.append('../models/')
 
 import numpy as np
 import keras
+import os
 
 import utils,\
        callbacks,\
@@ -35,6 +36,9 @@ if True:
     # config
     cfg = data.cfg
     cfg.fast_rcnn_config()
+    utils.saveConfig(cfg)
+    f= open(cfg.my_results_path + "history.txt","w+")
+    f.close()
     
     # labels
     class_mapping = data.class_mapping
@@ -45,7 +49,7 @@ if True:
 
 if True:
     # models
-    model_rpn, model_detection, model_hoi = methods.get_hoi_rcnn_models(cfg)
+    model_rpn, model_detection, model_hoi, model_all = methods.get_hoi_rcnn_models(cfg)
         
     print('Obj. classes', cfg.nb_object_classes)
     if cfg.optimizer == 'adam':
@@ -60,16 +64,18 @@ if True:
     model_detection.compile(optimizer=opt,
                             loss=[losses.class_loss_cls, losses.class_loss_regr(cfg.nb_object_classes - 1)],
                             metrics={'det_out_class': 'categorical_accuracy'})
+    model_all.compile(optimizer='sgd', loss='mae')
+
 
 if True:
     
-    losses = np.zeros([cfg.epoch_end, genTrain.nb_batches, 4])
+    my_losses = np.zeros([cfg.epoch_end, genTrain.nb_batches, 4])
     dataIterator = genTrain.begin()
     for epochidx in range(cfg.epoch_end):
         for batchidx in range(genTrain.nb_batches):
             X, [Y1,Y2], imageMeta, imageDims = next(dataIterator)
             
-            utils.update_progress_new(batchidx, genTrain.nb_batches, losses[epochidx, max(batchidx-1,0),:], imageMeta['imageName'])
+            utils.update_progress_new(batchidx, genTrain.nb_batches, my_losses[epochidx, max(batchidx-1,0),:], imageMeta['imageName'])
 
             loss_rpn = model_rpn.train_on_batch(X, [Y1,Y2])
     
@@ -97,5 +103,19 @@ if True:
             
             loss_class = model_detection.train_on_batch([X, norm_rois],
                                                         [det_props, det_deltas])
-            losses[epochidx, batchidx, :] = [loss_rpn[1], loss_rpn[2], loss_class[1], loss_class[2]]
-        utils.update_progress_new(genTrain.nb_batches, genTrain.nb_batches, losses[epochidx,-1,:], 'theend')
+            my_losses[epochidx, batchidx, :] = [loss_rpn[1], loss_rpn[2], loss_class[1], loss_class[2]]
+            
+            newline = '%.01d, %.03d, %.4f, %.4f, %.4f, %.4f\n' % \
+                (epochidx, batchidx, loss_rpn[1], loss_rpn[2], loss_class[1], loss_class[2])
+            with open(cfg.my_results_path + "history.txt", 'a') as file:
+                file.write(newline)
+            
+        utils.update_progress_new(genTrain.nb_batches, genTrain.nb_batches, my_losses[epochidx,-1,:], 'theend')
+        
+        path = cfg.my_weights_path + 'weights-%d-end.h5' % batchidx
+        if not os.path.exists(path):
+            model_all.save_weights(path)
+            
+    
+utils.save_obj_nooverwrite(my_losses, path)      
+print('Path:', cfg.my_results_path)

@@ -15,6 +15,7 @@ import utils
 def prepareInputs(imageMeta, images_path, cfg):
     img = cv.imread(images_path + imageMeta['imageName'])
 #    img = cv.cvtColor(img, cv.COLOR_BGR2RGB)
+    assert(img is not None)
     assert(img.shape[0] > 10)
     assert(img.shape[1] > 10)
     assert(img.shape[2] == 3)

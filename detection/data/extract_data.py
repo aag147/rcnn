@@ -57,11 +57,11 @@ class object_data:
 #            _, counts = utils.getLabelStats(trainGTMeta, class_mapping)
             reduced_objs = self.getReduxIdxs(class_mapping)
             trainGTMeta = self.reduceData(trainGTMeta, reduced_objs)
+            valGTMeta = self.reduceData(valGTMeta, reduced_objs)
             class_mapping = self.reduceMapping(reduced_objs)
-#            testGTMeta = utils.reduceTestData(testGTMeta, reduced_idxs)
+#            testGTMeta = utils.reduceTestData(testGTMeta, reduced_objs)
 #            trainMeta = utils.reduceTestData(trainMeta, reduced_idxs)
 #            testMeta = utils.reduceTestData(testMeta, reduced_idxs)
-#            valGTMeta = utils.reduceTestData(valGTMeta, reduced_idxs)
 #            class_mapping = utils.idxs2labels(reduced_idxs, class_mapping)
             
             
@@ -77,10 +77,10 @@ class object_data:
         
         self.class_mapping = class_mapping
         self.valGTMeta = valGTMeta
+        self.trainGTMeta = trainGTMeta
 #        self.trainMeta = trainMeta
 #        self.valMeta = valMeta
 #        self.testMeta = testMeta
-        self.trainGTMeta = trainGTMeta
 #        self.testGTMeta = testGTMeta
         
     def getReduxIdxs(self, class_mapping):
