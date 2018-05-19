@@ -62,13 +62,15 @@ if True:
                             metrics={'det_out_class': 'categorical_accuracy'})
 
 if True:
+    
+    losses = np.zeros([cfg.epoch_end, genTrain.nb_batches, 4])
     dataIterator = genTrain.begin()
     for epochidx in range(cfg.epoch_end):
         for batchidx in range(genTrain.nb_batches):
-            utils.update_progress_new(batchidx, genTrain.nb_batches)
             X, [Y1,Y2], imageMeta, imageDims = next(dataIterator)
-    
-            print(imageMeta['imageName'])
+            
+            utils.update_progress_new(batchidx, genTrain.nb_batches, losses[epochidx, max(batchidx-1,0),:], imageMeta['imageName'])
+
             loss_rpn = model_rpn.train_on_batch(X, [Y1,Y2])
     
             [x_class, x_deltas] = model_rpn.predict_on_batch(X)
@@ -95,4 +97,5 @@ if True:
             
             loss_class = model_detection.train_on_batch([X, norm_rois],
                                                         [det_props, det_deltas])
-        utils.update_progress_new(genTrain.nb_batches, genTrain.nb_batches)
+            losses[epochidx, batchidx, :] = [loss_rpn[1], loss_rpn[2], loss_class[1], loss_class[2]]
+        utils.update_progress_new(genTrain.nb_batches, genTrain.nb_batches, losses[epochidx,-1,:], 'theend')

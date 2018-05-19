@@ -105,7 +105,7 @@ def update_progress(progress):
     sys.stdout.flush()
     
     
-def update_progress_new(itr, total):
+def update_progress_new(itr, total, losses, imageName):
     barLength = 10 # Modify this to change the length of the progress bar
     status = ""
     progress = float(itr) / total
@@ -120,8 +120,10 @@ def update_progress_new(itr, total):
     if progress >= 1:
         progress = 1
         status = "Done...\r\n"
+    if isinstance(progress, float):
+        status = imageName
     block = int(round(barLength*progress))
-    text = "\rPercent: [{0}] {1}/{2} {3}".format( "#"*block + "-"*(barLength-block), itr, total, status)
+    text = "\rPercent: [{0}] {1}/{2} - rpn_cls: {3}, rpn_reg: {4}, det_cls: {5}, det_reg: {6} {7}".format( "#"*block + "-"*(barLength-block), itr, total, losses[0], losses[1], losses[2], losses[3], status)
     sys.stdout.write(text)
     sys.stdout.flush()
 
