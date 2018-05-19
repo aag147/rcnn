@@ -197,12 +197,12 @@ def reduceTrainData(imagesMeta, counts, nb_classes, labels):
     if nb_classes > 0:
         reduced_idxs = counts.argsort()[-nb_classes:][::-1]
     else:
-        reduced_idxs = getPascalObjects()
-    reduced_idxs = []
-    for idx, label in enumerate(labels):
-        if label['obj'] in reduced_idxs:
-            reduced_idxs.append(idx)
-    reduced_idxs = np.array(reduced_idxs)
+        objs = getPascalObjects()
+        reduced_idxs = []
+        for idx, label in enumerate(labels):
+            if label['obj'] in objs:
+                reduced_idxs.append(idx)
+        reduced_idxs = np.array(reduced_idxs)
     reduced_imagesMeta = _reduceData(imagesMeta, reduced_idxs)
     return reduced_imagesMeta, reduced_idxs
 

@@ -50,10 +50,10 @@ if True:
     trainer = model_trainer(model=model, genTrain=genTrain, genVal=genVal, genTest=genTest, task=cfg.task)
     trainer.compileModel(cfg)
     
-#    from keras.utils import plot_model
-#    plot_model(model, to_file='model.png')
+    from keras.utils import plot_model
+    plot_model(model, to_file='model.png')
     
-if True:
+if False:
     # Train model
     print('Training model...')
     trainer.trainModel(cfg)
@@ -66,3 +66,10 @@ if True:
     print("F1:", res.F1, "nb_zeros", res.nb_zeros)
     utils.save_obj_nooverwrite(res.Y_hat, cfg.my_results_path + 'y_hat')
     print('Path:', cfg.my_results_path)
+
+if True:
+    testIterator = genTest.begin()
+    X,y = next(testIterator)
+    
+    loss = model.train_on_batch(X, y)
+    pred = model.predict_on_batch(X)

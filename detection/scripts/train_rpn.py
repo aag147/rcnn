@@ -24,6 +24,7 @@ from detection_generators import DataGenerator
     
 from keras.callbacks import EarlyStopping, LearningRateScheduler, Callback
 from keras.optimizers import SGD, Adam
+import os
 
 if True:
     # meta data
@@ -62,3 +63,9 @@ if True:
     model_rpn.fit_generator(generator = genTrain.begin(), \
                 steps_per_epoch = genTrain.nb_batches, \
                 epochs = cfg.epoch_end, initial_epoch=cfg.epoch_begin, callbacks=callbacks)
+
+    path = cfg.my_weights_path + 'weights-theend.h5'
+    if not os.path.exists(path):
+        model_rpn.save_weights(path)
+    
+    print('Path:', cfg.my_results_path)

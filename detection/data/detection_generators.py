@@ -10,6 +10,7 @@ import random as r
 import math as m
 import cv2 as cv
 import filters_rpn
+import time
 
 class DataGenerator():
     
@@ -69,10 +70,15 @@ class DataGenerator():
 #        batchIdx = 0
         for imageID in imageIDs:
             imageMeta = self.imagesMeta[imageID]
+            io_start = time.time()
             img, imageDims = filters_rpn.prepareInputs(imageMeta, self.images_path, self.cfg)
+            io_end = time.time()
+            pp_start = time.time()
             y_rpn_cls, y_rpn_regr = filters_rpn.prepareTargets(imageMeta, imageDims, self.cfg)
+            pp_end = time.time()
+            times = np.array([io_end-io_start, pp_end-pp_start])
             
-        return img, [y_rpn_cls, y_rpn_regr], imageMeta, imageDims
+        return img, [y_rpn_cls, y_rpn_regr], imageMeta, imageDims, times
 
     #%% Different forms of generators     
     def _generateIterativeImageCentricBatches(self):
