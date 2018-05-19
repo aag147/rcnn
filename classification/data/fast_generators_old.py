@@ -12,8 +12,6 @@ import cv2 as cv
 import utils
 import image
 import sys
-import filters_helper as helper
-
 
 class DataGenerator():
     
@@ -63,45 +61,6 @@ class DataGenerator():
           self.nb_batches = self.nb_images
       
       
-        
-    def getXData(self, imagesID, batchIdx):
-        dataX = []
-        dataH = []
-        dataO = []
-        IDs   = []
-        for imageID in imagesID:
-            imageMeta = self.imagesMeta[imageID]
-            img = cv.imread(self.images_path + imageMeta['imageName'])
-    #        img = cv.cvtColor(img, cv.COLOR_BGR2RGB)
-            assert(img is not None)
-            assert(img.shape[0] > 10)
-            assert(img.shape[1] > 10)
-            assert(img.shape[2] == 3)
-            imgRedux, scale = helper.preprocessImage(img, self.cfg)
-    
-            tmpH = []
-            tmpO = []
-            for relID, rel in imageMeta['rels'].items():
-                h, o = image.getDataFromRel(rel['prsBB'], rel['objBB'], scale, [0,0], imgRedux.shape, self.cfg)
-                tmpH.append([batchIdx] + h)
-                tmpO.append([batchIdx] + o)
-                
-            dataX.append(imgRedux)
-            dataH.append(tmpH)
-            dataO.append(tmpO)
-            IDs.append(imageID)
-            batchIdx += 1
-        dataX = np.array(dataX)
-        dataH = np.array(dataH)
-        dataO = np.array(dataO)
-    #    print(dataX.shape, dataH.shape, dataO.shape)
-        IDs = np.array(IDs)
-        
-    #    dataH = np.expand_dims(dataH, axis=1)
-    #    dataO = np.expand_dims(dataO, axis=1)
-        
-        return [dataX, dataH, dataO], IDs
-        
       
     def begin(self):
         'Generates batches of samples'
@@ -110,7 +69,7 @@ class DataGenerator():
     
     def _generateBatchFromIDs(self, imageIdxs, batchIdx):
         imagesID = [self.dataID[idx] for idx in imageIdxs]
-        [dataXI, dataXH, dataXO], _ = self.getXData(imagesID, batchIdx)
+        [dataXI, dataXH, dataXO], _ = image.getXData(imagesID, self.imagesMeta, self.images_path, self.cfg, batchIdx)
         dataXW = image.getDataPairWiseStream(imagesID, self.imagesMeta, self.cfg)            
         dataXW = np.expand_dims(dataXW, axis=0)
         y, _, _ = image.getYData(imagesID, self.imagesMeta, self.GTMeta, self.cfg)

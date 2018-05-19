@@ -10,6 +10,7 @@ import numpy as np
 import utils
 import sys
 
+
 #%% Y DATA
 def getYData(imagesID, imagesMeta, GTMeta, cfg):
     dataLabels = []
@@ -79,12 +80,13 @@ def getXData(imagesID, imagesMeta, data_path, cfg, batchIdx):
     IDs   = []
     for imageID in imagesID:
         imageMeta = imagesMeta[imageID]
-#        print(data_path + imageMeta['imageName'])
-        image = cv.imread(data_path + imageMeta['imageName'])
-#        sys.stdout.write('\r' + str(imageID))
-#        sys.stdout.flush()
-        image = cv.cvtColor(image, cv.COLOR_BGR2RGB)
-        imageClean, scale, padds = preprocessImage(image, cfg)
+        img = cv.imread(data_path + imageMeta['imageName'])
+#        img = cv.cvtColor(img, cv.COLOR_BGR2RGB)
+        assert(img is not None)
+        assert(img.shape[0] > 10)
+        assert(img.shape[1] > 10)
+        assert(img.shape[2] == 3)
+        imgRedux, scale = helper.preprocessImage(img, cfg)
 
         tmpH = []
         tmpO = []

@@ -11,6 +11,8 @@ sys.path.append('../../shared/')
 sys.path.append('../models/')
 sys.path.append('../cfgs/')
 sys.path.append('../data/')
+sys.path.append('../../detection/filters/')
+
 
 import utils
 from model_trainer import model_trainer
@@ -51,7 +53,7 @@ if True:
     from keras.utils import plot_model
     plot_model(model, to_file='model.png')
     
-if False:
+if True:
     # Train model
     print('Training model...')
     trainer.trainModel(cfg)
