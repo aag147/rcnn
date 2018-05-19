@@ -81,6 +81,9 @@ if True:
             rois, true_labels, true_boxes, IouS = filters_detection.prepareTargets(pred_anchors, imageMeta, imageDims, class_mapping, cfg)
             norm_rois = filters_detection.prepareInputs(rois, imageDims)
     
+            if rois is None:
+                continue
+    
             # reduce and filter
             samples = helper.reduce_rois(true_labels, cfg)
             rois = rois[samples, :]
