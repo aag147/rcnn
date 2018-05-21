@@ -79,8 +79,8 @@ class DataGenerator():
             img, imageDims = filters_rpn.prepareInputs(imageMeta, self.images_path, self.cfg)
             io_end = time.time()
             pp_start = time.time()
-            y_rpn_cls, y_rpn_regr = filters_rpn.loadTargets(imageMeta, self.anchors_path)
-#            y_rpn_cls, y_rpn_regr = filters_rpn.prepareTargets(imageMeta, imageDims, self.cfg)
+#            y_rpn_cls, y_rpn_regr = filters_rpn.loadTargets(imageMeta, self.anchors_path)
+            y_rpn_cls, y_rpn_regr = filters_rpn.prepareTargets(imageMeta, imageDims, self.cfg)
             pp_end = time.time()
             times = np.array([io_end-io_start, pp_end-pp_start])
             
@@ -100,7 +100,7 @@ class DataGenerator():
         'Generates iterative batches of samples'
         
         while 1:
-          imageIdxs = [r.randint(0, self.nb_images)]
+          imageIdxs = [r.randint(0, self.nb_images-1)]
           data = self._generateBatchFromIDs(imageIdxs)
           yield data
     

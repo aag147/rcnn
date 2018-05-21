@@ -77,7 +77,6 @@ def prepareTargets(imageMeta, imageDims, cfg):
     ##### Ground truth boxes ####
     #############################
     gta = helper.normalizeGTboxes(bboxes, scale=scale, roundoff=True)
-    
 #    draw.drawHOI(image, gta[0,:], gta[0,:])
      
     #############################
@@ -92,14 +91,13 @@ def prepareTargets(imageMeta, imageDims, cfg):
                 xmin_anc = float(rpn_stride) * (ix + 0.5) - w_anc / 2
                 xmax_anc = float(rpn_stride) * (ix + 0.5) + w_anc / 2
                 if xmin_anc < 0 or xmax_anc > image_width:
-                    continue
+                    continue                
                 
                 for jy in range(output_height):
                     ymin_anc = float(rpn_stride) * (jy + 0.5) - h_anc / 2
                     ymax_anc = float(rpn_stride) * (jy + 0.5) + h_anc / 2
                     if ymin_anc < 0 or ymax_anc > image_height:
                         continue
-                    
                     
                     bbox_type = 'neg'
                     best_iou_for_loc = 0.0
@@ -108,10 +106,11 @@ def prepareTargets(imageMeta, imageDims, cfg):
                     for gtidx in range(num_bboxes):
                         gt = gta[gtidx]
                         curr_iou = utils.get_iou(gt, at)
+                                                
                         if curr_iou > best_iou_for_gtbox[gtidx] or curr_iou > rpn_max_overlap:
                             tx, ty, tw, th = helper.get_GT_deltas(gt, at)
                             
-                            bxmin, bymin, bw, bh = helper.apply_regr([at['xmin'],at['ymin'],at['xmax']-at['xmin'],at['ymax']-at['ymin']], [tx,ty,tw,th])
+#                            bxmin, bymin, bw, bh = helper.apply_regr([at['xmin'],at['ymin'],at['xmax']-at['xmin'],at['ymax']-at['ymin']], [tx,ty,tw,th])
 #                            print(curr_iou)
 #                            print('at',at['xmin'], at['ymin'], at['xmax'], at['ymax'])
 #                            print('gt',gt['xmin'], gt['ymin'], gt['xmax'], gt['ymax'])
@@ -126,7 +125,7 @@ def prepareTargets(imageMeta, imageDims, cfg):
     
     					# we set the anchor to positive if the IOU is >0.7 (it does not matter if there was another better box, it just indicates overlap)
                         if curr_iou > rpn_max_overlap:
-    #                        print(curr_iou, at)
+#                            print(curr_iou, at)
     #                        print(anchor_sizes[anchor_size_idx], anchor_ratios[anchor_ratio_idx])
                             bbox_type = 'pos'
                             num_anchors_for_gtbox[gtidx] += 1

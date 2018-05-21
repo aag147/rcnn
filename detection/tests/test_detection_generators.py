@@ -49,18 +49,18 @@ cfg.fast_rcnn_config()
 #
 #utils.save_dict(new_trainGTMeta, cfg.data_path + 'train')
 # Create batch generators
-genTrain = DataGenerator(imagesMeta = data.trainGTMeta, cfg=cfg, data_type='train')
+genVal = DataGenerator(imagesMeta = data.valGTMeta, cfg=cfg, data_type='val')
 
 
-trainIterator = genTrain.begin()
+trainIterator = genVal.begin()
 
 total_times = np.array([0.0,0.0])
 #j = 0
-for i in range(genTrain.nb_batches):
+for i in range(genVal.nb_batches):
     X, y, imageMeta, imageDims, times = next(trainIterator)
  
     total_times += times
-    utils.update_progress_new(i, genTrain.nb_batches, list(times) + [0,0], imageMeta['imageName'])
+    utils.update_progress_new(i, genVal.nb_batches, list(times) + [0,0], imageMeta['imageName'])
     
 #    img = X[0]
 #    img -= np.min(img)
@@ -69,9 +69,9 @@ for i in range(genTrain.nb_batches):
 #    draw.drawBoxes(img, imageMeta['objects'], imageDims)
 #    print('t',X[0].shape, X[1].shape, y[0].shape, y[1].shape)
 #    
-#    utils.save_obj(y, cfg.data_path +'anchors/' + imageMeta['imageName'].split('.')[0])
+    utils.save_obj(y, cfg.data_path +'anchors/val/' + imageMeta['imageName'].split('.')[0])
 #    s = time.time()
-#    utils.load_obj(cfg.data_path +'anchors/' + imageMeta['imageName'].split('.')[0])
+#    utils.load_obj(cfg.data_path +'anchors/val/' + imageMeta['imageName'].split('.')[0])
 #    f = time.time()
 #    print(f-s, times[1])
 #    if j > 10:

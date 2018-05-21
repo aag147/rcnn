@@ -41,7 +41,7 @@ if True:
 
 #if False:
     # models
-    model_rpn, model_detection, model_hoi = methods.get_hoi_rcnn_models(cfg)
+    model_rpn, model_detection, model_hoi, model_all = methods.get_hoi_rcnn_models(cfg)
     
     print('Obj. classes', cfg.nb_object_classes)
     if cfg.optimizer == 'adam':
