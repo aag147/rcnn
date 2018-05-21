@@ -65,10 +65,10 @@ class DataGenerator():
     
     def _generateBatchFromIDs(self, imageIdxs):
         imageIDs = [self.dataID[idx] for idx in imageIdxs]
-        if imageIDs[0] <= '550394':
+        if imageIDs[0] < '550394':
             return None, None, None, None, None
-        else:
-            print(imageIDs)
+#        else:
+#            print(imageIDs)
         # Only works for batch_size=0
 #        batchIdx = 0
         for imageID in imageIDs:

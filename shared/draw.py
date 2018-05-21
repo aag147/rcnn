@@ -117,6 +117,16 @@ def drawPositiveRois(img, rois):
             spl.plot(bbox[0,:], bbox[1,:])
             bboxes.append(bb)
     return np.array(bboxes)
+
+
+def drawBoxes(img, bboxes, imageDims):
+    f, spl = plt.subplots(1)
+    spl.imshow(img)
+    scales = imageDims['scale']
+    for bbox in bboxes:
+        bbox = drawBoundingBox(bbox)
+        print(bbox[1,:]*scales[0])
+        spl.plot(bbox[0,:]*scales[1], bbox[1,:]*scales[0])
             
 def drawGTBoxes(img, imageMeta, imageDims):
     f, spl = plt.subplots(1)
