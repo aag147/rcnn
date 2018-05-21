@@ -39,7 +39,7 @@ if True:
     genVal = DataGenerator(imagesMeta=data.valMeta, GTMeta = data.trainGTMeta, labels=data.labels, cfg=cfg, data_type='val')
     genTest = DataGenerator(imagesMeta=data.testMeta, GTMeta = data.testGTMeta, labels=data.labels, cfg=cfg, data_type='test')  
 
-if True:    
+if False:    
     # Save config
     utils.saveConfig(cfg)
     utils.saveSplit(cfg, list(data.trainMeta.keys()), list(data.valMeta.keys()))
@@ -67,7 +67,7 @@ if False:
     utils.save_obj_nooverwrite(res.Y_hat, cfg.my_results_path + 'y_hat')
     print('Path:', cfg.my_results_path)
 
-if True:
+if False:
     testIterator = genTest.begin()
     X,y = next(testIterator)
     

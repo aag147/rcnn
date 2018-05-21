@@ -17,7 +17,7 @@ sys.path.append('../../detection/filters/')
 
 from model_trainer import model_trainer
 from load_data import data
-from fast_generators import DataGenerator
+from generators import DataGenerator
 from methods import Fast_HO_RCNN
 import utils
 import draw
@@ -31,12 +31,12 @@ np.seterr(all='raise')
 
 # Load data
 print('Loading data...')
-data = data()
+data = data(False)
 cfg = data.cfg
 cfg.fast_rcnn_config()
 
 # Create batch generators
-genTrain = DataGenerator(imagesMeta=data.trainMeta, GTMeta = data.trainGTMeta, labels = data.labels, cfg=cfg, data_type='train')
+genTrain = DataGenerator(imagesMeta=data.trainMeta, GTMeta = data.trainGTMeta, cfg=cfg, data_type='train')
 
 
 trainIterator = genTrain.begin()
@@ -49,6 +49,7 @@ def unnormCoords(box, shape):
 idx = 0
 for i in range(genTrain.nb_batches):
     X, y = next(trainIterator)
+    break
 #    utils.update_progress(i / genTrain.nb_images)
     print('t',X[0].shape, X[1].shape, X[3].shape, y.shape)
     
@@ -63,5 +64,5 @@ for i in range(genTrain.nb_batches):
     objBB = unnormCoords(objBB[1:], image.shape)
     draw.drawHOI(image, prsBB, objBB)
     
-    if i > 100:
+    if i > 0:
         break

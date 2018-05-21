@@ -74,7 +74,7 @@ class DataGenerator():
         X = [dataXP, dataXB, dataXW]
         X = [X[i] for i in range(len(X)) if self.inputs[i]]
         y, _, _ = image.getYData(batchID, self.imagesMeta, self.GTMeta, self.cfg)
-        y = np.squeeze(y, axis=0)
+        y = y[0]
         return X, y
     
     def _generateBatchFromBGs(self, imageMeta, bbs):

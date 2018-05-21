@@ -152,11 +152,13 @@ def getLabelStats(imagesMeta, labels):
         stats['nb_images'] += 1
         for relID, rel in imageMeta['rels'].items():
             stats['nb_samples'] += 1
+            stats['total'] += 1
+            if 'labels' in rel:
+                continue
             idx = rel['label']
             name = labels[idx]
             stats[name['obj']][name['pred']] += 1
             stats[name['obj']]['total'] += 1
-            stats['total'] += 1
                 
             counts[idx] += 1
     return stats, counts

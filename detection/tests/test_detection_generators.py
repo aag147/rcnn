@@ -18,7 +18,7 @@ from detection_generators import DataGenerator
 
 import numpy as np
 import utils
-from operator import add
+import time
 
 np.seterr(all='raise')
 
@@ -40,12 +40,22 @@ total_times = np.array([0.0,0.0])
 for i in range(genTrain.nb_batches):
     try:
         X, y, imageMeta, imageDims, times = next(trainIterator)
+        if X is None:
+            continue
     except:
         print('error', imageMeta['imageName'])
+        break
     total_times += times
-    utils.update_progress_new(i, genTrain.nb_batches, list(times) + [0,0], imageMeta['imageName'])
+    print('finally', i, imageMeta['imageName'])
+    break
+#    utils.update_progress_new(i, genTrain.nb_batches, list(times) + [0,0], imageMeta['imageName'])
 #    print('t',X[0].shape, X[1].shape, y[0].shape, y[1].shape)
 #    
-    utils.save_obj(y, cfg.weights_path +'anchors/' + imageMeta['imageName'].split('.')[0])
+    #utils.save_obj(y, cfg.weights_path +'anchors/' + imageMeta['imageName'].split('.')[0])
+    s = time.time()
+    utils.load_obj(cfg.weights_path +'anchors/' + imageMeta['imageName'].split('.')[0])
+    f = time.time()
+    print(f-s, times[1])
 #    break
-print(total_times)
+print(f-s)
+

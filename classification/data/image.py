@@ -26,12 +26,12 @@ def getYData(imagesID, imagesMeta, GTMeta, cfg):
             relsY.append(labels)
             relsH.append(prsGT)
             relsO.append(objGT)
-            
         relsY = utils.getMatrixLabels(cfg.nb_classes, relsY)
         dataLabels.append(relsY)
         dataHumanBBs.append(relsH)
         dataObjectBBs.append(relsO)
-    dataLabels = np.array(dataLabels)
+    dataLabels = np.vstack(dataLabels)
+    dataLabels = np.expand_dims(dataLabels, axis=0)
     dataHumanBBs = np.array(dataHumanBBs)
     dataObjectBBs = np.array(dataObjectBBs)
     return dataLabels, dataHumanBBs, dataObjectBBs

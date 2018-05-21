@@ -27,7 +27,7 @@ from detection_generators import DataGenerator
     
 from keras.callbacks import EarlyStopping, LearningRateScheduler, Callback
 from keras.optimizers import SGD, Adam
-
+import time
 
 if True:
     # meta data
@@ -73,7 +73,9 @@ if True:
     dataIterator = genTrain.begin()
     for epochidx in range(cfg.epoch_end):
         for batchidx in range(genTrain.nb_batches):
-            X, [Y1,Y2], imageMeta, imageDims = next(dataIterator)
+            rpn_s = time.time()
+            X, [Y1,Y2], imageMeta, imageDims, times = next(dataIterator)
+            rpn_f = time.time()
             
             utils.update_progress_new(batchidx, genTrain.nb_batches, my_losses[epochidx, max(batchidx-1,0),:], imageMeta['imageName'])
 
@@ -82,9 +84,13 @@ if True:
             [x_class, x_deltas] = model_rpn.predict_on_batch(X)
     
             # post preprocessing
+            det1_s = time.time()
             pred_anchors = helper.deltas2Anchors(x_class, x_deltas, cfg, imageDims)
             pred_anchors = helper.non_max_suppression_fast(pred_anchors, overlap_thresh=cfg.detection_nms_overlap_thresh)
             pred_anchors = pred_anchors[:, 0: -1]
+            
+            det1_f = time.time()
+            det2_s = time.time()
             
             # get inputs and targets
             rois, true_labels, true_boxes, IouS = filters_detection.prepareTargets(pred_anchors, imageMeta, imageDims, class_mapping, cfg)
@@ -93,6 +99,9 @@ if True:
                 continue
     
             norm_rois = filters_detection.prepareInputs(rois, imageDims)
+            
+            det2_f = time.time()
+            det3_s = time.time()
     
             # reduce and filter
             samples = helper.reduce_rois(true_labels, cfg)
@@ -101,12 +110,16 @@ if True:
             det_props = true_labels[:, samples, :]
             det_deltas = true_boxes[:, samples, :]
             
+            det3_f = time.time()
+            
             loss_class = model_detection.train_on_batch([X, norm_rois],
                                                         [det_props, det_deltas])
-            my_losses[epochidx, batchidx, :] = [loss_rpn[1], loss_rpn[2], loss_class[1], loss_class[2]]
+#            my_losses[epochidx, batchidx, :] = [loss_rpn[1], loss_rpn[2], loss_class[1], loss_class[2]]
+            my_losses[epochidx, batchidx, :] = [times[1], det1_f-det1_s, det2_f-det2_s, det3_f-det3_s]
             
             newline = '%.01d, %.03d, %.4f, %.4f, %.4f, %.4f\n' % \
                 (epochidx, batchidx, loss_rpn[1], loss_rpn[2], loss_class[1], loss_class[2])
+
             with open(cfg.my_results_path + "history.txt", 'a') as file:
                 file.write(newline)
             

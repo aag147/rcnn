@@ -65,7 +65,10 @@ class DataGenerator():
     
     def _generateBatchFromIDs(self, imageIdxs):
         imageIDs = [self.dataID[idx] for idx in imageIdxs]
-        
+        if imageIDs[0] <= '550394':
+            return None, None, None, None, None
+        else:
+            print(imageIDs)
         # Only works for batch_size=0
 #        batchIdx = 0
         for imageID in imageIDs:
@@ -83,14 +86,12 @@ class DataGenerator():
     #%% Different forms of generators     
     def _generateIterativeImageCentricBatches(self):
         'Generates iterative batches of samples'
-        
+        currImageIdx = 0
         while 1:
-          currImageIdx = 0
-          for i in range(self.nb_batches):
-              imageIdxs = [imageIdx for imageIdx in range(currImageIdx, currImageIdx+self.batch_size)]
-              currImageIdx += len(imageIdxs)
-              data = self._generateBatchFromIDs(imageIdxs)
-              yield data
+          imageIdxs = [imageIdx for imageIdx in range(currImageIdx % self.nb_batches, min(currImageIdx+self.batch_size, self.nb_batches))]
+          currImageIdx += len(imageIdxs)
+          data = self._generateBatchFromIDs(imageIdxs)
+          yield data
               
     def _generateRandomImageCentricBatches(self):
         'Generates iterative batches of samples'

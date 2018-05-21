@@ -67,5 +67,6 @@ if True:
     path = cfg.my_weights_path + 'weights-theend.h5'
     if not os.path.exists(path):
         model_rpn.save_weights(path)
+
     
     print('Path:', cfg.my_results_path)
