@@ -73,7 +73,6 @@ class DataGenerator():
 #            print(imageIDs)
         # Only works for batch_size=0
 #        batchIdx = 0
-        print(imageIDs)
         for imageID in imageIDs:
             imageMeta = self.imagesMeta[imageID]
             io_start = time.time()

@@ -49,9 +49,9 @@ class DataGenerator():
       
       self.imagesMeta = imagesMeta
       self.GTMeta     = GTMeta
-      self.gt_label, _, _ = image.getYData(self.dataID, self.imagesMeta, self.GTMeta, self.cfg)
+      gt_label, _, _ = image.getYData(self.dataID, self.imagesMeta, self.GTMeta, self.cfg)
       self.nb_images = len(self.dataID)
-      self.nb_samples = len(self.gt_label)
+      self.nb_samples = gt_label.shape[1]
       if self.nb_batches is None:
           self.nb_batches = m.ceil(self.nb_samples / self.batch_size)
       
