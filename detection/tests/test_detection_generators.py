@@ -55,32 +55,28 @@ genTrain = DataGenerator(imagesMeta = data.trainGTMeta, cfg=cfg, data_type='trai
 trainIterator = genTrain.begin()
 
 total_times = np.array([0.0,0.0])
-j = 0
+#j = 0
 for i in range(genTrain.nb_batches):
-    try:
-        X, y, imageMeta, imageDims, times = next(trainIterator)
-        if X is None:
-            continue
-    except:
-        print('error', imageMeta['imageName'])
-        break
+    X, y, imageMeta, imageDims, times = next(trainIterator)
+ 
     total_times += times
+    utils.update_progress_new(i, genTrain.nb_batches, list(times) + [0,0], imageMeta['imageName'])
+    
 #    img = X[0]
 #    img -= np.min(img)
 #    img /= 255
 #    img = img[:,:,(2,1,0)]
 #    draw.drawBoxes(img, imageMeta['objects'], imageDims)
-    utils.update_progress_new(i, genTrain.nb_batches, list(times) + [0,0], imageMeta['imageName'])
 #    print('t',X[0].shape, X[1].shape, y[0].shape, y[1].shape)
 #    
-    utils.save_obj(y, cfg.weights_path +'anchors/' + imageMeta['imageName'].split('.')[0])
-    s = time.time()
-    utils.load_obj(cfg.weights_path +'anchors/' + imageMeta['imageName'].split('.')[0])
-    f = time.time()
+#    utils.save_obj(y, cfg.data_path +'anchors/' + imageMeta['imageName'].split('.')[0])
+#    s = time.time()
+#    utils.load_obj(cfg.data_path +'anchors/' + imageMeta['imageName'].split('.')[0])
+#    f = time.time()
 #    print(f-s, times[1])
-    if j > 10:
-        break
-    j += 1
+#    if j > 10:
+#        break
+#    j += 1
 #    break
 #print(f-s)
 

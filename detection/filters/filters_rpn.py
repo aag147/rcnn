@@ -25,6 +25,11 @@ def prepareInputs(imageMeta, images_path, cfg):
     imgRedux = np.expand_dims(imgRedux, axis=0)
     return imgRedux, imgDims
 
+
+def loadTargets(imageMeta, anchors_path):
+    y_rpn_cls, y_rpn_regr = utils.load_obj(anchors_path + imageMeta['imageName'].split('.')[0])
+    return y_rpn_cls, y_rpn_regr
+
 def prepareTargets(imageMeta, imageDims, cfg):
 
     #############################

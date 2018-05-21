@@ -36,6 +36,8 @@ class DataGenerator():
       self.data_path = cfg.data_path
       self.images_path = self.data_path + 'images/'
       self.images_path = self.images_path + self.data_type + '/'
+      self.anchors_path = self.data_path + 'anchors/'
+      self.anchors_path = self.anchors_path + self.data_type + '/'
       self.cfg = cfg
 
       self.dataID = list(imagesMeta.keys())
@@ -65,19 +67,21 @@ class DataGenerator():
     
     def _generateBatchFromIDs(self, imageIdxs):
         imageIDs = [self.dataID[idx] for idx in imageIdxs]
-        if imageIDs[0] < '550394':
-            return None, None, None, None, None
+#        if imageIDs[0] < '550394':
+#            return None, None, None, None, None
 #        else:
 #            print(imageIDs)
         # Only works for batch_size=0
 #        batchIdx = 0
+        print(imageIDs)
         for imageID in imageIDs:
             imageMeta = self.imagesMeta[imageID]
             io_start = time.time()
             img, imageDims = filters_rpn.prepareInputs(imageMeta, self.images_path, self.cfg)
             io_end = time.time()
             pp_start = time.time()
-            y_rpn_cls, y_rpn_regr = filters_rpn.prepareTargets(imageMeta, imageDims, self.cfg)
+            y_rpn_cls, y_rpn_regr = filters_rpn.loadTargets(imageMeta, self.anchors_path)
+#            y_rpn_cls, y_rpn_regr = filters_rpn.prepareTargets(imageMeta, imageDims, self.cfg)
             pp_end = time.time()
             times = np.array([io_end-io_start, pp_end-pp_start])
             
