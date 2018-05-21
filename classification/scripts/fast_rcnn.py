@@ -39,7 +39,7 @@ if True:
     genVal = DataGenerator(imagesMeta=data.valMeta, GTMeta = data.trainGTMeta, labels=data.labels, cfg=cfg, data_type='val')
     genTest = DataGenerator(imagesMeta=data.testMeta, GTMeta = data.testGTMeta, labels=data.labels, cfg=cfg, data_type='test')  
 
-if False:    
+if True:    
     # Save config
     utils.saveConfig(cfg)
     utils.saveSplit(cfg, list(data.trainMeta.keys()), list(data.valMeta.keys()))
@@ -50,8 +50,8 @@ if False:
     trainer = model_trainer(model=model, genTrain=genTrain, genVal=genVal, genTest=genTest, task=cfg.task)
     trainer.compileModel(cfg)
     
-    from keras.utils import plot_model
-    plot_model(model, to_file='model.png')
+#    from keras.utils import plot_model
+#    plot_model(model, to_file='model.png')
     
 if False:
     # Train model

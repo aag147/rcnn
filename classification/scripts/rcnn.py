@@ -14,7 +14,7 @@ sys.path.append('../data/')
 
 import utils
 from model_trainer import model_trainer
-from load_data import data
+import load_data
 from generators import DataGenerator
 from methods import HO_RCNN
 
@@ -28,7 +28,7 @@ np.seterr(all='raise')
 if True:
     # Load data
     print('Loading data...')
-    data = data()
+    data = load_data.data()
     cfg = data.cfg
     cfg.rcnn_config()
     
@@ -36,10 +36,8 @@ if True:
     genTrain = DataGenerator(imagesMeta=data.trainMeta, GTMeta = data.trainGTMeta, cfg=cfg, data_type='train')
     genVal = DataGenerator(imagesMeta=data.valMeta, GTMeta = data.trainGTMeta, cfg=cfg, data_type='val')
     genTest = DataGenerator(imagesMeta=data.testMeta, GTMeta = data.testGTMeta, cfg=cfg, data_type='test')  
-    itr=genTrain.begin()
-    data2 = next(itr)
 
-if False:    
+if True:
     # Save config
     utils.saveConfig(cfg)
     utils.saveSplit(cfg, list(data.trainMeta.keys()), list(data.valMeta.keys()))
@@ -47,10 +45,11 @@ if False:
     # Create model
     print('Creating model...')
     model = HO_RCNN(cfg)
+
     trainer = model_trainer(model=model, genTrain=genTrain, genVal=genVal, genTest=genTest, task=cfg.task)
     trainer.compileModel(cfg)
 
-if False:    
+if True:    
     # Train model
     print('Training model...')
     trainer.trainModel(cfg)
