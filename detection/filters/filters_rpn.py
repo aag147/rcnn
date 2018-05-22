@@ -64,6 +64,7 @@ def prepareTargets(imageMeta, imageDims, cfg):
     y_rpn_overlap = np.zeros((output_height, output_width, num_anchors))
     y_is_box_valid = np.zeros((output_height, output_width, num_anchors))
     y_rpn_regr = np.zeros((output_height, output_width, num_anchors * 4))
+    y_rpn_ancs = np.zeros((output_height, output_width, num_anchors * 4))
     
     num_bboxes = len(bboxes)
     
@@ -152,6 +153,7 @@ def prepareTargets(imageMeta, imageDims, cfg):
                         y_is_box_valid[jy, ix, anc_idx] = 1
                         y_rpn_overlap[jy, ix, anc_idx] = 1
                         y_rpn_regr[jy, ix, 4*anc_idx:4*anc_idx+4] = best_regr
+                        y_rpn_ancs[jy, ix, 4*anc_idx:4*anc_idx+4] = [xmin_anc, ymin_anc, xmax_anc-xmin_anc, ymax_anc-ymin_anc]
                         
             
     #############################
@@ -161,6 +163,7 @@ def prepareTargets(imageMeta, imageDims, cfg):
     for idx in range(num_anchors_for_gtbox.shape[0]):
         if num_anchors_for_gtbox[idx] == 0:
             # no box with an IOU greater than zero ...
+            print('no anchors', idx, gta[idx])
             if best_anchor_for_gtbox[idx, 0] == -1:
                 continue
             
@@ -190,7 +193,7 @@ def prepareTargets(imageMeta, imageDims, cfg):
     neg_locs = np.where(np.logical_and(y_rpn_overlap[0, :, :, :] == 0, y_is_box_valid[0, :, :, :] == 1))
 
     num_pos = len(pos_locs[0])
-    num_regions = 256
+    num_regions = cfg.nb_rpn_proposals
         
     if len(pos_locs[0]) > num_regions/2:
         val_locs = random.sample(range(len(pos_locs[0])), len(pos_locs[0]) - int(num_regions/2))
@@ -210,4 +213,4 @@ def prepareTargets(imageMeta, imageDims, cfg):
     # y_rpn_regr: regression deltas - x,y,w,h
     y_rpn_cls = np.concatenate([y_is_box_valid, y_rpn_overlap], axis=3)
     y_rpn_regr = np.concatenate([np.repeat(y_rpn_overlap, 4, axis=3), y_rpn_regr], axis=3)
-    return np.copy(y_rpn_cls), np.copy(y_rpn_regr)
+    return np.copy(y_rpn_cls), np.copy(y_rpn_regr), y_rpn_ancs / cfg.rpn_stride

@@ -41,7 +41,7 @@ class PrintCallBack(Callback):
 class SaveLog2File(Callback):
    def __init__(self, cfg):
       self.cfg = cfg
-      f= open(cfg.my_results_path + "history.txt","w+")
+      f= open(cfg.my_results_path + "history.txt","a")
       f.close()
    def on_epoch_end(self, epoch, logs=None):
        val_loss = logs.get('val_loss') if type(logs.get('val_loss')) is float else 0.0

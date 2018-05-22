@@ -35,7 +35,9 @@ if True:
     # Create batch generators
     genTrain = DataGenerator(imagesMeta=data.trainMeta, GTMeta = data.trainGTMeta, cfg=cfg, data_type='train')
     genVal = DataGenerator(imagesMeta=data.valMeta, GTMeta = data.trainGTMeta, cfg=cfg, data_type='val')
-    genTest = DataGenerator(imagesMeta=data.testMeta, GTMeta = data.testGTMeta, cfg=cfg, data_type='test')  
+    genTest = DataGenerator(imagesMeta=data.testMeta, GTMeta = data.testGTMeta, cfg=cfg, data_type='test')
+    
+    stats, count = utils.getLabelStats(data.trainMeta, data.labels)
 
 if True:
     # Save config
@@ -59,8 +61,16 @@ if True:
     print('Saving final model...')
     trainer.saveModel(cfg)
     print('Testing model on test...')
-    resTest = trainer.evaluateModel(genTest)
+    resTest = trainer.evaluateModel(genTest)    
     print("F1 (test!):", resTest.F1, "nb_zeros", resTest.nb_zeros)
     print('Testing model on training...')
     resTrain = trainer.evaluateModel(genTrain)
     print("F1 (train):", resTrain.F1, "nb_zeros", resTrain.nb_zeros)
+
+    utils.save_obj_nooverwrite(resTest.Y_hat, cfg.my_results_path + 'y_hat')    
+    
+    f= open(cfg.my_results_path + "tests.txt","a")
+    f.close()
+    newline = 'test: %.4f, nb_zeros: %.03d | train: %.4f, nb_zeros: %.03d\n' % (resTest.F1, resTest.nb_zeros, resTrain.F1, resTrain.nb_zeros)
+    with open(cfg.my_results_path + "tests.txt", 'a') as file:
+        file.write(newline)

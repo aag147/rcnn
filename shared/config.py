@@ -133,19 +133,20 @@ class basic_config:
        
        #rpn filters
        self.rpn_stride = 16
+       self.nb_rpn_proposals = 256
         
        self.anchor_sizes = [64, 128, 256, 512]
        self.anchor_ratios = [[1, 1], [1, 2], [2, 1]]
         
-       self.rpn_min_overlap = 0.1
-       self.rpn_max_overlap = 0.5
+       self.rpn_min_overlap = 0.3
+       self.rpn_max_overlap = 0.7
         
        # detection filters
        self.detection_max_overlap = 0.5
-       self.detection_min_overlap = 0.1
+       self.detection_min_overlap = 0.0
        self.nb_detection_rois = 32
-       self.detection_nms_max_boxes=256
-       self.detection_nms_overlap_thresh=0.9
+       self.detection_nms_max_boxes=300
+       self.detection_nms_overlap_thresh=0.7
         
        # hoi filters
        self.hoi_bbox_threshold = 0.5
@@ -160,7 +161,7 @@ class basic_config:
    def get_args(self):
        try:
           argv = sys.argv[1:]
-          opts, args = getopt.getopt(argv,"m:c:x:d:w:v:t:b:s:f:h:o:l:g:")
+          opts, args = getopt.getopt(argv,"m:c:x:d:w:v:t:b:s:f:h:o:l:g:n:")
        except getopt.GetoptError:
           print('.py -m <my_model> -c <my_method> -x <max_classes> -d <dataset>')
           sys.exit(2)
@@ -191,9 +192,12 @@ class basic_config:
               self.wp = int(arg)
           if opt == '-t':
               self.testdata = arg
-          if opt == '-s':
+          if opt == '-n':
               assert arg.isdigit(), 'move must be int'
               self.move = int(arg)
+          if opt == '-s':
+              assert arg.isdigit(), 'final epoch must be int'
+              self.epoch_begin = int(arg)
           if opt == '-f':
               assert arg.isdigit(), 'final epoch must be int'
               self.epoch_end = int(arg)

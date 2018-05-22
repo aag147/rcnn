@@ -19,7 +19,8 @@ from detection_generators import DataGenerator
 import numpy as np
 import utils
 import time
-#import draw
+import draw
+import filters_helper as helper
 
 np.seterr(all='raise')
 
@@ -62,14 +63,35 @@ for i in range(genVal.nb_batches):
     total_times += times
     utils.update_progress_new(i, genVal.nb_batches, list(times) + [0,0], imageMeta['imageName'])
     
-#    img = X[0]
-#    img -= np.min(img)
-#    img /= 255
-#    img = img[:,:,(2,1,0)]
+    img = X[0]
+    img -= np.min(img)
+    img /= 255
+    img = img[:,:,(2,1,0)]
+    
+    Y1 = y[0][:,:,:,12:]
+    Y2 = y[1][:,:,:,48:]
+    Y3 = y[2]
+    
+    anchors = np.reshape(Y3, (-1,4))
+    props = np.reshape(Y1,(-1,1))
+    anchors = np.concatenate((anchors,props), axis=1)
+    anchors = anchors[anchors[:,4]==1]
+    draw.drawPositiveAnchors(img, anchors, cfg)
+    
+    pred_anchors = helper.deltas2Anchors(Y1, Y2, cfg, imageDims)
+    pred_anchors = helper.non_max_suppression_fast(pred_anchors, overlap_thresh=cfg.detection_nms_overlap_thresh)
+    print(pred_anchors.shape)
+    pred_anchors = pred_anchors[pred_anchors[:,4]==1]
+    draw.drawPositiveAnchors(img, pred_anchors, cfg)
+#    pred_anchors = helper.non_max_suppression_fast(pred_anchors, overlap_thresh=cfg.detection_nms_overlap_thresh)
+#    print(pred_anchors.shape)
+#    draw.drawPositiveAnchors(img, pred_anchors, cfg)
+    draw.drawGTBoxes(img, imageMeta, imageDims)
+    break
 #    draw.drawBoxes(img, imageMeta['objects'], imageDims)
 #    print('t',X[0].shape, X[1].shape, y[0].shape, y[1].shape)
 #    
-    utils.save_obj(y, cfg.data_path +'anchors/val/' + imageMeta['imageName'].split('.')[0])
+#    utils.save_obj(y, cfg.data_path +'anchors/val/' + imageMeta['imageName'].split('.')[0])
 #    s = time.time()
 #    utils.load_obj(cfg.data_path +'anchors/val/' + imageMeta['imageName'].split('.')[0])
 #    f = time.time()

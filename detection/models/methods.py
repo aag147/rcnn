@@ -51,7 +51,7 @@ def get_hoi_rcnn_models(cfg, mode='train'):
         
         features_input = keras.layers.Input(
             shape=features_shape,
-            name="input_object"
+            name="input_features"
         )        
         
         ########################

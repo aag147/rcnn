@@ -80,11 +80,11 @@ class DataGenerator():
             io_end = time.time()
             pp_start = time.time()
 #            y_rpn_cls, y_rpn_regr = filters_rpn.loadTargets(imageMeta, self.anchors_path)
-            y_rpn_cls, y_rpn_regr = filters_rpn.prepareTargets(imageMeta, imageDims, self.cfg)
+            Y = filters_rpn.prepareTargets(imageMeta, imageDims, self.cfg)
             pp_end = time.time()
             times = np.array([io_end-io_start, pp_end-pp_start])
             
-        return img, [y_rpn_cls, y_rpn_regr], imageMeta, imageDims, times
+        return img, Y, imageMeta, imageDims, times
 
     #%% Different forms of generators     
     def _generateIterativeImageCentricBatches(self):

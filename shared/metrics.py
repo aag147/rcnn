@@ -56,7 +56,7 @@ class EvalResults():
           s_idx = i * self.gen.batch_size
           
           f_idx = s_idx + y.shape[-2]
-          print(y_hat.shape)
+#          print(y_hat.shape)
           evalYHat[s_idx:f_idx, :] = y_hat
           Y[s_idx:f_idx, :] = y
       utils.update_progress(self.gen.nb_batches)

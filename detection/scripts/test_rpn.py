@@ -26,7 +26,7 @@ from keras.callbacks import EarlyStopping, LearningRateScheduler, Callback
 from keras.optimizers import SGD, Adam
 import os
 
-if False:
+if True:
     # meta data
     data = extract_data.object_data()
     
@@ -42,7 +42,7 @@ if False:
     
     def evaluteRPN(x_class, x_deltas, imageMeta, imageDims, cfg):
         pred_anchors = helper.deltas2Anchors(x_class, x_deltas, cfg, imageDims)
-        pred_anchors = helper.non_max_suppression_fast(pred_anchors, overlap_thresh=cfg.detection_nms_overlap_thresh)
+#        pred_anchors = helper.non_max_suppression_fast(pred_anchors, overlap_thresh=cfg.detection_nms_overlap_thresh)
         
         bboxes = imageMeta['objects']
         scale = imageDims['scale']
@@ -62,7 +62,7 @@ if False:
                     else:
                         false += 1
                     total += 1
-        return true / total, total
+        return true / total, total, true
                 
             
 
@@ -75,13 +75,13 @@ if True:
     model_rpn.compile(optimizer='sgd', loss='mse')
 
     genIterator = genVal.begin()
-    accs = np.zeros([genVal.nb_batches, 2])
+    accs = np.zeros([genVal.nb_batches, 3])
     for batchidx in range(genVal.nb_batches):
         utils.update_progress(batchidx / genVal.nb_batches)
         X, y, imageMeta, imageDims, times = next(genIterator)
         x_class, x_deltas = model_rpn.predict_on_batch(X)
-        accs[i,:] = evaluteRPN(x_class, x_deltas, imageMeta, imageDims, cfg)
+        accs[batchidx,:] = evaluteRPN(x_class, x_deltas, imageMeta, imageDims, cfg)
         
-    print(np.mean(accs[:,0]))
+    print(np.mean(accs, axis=0))
     
     print('Path:', cfg.my_results_path)

@@ -33,13 +33,13 @@ if True:
     # config
     cfg = data.cfg
     cfg.fast_rcnn_config()
+    utils.saveConfig(cfg)
 
     # data
     genTrain = DataGenerator(imagesMeta = data.trainGTMeta, cfg=cfg, data_type='train')
     #genVal = DataGenerator(imagesMeta = data.valGTMeta, cfg=cfg, data_type='val')
     #genTest = DataGenerator(imagesMeta = data.testGTMeta, cfg=cfg, data_type='test') 
 
-#if False:
     # models
     model_rpn, model_detection, model_hoi, model_all = methods.get_hoi_rcnn_models(cfg)
     
@@ -54,7 +54,10 @@ if True:
     model_rpn.compile(optimizer=opt,\
                       loss=[losses.rpn_loss_cls(cfg.nb_anchors), losses.rpn_loss_regr(cfg.nb_anchors)])
 #                      metrics={'rpn_out_class':'categorical_accuracy'}) 
+
     
+
+if True:    
     # train
     callbacks = [callbacks.MyModelCheckpointInterval(cfg), \
                  callbacks.SaveLog2File(cfg), \
@@ -64,6 +67,7 @@ if True:
                 steps_per_epoch = genTrain.nb_batches, \
                 epochs = cfg.epoch_end, initial_epoch=cfg.epoch_begin, callbacks=callbacks)
 
+    # Save stuff
     path = cfg.my_weights_path + 'weights-theend.h5'
     if not os.path.exists(path):
         model_rpn.save_weights(path)

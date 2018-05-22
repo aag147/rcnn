@@ -81,7 +81,6 @@ def Fast_HO_RCNN(cfg):
     modelShr = VGG16((None, None, cfg.cdim), weights, cfg.nb_classes, include='basic')
     prsRoI   = input_rois()
     objRoI   = input_rois()
-    print(modelShr.layers[-1].output_shape)
     modelPrs = fastClassifier(modelShr.output, prsRoI, cfg, nb_classes=cfg.nb_classes)
     modelObj = fastClassifier(modelShr.output, objRoI, cfg, nb_classes=cfg.nb_classes)
     modelPar = fastPairWiseStream(input_shape=(None,64,64,2), nb_classes = cfg.nb_classes, include='fc')      
