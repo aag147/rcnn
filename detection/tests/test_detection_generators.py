@@ -61,7 +61,7 @@ for i in range(genVal.nb_batches):
     X, y, imageMeta, imageDims, times = next(trainIterator)
  
     total_times += times
-    utils.update_progress_new(i, genVal.nb_batches, list(times) + [0,0], imageMeta['imageName'])
+#    utils.update_progress_new(i, genVal.nb_batches, list(times) + [0,0], imageMeta['imageName'])
     
     img = X[0]
     img -= np.min(img)

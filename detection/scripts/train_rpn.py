@@ -57,7 +57,7 @@ if True:
 
     
 
-if True:    
+if False:    
     # train
     callbacks = [callbacks.MyModelCheckpointInterval(cfg), \
                  callbacks.SaveLog2File(cfg), \

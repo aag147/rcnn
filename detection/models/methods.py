@@ -6,9 +6,12 @@ Created on Mon May  7 15:40:50 2018
 """
 
 import keras
+from keras import backend as K
 
-import models,\
+
+import detection.models.models as models,\
        layers
+K.set_image_dim_ordering('tf')
 
 def get_hoi_rcnn_models(cfg, mode='train'):
         ########################
@@ -57,7 +60,7 @@ def get_hoi_rcnn_models(cfg, mode='train'):
         ########################
         ####### Backbone #######
         ########################
-        output_features = models.VGG16_keras()(img_input)
+        output_features = models.VGG16(cfg.weights_path)(img_input)
         
         ########################
         ######### RPN ##########

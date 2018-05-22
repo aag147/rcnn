@@ -20,7 +20,7 @@ import numpy as np
 
 def rpn(x):
     base_layers = x[0]
-    x = Conv2D(256, (3, 3), padding='same', activation='relu', kernel_initializer='normal', name='rpn_conv1')(
+    x = Conv2D(512, (3, 3), padding='same', activation='relu', kernel_initializer='normal', name='rpn_conv1')(
         base_layers)
 
     return x
