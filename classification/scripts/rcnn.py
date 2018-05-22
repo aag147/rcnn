@@ -71,6 +71,7 @@ if True:
     
     f= open(cfg.my_results_path + "tests.txt","a")
     f.close()
-    newline = 'test: %.4f, nb_zeros: %.03d | train: %.4f, nb_zeros: %.03d\n' % (resTest.F1, resTest.nb_zeros, resTrain.F1, resTrain.nb_zeros)
+    newline = 'epoch:%0.3d :: test: %.4f, nb_zeros: %.03d | train: %.4f, nb_zeros: %.03d\n' % \
+        (cfg.epoch_end, resTest.F1, resTest.nb_zeros, resTrain.F1, resTrain.nb_zeros)
     with open(cfg.my_results_path + "tests.txt", 'a') as file:
         file.write(newline)

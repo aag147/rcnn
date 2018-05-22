@@ -79,9 +79,12 @@ for i in range(genVal.nb_batches):
     draw.drawPositiveAnchors(img, anchors, cfg)
     
     pred_anchors = helper.deltas2Anchors(Y1, Y2, cfg, imageDims)
+    pred_anchors = pred_anchors[pred_anchors[:,4]==1]
+    print(pred_anchors.shape)
+    draw.drawPositiveAnchors(img, pred_anchors, cfg)
+    
     pred_anchors = helper.non_max_suppression_fast(pred_anchors, overlap_thresh=cfg.detection_nms_overlap_thresh)
     print(pred_anchors.shape)
-    pred_anchors = pred_anchors[pred_anchors[:,4]==1]
     draw.drawPositiveAnchors(img, pred_anchors, cfg)
 #    pred_anchors = helper.non_max_suppression_fast(pred_anchors, overlap_thresh=cfg.detection_nms_overlap_thresh)
 #    print(pred_anchors.shape)
