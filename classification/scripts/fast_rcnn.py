@@ -56,12 +56,12 @@ if True:
 if True:
     # Train model
     print('Training model...')
-#    trainer.trainModel(cfg)
+    trainer.trainModel(cfg)
     
     # Save stuff
     print('Path:', cfg.my_results_path)
     print('Saving final model...')
-#    trainer.saveModel(cfg)
+    trainer.saveModel(cfg)
 
     print('Testing model on test...')
     resTest = trainer.evaluateModel(genTest)    

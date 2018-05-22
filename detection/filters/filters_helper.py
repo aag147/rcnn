@@ -112,7 +112,7 @@ def deltas2Anchors(props, deltas, cfg, imageDims):
             A[2, :, :, anc_idx] = anchor_x
             A[3, :, :, anc_idx] = anchor_y
 
-#            A[:, :, :, anc_idx] = apply_regr_np(A[:, :, :, anc_idx], regr)
+            A[:, :, :, anc_idx] = apply_regr_np(A[:, :, :, anc_idx], regr)
 
             A[2, :, :, anc_idx] = np.maximum(1, A[2, :, :, anc_idx])
             A[3, :, :, anc_idx] = np.maximum(1, A[3, :, :, anc_idx])
