@@ -14,7 +14,7 @@ import time
 
 class DataGenerator():
     
-    def __init__(self, imagesMeta, cfg, data_type='train'):
+    def __init__(self, imagesMeta, cfg, data_type='train', do_meta=True):
       'Initialization'
       self.data_type = data_type
       if data_type == 'train':
@@ -30,6 +30,7 @@ class DataGenerator():
 
       self.shuffle = g_cfg.shuffle
       self.inputs = cfg.inputs
+      self.do_meta = do_meta
       
       cfg.img_out_reduction = (16, 16)
       
@@ -83,8 +84,11 @@ class DataGenerator():
             Y = filters_rpn.prepareTargets(imageMeta, imageDims, self.cfg)
             pp_end = time.time()
             times = np.array([io_end-io_start, pp_end-pp_start])
+            print(Y[0].shape, Y[1].shape)
             
-        return img, Y, imageMeta, imageDims, times
+        if self.do_meta:
+            return img, Y, imageMeta, imageDims, times
+        return img, Y
 
     #%% Different forms of generators     
     def _generateIterativeImageCentricBatches(self):

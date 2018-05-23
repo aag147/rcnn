@@ -56,7 +56,7 @@ genVal = DataGenerator(imagesMeta = data.valGTMeta, cfg=cfg, data_type='val')
 trainIterator = genVal.begin()
 
 total_times = np.array([0.0,0.0])
-#j = 0
+j = 0
 for i in range(genVal.nb_batches):
     X, y, imageMeta, imageDims, times = next(trainIterator)
  
@@ -68,29 +68,31 @@ for i in range(genVal.nb_batches):
     img /= 255
     img = img[:,:,(2,1,0)]
     
-    Y1 = y[0][:,:,:,12:]
+    Y1 = y[0][:,:,:,12:];
+    idxs = y[0][:,:,:,:12]; idxs = idxs.reshape((-1)); idxs = np.where(idxs)[0]
+    
     Y2 = y[1][:,:,:,48:]
-    Y3 = y[2]
+#    Y3 = y[2]
     
-    anchors = np.reshape(Y3, (-1,4))
+#    anchors = np.reshape(Y3, (-1,4))
     props = np.reshape(Y1,(-1,1))
-    anchors = np.concatenate((anchors,props), axis=1)
-    anchors = anchors[anchors[:,4]==1]
-    draw.drawPositiveAnchors(img, anchors, cfg)
+#    anchors = np.concatenate((anchors,props), axis=1)
+#    anchors = anchors[anchors[:,4]==1]
+#    draw.drawPositiveAnchors(img, anchors, cfg)
     
-    pred_anchors = helper.deltas2Anchors(Y1, Y2, cfg, imageDims)
-    pred_anchors = pred_anchors[pred_anchors[:,4]==1]
+    pred_anchors = helper.deltas2Anchors(Y1, Y2, cfg, imageDims, do_regr=False)
+#    pred_anchors = pred_anchors[pred_anchors[:,4]==1]
+    pred_anchors = pred_anchors[idxs,:]
     print(pred_anchors.shape)
-    draw.drawPositiveAnchors(img, pred_anchors, cfg)
+    draw.drawAnchors(img, pred_anchors, cfg)
     
-    pred_anchors = helper.non_max_suppression_fast(pred_anchors, overlap_thresh=cfg.detection_nms_overlap_thresh)
-    print(pred_anchors.shape)
-    draw.drawPositiveAnchors(img, pred_anchors, cfg)
+#    pred_anchors = helper.non_max_suppression_fast(pred_anchors, overlap_thresh=cfg.detection_nms_overlap_thresh)
+#    print(pred_anchors.shape)
+#    draw.drawPositiveAnchors(img, pred_anchors, cfg)
 #    pred_anchors = helper.non_max_suppression_fast(pred_anchors, overlap_thresh=cfg.detection_nms_overlap_thresh)
 #    print(pred_anchors.shape)
 #    draw.drawPositiveAnchors(img, pred_anchors, cfg)
     draw.drawGTBoxes(img, imageMeta, imageDims)
-    break
 #    draw.drawBoxes(img, imageMeta['objects'], imageDims)
 #    print('t',X[0].shape, X[1].shape, y[0].shape, y[1].shape)
 #    
@@ -99,9 +101,9 @@ for i in range(genVal.nb_batches):
 #    utils.load_obj(cfg.data_path +'anchors/val/' + imageMeta['imageName'].split('.')[0])
 #    f = time.time()
 #    print(f-s, times[1])
-#    if j > 10:
-#        break
-#    j += 1
+    if j == 4:
+        break
+    j += 1
 #    break
 #print(f-s)
 

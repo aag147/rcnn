@@ -28,16 +28,25 @@ def _final_stop(inputs, outputs, cfg):
     return model
         
 def AlexNet_Weights(cfg):
-    return cfg.weights_path + "alexnet_weights.h5"
+    return cfg.weights_path + "alexnet_weights_tf.h5"
+def AlexNet_Weights_notop(cfg):
+    return cfg.weights_path + "alexnet_weights_tf_notop.h5"
 def VGG16_Weights(cfg):
     return cfg.weights_path + "vgg16_weights_tf_notop.h5"
+def VGG16Full_Weights(cfg):
+    return cfg.weights_path + "vgg16_weights_tf.h5"
 
 def HO_RCNN(cfg):
-    K.set_image_dim_ordering('th')
+    K.set_image_dim_ordering('tf')
     weights = AlexNet_Weights(cfg) if cfg.pretrained_weights == True else False
-    modelPrs = AlexNet((3, 227, 227), weights, cfg.nb_classes, include='fc')
-    modelObj = AlexNet((3, 227, 227), weights, cfg.nb_classes, include='fc')
-    modelPar = PairWiseStream(input_shape=(2,64,64), nb_classes = cfg.nb_classes, include='fc')             
+    modelPrs = AlexNet((227, 227, 3), weights, cfg.nb_classes, include='fc')
+    modelObj = AlexNet((227, 227, 3), None, cfg.nb_classes, include='fc')
+    return modelPrs
+#    weights = AlexNet_Weights(cfg) if cfg.pretrained_weights == True else False
+#    modelPrs = fastAlexNet((3, 227, 227), weights, cfg.nb_classes, include='fc')
+#    modelObj = fastAlexNet((3, 227, 227), weights, cfg.nb_classes, include='fc')
+    
+    modelPar = PairWiseStream(input_shape=(64,64,2), nb_classes = cfg.nb_classes, include='fc')             
     
     models = [modelPrs, modelObj, modelPar]
     models = [models[i] for i in range(len(models)) if cfg.inputs[i]]
@@ -76,9 +85,11 @@ def Slow_HO_RCNN(cfg):
 def Fast_HO_RCNN(cfg):
     
     K.set_image_dim_ordering('tf')
-    weights = VGG16_Weights(cfg) if cfg.pretrained_weights == True else False
+#    weights = VGG16_Weights(cfg) if cfg.pretrained_weights == True else False
 #    modelShr = AlexNet(weights, cfg.nb_classes, include='none')
-    modelShr = VGG16((None, None, cfg.cdim), weights, cfg.nb_classes, include='basic')
+#    modelShr = VGG16((None, None, cfg.cdim), weights, cfg.nb_classes, include='basic')
+    weights = AlexNet_Weights_notop(cfg) if cfg.pretrained_weights == True else False
+    modelShr = AlexNet((None, None, cfg.cdim), weights, cfg.nb_classes, include='basic')
     prsRoI   = input_rois()
     objRoI   = input_rois()
     modelPrs = fastClassifier(modelShr.output, prsRoI, cfg, nb_classes=cfg.nb_classes)

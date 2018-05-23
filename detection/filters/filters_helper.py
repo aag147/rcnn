@@ -85,7 +85,7 @@ def non_max_suppression_boxes(bboxes, cfg):
     new_bboxes = np.array(new_bboxes)
     return new_bboxes
 
-def deltas2Anchors(props, deltas, cfg, imageDims):
+def deltas2Anchors(props, deltas, cfg, imageDims, do_regr=True):
     # Deltas to coordinates by way of anchors
     # [dx,dy,dw,dh] -> (xmin,ymin,width,height)
     
@@ -112,7 +112,8 @@ def deltas2Anchors(props, deltas, cfg, imageDims):
             A[2, :, :, anc_idx] = anchor_x
             A[3, :, :, anc_idx] = anchor_y
 
-#            A[:, :, :, anc_idx] = apply_regr_np(A[:, :, :, anc_idx], regr)
+            if do_regr:
+                A[:, :, :, anc_idx] = apply_regr_np(A[:, :, :, anc_idx], regr)
 
             A[2, :, :, anc_idx] = np.maximum(1, A[2, :, :, anc_idx])
             A[3, :, :, anc_idx] = np.maximum(1, A[3, :, :, anc_idx])
@@ -356,6 +357,7 @@ def preprocessImage(img, cfg):
     img[:, :, 1] -= cfg.img_channel_mean[1]
     img[:, :, 2] -= cfg.img_channel_mean[2]
     img /= cfg.img_scaling_factor
+    img = cv.cvtColor(img, cv.COLOR_BGR2RGB)
 
 #    img = (img - np.min(img)) / np.max(img)
     # Transpose

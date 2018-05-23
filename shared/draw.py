@@ -91,6 +91,22 @@ def drawCrops(imagesID, imagesMeta, imagesCrops, images):
         spl[i+1].imshow(prsCropFull)
         #spl[i+1].imshow(objCrop)
         
+
+def drawAnchors(img, anchorsGT, cfg):
+    f, spl = plt.subplots(1)
+    spl.imshow(img)
+    bboxes = []
+    for anchor in anchorsGT:
+        objectiveness = anchor[4]
+        if objectiveness==1:
+            c = 'red'
+        else:
+            c = 'blue'
+        bb = anchor[0:4]*cfg.rpn_stride
+        bbox = drawProposalBox(bb)
+        spl.plot(bbox[0,:], bbox[1,:], c=c)
+        bboxes.append(bb)
+    return np.array(bboxes)
         
 def drawPositiveAnchors(img, anchorsGT, cfg):
     f, spl = plt.subplots(1)

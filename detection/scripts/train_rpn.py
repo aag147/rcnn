@@ -6,6 +6,7 @@ Created on Mon May  7 15:40:50 2018
 """
 import sys 
 sys.path.append('../../../')
+sys.path.append('../../')
 sys.path.append('../../shared/')
 sys.path.append('../models/')
 sys.path.append('../filters/')
@@ -55,9 +56,11 @@ if True:
                       loss=[losses.rpn_loss_cls(cfg.nb_anchors), losses.rpn_loss_regr(cfg.nb_anchors)])
 #                      metrics={'rpn_out_class':'categorical_accuracy'}) 
 
+
+#    X,y = next(genTrain.begin())
     
 
-if False:    
+if True:    
     # train
     callbacks = [callbacks.MyModelCheckpointInterval(cfg), \
                  callbacks.SaveLog2File(cfg), \

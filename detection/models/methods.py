@@ -77,7 +77,7 @@ def get_hoi_rcnn_models(cfg, mode='train'):
             filters=nb_anchors,
             kernel_size=(1, 1),
             activation='sigmoid',
-            kernel_initializer='uniform',
+            kernel_initializer='normal',
             name='rpn_out_class'
         )(rpn_features)
         
@@ -85,7 +85,7 @@ def get_hoi_rcnn_models(cfg, mode='train'):
             filters=nb_anchors * 4,
             kernel_size=(1, 1), 
             activation='linear', 
-            kernel_initializer='zero', 
+            kernel_initializer='normal', 
             name='rpn_out_regress'
         )(rpn_features)
         

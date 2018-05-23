@@ -161,9 +161,10 @@ def prepareTargets(imageMeta, imageDims, cfg):
     #############################        
     # we ensure that every bbox has at least one positive RPN region
     for idx in range(num_anchors_for_gtbox.shape[0]):
+#        print('anchors', idx)
         if num_anchors_for_gtbox[idx] == 0:
             # no box with an IOU greater than zero ...
-            print('no anchors', idx, gta[idx])
+#            print('no anchors', idx, gta[idx])
             if best_anchor_for_gtbox[idx, 0] == -1:
                 continue
             
@@ -192,6 +193,8 @@ def prepareTargets(imageMeta, imageDims, cfg):
     pos_locs = np.where(np.logical_and(y_rpn_overlap[0, :, :, :] == 1, y_is_box_valid[0, :, :, :] == 1))
     neg_locs = np.where(np.logical_and(y_rpn_overlap[0, :, :, :] == 0, y_is_box_valid[0, :, :, :] == 1))
 
+    print('pos len', len(pos_locs[0]))
+    print('neg len', len(neg_locs[0]))
     num_pos = len(pos_locs[0])
     num_regions = cfg.nb_rpn_proposals
         
@@ -211,6 +214,8 @@ def prepareTargets(imageMeta, imageDims, cfg):
     # y_rpn_overlap: objectiveness score - 0/1
     # y_is_box_valid: should box be included in loss - 0/1
     # y_rpn_regr: regression deltas - x,y,w,h
+    print(np.sum(y_rpn_overlap))
     y_rpn_cls = np.concatenate([y_is_box_valid, y_rpn_overlap], axis=3)
+    y_rpn_regr *= 4.0
     y_rpn_regr = np.concatenate([np.repeat(y_rpn_overlap, 4, axis=3), y_rpn_regr], axis=3)
-    return np.copy(y_rpn_cls), np.copy(y_rpn_regr), y_rpn_ancs / cfg.rpn_stride
+    return [np.copy(y_rpn_cls), np.copy(y_rpn_regr)]

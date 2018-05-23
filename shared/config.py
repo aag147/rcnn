@@ -105,7 +105,9 @@ class basic_config:
        
        self.shape = (self.ydim, self.xdim)
        self.order_of_dims = [2,0,1]
+       self.order_of_dims = [0,1,2]
        self.par_order_of_dims = [0,1,2,3]
+       self.par_order_of_dims = [0,2,3,1]
        self.winShape = (64, 64)
        
        self.init_lr = 0.0001
@@ -150,7 +152,7 @@ class basic_config:
         
        # hoi filters
        self.hoi_bbox_threshold = 0.5
-       self.hoi_nms_overlap_thresh=0.9
+       self.hoi_nms_overlap_thresh=0.7
         
        # model
        self.nb_anchors = len(self.anchor_sizes) * len(self.anchor_ratios)

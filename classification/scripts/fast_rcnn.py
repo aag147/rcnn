@@ -11,12 +11,10 @@ sys.path.append('../../shared/')
 sys.path.append('../models/')
 sys.path.append('../cfgs/')
 sys.path.append('../data/')
-sys.path.append('../../detection/filters/')
-
 
 import utils
 from model_trainer import model_trainer
-from load_data import data
+import load_data
 from fast_generators import DataGenerator
 from methods import Fast_HO_RCNN
 
@@ -30,16 +28,16 @@ np.seterr(all='raise')
 if True:
     # Load data
     print('Loading data...')
-    data = data()
+    data = load_data.data()
     cfg = data.cfg
     cfg.fast_rcnn_config()
     
     # Create batch generators
-    genTrain = DataGenerator(imagesMeta=data.trainMeta, GTMeta = data.trainGTMeta, labels=data.labels, cfg=cfg, data_type='train')
-    genVal = DataGenerator(imagesMeta=data.valMeta, GTMeta = data.trainGTMeta, labels=data.labels, cfg=cfg, data_type='val')
-    genTest = DataGenerator(imagesMeta=data.testMeta, GTMeta = data.testGTMeta, labels=data.labels, cfg=cfg, data_type='test')  
-
-if True:    
+    genTrain = DataGenerator(imagesMeta=data.trainMeta, GTMeta = data.trainGTMeta, cfg=cfg, data_type='train', labels=data.labels)
+    genVal = DataGenerator(imagesMeta=data.valMeta, GTMeta = data.trainGTMeta, cfg=cfg, data_type='val', labels=data.labels)
+    genTest = DataGenerator(imagesMeta=data.testMeta, GTMeta = data.testGTMeta, cfg=cfg, data_type='test', labels=data.labels)
+    
+if True:
     # Save config
     utils.saveConfig(cfg)
     utils.saveSplit(cfg, list(data.trainMeta.keys()), list(data.valMeta.keys()))
@@ -47,13 +45,11 @@ if True:
     # Create model
     print('Creating model...')
     model = Fast_HO_RCNN(cfg)
+
     trainer = model_trainer(model=model, genTrain=genTrain, genVal=genVal, genTest=genTest, task=cfg.task)
     trainer.compileModel(cfg)
-    
-#    from keras.utils import plot_model
-#    plot_model(model, to_file='model.png')
-    
-if True:
+
+if True:    
     # Train model
     print('Training model...')
     trainer.trainModel(cfg)
@@ -62,15 +58,14 @@ if True:
     print('Path:', cfg.my_results_path)
     print('Saving final model...')
     trainer.saveModel(cfg)
-
     print('Testing model on test...')
     resTest = trainer.evaluateModel(genTest)    
     print("F1 (test!):", resTest.F1, "nb_zeros", resTest.nb_zeros)
     print('Testing model on training...')
     resTrain = trainer.evaluateModel(genTrain)
     print("F1 (train):", resTrain.F1, "nb_zeros", resTrain.nb_zeros)
-    
-    utils.save_obj_nooverwrite(resTest.Y_hat, cfg.my_results_path + 'y_hat')
+
+    utils.save_obj_nooverwrite(resTest.Y_hat, cfg.my_results_path + 'y_hat')    
     
     f= open(cfg.my_results_path + "tests.txt","a")
     f.close()

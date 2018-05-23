@@ -121,7 +121,6 @@ def getX2Data(imagesID, imagesMeta, data_path, cfg):
         imageMeta = imagesMeta[imageID]
 #        print(data_path + imageMeta['imageName'])
         image = cv.imread(data_path + imageMeta['imageName'])
-        image = cv.cvtColor(image, cv.COLOR_BGR2RGB)
         for relID, rel in imageMeta['rels'].items():
             relCrops = cropImageFromRel(rel['prsBB'], rel['objBB'], image)
             relCrops = preprocessRel(relCrops['prsCrop'], relCrops['objCrop'], image, cfg)
@@ -194,7 +193,9 @@ def preprocessCrop(image, cfg):
 #    image = (image - np.mean(image)) / np.std(image)
 #    print(np.max(image))
 #    print('im', np.min(image), np.max(image), np.isfinite(image).all())
-    image = (image - np.min(image)) / np.max(image)
+#    image = (image - np.min(image)) / np.max(image)
+    image -= cfg.img_channel_mean
+    image = cv.cvtColor(image, cv.COLOR_BGR2RGB)
     image = image.transpose(cfg.order_of_dims)
     return image
 
