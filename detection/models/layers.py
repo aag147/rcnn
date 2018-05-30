@@ -95,9 +95,10 @@ class RoiPoolingConv(Layer):
         return final_output
     
     def get_config(self):
-        configuration = {
+        config = {
             "pool_size": self.pool_size,
             "nb_channels": self.nb_channels
         }
+        base_config = super(RoiPoolingConv, self).get_config()
 
-        return {**super(RoiPoolingConv, self).get_config(), **configuration}
+        return dict(list(base_config.items()) + list(config.items()))
