@@ -20,10 +20,10 @@ def unnormalizeRoIs(norm_rois, imageDims):
     shape = imageDims['output_shape']
 
     rois = np.zeros_like(norm_rois)
-    rois[:,0] = norm_rois[:,0] * (shape[0]-0)
-    rois[:,1] = norm_rois[:,1] * (shape[1]-0)
-    rois[:,2] = norm_rois[:,2] * (shape[0]-0)
-    rois[:,3] = norm_rois[:,3] * (shape[1]-0)
+    rois[:,0] = norm_rois[:,0] * (shape[1]-0)
+    rois[:,1] = norm_rois[:,1] * (shape[0]-0)
+    rois[:,2] = norm_rois[:,2] * (shape[1]-0)
+    rois[:,3] = norm_rois[:,3] * (shape[0]-0)
 
     return rois
 
@@ -55,12 +55,17 @@ def deltas2Boxes(props, deltas, rois, cfg):
         prop = np.max(props[0, ii, :])
         roi = rois[ii, :]
         
-        regr = deltas[0, ii, 4 * labelID:4 * (labelID + 1)]
-#            tx /= cfg.classifier_regr_std[0]
-#            ty /= cfg.classifier_regr_std[1]
-#            tw /= cfg.classifier_regr_std[2]
-#            th /= cfg.classifier_regr_std[3]
+        label_pos = labelID - 1
+        
+        regr = deltas[0, ii, 4 * label_pos:4 * (label_pos + 1)]
+        sx, sy, sw, sh = cfg.det_regr_std
+        regr[0] /= sx
+        regr[1] /= sy
+        regr[2] /= sw
+        regr[3] /= sh
+        print(roi, regr)
         x, y, w, h = apply_regr(roi, regr)
+#        print('label', ii, labelID)
 #        print('rt',roi[0], roi[1], roi[2], roi[3])
 #        print('dl',regr[0], regr[1], regr[2], regr[3])
 #        print('bb',x, y, w, h)
@@ -91,6 +96,8 @@ def deltas2Anchors(props, deltas, cfg, imageDims, do_regr=True):
     
     assert props.shape[0] == 1
     shape = imageDims['redux_shape']
+    deltas /= cfg.rpn_regr_std
+    
     
     anc_idx = 0
     
@@ -120,8 +127,8 @@ def deltas2Anchors(props, deltas, cfg, imageDims, do_regr=True):
 
             A[0, :, :, anc_idx] = np.maximum(0, A[0, :, :, anc_idx])
             A[1, :, :, anc_idx] = np.maximum(0, A[1, :, :, anc_idx])
-            A[2, :, :, anc_idx] = np.minimum(shape[1] - 1 - A[0, :, :, anc_idx], A[2, :, :, anc_idx])
-            A[3, :, :, anc_idx] = np.minimum(shape[0] - 1 - A[1, :, :, anc_idx], A[3, :, :, anc_idx])
+            A[2, :, :, anc_idx] = np.minimum(shape[1] - 0.01 - A[0, :, :, anc_idx], A[2, :, :, anc_idx])
+            A[3, :, :, anc_idx] = np.minimum(shape[0] - 0.01 - A[1, :, :, anc_idx], A[3, :, :, anc_idx])
 
             anc_idx += 1
 
@@ -296,73 +303,55 @@ def reduce_rois(true_labels, cfg):
     #############################    
     nb_detection_rois = cfg.nb_detection_rois
     
-    neg_samples = np.where(true_labels[0, :, 0] == 1)
-    pos_samples = np.where(true_labels[0, :, 0] == 0)
+    bg_samples = np.where(true_labels[0, :, 0] == 1)
+    fg_samples = np.where(true_labels[0, :, 0] == 0)
 
-    if len(neg_samples) > 0:
-        neg_samples = neg_samples[0]
+    if len(bg_samples) > 0:
+        bg_samples = bg_samples[0]
     else:
-        neg_samples = []
+        bg_samples = []
 
-    if len(pos_samples) > 0:
-        pos_samples = pos_samples[0]
+    if len(fg_samples) > 0:
+        fg_samples = fg_samples[0]
     else:
-        pos_samples = []
+        fg_samples = []
 
     # Half positives, half negatives
-    if len(pos_samples) < nb_detection_rois // 2:
-        selected_pos_samples = pos_samples.tolist()
+    if len(fg_samples) < nb_detection_rois // 4:
+        selected_pos_samples = fg_samples.tolist()
     else:
-        selected_pos_samples = np.random.choice(pos_samples, nb_detection_rois // 2, replace=False).tolist()
+        selected_pos_samples = np.random.choice(fg_samples, nb_detection_rois // 4, replace=False).tolist()
     try:
-        selected_neg_samples = np.random.choice(neg_samples, nb_detection_rois - len(selected_pos_samples),
+        selected_neg_samples = np.random.choice(bg_samples, nb_detection_rois - len(selected_pos_samples),
                                                 replace=False).tolist()
     except:
-        selected_neg_samples = np.random.choice(neg_samples, nb_detection_rois - len(selected_pos_samples),
+        selected_neg_samples = np.random.choice(bg_samples, nb_detection_rois - len(selected_pos_samples),
                                                 replace=True).tolist()
 
     sel_samples = selected_pos_samples + selected_neg_samples
     return sel_samples
        
 def preprocessImage(img, cfg):
-    shape = img.shape
-    if shape[0] < shape[1]:
-        newHeight = cfg.mindim
-        scale = float(newHeight) / shape[0]
-        newWidth = int(shape[1] * scale)
-        if newWidth > cfg.maxdim:
-            newWidth = cfg.maxdim
-            scale = newWidth / shape[1]
-            newHeight = shape[0] * scale
-    else:
-        newWidth = cfg.mindim
-        scale = float(newWidth) / shape[1]
-        newHeight = int(shape[0] * scale)
-        if newHeight > cfg.maxdim:
-            newHeight = cfg.maxdim
-            scale = newHeight / shape[0]
-            newWidth = shape[1] * scale
-
-
-    newWidth = round(newWidth)
-    newHeight = round(newHeight)
-
-    scaleWidth = float(newWidth) / img.shape[1]
-    scaleHeight = float(newHeight) / img.shape[0]
-    scales = [scaleHeight, scaleWidth]
-    # Rescale
-    img = cv.resize(img, (newWidth, newHeight)).astype(np.float32)
-    # Normalize
-    img[:, :, 0] -= cfg.img_channel_mean[0]
-    img[:, :, 1] -= cfg.img_channel_mean[1]
-    img[:, :, 2] -= cfg.img_channel_mean[2]
-    img /= cfg.img_scaling_factor
+    img = img.astype(np.float32, copy=False)
     img = cv.cvtColor(img, cv.COLOR_BGR2RGB)
-
-#    img = (img - np.min(img)) / np.max(img)
-    # Transpose
-    img = img.transpose(cfg.order_of_dims)
-    return img, scales
+    
+    if cfg.use_channel_mean:
+        img -= cfg.img_channel_mean
+    else:
+#        img = (img - np.min(img)) / np.max(img)
+        img /= 127.5
+        img -= 1.0
+    
+    img_shape = img.shape
+    img_size_min = np.min(img_shape[0:2])
+    img_size_max = np.max(img_shape[0:2])
+    img_scale = float(cfg.mindim) / float(img_size_min)
+    # Prevent the biggest axis from being more than MAX_SIZE
+    if np.round(img_scale * img_size_min) > cfg.maxdim:
+        img_scale = float(cfg.maxdim) / float(img_size_max)
+    img = cv.resize(img, None, None, fx=img_scale, fy=img_scale,
+                    interpolation=cv.INTER_LINEAR)
+    return img, [img_scale, img_scale]
 
        
 def normalizeGTboxes(gtboxes, scale=[1,1], rpn_stride=1, shape=[1,1], roundoff=False):
@@ -371,11 +360,58 @@ def normalizeGTboxes(gtboxes, scale=[1,1], rpn_stride=1, shape=[1,1], roundoff=F
 #        print(bbox)
         # get the GT box coordinates, and resize to account for image resizing
         xmin = ((bbox['xmin']) * scale[0] / rpn_stride) / shape[0]
-        xmax = ((bbox['xmax']) * scale[0] / rpn_stride) / shape[0]
+        xmax = ((bbox['xmax']-0.01) * scale[0] / rpn_stride) / shape[0]
         ymin = ((bbox['ymin']) * scale[1] / rpn_stride) / shape[1]
-        ymax = ((bbox['ymax']) * scale[1] / rpn_stride) / shape[1]
+        ymax = ((bbox['ymax']-0.01) * scale[1] / rpn_stride) / shape[1]
         if roundoff:
             xmin=int(round(xmin)); xmax=int(round(xmax))
             ymin=int(round(ymin)); ymax=int(round(ymax))
         gtnormboxes.append({'xmin':xmin, 'xmax':xmax, 'ymin':ymin, 'ymax':ymax})    
     return gtnormboxes
+
+def _getSinglePairWiseStream(thisBB, thatBB, width, height, newWidth, newHeight, cfg):
+    xmin = max(0, thisBB['xmin'] - thatBB['xmin'])
+    xmax = width - max(0, thatBB['xmax'] - thisBB['xmax'])
+    ymin = max(0, thisBB['ymin'] - thatBB['ymin'])
+    ymax = height - max(0, thatBB['ymax'] - thisBB['ymax'])
+    
+    attWin = np.zeros([height,width])
+    attWin[ymin:ymax, xmin:xmax] = 1
+    attWin = cv.resize(attWin, (newWidth, newHeight), interpolation = cv.INTER_NEAREST)
+    attWin = attWin.astype(np.int)
+
+    xPad = int(abs(newWidth - cfg.winShape[0]) / 2)
+    yPad = int(abs(newHeight - cfg.winShape[0]) / 2)
+    attWinPad = np.zeros(cfg.winShape).astype(np.int)
+#        print(attWin.shape, attWinPad.shape, xPad, yPad)
+#        print(height, width, newHeight, newWidth)
+    attWinPad[yPad:yPad+newHeight, xPad:xPad+newWidth] = attWin
+    return attWinPad
+
+def _getPairWiseStream(prsBB, objBB, cfg):
+    width = max(prsBB['xmax'], objBB['xmax']) - min(prsBB['xmin'], objBB['xmin'])
+    height = max(prsBB['ymax'], objBB['ymax']) - min(prsBB['ymin'], objBB['ymin'])
+    if width > height:
+        newWidth = cfg.winShape[0]
+        apr = newWidth / width
+        newHeight = int(height*apr) 
+    else:
+        newHeight = cfg.winShape[0]
+        apr = newHeight / height
+        newWidth = int(width*apr)
+        
+    prsWin = _getSinglePairWiseStream(prsBB, objBB, width, height, newWidth, newHeight, cfg)
+    objWin = _getSinglePairWiseStream(objBB, prsBB, width, height, newWidth, newHeight, cfg)
+    
+    return [prsWin, objWin]
+
+def getDataPairWiseStream(imagesID, imagesMeta, cfg):
+    dataPar = []
+    for imageID in imagesID:
+        imageMeta = imagesMeta[imageID]
+        for relID, rel in imageMeta['rels'].items():
+            relWin = _getPairWiseStream(rel['prsBB'], rel['objBB'], cfg)
+            dataPar.append(relWin)
+    dataPar = np.array(dataPar)
+    dataPar = dataPar.transpose(cfg.par_order_of_dims)
+    return dataPar

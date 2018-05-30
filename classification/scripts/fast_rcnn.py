@@ -7,6 +7,7 @@ Created on Thu Mar 15 13:49:30 2018
 
 import sys 
 sys.path.append('../../../')
+sys.path.append('../../detection/filters/')
 sys.path.append('../../shared/')
 sys.path.append('../models/')
 sys.path.append('../cfgs/')
@@ -65,7 +66,8 @@ if True:
     resTrain = trainer.evaluateModel(genTrain)
     print("F1 (train):", resTrain.F1, "nb_zeros", resTrain.nb_zeros)
 
-    utils.save_obj_nooverwrite(resTest.Y_hat, cfg.my_results_path + 'y_hat')    
+    utils.save_obj_nooverwrite(resTest.Y_hat, cfg.my_results_path + 'y_hat')  
+    utils.save_obj_nooverwrite(resTest.Y, cfg.my_results_path + 'y_test')
     
     f= open(cfg.my_results_path + "tests.txt","a")
     f.close()

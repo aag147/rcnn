@@ -17,10 +17,11 @@ import sys
 import shutil
 
 
-def getPascalObjects():
-    objs = ['airplane', 'bicycle', 'bird', 'boat', 'bottle', 'bus', 'car', 'cat', 'chair', 'cow', 'dining table',\
-     'dog', 'horse', 'motorcycle', 'person', 'potted plant', 'sheep', 'couch', 'train', 'tv']
-    return objs
+def getPascalObjects(nb_classes):
+    objs = ['person', 'airplane', 'bicycle', 'bird', 'boat', 'bottle', 'bus', 'car', 'cat', 'chair', 'cow', 'dining table',\
+     'dog', 'horse', 'motorcycle', 'potted plant', 'sheep', 'couch', 'train', 'tv']
+    
+    return objs[0:nb_classes]
 
 
 #%% Save / load
@@ -36,9 +37,9 @@ def load_hist(path):
 
 def save_obj_nooverwrite(obj, path, protocol = 2):
     for fid in range(100):
-        path = path + '%d.pkl' % fid
-        if not os.path.exists(path):
-           with open(path, 'wb') as f:
+        path = path + '%d' % fid
+        if not os.path.exists(path+'.pkl'):
+           with open(path+'.pkl', 'wb') as f:
                pickle.dump(obj, f, protocol)
                return
 
@@ -64,6 +65,7 @@ def saveConfig(cfg):
    obj['train_cfg'] = vars(obj['train_cfg'])
    obj['val_cfg'] = vars(obj['val_cfg'])
    obj['test_cfg'] = vars(obj['test_cfg'])
+   obj['img_channel_mean'] = obj['img_channel_mean'].tolist()
    obj['wp'] = obj['wp'] if type(obj['wp']) is int else obj['wp'].tolist()
    for fid in range(100):
         path = cfg.my_results_path
@@ -146,15 +148,20 @@ def getLabelStats(imagesMeta, labels):
     counts = np.zeros(len(labels))
     stats = getBareBonesStats(labels)
     stats['total'] = 0
+    stats['totalx'] = 0
     stats['nb_samples'] = 0
     stats['nb_images'] = 0
     for imageID, imageMeta in imagesMeta.items():
         stats['nb_images'] += 1
+        
+        stats['nb_samples'] += len(imageMeta['rels'])
+        stats['total'] += len(imageMeta['rels'])
+        stats['totalx'] += min(32,len(imageMeta['rels']))
+        
         for relID, rel in imageMeta['rels'].items():
-            stats['nb_samples'] += 1
-            stats['total'] += 1
             if 'labels' in rel:
                 continue
+            
             idx = rel['label']
             name = labels[idx]
             stats[name['obj']][name['pred']] += 1
@@ -164,7 +171,7 @@ def getLabelStats(imagesMeta, labels):
     return stats, counts
 
 # %% Reduce data
-def _reduceData(imagesMeta, reduced_idxs):
+def reduceData(imagesMeta, reduced_idxs):
     reduced_imagesMeta = {}
     for imageID, imageMeta in imagesMeta.items():
         new_rels = {}
@@ -195,23 +202,18 @@ def idxs2labels(idxs, labels):
         reduced_labels.append(labels[idx])
     return reduced_labels 
 
-def reduceTrainData(imagesMeta, counts, nb_classes, labels):
-    if nb_classes > 0:
+
+def getReducedIdxs(counts, nb_classes, labels):
+    if nb_classes >= 50:
         reduced_idxs = counts.argsort()[-nb_classes:][::-1]
     else:
-        objs = getPascalObjects()
+        objs = getPascalObjects(nb_classes)
         reduced_idxs = []
         for idx, label in enumerate(labels):
             if label['obj'] in objs:
                 reduced_idxs.append(idx)
-        reduced_idxs = np.array(reduced_idxs)
-    reduced_imagesMeta = _reduceData(imagesMeta, reduced_idxs)
-    return reduced_imagesMeta, reduced_idxs
-
-def reduceTestData(imagesMeta, reduced_idxs):
-    return _reduceData(imagesMeta, reduced_idxs)
-
-
+        reduced_idxs = np.array(reduced_idxs)    
+    return reduced_idxs
 
 # %% Split and concat data
 def splitData(imagesID, imagesMeta):

@@ -21,6 +21,7 @@ def get_hoi_rcnn_models(cfg, mode='train'):
         pool_size = cfg.pool_size
         nb_object_classes = cfg.nb_object_classes
         nb_hoi_classes =cfg.nb_hoi_classes
+        print('nb classes', nb_object_classes)
     
         ########################
         ##### Input shapes #####
@@ -77,7 +78,7 @@ def get_hoi_rcnn_models(cfg, mode='train'):
             filters=nb_anchors,
             kernel_size=(1, 1),
             activation='sigmoid',
-            kernel_initializer='normal',
+            kernel_initializer=keras.initializers.RandomNormal(stddev=0.01),
             name='rpn_out_class'
         )(rpn_features)
         
@@ -85,7 +86,7 @@ def get_hoi_rcnn_models(cfg, mode='train'):
             filters=nb_anchors * 4,
             kernel_size=(1, 1), 
             activation='linear', 
-            kernel_initializer='normal', 
+            kernel_initializer=keras.initializers.RandomNormal(stddev=0.01),
             name='rpn_out_regress'
         )(rpn_features)
         
@@ -102,6 +103,12 @@ def get_hoi_rcnn_models(cfg, mode='train'):
             ]
         
         model_rpn = keras.models.Model(inputs=rpn_inputs, outputs=rpn_outputs)
+        
+        # Only train from conv3_1
+        for i, layer in enumerate(model_rpn.layers):
+            layer.trainable = False
+            if i > 6:
+                break
         
         ########################
         ###### Detection #######
@@ -130,31 +137,37 @@ def get_hoi_rcnn_models(cfg, mode='train'):
             object_rois
         ])
         
+        
+        object_scores = keras.layers.TimeDistributed(
+            keras.layers.Dense(
+                units=nb_object_classes,
+                activation='softmax',
+                kernel_initializer=keras.initializers.RandomNormal(stddev=0.01)
+            ),
+            name="det_out_class"
+        )(object_features)
+        
         object_deltas = keras.layers.TimeDistributed(
             keras.layers.Dense(
                 units=4 * (nb_object_classes - 1),
                 activation="linear",
-                kernel_initializer="zero",
-                name="det_out_class"
-            )
+                kernel_initializer=keras.initializers.RandomNormal(stddev=0.001)
+            ),
+            name="det_out_regress"
         )(object_features)
 
-        object_scores = keras.layers.TimeDistributed(
-            keras.layers.Dense(
-                units=1 * nb_object_classes,
-                activation='softmax',
-                kernel_initializer="uniform",
-                name="det_out_regress"
-            )
-        )(object_features)
-        
         detection_outputs = [
             object_scores,
             object_deltas
         ]
         
         model_detection = keras.models.Model(inputs=detection_inputs, outputs=detection_outputs)
-        
+
+        # Only train from conv3_1
+        for i, layer in enumerate(model_detection.layers):
+            layer.trainable = False
+            if i > 6:
+                break
 
         ########################
         ######### HOI ##########
@@ -180,7 +193,7 @@ def get_hoi_rcnn_models(cfg, mode='train'):
             keras.layers.Dense(
                 units=1 * nb_hoi_classes,
                 activation=None,
-                kernel_initializer="uniform",
+                kernel_initializer=keras.initializers.RandomNormal(stddev=0.01),
                 name="scores4human"
             )
         )(hoi_human_features)
@@ -200,7 +213,7 @@ def get_hoi_rcnn_models(cfg, mode='train'):
             keras.layers.Dense(
                 units=1 * nb_hoi_classes,
                 activation=None,
-                kernel_initializer="uniform",
+                kernel_initializer=keras.initializers.RandomNormal(stddev=0.01),
                 name="scores4object"
             )
         )(hoi_object_features)
@@ -208,7 +221,10 @@ def get_hoi_rcnn_models(cfg, mode='train'):
         hoi_score = keras.layers.Add()([hoi_human_scores, hoi_object_scores])
         
         
-        hoi_final_score = keras.layers.Activation("sigmoid",name="predictions")(hoi_score)
+        hoi_final_score = keras.layers.Activation(
+            "sigmoid",
+            name="hoi_out_class"
+        )(hoi_score)
         
         hoi_outputs = [
             hoi_final_score,

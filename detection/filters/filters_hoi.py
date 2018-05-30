@@ -202,9 +202,9 @@ def prepareTargets(objpreds, bboxes, imageMeta, imageDims, cfg):
 
     selected_samples = selected_pos_samples + selected_neg1_samples + selected_neg2_samples
     
-    valid_human_boxes = valid_human_boxes[selected_samples,:]
-    valid_object_boxes = valid_object_boxes[selected_samples,:]
-    valid_labels = valid_labels[selected_samples,:]
+    valid_human_boxes = all_human_boxes[selected_samples,:]
+    valid_object_boxes = all_object_boxes[selected_samples,:]
+    valid_labels = all_labels[selected_samples,:]
     
     
     return valid_human_boxes, valid_object_boxes, Xi, valid_labels

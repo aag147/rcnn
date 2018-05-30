@@ -32,9 +32,9 @@ class model_trainer:
     def compileModel(self, cfg):
         if cfg.optimizer == 'adam':
             print('Optimzer: adam')
-            opt = Adam(lr=0.001, decay=0.0)
+            opt = Adam(lr=0.001)
         else:
-            opt = SGD(lr = 0.001, momentum = 0.9, decay = 0.0, nesterov=False)
+            opt = SGD(lr = 0.001, momentum = 0.9, decay = 0.0005, nesterov=False)
         if self.task == 'multi-label':
             loss = l.weigthed_binary_crossentropy(cfg.wp,1)
         else:
@@ -87,6 +87,7 @@ class model_trainer:
                 break
     
     def saveModel(self, cfg):
-        path = cfg.my_weights_path + 'weights-%03d-end.h5' % len(self.log.hist.train_loss)
-        if not os.path.exists(path):
-            self.model.save_weights(path)
+        for fid in range(100):
+            path = cfg.my_weights_path + 'weights-thend%d.h5' % fid
+            if not os.path.exists(path):
+                self.model.save_weights(path)

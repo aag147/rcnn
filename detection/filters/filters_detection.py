@@ -10,18 +10,46 @@ import utils
 
 import filters_helper as helper
 
+def loadData(imageMeta, rois_path, cfg):
+    roisMeta = utils.load_dict(rois_path + imageMeta['imageName'].split('.')[0])
+#    roisMeta = utils.load_dict(rois_path + imageMeta['imageName'])
+    if roisMeta is None:
+        return None, None, None
+    rois = np.array(roisMeta['rois'])
+    target_props = np.array(roisMeta['target_props'])
+    target_deltas = np.array(roisMeta['target_deltas'])
+    
+    
+    samples = helper.reduce_rois(target_props, cfg)
+    rois = rois[samples, :]
+    target_props = target_props[:, samples, :]
+    target_deltas = target_deltas[:, samples, :]
+    
+    return rois, target_props, target_deltas
+
+def unprepareInputs(norm_rois, imageDims):
+    #(idx,ymin,xmin,ymax,xmax) -> (xmin,ymin,width,height)
+    
+    rois = copy.copy(norm_rois)
+    rois = rois[0,:,1:]
+    rois = rois[:,(1,0,3,2)]
+
+    rois[:,2] = rois[:,2] - rois[:,0]
+    rois[:,3] = rois[:,3] - rois[:,1]
+    
+    rois = helper.unnormalizeRoIs(rois, imageDims)
+    return rois
 
 def prepareInputs(rois, imageDims):
-    #(xmin,ymin,xmax,ymax) -> (ymin,xmin,ymax,xmax)
+    #(xmin,ymin,width,height) -> (idx,ymin,xmin,ymax,xmax)
     
 #    print(rois.shape)
-    new_rois = np.zeros_like(rois)
-    new_rois[:,0] = rois[:,1]
-    new_rois[:,1] = rois[:,0]
-    new_rois[:,2] = rois[:,1] + rois[:,3]
-    new_rois[:,3] = rois[:,0] + rois[:,2]
+    new_rois = copy.copy(rois)
+    new_rois = new_rois[:,(1,0,3,2)]
+    new_rois[:,2] = new_rois[:,2] + new_rois[:,0]
+    new_rois[:,3] = new_rois[:,3] + new_rois[:,1]
     
-#    new_rois = helper.normalizeRoIs(new_rois, imageDims)
+    new_rois = helper.normalizeRoIs(new_rois, imageDims)
     
     new_rois = np.insert(new_rois, 0, 0, axis=1)
     new_rois = np.expand_dims(new_rois, axis=0)
@@ -92,7 +120,6 @@ def prepareTargets(rois, imageMeta, imageDims, class_mapping, cfg):
             elif detection_max_overlap <= best_iou:
                 cls_name = bboxes[best_bbox]['label']                
                 tx, ty, tw, th = helper.get_GT_deltas(gta[best_bbox], rt)
-                
 #                bxmin, bymin, bw, bh = helper.apply_regr([xmin,ymin,width,height], [tx,ty,tw,th])
 #                print(best_iou)
 #                print('rt',rt['xmin'], rt['ymin'], rt['xmax'], rt['ymax'])
@@ -107,14 +134,13 @@ def prepareTargets(rois, imageMeta, imageDims, class_mapping, cfg):
         class_label = len(class_mapping) * [0]
         class_label[class_num] = 1
         y_class_num.append(copy.deepcopy(class_label))
-        
         # Regression ground truth
-        coords = np.array([0] * 4 * (len(class_mapping) - 1))
-        labels = np.array([0] * 4 * (len(class_mapping) - 1))
+        coords = [0] * 4 * (len(class_mapping) - 1)
+        labels = [0] * 4 * (len(class_mapping) - 1)
         if cls_name != 'bg':
-            label_pos = 4 * class_num - 4
-#            sx, sy, sw, sh = C.classifier_regr_std
-            coords[label_pos:4 + label_pos] = [tx, ty, tw, th]
+            label_pos = 4 * (class_num - 1)
+            sx, sy, sw, sh = cfg.det_regr_std
+            coords[label_pos:4 + label_pos] = [tx*sx, ty*sy, tw*sw, th*sh]
 #            coords[label_pos+0] * sx; coords[label_pos+1] * sy
 #            coords[label_pos+2] * sw; coords[label_pos+3] * sh
             labels[label_pos:4 + label_pos] = [1, 1, 1, 1]

@@ -6,16 +6,17 @@ Created on Thu Mar 15 13:49:30 2018
 """
 
 import sys 
-sys.path.append('../../')
-sys.path.append('../shared/')
+sys.path.append('../../../')
+sys.path.append('../../shared/')
 sys.path.append('../models/')
 sys.path.append('../cfgs/')
+sys.path.append('../data/')
 
 import utils
 from model_trainer import model_trainer
 from generators import DataGenerator
 from methods import HO_RCNN
-from load_data import data
+import load_data
 
 import numpy as np
 import sys
@@ -24,8 +25,9 @@ import sys
 
 print('Loading data...')
 # Load data
-data = data()
+data = load_data.data()
 cfg = data.cfg
+cfg.rcnn_config()
 
 # Create batch generators
 genTrain = DataGenerator(imagesMeta=data.trainMeta, GTMeta = data.trainGTMeta, cfg=cfg, data_type='train')

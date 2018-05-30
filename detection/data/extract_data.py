@@ -32,6 +32,7 @@ class object_data:
         to_path   = self.cfg.move_path
         if to_path is None:
             return
+        to_path += '/'+self.cfg.dataset
         
         if not os.path.exists(to_path):
 #            self.remove_data()        
@@ -47,19 +48,19 @@ class object_data:
         cfg.get_args()
         cfg.update_paths()
         
-        trainGTMeta = utils.load_dict(cfg.data_path + 'train_GT')
-        valGTMeta = utils.load_dict(cfg.data_path + 'val_GT')
-#        testGTMeta = utils.load_dict(cfg.data_path + 'test_GT')
+        trainGTMeta = utils.load_dict(cfg.data_path + 'train_objs')
+#        valGTMeta = utils.load_dict(cfg.data_path + 'val_objs')
+        testGTMeta = utils.load_dict(cfg.data_path + 'test_objs')
         class_mapping = utils.load_dict(cfg.data_path + 'class_mapping')
         
         if cfg.max_classes is not None:
             # Reduce data to include only max_classes number of different classes
 #            _, counts = utils.getLabelStats(trainGTMeta, class_mapping)
-            reduced_objs = self.getReduxIdxs(class_mapping)
+            reduced_objs = self.getReduxIdxs(class_mapping, cfg)
             trainGTMeta = self.reduceData(trainGTMeta, reduced_objs)
-            valGTMeta = self.reduceData(valGTMeta, reduced_objs)
+#            valGTMeta = self.reduceData(valGTMeta, reduced_objs)
             class_mapping = self.reduceMapping(reduced_objs)
-#            testGTMeta = utils.reduceTestData(testGTMeta, reduced_objs)
+            testGTMeta = self.reduceData(testGTMeta, reduced_objs)
 #            trainMeta = utils.reduceTestData(trainMeta, reduced_idxs)
 #            testMeta = utils.reduceTestData(testMeta, reduced_idxs)
 #            class_mapping = utils.idxs2labels(reduced_idxs, class_mapping)
@@ -76,15 +77,15 @@ class object_data:
         print('Path:', cfg.my_results_path)
         
         self.class_mapping = class_mapping
-        self.valGTMeta = valGTMeta
+        self.testGTMeta = testGTMeta
         self.trainGTMeta = trainGTMeta
 #        self.trainMeta = trainMeta
 #        self.valMeta = valMeta
 #        self.testMeta = testMeta
 #        self.testGTMeta = testGTMeta
         
-    def getReduxIdxs(self, class_mapping):
-        objs = utils.getPascalObjects()
+    def getReduxIdxs(self, class_mapping, cfg):
+        objs = utils.getPascalObjects(cfg.max_classes)
         reduced_idxs = []
         for label, idx in class_mapping.items():
             if label in objs:
@@ -122,8 +123,12 @@ class object_data:
         return stats
     
     
-    def getLabelStats(self, imagesMeta, class_mapping):
-        stats = self.getBareBonesStats(class_mapping)
+    def getLabelStats(self, dataset='train'):
+        if dataset == 'test':
+            imagesMeta = self.testGTMeta
+        else:
+            imagesMeta = self.trainGTMeta
+        stats = self.getBareBonesStats(self.class_mapping)
         stats['total'] = 0
         stats['nb_samples'] = 0
         stats['nb_images'] = 0

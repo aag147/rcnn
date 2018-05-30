@@ -13,7 +13,7 @@ import numpy as np
 from keras import backend as K
 from keras.layers.core import Lambda
 from keras.engine.topology import Layer
-from keras.initializers import TruncatedNormal
+from keras.initializers import TruncatedNormal, RandomNormal
 import keras.applications as keras_models
 from keras import regularizers
 
@@ -162,11 +162,11 @@ def AlexNet(input_shape, weights_path=None, nb_classes=1000, include = 'all'):
     if include == 'fc':
         dense_1 = MaxPooling2D((3, 3), strides=(2,2))(conv_5)
         dense_1 = Flatten()(dense_1)
-        dense_1 = Dense(4096, activation='relu', kernel_initializer='TruncatedNormal', kernel_regularizer=regularizers.l2(0.01))(dense_1)
+        dense_1 = Dense(4096, activation='relu')(dense_1)#, kernel_initializer='TruncatedNormal', kernel_regularizer=regularizers.l2(0.01))(dense_1)
         dense_2 = Dropout(0.5)(dense_1)
-        dense_2 = Dense(4096, activation='relu', kernel_initializer='TruncatedNormal', kernel_regularizer=regularizers.l2(0.01))(dense_2)
+        dense_2 = Dense(4096, activation='relu')(dense_2)#, kernel_initializer='TruncatedNormal', kernel_regularizer=regularizers.l2(0.01))(dense_2)
         dense_3 = Dropout(0.5)(dense_2)
-        dense_3 = Dense(1000, kernel_regularizer=regularizers.l2(0.01))(dense_3)
+        dense_3 = Dense(1000)(dense_3)#, kernel_regularizer=regularizers.l2(0.01))(dense_3)
         model = Model(inputs=inputs, outputs=dense_3)
 
     model = final_model(model, weights_path, nb_classes, include)
@@ -175,15 +175,15 @@ def AlexNet(input_shape, weights_path=None, nb_classes=1000, include = 'all'):
 def fastPairWiseStream(input_shape, weights_path=None, nb_classes=1000, include = 'all'):
     inputs = Input(shape=input_shape)
     model = Sequential()
-    conv_1 = TimeDistributed(Conv2D(64, (5, 5), activation='relu'))(inputs)
+    conv_1 = TimeDistributed(Conv2D(64, (5, 5), activation='relu', kernel_initializer=RandomNormal(stddev=0.01)))(inputs)
     conv_1 = TimeDistributed(MaxPooling2D((2,2), strides=(2,2)))(conv_1)
     
-    conv_2 = TimeDistributed(Conv2D(32, (5, 5), activation='relu'))(conv_1)
+    conv_2 = TimeDistributed(Conv2D(32, (5, 5), activation='relu', kernel_initializer=RandomNormal(stddev=0.01)))(conv_1)
     conv_2 = TimeDistributed(MaxPooling2D((2,2), strides=(2,2)))(conv_2)
     
     fc = TimeDistributed(Flatten())(conv_2)
-    fc = TimeDistributed(Dense(256, activation='relu'))(fc)
-    fc = TimeDistributed(Dense(nb_classes))(fc)
+    fc = TimeDistributed(Dense(256, activation='relu', kernel_initializer=RandomNormal(stddev=0.01)))(fc)
+    fc = TimeDistributed(Dense(nb_classes, kernel_initializer=RandomNormal(stddev=0.01)))(fc)
     
     model = Model(inputs=inputs, outputs=fc)
     
@@ -193,15 +193,15 @@ def fastPairWiseStream(input_shape, weights_path=None, nb_classes=1000, include 
 def PairWiseStream(input_shape, weights_path=None, nb_classes=1000, include = 'all'):
     inputs = Input(shape=input_shape)
     model = Sequential()
-    conv_1 = Conv2D(64, (5, 5), activation='relu')(inputs)
+    conv_1 = Conv2D(64, (5, 5), activation='relu', kernel_initializer=RandomNormal(stddev=0.01))(inputs)
     conv_1 = MaxPooling2D((2,2), strides=(2,2))(conv_1)
     
-    conv_2 = Conv2D(32, (5, 5), activation='relu')(conv_1)
+    conv_2 = Conv2D(32, (5, 5), activation='relu', kernel_initializer=RandomNormal(stddev=0.01))(conv_1)
     conv_2 = MaxPooling2D((2,2), strides=(2,2))(conv_2)
     
     fc = Flatten()(conv_2)
-    fc = Dense(256, activation='relu')(fc)
-    fc = Dense(nb_classes)(fc)
+    fc = Dense(256, activation='relu', kernel_initializer=RandomNormal(stddev=0.01))(fc)
+    fc = Dense(nb_classes, kernel_initializer=RandomNormal(stddev=0.01))(fc)
     
     model = Model(inputs=inputs, outputs=fc)
     
@@ -220,7 +220,7 @@ def final_model(model, weights_path, nb_classes, include):
         output = model.layers[-8].output
         model = Model(inputs=model.input, outputs=output)
     elif include == 'fc':
-        output = Dense(nb_classes)(model.layers[-2].output)
+        output = Dense(nb_classes, kernel_initializer=RandomNormal(stddev=0.01))(model.layers[-2].output)
         model = Model(inputs=model.input, outputs=output)
 
     return model
@@ -229,35 +229,6 @@ def input_rois():
     input_rois = Input(shape=(None, 5))
     return input_rois
 
-def rpn(base_layers, num_anchors):
-    x = Conv2D(256, (3, 3), padding='same', activation='relu', kernel_initializer='normal', name='rpn_conv1')(
-        base_layers)
-
-    x_class = Conv2D(num_anchors, (1, 1), activation='sigmoid', kernel_initializer='uniform', name='rpn_out_class')(x)
-    x_regr = Conv2D(num_anchors * 4, (1, 1), activation='linear', kernel_initializer='zero', name='rpn_out_regress')(x)
-
-    return [x_class, x_regr, base_layers]
-
-
-def classifier(base_layers, input_rois, cfg, nb_classes=21):
-    # compile times on theano tend to be very high, so we use smaller ROI pooling regions to workaround
-
-    cfg.pooling_regions = 7
-#    print(K.shape(base_layers))
-#    print(K.shape(input_rois))
-    out_roi_pool = RoiPoolingConv(cfg)([base_layers, input_rois])
-
-    dense_1 = Flatten()(out_roi_pool)
-    dense_1 = Dense(4096, activation='relu', kernel_initializer='TruncatedNormal')(dense_1)
-    dense_2 = Dropout(0.5)(dense_1)
-    dense_2 = Dense(4096, activation='relu', kernel_initializer='TruncatedNormal')(dense_2)
-    dense_3 = Dropout(0.5)(dense_2)
-
-    out_class = Dense(nb_classes, kernel_initializer='uniform')(dense_3)
-    # note: no regression target for bg class
-#    out_regr = Dense(4 * (nb_classes - 1), activation='linear', kernel_initializer='zero')(dense_3)
-
-    return out_class
 
 def fastClassifier(base_layers, input_rois, cfg, nb_classes=21):    
     cfg.pooling_regions = 7
@@ -265,15 +236,15 @@ def fastClassifier(base_layers, input_rois, cfg, nb_classes=21):
     
     dense_1 = TimeDistributed(Flatten())(out_roi_pool)
     dense_1 = TimeDistributed(
-        Dense(4096, activation='relu', kernel_initializer='TruncatedNormal')
+        Dense(4096, activation='relu', kernel_initializer=RandomNormal(stddev=0.01))
     )(dense_1)
     dense_1 = Dropout(0.5)(dense_1)
     dense_2 = TimeDistributed(
-        Dense(4096, activation='relu', kernel_initializer='TruncatedNormal')
+        Dense(4096, activation='relu', kernel_initializer=RandomNormal(stddev=0.01))
     )(dense_1)
     dense_2 = Dropout(0.5)(dense_2)
     
-    out_class = TimeDistributed(Dense(nb_classes, kernel_initializer='uniform'))(dense_2)
+    out_class = TimeDistributed(Dense(nb_classes, kernel_initializer=RandomNormal(stddev=0.01)))(dense_2)
 
     return out_class
 
@@ -319,7 +290,6 @@ class RoiPoolingConv(Layer):
         assert(len(x) == 2)
 
         img = x[0]
-        img = K.permute_dimensions(img, (0, 2, 3, 1))
         rois = x[1][0]
 
 #        outputs = []
@@ -375,7 +345,7 @@ class RoiPoolingConv(Layer):
         final_output = tf.image.crop_and_resize(img, boxes=rois, box_ind=box_ind, crop_size=(self.pool_size, self.pool_size), method="bilinear")
 #        final_output = tf.Print(final_output, ['Value: ', tf.shape(final_output)])
 #        final_output = K.reshape(final_output, (batch_size, self.pool_size, self.pool_size, self.nb_channels))
-        final_output = K.permute_dimensions(final_output, (0, 3, 1, 2))
+#        final_output = K.permute_dimensions(final_output, (0, 3, 1, 2))
         final_output = K.expand_dims(final_output, axis=0)
         return final_output
 

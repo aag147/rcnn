@@ -10,10 +10,10 @@ from keras.objectives import categorical_crossentropy
 
 import tensorflow as tf
 
-lambda_rpn_regr = 10.0
+lambda_rpn_regr = 1.0
 lambda_rpn_class = 1.0
 
-lambda_cls_regr = 10.0
+lambda_cls_regr = 1.0
 lambda_cls_class = 1.0
 
 epsilon = 1e-4
@@ -47,3 +47,9 @@ def class_loss_regr(num_classes):
 
 def class_loss_cls(y_true, y_pred):
     return lambda_cls_class * K.mean(categorical_crossentropy(y_true[0, :, :], y_pred[0, :, :]))
+
+
+def hoi_loss_cls(wp, wn=1):
+    def hoi_loss_cls_fixed_num(y_true, y_pred):
+        return K.sum((wn*(1-y_true)+wp*(y_true))*K.binary_crossentropy(y_true, y_pred), axis=-1)
+    return hoi_loss_cls_fixed_num

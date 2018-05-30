@@ -13,9 +13,45 @@ import copy as cp
 import os
 import glob
 import itertools
-import filters_helper
 
-def plot_confusion_matrix(cm, classes,
+
+def plot_hoi_stats(stats):
+    f, spl = plt.subplots(1)
+    names = []
+    idxs = []
+    counts = []
+    for obj, preds in stats.items():
+        if type(preds) is dict:
+            for pred, count in preds.items():
+                if pred not in ['nb_images', 'nb_samples', 'total', 'totalx']:
+                    names.append(pred)
+                    idxs.append(len(idxs))
+                    counts.append(count)
+#    counts.sort()
+    spl.bar(idxs, counts[::-1])
+    spl.set_xlim([0, len(counts)])
+    spl.set_ylabel('Count')
+    spl.set_xlabel('Classes')
+
+
+def plot_object_stats(stats):
+    f, spl = plt.subplots(1)
+    names = []
+    idxs = []
+    counts = []
+    for key, count in stats.items():
+        if key not in ['nb_images', 'nb_samples', 'total', 'totalx', 'bg']:
+            names.append(key)
+            idxs.append(len(idxs))
+            counts.append(count)
+    spl.bar(idxs, counts)
+    spl.set_xticks([])
+    spl.set_xticklabels(names)
+    spl.set_ylabel('Count')
+    spl.set_xlabel('Classes')
+    print(names)
+
+def plot_confusion_matrix(cm, classes=None,
                           normalize=False,
                           title='Confusion matrix',
                           cmap=plt.cm.Blues):
@@ -98,7 +134,7 @@ def drawAnchors(img, anchorsGT, cfg):
     bboxes = []
     for anchor in anchorsGT:
         objectiveness = anchor[4]
-        if objectiveness==1:
+        if objectiveness>0.5:
             c = 'red'
         else:
             c = 'blue'
@@ -114,7 +150,7 @@ def drawPositiveAnchors(img, anchorsGT, cfg):
     bboxes = []
     for anchor in anchorsGT:
         objectiveness = anchor[4]
-        if objectiveness==1:
+        if objectiveness>0.9:
             bb = anchor[0:4]*cfg.rpn_stride
             bbox = drawProposalBox(bb)
             spl.plot(bbox[0,:], bbox[1,:])
@@ -145,10 +181,11 @@ def drawBoxes(img, bboxes, imageDims):
         spl.plot(bbox[0,:]*scales[1], bbox[1,:]*scales[0])
             
 def drawGTBoxes(img, imageMeta, imageDims):
+    import filters_helper as helper
     f, spl = plt.subplots(1)
     spl.imshow(img)
     
-    bboxes = filters_helper.normalizeGTboxes(imageMeta['objects'], scale=imageDims['scale'], roundoff=True)
+    bboxes = helper.normalizeGTboxes(imageMeta['objects'], scale=imageDims['scale'], roundoff=True)
     
     for bb in bboxes:
         bbox = drawBoundingBox(bb)

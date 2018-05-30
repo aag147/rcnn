@@ -9,7 +9,7 @@ from keras.layers.convolutional import Conv2D, Convolution2D, MaxPooling2D, Zero
 from keras import backend as K
 from keras.layers.core import Lambda
 from keras.engine.topology import Layer
-
+from keras.initializers import RandomNormal
 from keras.layers import Flatten, Dense, Dropout, Reshape, Permute, Activation, \
     Input, merge, TimeDistributed
 
@@ -20,7 +20,7 @@ import numpy as np
 
 def rpn(x):
     base_layers = x[0]
-    x = Conv2D(256, (3, 3), padding='same', activation='relu', kernel_initializer='normal', name='rpn_conv1')(
+    x = Conv2D(512, (3, 3), padding='same', activation='relu', kernel_initializer=RandomNormal(stddev=0.01), name='rpn_conv1')(
         base_layers)
 
     return x
@@ -31,11 +31,11 @@ def fullyConnected(x):
     
     dense_1 = TimeDistributed(Flatten())(rois)
     dense_1 = TimeDistributed(
-        Dense(4096, activation='relu', kernel_initializer='TruncatedNormal')
+        Dense(4096, activation='relu', kernel_initializer=RandomNormal(stddev=0.01))
     )(dense_1)
     dense_1 = Dropout(0.5)(dense_1)
     dense_2 = TimeDistributed(
-        Dense(4096, activation='relu', kernel_initializer='TruncatedNormal')
+        Dense(4096, activation='relu', kernel_initializer=RandomNormal(stddev=0.01))
     )(dense_1)
     dense_2 = Dropout(0.5)(dense_2)
 
@@ -94,10 +94,10 @@ class RoiPoolingConv(Layer):
         final_output = K.expand_dims(final_output, axis=0)
         return final_output
     
-#    def get_config(self):
-#        configuration = {
-#            "pool_size": self.pool_size,
-#            "nb_channels": self.nb_channels
-#        }
-#
-#        return {**super(RoiPoolingConv, self).get_config(), **configuration}
+    def get_config(self):
+        configuration = {
+            "pool_size": self.pool_size,
+            "nb_channels": self.nb_channels
+        }
+
+        return {**super(RoiPoolingConv, self).get_config(), **configuration}

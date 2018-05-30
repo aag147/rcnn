@@ -10,11 +10,11 @@ import numpy as np
 import random
 import filters_helper as helper
 import utils
+import os
 
 
 def prepareInputs(imageMeta, images_path, cfg):
     img = cv.imread(images_path + imageMeta['imageName'])
-#    img = cv.cvtColor(img, cv.COLOR_BGR2RGB)
     assert(img is not None)
     assert(img.shape[0] > 10)
     assert(img.shape[1] > 10)
@@ -23,12 +23,15 @@ def prepareInputs(imageMeta, images_path, cfg):
     output_shape = [imgRedux.shape[0] / cfg.rpn_stride, imgRedux.shape[1] / cfg.rpn_stride]
     imgDims = {'shape': img.shape, 'redux_shape':imgRedux.shape, 'output_shape':output_shape, 'scale':scale}
     imgRedux = np.expand_dims(imgRedux, axis=0)
-    return imgRedux, imgDims
+    return np.copy(imgRedux), imgDims
 
 
 def loadTargets(imageMeta, anchors_path):
-    y_rpn_cls, y_rpn_regr = utils.load_obj(anchors_path + imageMeta['imageName'].split('.')[0])
-    return y_rpn_cls, y_rpn_regr
+    path = anchors_path + imageMeta['imageName'].split('.')[0]
+    if not os.path.exists(path + '.pkl'):
+        return None
+    y_rpn_cls, y_rpn_regr = utils.load_obj(path)
+    return [y_rpn_cls, y_rpn_regr]
 
 def prepareTargets(imageMeta, imageDims, cfg):
 
@@ -193,8 +196,6 @@ def prepareTargets(imageMeta, imageDims, cfg):
     pos_locs = np.where(np.logical_and(y_rpn_overlap[0, :, :, :] == 1, y_is_box_valid[0, :, :, :] == 1))
     neg_locs = np.where(np.logical_and(y_rpn_overlap[0, :, :, :] == 0, y_is_box_valid[0, :, :, :] == 1))
 
-    print('pos len', len(pos_locs[0]))
-    print('neg len', len(neg_locs[0]))
     num_pos = len(pos_locs[0])
     num_regions = cfg.nb_rpn_proposals
         
@@ -204,7 +205,10 @@ def prepareTargets(imageMeta, imageDims, cfg):
         num_pos = int(num_regions/2)
     
     if len(neg_locs[0]) + num_pos > num_regions:
-        val_locs = random.sample(range(len(neg_locs[0])), len(neg_locs[0]) - num_pos)
+        if cfg.rpn_uniform_sampling:
+            val_locs = random.sample(range(len(neg_locs[0])), len(neg_locs[0]) - num_pos)
+        else:
+            val_locs = random.sample(range(len(neg_locs[0])), len(neg_locs[0]) - (num_regions - num_pos))
         y_is_box_valid[0, neg_locs[0][val_locs], neg_locs[1][val_locs], neg_locs[2][val_locs]] = 0
     
     
@@ -214,8 +218,7 @@ def prepareTargets(imageMeta, imageDims, cfg):
     # y_rpn_overlap: objectiveness score - 0/1
     # y_is_box_valid: should box be included in loss - 0/1
     # y_rpn_regr: regression deltas - x,y,w,h
-    print(np.sum(y_rpn_overlap))
     y_rpn_cls = np.concatenate([y_is_box_valid, y_rpn_overlap], axis=3)
-    y_rpn_regr *= 4.0
+    y_rpn_regr *= cfg.rpn_regr_std
     y_rpn_regr = np.concatenate([np.repeat(y_rpn_overlap, 4, axis=3), y_rpn_regr], axis=3)
     return [np.copy(y_rpn_cls), np.copy(y_rpn_regr)]

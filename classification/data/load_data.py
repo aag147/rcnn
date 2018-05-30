@@ -33,6 +33,8 @@ class data:
         if to_path is None:
             return
         
+        to_path += '/'+self.cfg.dataset
+        
         if not os.path.exists(to_path):
 #            self.remove_data()        
             print('Moving data...')
@@ -52,14 +54,16 @@ class data:
         trainGTMeta = utils.load_dict(cfg.data_path + 'train_GT')
         testGTMeta = utils.load_dict(cfg.data_path + 'test_GT')
         labels = utils.load_dict(cfg.data_path + 'labels')
+        class_mapping = utils.load_dict(cfg.data_path + 'class_mapping')
         
         if cfg.max_classes is not None:
             # Reduce data to include only max_classes number of different classes
             _, counts = utils.getLabelStats(trainGTMeta, labels)
-            trainGTMeta, reduced_idxs = utils.reduceTrainData(trainGTMeta, counts, cfg.max_classes, labels)
-            testGTMeta = utils.reduceTestData(testGTMeta, reduced_idxs)
-            trainMeta = utils.reduceTestData(trainMeta, reduced_idxs)
-            testMeta = utils.reduceTestData(testMeta, reduced_idxs)
+            reduced_idxs = utils.getReducedIdxs(counts, cfg.max_classes, labels)
+            trainGTMeta = utils.reduceData(trainGTMeta, reduced_idxs)
+            testGTMeta = utils.reduceData(testGTMeta, reduced_idxs)
+            trainMeta = utils.reduceData(trainMeta, reduced_idxs)
+            testMeta = utils.reduceData(testMeta, reduced_idxs)
             labels = utils.idxs2labels(reduced_idxs, labels)
             
             
@@ -70,10 +74,12 @@ class data:
         
         if cfg.move:
             self.move_data()
-            
+        
+        print('Data:', cfg.data_path)
         print('Path:', cfg.my_results_path)
         
         self.labels = labels
+        self.class_mapping = class_mapping
         self.trainMeta = trainMeta
         self.valMeta = valMeta
         self.testMeta = testMeta

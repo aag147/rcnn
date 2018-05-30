@@ -17,12 +17,12 @@ def MyEarlyStopping(cfg):
 
 
 def MyModelCheckpointBest(cfg):
-    path = cfg.my_weights_path + 'weights-best.h5'
-    return ModelCheckpoint(path, monitor='val_loss', verbose=0, save_best_only=True, save_weights_only=True, mode='auto', period=1)
+    path = cfg.my_weights_path + 'model-best.h5'
+    return ModelCheckpoint(path, monitor='val_loss', verbose=0, save_best_only=True, save_weights_only=False, mode='auto', period=1)
 
 def MyModelCheckpointInterval(cfg):
-    path = cfg.my_weights_path + 'weights-{epoch:03d}.h5'
-    return ModelCheckpoint(path, monitor='val_loss', verbose=0, save_best_only=False, save_weights_only=True, mode='auto', period=cfg.checkpoint_interval)
+    path = cfg.my_weights_path + 'model-{epoch:03d}.h5'
+    return ModelCheckpoint(path, monitor='val_loss', verbose=0, save_best_only=False, save_weights_only=False, mode='auto', period=cfg.checkpoint_interval)
 
 def MyLearningRateScheduler(cfg):
    epoch_splits = cfg.epoch_splits
@@ -46,6 +46,10 @@ class SaveLog2File(Callback):
    def on_epoch_end(self, epoch, logs=None):
        val_loss = logs.get('val_loss') if type(logs.get('val_loss')) is float else 0.0
        val_acc  = logs.get('val_acc') if type(logs.get('val_acc')) is float else 0.0
+       val_loss = logs.get('rpn_out_class_loss') if logs.get('rpn_out_class_loss') is not None else 0.0
+       val_acc  = logs.get('rpn_out_regress_loss') if logs.get('rpn_out_regress_loss') is not None else 0.0
+       val_loss = logs.get('det_out_class_loss') if logs.get('det_out_class_loss') is not None else 0.0
+       val_acc  = logs.get('det_out_regress_loss') if logs.get('det_out_regress_loss') is not None else 0.0
        train_acc  = logs.get('acc') if type(logs.get('acc')) is float else 0.0
        newline = '%.03d, %.4f, %.4f, %.4f, %.4f\n' % \
          (epoch, logs.get('loss'), train_acc, val_loss, val_acc)

@@ -9,6 +9,7 @@ import utils
 
 import os
 import sys, getopt
+import numpy as np
 
 class basic_config:
    class gen_config:
@@ -25,8 +26,8 @@ class basic_config:
    def get_results_paths(self):
       if len(self.my_results_path) > 0 or not self.newDir:
           return
-      if len(self.my_results_dir) > 0:
-          path = self.part_results_path + self.dataset + "/" + self.my_results_dir + '/'
+      if len(self.my_results_dir) > 0 and not self.use_shared_cnn:
+          path = self.part_results_path + self.my_results_dir + '/'
       else:
           for fid in range(100):
             path = self.part_results_path + self.dataset + "/" + self.modelnamekey + '%d/' % fid
@@ -34,13 +35,27 @@ class basic_config:
                 os.mkdir(path)
                 os.mkdir(path + 'weights/')
                 break
+            
       self.my_results_path = path
       self.my_weights_path = path + 'weights/'
+      
+      if self.my_weights is not None:
+          self.my_shared_weights = self.my_weights_path + self.my_weights
+      
+      if self.use_shared_cnn:
+          self.my_shared_weights = self.part_results_path + self.my_results_dir + '/weights/' + self.my_weights
+      
+   def get_detections_path(self):
+       if len(self.my_detections_dir) == 0:
+          return
+       
+       self.my_detections_path = self.part_results_path + self.dataset + "/" + self.my_detections_dir + '/detections/'
       
       
    def update_paths(self):
        self.get_data_path()
        self.get_results_paths()
+       self.get_detections_path()
       
    def __init__(self, newDir = True):
        self.newDir = newDir
@@ -55,13 +70,17 @@ class basic_config:
        self.my_results_path = ''
        self.my_weights_path = ''
        self.my_results_dir = ''
+       self.my_detections_dir = ''
+       self.my_detections_path = ''
        self.move_path = None
-       self.move = 0
+       self.move = False
+       self.use_shared_cnn = False
        
        #basics
        self.dataset = 'HICO'
        self.inputs  = None
        self.max_classes = None
+       self.backbone = None
        
        #generator
        self.train_cfg = self.gen_config()
@@ -73,8 +92,12 @@ class basic_config:
        self.minIoU = 0.5
        self.testdata = 'genTest'
        
-       self.img_channel_mean = [103.939, 116.779, 123.68] #BGR
+       self.img_channel_mean = np.array([[[102.9801, 115.9465, 122.7717]]]) #BGR
        self.img_scaling_factor = 1.0
+       
+       self.order_of_dims = [0,1,2]
+       self.par_order_of_dims = [0,2,3,1]
+       self.winShape = (64, 64)
        
        #model
        self.task = None
@@ -98,32 +121,53 @@ class basic_config:
        self.epoch_begin = None
        self.epoch_end = None
        
+       
+       #fast data preprocesses
+       self.use_channel_mean = False
+       self.rpn_uniform_sampling = False
+       self.flip_image = False
+       self.pool_size = None
+       
    def rcnn_config(self):
        self.xdim=227
        self.ydim=227
        self.cdim=3
        
-       self.shape = (self.ydim, self.xdim)
-       self.order_of_dims = [2,0,1]
-       self.order_of_dims = [0,1,2]
-       self.par_order_of_dims = [0,1,2,3]
-       self.par_order_of_dims = [0,2,3,1]
-       self.winShape = (64, 64)
+       self.backbone = 'alex'
        
+       self.shape = (self.ydim, self.xdim)       
        self.init_lr = 0.0001
 
        
    def fast_rcnn_config(self):
        self.mindim = 600
        self.maxdim = 1000
-       self.xdim = 224
-       self.ydim = 224
        self.cdim  = 3
        
-       self.pool_size = 7
+       if self.backbone is None:
+           self.backbone = 'alex'
+       
+       if self.pool_size is None:
+           self.pool_size = 3
        
        if self.init_lr is None:
-           self.init_lr = 0.000001
+           self.init_lr = 0.00001
+       
+       self.train_cfg.batch_size = 1
+       self.val_cfg.batch_size = 1
+       self.test_cfg.batch_size = 1      
+       
+   def faster_rcnn_config(self):
+       self.mindim = 600
+       self.maxdim = 1000
+       self.cdim  = 3
+       
+       
+       if self.pool_size is None:
+           self.pool_size = 3
+       
+       if self.init_lr is None:
+           self.init_lr = 0.00001
        
        self.order_of_dims = [0,1,2]
        self.par_order_of_dims = [0,2,3,1]
@@ -133,20 +177,24 @@ class basic_config:
        self.val_cfg.batch_size = 1
        self.test_cfg.batch_size = 1
        
+       self.rpn_regr_std = 4.0
+       self.det_regr_std = [8.0, 8.0, 4.0, 4.0]
+       
        #rpn filters
        self.rpn_stride = 16
-       self.nb_rpn_proposals = 256
+       self.nb_rpn_proposals = 128
         
        self.anchor_sizes = [64, 128, 256, 512]
        self.anchor_ratios = [[1, 1], [1, 2], [2, 1]]
         
        self.rpn_min_overlap = 0.3
        self.rpn_max_overlap = 0.7
+
         
        # detection filters
        self.detection_max_overlap = 0.5
        self.detection_min_overlap = 0.0
-       self.nb_detection_rois = 32
+       self.nb_detection_rois = 64
        self.detection_nms_max_boxes=300
        self.detection_nms_overlap_thresh=0.7
         
@@ -156,62 +204,84 @@ class basic_config:
         
        # model
        self.nb_anchors = len(self.anchor_sizes) * len(self.anchor_ratios)
-       self.pool_size = 3
 #       self.nb_object_classes = 81
        self.nb_hoi_classes = 600
        
    def get_args(self):
        try:
           argv = sys.argv[1:]
-          opts, args = getopt.getopt(argv,"m:c:x:d:w:v:t:b:s:f:h:o:l:g:n:")
+          opts, args = getopt.getopt(argv,"ab:c:d:e:f:g:hi:l:m:n:o:r:s:tuw:x:")
        except getopt.GetoptError:
           print('.py -m <my_model> -c <my_method> -x <max_classes> -d <dataset>')
           sys.exit(2)
      
+#    augment, backbone, cfg_method, dataset, epoch_split, final_epoch, generator_type, input_roi_dir, learning_rate, model, nb_batches, optimizer, results_dir, start_epoch, transfor data, uniform_sampling, weighing, ma(x)_classes
        for opt, arg in opts:
           print(opt, arg)
-          if opt == '-v':
-#             path = self.part_results_path + arg
-             self.my_results_dir = arg
-#             self.my_results_path = path
-#             self.my_weights_path = path + 'weights/'
-          if opt == '-m':
-             self.my_weights = arg
+          if opt == '-a':
+             # augmentation
+             self.flip_image = True
+          if opt == '-b':
+             # backbone
+             self.backbone = arg
           if opt == '-c':
+             # cfg method
              assert hasattr(mcfg, arg), 'method cfg needs to exist'
              self = getattr(mcfg, arg)(self)
-          if opt == '-x':
-              assert arg.isdigit(), 'max_classes must be int'
-              self.max_classes = int(arg)
-          if opt == '-b':
-              assert arg.isdigit(), 'nb_batches must be int'
-              self.train_cfg.nb_batches = int(arg)
-#              self.val_cfg.nb_batches = int(arg)
           if opt == '-d':
+              # dataset
               self.dataset = arg
-          if opt == '-w':
-              assert (arg.isdigit() or arg=='-1'), 'weight must be int'
-              self.wp = int(arg)
-          if opt == '-t':
-              self.testdata = arg
-          if opt == '-n':
-              assert arg.isdigit(), 'move must be int'
-              self.move = int(arg)
-          if opt == '-s':
-              assert arg.isdigit(), 'final epoch must be int'
-              self.epoch_begin = int(arg)
-          if opt == '-f':
-              assert arg.isdigit(), 'final epoch must be int'
-              self.epoch_end = int(arg)
-          if opt == '-h':
+          if opt == '-e':
+              # epoch learning rate split
               assert arg.isdigit(), 'epoch learning split must be int'
               self.epoch_splits = [int(arg)]
-          if opt == '-o':
-              self.optimizer = arg
-          if opt == '-l':
-              self.init_lr = float(arg)
+          if opt == '-f':
+              # final epoch
+              assert arg.isdigit(), 'final epoch must be int'
+              self.epoch_end = int(arg)
           if opt == '-g':
+              # generator iterator type
               self.train_cfg.type = arg
+          if opt == '-h':
+              # fine-tune with shared CNN
+              self.use_shared_cnn = True
+          if opt == '-i':
+              # roi input directory for detection
+              self.my_detections_dir = arg
+          if opt == '-l':
+              # initial learning rate
+              self.init_lr = float(arg)
+          if opt == '-m':
+              # loadable model/weights
+              self.my_weights = arg
+          if opt == '-n':
+              # number of batches per epoch
+              assert arg.isdigit(), 'nb_batches must be int'
+              self.train_cfg.nb_batches = int(arg)
+          if opt == '-o':
+              # optimizer
+              self.optimizer = arg
+          if opt == '-r':
+              # use results directory from previous model
+              self.my_results_dir = arg
+          if opt == '-s':
+              # start epoch
+              assert arg.isdigit(), 'start epoch must be int'
+              self.epoch_begin = int(arg)
+          if opt == '-t':
+              # transfer data to scratch
+              self.move = True
+          if opt == '-u':
+              # use uniform rpn proposal sampling
+              self.rpn_uniform_sampling = True
+          if opt == '-w':
+              # weighing in loss
+              assert (arg.isdigit() or arg=='-1'), 'weight must be int'
+              self.wp = int(arg)
+          if opt == '-x':
+              # max classes
+              assert arg.isdigit(), 'max_classes must be int'
+              self.max_classes = int(arg)
               
    def set_class_weights(self, labels, imagesMeta):
        if self.wp >= 0: 
@@ -221,3 +291,62 @@ class basic_config:
        p = counts / sum(counts)
        wp = 1 / p
        self.wp = wp
+       
+       
+       
+### OLD ARG PARSER
+#        for opt, arg in opts:
+#          print(opt, arg)
+#          if opt == '-v':
+##             path = self.part_results_path + arg
+#             self.my_results_dir = arg
+##             self.my_results_path = path
+##             self.my_weights_path = path + 'weights/'
+#          if opt == '-m':
+#             self.my_weights = arg
+#          if opt == '-c':
+#             assert hasattr(mcfg, arg), 'method cfg needs to exist'
+#             self = getattr(mcfg, arg)(self)
+#          if opt == '-x':
+#              assert arg.isdigit(), 'max_classes must be int'
+#              self.max_classes = int(arg)
+#          if opt == '-b':
+#              assert arg.isdigit(), 'nb_batches must be int'
+#              self.train_cfg.nb_batches = int(arg)
+##              self.val_cfg.nb_batches = int(arg)
+#          if opt == '-d':
+#              self.dataset = arg
+#          if opt == '-w':
+#              assert (arg.isdigit() or arg=='-1'), 'weight must be int'
+#              self.wp = int(arg)
+#          if opt == '-t':
+#              self.testdata = arg
+#          if opt == '-n':
+#              assert arg.isdigit(), 'move must be int'
+#              self.move = int(arg)
+#          if opt == '-s':
+#              assert arg.isdigit(), 'final epoch must be int'
+#              self.epoch_begin = int(arg)
+#          if opt == '-f':
+#              assert arg.isdigit(), 'final epoch must be int'
+#              self.epoch_end = int(arg)
+#          if opt == '-h':
+#              assert arg.isdigit(), 'epoch learning split must be int'
+#              self.epoch_splits = [int(arg)]
+#          if opt == '-o':
+#              self.optimizer = arg
+#          if opt == '-l':
+#              self.init_lr = float(arg)
+#          if opt == '-g':
+#              self.train_cfg.type = arg
+#          if opt == '-u':
+#              assert arg.isdigit(), 'uniform flag must be int'
+#              if int(arg)==0:
+#                  self.rpn_uniform_sampling = False
+#          if opt == '-r':
+#              if int(arg)==0:
+#                  self.use_channel_mean = False
+#          if opt == '-p':
+#              self.my_detections_dir = arg
+#          if opt == '-a':
+#              self.flip_image = True

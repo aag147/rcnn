@@ -49,16 +49,16 @@ class EvalResults():
       evalYHat = np.zeros([self.gen.nb_samples, self.gen.nb_classes])
       Y = np.zeros([self.gen.nb_samples, self.gen.nb_classes])
       iterGen = self.gen.begin()
+      s_idx = 0
       for i in range(self.gen.nb_batches):
           utils.update_progress(i / self.gen.nb_batches)
           batch, y = next(iterGen)
           y_hat = self.model.predict_on_batch(x=batch)
-          s_idx = i * self.gen.batch_size
-          
           f_idx = s_idx + y.shape[-2]
 #          print(y_hat.shape)
           evalYHat[s_idx:f_idx, :] = y_hat
           Y[s_idx:f_idx, :] = y
+          s_idx = f_idx
       utils.update_progress(self.gen.nb_batches)
       print()
       accs, self.mP, self.mR, self.F1 = computeMultiLabelLoss(Y, evalYHat)
@@ -69,6 +69,7 @@ class EvalResults():
       self.recall = accs[:,5]
       self.nb_zeros = np.count_nonzero(accs[:,1] == 0)
       self.Y_hat = evalYHat
+      self.Y = Y
 
 
 #%% COMPUTE ACCURACY

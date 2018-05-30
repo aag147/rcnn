@@ -6,6 +6,7 @@ Created on Mon May  7 15:40:50 2018
 """
 import sys 
 sys.path.append('../../../')
+sys.path.append('../../')
 sys.path.append('../../shared/')
 sys.path.append('../models/')
 sys.path.append('../filters/')
@@ -20,11 +21,14 @@ import utils,\
        losses,\
        callbacks,\
        filters_helper as helper
-from detection_generators import DataGenerator
+from rpn_generators import DataGenerator
     
 from keras.callbacks import EarlyStopping, LearningRateScheduler, Callback
 from keras.optimizers import SGD, Adam
 import os
+from keras.models import load_model
+from keras.utils.generic_utils import get_custom_objects
+
 
 if True:
     # meta data
@@ -32,7 +36,7 @@ if True:
     
     # config
     cfg = data.cfg
-    cfg.fast_rcnn_config()
+    cfg.faster_rcnn_config()
 
     # data
 #    genTrain = DataGenerator(imagesMeta = data.trainGTMeta, cfg=cfg, data_type='train')
@@ -68,11 +72,24 @@ if True:
 
 if True:
     # models
-    model_rpn, model_detection, model_hoi, model_all = methods.get_hoi_rcnn_models(cfg)
-    cfg.my_weights = ''
+#    model_rpn, model_detection, model_hoi, model_all = methods.get_hoi_rcnn_models(cfg)
+#    cfg.my_weights = ''
+#    path = cfg.my_weights_path + cfg.my_weights
+##    model_rpn.load_weights(path)    
+#    model_rpn.compile(optimizer='sgd', loss='mse')
+    
+    
+    loss_cls = losses.rpn_loss_cls(cfg.nb_anchors)
+    loss_rgr = losses.rpn_loss_regr(cfg.nb_anchors)
+    
+    get_custom_objects().update({"rpn_loss_cls_fixed_num": loss_cls})
+    get_custom_objects().update({"rpn_loss_regr_fixed_num": loss_rgr})
+    
+    
     path = cfg.my_weights_path + cfg.my_weights
-#    model_rpn.load_weights(path)    
-    model_rpn.compile(optimizer='sgd', loss='mse')
+    model_rpn = load_model(path)
+    
+    model_rpn.save_weights(cfg.my_weights_path + 'weights.h5')
 
     genIterator = genVal.begin()
     accs = np.zeros([genVal.nb_batches, 3])
