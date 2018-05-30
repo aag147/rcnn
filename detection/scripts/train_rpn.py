@@ -87,9 +87,6 @@ if True:
     model_rpn.compile(optimizer=opt,\
                       loss=[losses.rpn_loss_cls(cfg.nb_anchors), losses.rpn_loss_regr(cfg.nb_anchors)])
 #                      metrics={'rpn_out_class':'categorical_accuracy'}) 
-
-
-#    X,y = next(genTrain.begin())
     
 
 if True:    

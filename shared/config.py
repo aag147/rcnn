@@ -199,8 +199,8 @@ class basic_config:
        self.detection_nms_overlap_thresh=0.7
         
        # hoi filters
-       self.hoi_bbox_threshold = 0.5
-       self.hoi_nms_overlap_thresh=0.7
+       self.hoi_bbox_threshold = 0.7
+       self.hoi_nms_overlap_thresh=0.5
         
        # model
        self.nb_anchors = len(self.anchor_sizes) * len(self.anchor_ratios)

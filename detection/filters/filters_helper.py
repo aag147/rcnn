@@ -46,7 +46,8 @@ def deltas2Boxes(props, deltas, rois, cfg):
     boxes = []
     
     for ii in range(nb_rois_in_batch):
-        if np.max(props[0, ii, :]) < bbox_threshold or np.argmax(props[0, ii, :]) == 0:
+#        if np.max(props[0, ii, :]) < bbox_threshold or np.argmax(props[0, ii, :]) == 0:
+        if np.argmax(props[0, ii, :]) == 0:
             continue
         
         labelID = np.argmax(props[0, ii, :])
@@ -63,7 +64,6 @@ def deltas2Boxes(props, deltas, rois, cfg):
         regr[1] /= sy
         regr[2] /= sw
         regr[3] /= sh
-        print(roi, regr)
         x, y, w, h = apply_regr(roi, regr)
 #        print('label', ii, labelID)
 #        print('rt',roi[0], roi[1], roi[2], roi[3])
@@ -237,6 +237,8 @@ def apply_regr_np(anchors, deltas):
     except Exception as e:
         print(e)
         return anchors
+
+
 
 
 def non_max_suppression_fast(boxes, overlap_thresh=0.5, max_boxes=300):

@@ -66,22 +66,27 @@ if True:
         print('Image mean/std preprocessing')
         
     if type(cfg.my_weights)==str and len(cfg.my_weights) > 0:
-        print('Loading my weights...')
-        loss_cls = losses.class_loss_cls
-        loss_rgr = losses.class_loss_regr(cfg.nb_object_classes-1)
-        
-        get_custom_objects().update({"class_loss_cls": loss_cls})
-        get_custom_objects().update({"class_loss_regr_fixed_num": loss_rgr})
-        
-        path = cfg.my_weights_path + cfg.my_weights
-        model_detection = load_model(path)
-    
+        if cfg.use_shared_cnn:
+            print('Loading shared weights...')
+            model_detection.load_weights(cfg.my_shared_weights, by_name=True)
+            # Only train unique layers
+            for i, layer in enumerate(model_rpn.layers):
+                layer.trainable = False
+                if i > 17:
+                    break
+        else:
+            print('Loading my weights...')
+            loss_cls = losses.class_loss_cls
+            loss_rgr = losses.class_loss_regr(cfg.nb_object_classes-1)
+            
+            get_custom_objects().update({"class_loss_cls": loss_cls})
+            get_custom_objects().update({"class_loss_regr_fixed_num": loss_rgr})
+            
+            model_detection = load_model(cfg.my_shared_weights)
     
     model_detection.compile(optimizer=opt,\
                       loss=[losses.class_loss_cls, losses.class_loss_regr(cfg.nb_object_classes-1)],\
                       metrics={'det_out_class':'categorical_accuracy'}) 
-
-
     
 
 if True:    

@@ -10,20 +10,30 @@ import utils
 
 import filters_helper as helper
 
-def loadData(imageMeta, rois_path, cfg):
+def loadData(imageMeta, rois_path, cfg, batchidx = None):
     roisMeta = utils.load_dict(rois_path + imageMeta['imageName'].split('.')[0])
 #    roisMeta = utils.load_dict(rois_path + imageMeta['imageName'])
     if roisMeta is None:
         return None, None, None
-    rois = np.array(roisMeta['rois'])
-    target_props = np.array(roisMeta['target_props'])
-    target_deltas = np.array(roisMeta['target_deltas'])
+    allrois = np.array(roisMeta['rois'])
+    alltarget_props = np.array(roisMeta['target_props'])
+    alltarget_deltas = np.array(roisMeta['target_deltas'])
     
-    
-    samples = helper.reduce_rois(target_props, cfg)
-    rois = rois[samples, :]
-    target_props = target_props[:, samples, :]
-    target_deltas = target_deltas[:, samples, :]
+    if batchidx is None:
+        samples = helper.reduce_rois(alltarget_props, cfg)
+        rois = allrois[:,samples, :]
+        target_props = alltarget_props[:, samples, :]
+        target_deltas = alltarget_deltas[:, samples, :]
+    else:
+        rois = np.zeros((1, cfg.nb_detection_rois, 5))
+        target_props = np.zeros((1, cfg.nb_detection_rois, cfg.nb_object_classes))
+        target_deltas = np.zeros((1, cfg.nb_detection_rois, (cfg.nb_object_classes-1)*4*2))
+        
+        sidx = batchidx * cfg.nb_detection_rois
+        fidx = min(cfg.detection_nms_max_boxes, sidx + cfg.nb_detection_rois)
+        rois[:,:fidx-sidx,:] = allrois[:,sidx:fidx, :]
+        target_props[:,:fidx-sidx,:] = alltarget_props[:, sidx:fidx, :]
+        target_deltas[:,:fidx-sidx,:] = alltarget_deltas[:, sidx:fidx, :]
     
     return rois, target_props, target_deltas
 
