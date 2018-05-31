@@ -42,7 +42,7 @@ np.seterr(all='raise')
 if True:
     # Load data
     print('Loading data...')
-    data = data(False, method='normal')
+    data = data(True, method='normal')
     cfg = data.cfg
     cfg.order_of_dims = [2,0,1]
     cfg.par_order_of_dims = [0,1,2,3]
