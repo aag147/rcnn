@@ -17,14 +17,14 @@ sys.path.append('../../detection/filters/')
 
 from model_trainer import model_trainer
 from load_data import data
-from generators import DataGenerator
+from old_generators import DataGenerator
 import losses
 from methods import HO_RCNN, HO_RCNN_OLD
 import utils
-import draw
+#import draw
 
 
-from matplotlib import pyplot as plt
+#from matplotlib import pyplot as plt
 from keras.models import Sequential, Model
 from keras.optimizers import SGD, Adam
 
@@ -42,8 +42,11 @@ np.seterr(all='raise')
 if True:
     # Load data
     print('Loading data...')
-    data = data(False, method='fast')
+    data = data(False, method='normal')
     cfg = data.cfg
+    cfg.order_of_dims = [2,0,1]
+    cfg.par_order_of_dims = [0,1,2,3]
+    
     class_mapping = data.class_mapping
     
     # Create batch generators
@@ -68,6 +71,19 @@ if True:
     w_th = model_th.layers[1].get_weights()
   
 
+if True:
+    trainer_tf = model_trainer(model=model_tf_all, genTrain=genTrain, genVal=None, genTest=None, task=cfg.task)
+    trainer_tf.compileModel(cfg)
+    
+    trainer_th = model_trainer(model=model_th_all, genTrain=genTrain, genVal=None, genTest=None, task=cfg.task)
+    trainer_th.compileModel(cfg)
+    
+    
+    trainer_th.trainModel(cfg)
+    print('Testing model on test...')
+    resTest = trainer_th.evaluateModel(genTest)    
+    print("F1 (test!):", resTest.F1, "nb_zeros", resTest.nb_zeros)
+
 j = 0
 for i in range(1):
     X, y = next(trainIterator)
@@ -76,10 +92,10 @@ for i in range(1):
     img += 1.0
     img /= 2.0
     
-    pred_tf = model_tf.predict_on_batch(X)
-    X = [X[0].transpose([0,3,1,2])]
-    pred_th = model_th.predict_on_batch(X)
-    pred_th = pred_th.transpose([0,2,3,1])
+    pred_th = model_th_all.predict_on_batch(X)
+    X = [X[0].transpose([0,2,3,1])]
+    pred_tf = model_tf_all.predict_on_batch(X)
+#    pred_tf = pred_tf.transpose([0,3,1,2])
     diff = pred_tf - pred_th
     s = np.sum(diff)
     print('sum',s)
