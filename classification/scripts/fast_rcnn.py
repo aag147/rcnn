@@ -29,14 +29,15 @@ np.seterr(all='raise')
 if True:
     # Load data
     print('Loading data...')
-    data = load_data.data()
+    data = load_data.data(method='fast')
     cfg = data.cfg
-    cfg.fast_rcnn_config()
+    labels = data.labels
+    class_mapping = data.class_mapping
     
     # Create batch generators
-    genTrain = DataGenerator(imagesMeta=data.trainMeta, GTMeta = data.trainGTMeta, cfg=cfg, data_type='train', labels=data.labels)
-    genVal = DataGenerator(imagesMeta=data.valMeta, GTMeta = data.trainGTMeta, cfg=cfg, data_type='val', labels=data.labels)
-    genTest = DataGenerator(imagesMeta=data.testMeta, GTMeta = data.testGTMeta, cfg=cfg, data_type='test', labels=data.labels)
+    genTrain = DataGenerator(imagesMeta=data.trainMeta, GTMeta = data.trainGTMeta, cfg=cfg, data_type='train', labels=labels)
+    genVal = DataGenerator(imagesMeta=data.valMeta, GTMeta = data.trainGTMeta, cfg=cfg, data_type='val', labels=labels)
+    genTest = DataGenerator(imagesMeta=data.testMeta, GTMeta = data.testGTMeta, cfg=cfg, data_type='test', labels=labels)
     
 if True:
     # Save config

@@ -131,10 +131,11 @@ class basic_config:
        self.xdim=227
        self.ydim=227
        self.cdim=3
-       
+              
        # Basic stuff
        self.pool_size = 3
        self.init_lr = 0.0001
+       self.epoch_begin = 0
        self.epoch_end = 60
        self.epoch_splits = [40]
        self.optimizer = 'sgd'
@@ -148,9 +149,11 @@ class basic_config:
        self.maxdim = 1000
        self.cdim  = 3
        
+       
        # Basic stuff
        self.pool_size = 3
        self.init_lr = 0.00001
+       self.epoch_begin = 0
        self.epoch_end = 60
        self.optimizer = 'adam'
        self.backbone = 'alex'
@@ -168,6 +171,7 @@ class basic_config:
        self.pool_size = 3
        self.init_lr = 0.00001
        self.nb_batches = 1000
+       self.epoch_begin = 0
        self.epoch_end = 60
        self.optimizer = 'adam'
        

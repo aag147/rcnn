@@ -41,7 +41,6 @@ if True:
     
     # config
     cfg = data.cfg
-    cfg.faster_rcnn_config()
 
     # data
     genTrain = DataGenerator(imagesMeta = data.trainGTMeta, cfg=cfg, data_type='train')

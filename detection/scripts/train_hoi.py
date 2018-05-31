@@ -36,7 +36,6 @@ if True:
     
     # config
     cfg = data.cfg
-    cfg.faster_rcnn_config()
     utils.saveConfig(cfg)
 
     # data

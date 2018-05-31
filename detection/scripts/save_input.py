@@ -33,7 +33,6 @@ if True:
     print('Loading data...')
     data = extract_data.object_data()
     cfg = data.cfg
-    cfg.faster_rcnn_config()
     
     # Create batch generators
     genTrain = DataGenerator(imagesMeta = data.trainGTMeta, cfg=cfg, data_type='train')

@@ -43,7 +43,8 @@ if True:
     print('Loading data...')
     data = extract_data.object_data()
     cfg = data.cfg
-    cfg.faster_rcnn_config()
+    class_mapping = data.class_mapping
+    
     # Create batch generators
     genTrain = DataGenerator(imagesMeta = data.trainGTMeta, cfg=cfg, data_type='train', do_meta=True)
     

@@ -40,9 +40,8 @@ np.seterr(all='raise')
 
 # Load data
 print('Loading data...')
-data = data(False)
+data = data(False, method='fast')
 cfg = data.cfg
-cfg.fast_rcnn_config()
 
 # Create batch generators
 genTrain = DataGenerator(imagesMeta=data.trainMeta, GTMeta = data.trainGTMeta, cfg=cfg, data_type='train', labels=data.labels)

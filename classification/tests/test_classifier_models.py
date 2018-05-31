@@ -42,9 +42,9 @@ np.seterr(all='raise')
 if True:
     # Load data
     print('Loading data...')
-    data = data(False)
+    data = data(False, method='fast')
     cfg = data.cfg
-    cfg.fast_rcnn_config()
+    class_mapping = data.class_mapping
     
     # Create batch generators
     genTrain = DataGenerator(imagesMeta=data.trainMeta, GTMeta = data.trainGTMeta, cfg=cfg, data_type='train')

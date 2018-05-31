@@ -36,7 +36,7 @@ if True:
     
     # config
     cfg = data.cfg
-    cfg.faster_rcnn_config()
+    class_mapping = data.class_mapping
     utils.saveConfig(cfg)
 
     # data
