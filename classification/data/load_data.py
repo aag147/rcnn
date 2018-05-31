@@ -63,7 +63,6 @@ class data:
         cfg.dataset = 'HICO'
         cfg.update_paths()
         
-        
         trainMeta = utils.load_dict(cfg.data_path + 'train')
         testMeta = utils.load_dict(cfg.data_path + 'test')
         

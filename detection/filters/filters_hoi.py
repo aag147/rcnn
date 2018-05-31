@@ -16,17 +16,107 @@ import numpy as np
 import random
 import cv2 as cv
 import math
+import copy as cp
 
 import utils
 import filters_helper as helper
 
-def prepareTargets(objpreds, bboxes, imageMeta, imageDims, cfg):    
+
+def _transformBBoxes(bboxes):
+    hbboxes = []
+    obboxes = []
+    bboxes = bboxes[bboxes[:,4].argsort()[::-1]]
+    
+    for bbox in bboxes:
+        label = bbox[5]
+        (xmin, ymin, width, height) = bbox[:4]
+        xmax = xmin + width
+        ymax = ymin + height
+        trans_bbox = [xmin, ymin, xmax, ymax, label]
+        
+        if label == 1: #human
+            hbboxes.append(trans_bbox)
+        elif label > 1: #object
+            obboxes.append(trans_bbox)
+            
+    hbboxes = np.array(hbboxes)[:,:10]
+    obboxes = np.array(obboxes)[:,:10]
+
+    return hbboxes, obboxes   
+
+
+def _transformGTBBox(gt_bboxes, class_mapping, scale=[1,1], rpn_stride=1, shape=[1,1], roundoff=False):
+    gt_hbboxes = []
+    gt_obboxes = []
+    
+    for gt_bbox in gt_bboxes:
+        label = gt_bbox['label']
+        label = class_mapping[label]
+        xmin = ((gt_bbox['xmin']) * scale[0] / rpn_stride) / shape[0]
+        xmax = ((gt_bbox['xmax']-0.01) * scale[0] / rpn_stride) / shape[0]
+        ymin = ((gt_bbox['ymin']) * scale[1] / rpn_stride) / shape[1]
+        ymax = ((gt_bbox['ymax']-0.01) * scale[1] / rpn_stride) / shape[1]
+        if roundoff:
+            xmin=int(round(xmin)); xmax=int(round(xmax))
+            ymin=int(round(ymin)); ymax=int(round(ymax))
+            
+        trans_gt_bbox = [xmin, ymin, xmax, ymax, label]
+        
+        if label == 1: #human
+            gt_hbboxes.append(trans_gt_bbox)
+        elif label > 1: #object
+            gt_obboxes.append(trans_gt_bbox)
+            
+    gt_hbboxes = np.array(gt_hbboxes)
+    gt_obboxes = np.array(gt_obboxes)
+
+    return gt_hbboxes, gt_obboxes   
+
+
+def _getRelMap(rels):
+    nb_prs = len(np.unique(rels[:,0]))
+    nb_obj = len(np.unique(rels[:,1]))
+    
+    prsidxs = np.unique(rels[:,0])
+    prsidxs = {idx:i for i,idx in enumerate(prsidxs)}
+    
+    objidxs = np.unique(rels[:,1])
+    objidxs = {idx:i for i,idx in enumerate(objidxs)}
+    
+    rel_map = np.ones((nb_prs, nb_obj)) * -1
+    
+    for rel in rels:
+        rel_map[prsidxs[rel[0]], objidxs[rel[1]]] = rel[2]
+    return rel_map
+
+def _computeIoUs(bbox, gt_bboxes):
+    area = (bbox[2] - bbox[0]) * (bbox[3] - bbox[1])
+    gt_areas = (gt_bboxes[:,2] - gt_bboxes[:,0]) * (gt_bboxes[:,3] - gt_bboxes[:,1])
+    
+    # find the intersection
+    xx1_int = np.maximum(bbox[0], gt_bboxes[:,0])
+    yy1_int = np.maximum(bbox[1], gt_bboxes[:,1])
+    xx2_int = np.minimum(bbox[2], gt_bboxes[:,2])
+    yy2_int = np.minimum(bbox[3], gt_bboxes[:,3])
+
+    ww_int = np.maximum(0, xx2_int - xx1_int)
+    hh_int = np.maximum(0, yy2_int - yy1_int)
+
+    area_int = ww_int * hh_int
+    # find the union
+    area_union = area + gt_areas - area_int
+
+    # compute the ratio of overlap
+    overlap = area_int / (area_union + 1e-6)
+    
+    return overlap
+
+def prepareTargets(bboxes, imageMeta, imageDims, cfg, class_mapping):    
     #############################
     ########## Image ############
     #############################
-    hbboxes = imageMeta['humans']
-    obboxes = imageMeta['objects']
-    rels    = imageMeta['rels']
+    gt_bboxes = imageMeta['objects']
+    gt_rels    = imageMeta['rels']
     
     scale = imageDims['scale']
     shape = imageDims['shape']
@@ -34,38 +124,109 @@ def prepareTargets(objpreds, bboxes, imageMeta, imageDims, cfg):
     #############################
     ###### Set Parameters #######
     #############################  
-    nb_hoi_rois         = cfg.nb_hoi_rois
-    nb_hoi_classes      = cfg.nb_hoi_classes
-    hoi_max_overlap     = cfg.hoi_max_overlap
-    hoi_min_overlap     = cfg.hoi_min_overlap
-    nb_hoi_positives    = cfg.nb_hoi_positives
-    nb_hoi_negatives1   = cfg.nb_hoi_negatives1
-    nb_hoi_negatives2   = cfg.nb_hoi_negatives2
-    rpn_stride          = cfg.rpn_stride
+#    nb_hoi_rois         = cfg.nb_hoi_rois
+#    nb_hoi_classes      = cfg.nb_hoi_classes
+#    hoi_max_overlap     = cfg.hoi_max_overlap
+#    hoi_min_overlap     = cfg.hoi_min_overlap
+#    nb_hoi_positives    = cfg.nb_hoi_positives
+#    nb_hoi_negatives1   = cfg.nb_hoi_negatives1
+#    nb_hoi_negatives2   = cfg.nb_hoi_negatives2
+#    rpn_stride          = cfg.rpn_stride
     
     #############################
     ########## bboxes ###########
-    #############################
-    hpredlabels = []
-    hpredbboxes = []
-    opredlabels = []
-    opredbboxes = []
+    #############################    
+    hbboxes, obboxes = _transformBBoxes(bboxes)
     
-    for predidx in range(objpreds.shape[0]):
-#        objpred = np.argmax(objpreds[predidx,:])
-        objpred = objpreds[predidx,0]
-        objbbox = bboxes[predidx, 4*objpred:4*objpred+4]
-        if objpred == 1: #human
-            hpredlabels.append(objpred)
-            hpredbboxes.append(objbbox)
-        elif objpred > 1: #object
-            opredlabels.append(objpred)
-            opredbboxes.append(objbbox)
+    
+    #############################
+    ##### Ground truth boxes ####
+    #############################
+    gthboxes, gtoboxes = _transformGTBBox(gt_bboxes, class_mapping, scale=scale, rpn_stride=cfg.rpn_stride)
+    
+    gt_relmap  = _getRelMap(gt_rels)
+    
+    #############################
+    ## Unite humans and objects #
+    #############################
+    val_map = np.zeros((hbboxes.shape[0], obboxes.shape[0]))
+    label_map = np.zeros((hbboxes.shape[0], obboxes.shape[0], cfg.nb_hoi_classes))
+    hbb_map   = np.zeros((hbboxes.shape[0], obboxes.shape[0], 4))
+    obb_map   = np.zeros((hbboxes.shape[0], obboxes.shape[0], 4))
+    
+    for hidx, hbox in enumerate(hbboxes):
+        h_ious = _computeIoUs(hbox, gthboxes)
             
-    hpredlabels = np.array(hpredlabels)
-    hpredbboxes = np.array(hpredbboxes)
-    opredlabels = np.array(opredlabels)
-    opredbboxes = np.array(opredbboxes)
+        for oidx, obox in enumerate(obboxes):
+            objlabel = int(obox[4])
+            o_ious = _computeIoUs(obox, gtoboxes)
+                        
+            for gth_idx, h_iou in enumerate(h_ious):
+                for gto_idx, o_iou in enumerate(o_ious):
+                    gt_obj   = int(gtoboxes[gto_idx, 4])
+                    
+                    if objlabel != gt_obj:
+                        if val_map[hidx, oidx] < 1:
+                            # negative2
+                            val_map[hidx, oidx] = 1
+                            hbb_map[hidx, oidx, :] = hbox[:4]
+                            obb_map[hidx, oidx, :] = obox[:4]
+                    elif h_iou >= cfg.hoi_max_overlap and o_iou >= cfg.hoi_max_overlap:
+                        gt_label = int(gt_relmap[gth_idx, gto_idx])
+                        if gt_label >= 0:
+                            if oidx == 5:
+                                print(hidx, gth_idx, gto_idx, gt_label)    
+                            val_map[hidx, oidx] = 3
+                            label_map[hidx, oidx, gt_label] = 1
+                            hbb_map[hidx, oidx, :] = hbox[:4]
+                            obb_map[hidx, oidx, :] = obox[:4]
+                    elif h_iou >= cfg.hoi_min_overlap and o_iou >= cfg.hoi_min_overlap:
+                        if val_map[hidx, oidx] < 2:
+                            # negative1
+                            val_map[hidx, oidx] = 2
+                            hbb_map[hidx, oidx, :] = hbox[:4]
+                            obb_map[hidx, oidx, :] = obox[:4]
+                
+                
+    
+    ##############################
+    ### Reshape and remove bads ##
+    ##############################
+    val_idxs = np.where(val_map>0)
+    final_vals = cp.copy(val_map[val_idxs[0], val_idxs[1]])
+    final_labels = label_map[val_idxs[0], val_idxs[1]]
+    final_hbbs   = hbb_map[val_idxs[0], val_idxs[1], :]
+    final_obbs   = obb_map[val_idxs[0], val_idxs[1], :]
+    
+    
+    ##############################
+    # Three sample sources redux #
+    ##############################
+    positive_idxs = np.where(final_vals==3)[0]
+    negative1_idxs = np.where(final_vals==2)[0]
+    negative2_idxs = np.where(final_vals==1)[0]  
+    
+    selected_pos_samples = positive_idxs
+    if len(positive_idxs) > cfg.hoi_pos_share:
+        selected_pos_samples = np.random.choice(positive_idxs, cfg.hoi_pos_share, replace=False)
+    if len(negative1_idxs) > cfg.hoi_neg1_share:
+        selected_neg1_samples = np.random.choice(negative1_idxs, cfg.hoi_neg1_share, replace=False)
+    else:
+        selected_neg1_samples = np.random.choice(negative1_idxs, cfg.hoi_neg1_share, replace=True)
+    if len(negative2_idxs) + len(selected_neg1_samples) + len(selected_pos_samples) > cfg.nb_hoi_rois:
+        selected_neg2_samples = np.random.choice(negative2_idxs, cfg.hoi_neg2_share, replace=False)
+    else:
+        selected_neg2_samples = np.random.choice(negative2_idxs, cfg.nb_hoi_rois - len(selected_pos_samples) - len(selected_neg1_samples), replace=True)
+        
+
+    selected_samples = selected_pos_samples.tolist() + selected_neg1_samples.tolist() + selected_neg2_samples.tolist()
+    final_hbbs = final_hbbs[selected_samples,:]
+    final_obbs = final_obbs[selected_samples,:]
+    final_labels = final_labels[selected_samples,:]
+    final_vals   = final_vals[selected_samples]
+                
+    
+    return final_hbbs, final_obbs, final_labels, final_vals
 
     
     #############################
@@ -84,12 +245,6 @@ def prepareTargets(objpreds, bboxes, imageMeta, imageDims, cfg):
     Yc = np.zeros([nb_hoi_rois, nb_hoi_classes])
     Xi = np.zeros([10, 4])
     
-    
-    #############################
-    ##### Ground truth boxes ####
-    #############################
-    gthboxes = helper.normalizeGTboxes(hbboxes, scale=scale, rpn_stride=rpn_stride)
-    gtoboxes = helper.normalizeGTboxes(obboxes, scale=scale, rpn_stride=rpn_stride)
     
     olabels = [obj['label'] for obj in obboxes]
     #############################

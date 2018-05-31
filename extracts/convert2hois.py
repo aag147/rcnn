@@ -37,9 +37,10 @@ def extractMetaData(metaData, labels):
     mlk = 0
     for line in metaData:
         imageID = line.filename
-        bboxes = []
-        rels = []
         
+        objs = []
+        
+        rels = []
         #print(imageID)
         try:
             line.hoi[0]
@@ -71,33 +72,24 @@ def extractMetaData(metaData, labels):
                 
             objLabel = labels[hoiID]['obj']
             
-            objidxs = {}
-            prsidxs = {}
-            
-            for prsidx, prsSt in enumerate(prsStructs):
-                xmin = prsSt.x1; xmax = prsSt.x2
-                ymin = prsSt.y1; ymax = prsSt.y2
-                prsBB = {'xmin':xmin, 'xmax':xmax, 'ymin':ymin, 'ymax':ymax}
-                prsBB['label'] = 'person'
-                bboxes.append(prsBB)
-                prsidxs[prsidx] = len(bboxes)-1
-                
-            for objidx, objSt in enumerate(objStructs):
+            for objSt in objStructs:
                 xmin = objSt.x1; xmax = objSt.x2
                 ymin = objSt.y1; ymax = objSt.y2
                 objBB = {'xmin':xmin, 'xmax':xmax, 'ymin':ymin, 'ymax':ymax}
                 objBB['label'] = objLabel
-                bboxes.append(objBB)
-                objidxs[objidx] = len(bboxes)-1
-                
-            for subrel in subrels:
-                rel = [prsidxs[subrel[0]-1], objidxs[subrel[1]-1], hoiID]
-                rels.append(rel)
+                rels.append(objBB)
+            
+            for prsSt in prsStructs:
+                xmin = prsSt.x1; xmax = prsSt.x2
+                ymin = prsSt.y1; ymax = prsSt.y2
+                prsBB = {'xmin':xmin, 'xmax':xmax, 'ymin':ymin, 'ymax':ymax}
+                prsBB['label'] = 'person'
+                rels.append(prsBB)
 
 
 
-        if bboxes:
-            imagesMeta[imageID.split('.')[0]] = {'imageName': imageID, 'objects': bboxes, 'rels':rels}
+        if rels:
+            imagesMeta[imageID.split('.')[0]] = {'imageName': imageID, 'objects': rels}
 #    print(mlk)
     return imagesMeta
 
@@ -109,7 +101,7 @@ if __name__ == "__main__":
     bbData = sio.loadmat(url + 'anno_bbox.mat', struct_as_record=False, squeeze_me=True)
 #    actions = bbData['list_action']
 #    trainYMatrix = metaData['anno_train']
-    bbDataTrain   = bbData['bbox_test']
+    bbDataTrain   = bbData['bbox_train']
     cfg = basic_config()
     cfg = set_config(cfg)
     cfg.dataset = 'HICO'
@@ -119,4 +111,4 @@ if __name__ == "__main__":
     print("Extract meta data")
     tmpTrainMeta = extractMetaData(bbDataTrain, labels)
 
-    utils.save_dict(tmpTrainMeta, url+'test_objs')
+    utils.save_dict(tmpTrainMeta, url+'train_objs')

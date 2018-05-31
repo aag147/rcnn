@@ -74,7 +74,7 @@ if True:
             # Only train unique layers
             for i, layer in enumerate(model_rpn.layers):
                 layer.trainable = False
-                if i > 17:
+                if i == cfg.nb_shared_layers:
                     break
         else:
             print('Loading my weights...')

@@ -40,7 +40,6 @@ def normalizeRoIs(rois, imageDims):
 
 
 def deltas2Boxes(props, deltas, rois, cfg):
-    bbox_threshold = cfg.hoi_bbox_threshold
     nb_rois_in_batch = props.shape[1]
     bboxes = {}
     boxes = []
@@ -84,7 +83,7 @@ def non_max_suppression_boxes(bboxes, cfg):
         sub_bboxes = bboxes[idxs,:]
         if sub_bboxes.shape[0] == 0:
             continue
-        boxes_nms = non_max_suppression_fast(sub_bboxes, overlap_thresh=cfg.hoi_nms_overlap_thresh)
+        boxes_nms = non_max_suppression_fast(sub_bboxes, overlap_thresh=cfg.det_nms_overlap_thresh)
         new_bboxes.extend(boxes_nms)
         
     new_bboxes = np.array(new_bboxes)

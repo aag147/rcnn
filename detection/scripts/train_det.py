@@ -107,7 +107,8 @@ if True:
         if not os.path.exists(modelpath):
             model_detection.save(modelpath)
             model_detection.save_weights(weightspath)
-            shared_cnn.save(cfg.my_weights_path + 'shared_model.h5')
+            shared_cnn.save(cfg.my_weights_path + 'shared_model%d.h5' % i)
+            shared_cnn.save_weights(cfg.my_weights_path + 'shared_weights%d.h5' % i)
             break
     
 

@@ -187,6 +187,7 @@ class basic_config:
        self.det_regr_std = [8.0, 8.0, 4.0, 4.0]
        
        #rpn filters
+       self.nb_shared_layers = 17
        self.rpn_stride = 16
        self.nb_rpn_proposals = 128
         
@@ -195,18 +196,29 @@ class basic_config:
         
        self.rpn_min_overlap = 0.3
        self.rpn_max_overlap = 0.7
+       
+       self.rpn_nms_max_boxes=300
+       self.rpn_nms_overlap_thresh=0.7
 
         
        # detection filters
        self.detection_max_overlap = 0.5
        self.detection_min_overlap = 0.0
        self.nb_detection_rois = 64
-       self.detection_nms_max_boxes=300
-       self.detection_nms_overlap_thresh=0.7
+       
+       self.det_nms_max_boxes=300
+       self.det_nms_overlap_thresh=0.90
         
        # hoi filters
-       self.hoi_bbox_threshold = 0.7
+       self.hoi_max_overlap = 0.5
+       self.hoi_min_overlap = 0.1
        self.hoi_nms_overlap_thresh=0.5
+       
+       self.hoi_pos_share  = 4
+       self.hoi_neg1_share = 12
+       self.hoi_neg2_share = 16
+       
+       self.nb_hoi_rois = 32
         
        # model
        self.nb_anchors = len(self.anchor_sizes) * len(self.anchor_ratios)

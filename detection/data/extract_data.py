@@ -63,15 +63,23 @@ class object_data:
 #        valGTMeta = utils.load_dict(cfg.data_path + 'val_objs')
         testGTMeta = utils.load_dict(cfg.data_path + 'test_objs')
         class_mapping = utils.load_dict(cfg.data_path + 'class_mapping')
+        hoi_labels = None
         
+        if os.path.exists(cfg.data_path + 'labels.JSON'):
+            hoi_labels = utils.load_dict(cfg.data_path + 'labels')
+            
         if cfg.max_classes is not None:
             # Reduce data to include only max_classes number of different classes
 #            _, counts = utils.getLabelStats(trainGTMeta, class_mapping)
             reduced_objs = self.getReduxIdxs(class_mapping, cfg)
-            trainGTMeta = self.reduceData(trainGTMeta, reduced_objs)
-#            valGTMeta = self.reduceData(valGTMeta, reduced_objs)
+            
             class_mapping = self.reduceMapping(reduced_objs)
+            if hoi_labels is not None:
+                hoi_labels = self.reduceHoILabels(hoi_labels, reduced_objs)
+            
+            trainGTMeta = self.reduceData(trainGTMeta, reduced_objs)
             testGTMeta = self.reduceData(testGTMeta, reduced_objs)
+#            valGTMeta = self.reduceData(valGTMeta, reduced_objs)
 #            trainMeta = utils.reduceTestData(trainMeta, reduced_idxs)
 #            testMeta = utils.reduceTestData(testMeta, reduced_idxs)
 #            class_mapping = utils.idxs2labels(reduced_idxs, class_mapping)
@@ -90,6 +98,8 @@ class object_data:
         self.class_mapping = class_mapping
         self.testGTMeta = testGTMeta
         self.trainGTMeta = trainGTMeta
+        
+        self.hoi_labels = hoi_labels
 #        self.trainMeta = trainMeta
 #        self.valMeta = valMeta
 #        self.testMeta = testMeta
@@ -97,25 +107,34 @@ class object_data:
         
     def getReduxIdxs(self, class_mapping, cfg):
         objs = utils.getPascalObjects(cfg.max_classes)
-        reduced_idxs = []
-        for label, idx in class_mapping.items():
-            if label in objs:
-                reduced_idxs.append(idx)
+#        reduced_idxs = []
+#        for label, idx in class_mapping.items():
+#            if label in objs:
+#                reduced_idxs.append(idx)
         return objs
     
     def reduceData(self, imagesMeta, reduced_objs):
         reduced_imagesMeta = {}
         for imageID, imageMeta in imagesMeta.items():
-            new_rels = []
+            new_objs = []
             new_prs = []
+            new_rels = []
+            objsidxs = {}
             for idx, obj in enumerate(imageMeta['objects']):
                 if obj['label'] == 'person':
                     new_prs.append(obj)
+                    objsidxs[idx] = len(new_prs) + len(new_objs) - 1
                 elif obj['label'] in reduced_objs:
-                    new_rels.append(obj)
+                    new_objs.append(obj)
+                    objsidxs[idx] = len(new_prs) + len(new_objs) - 1
                     
-            if len(new_rels) > 0:
-                reduced_imagesMeta[imageID] = {'imageName':imageMeta['imageName'], 'objects':new_prs+new_rels}
+            if len(new_objs) > 0:
+                if 'rels' in imageMeta:
+                    for idx, rel in enumerate(imageMeta['rels']):    
+                        if rel[0] in objsidxs and rel[1] in objsidxs:
+                            new_rels.append([objsidxs[rel[0]], objsidxs[rel[1]], rel[2]])
+                    new_rels = np.array(new_rels)
+                reduced_imagesMeta[imageID] = {'imageName':imageMeta['imageName'], 'objects':new_prs+new_objs, 'rels':new_rels}
         return reduced_imagesMeta   
 
     def reduceMapping(self, reduced_objs):
@@ -125,6 +144,13 @@ class object_data:
                 continue
             new_class_mapping[obj] = len(new_class_mapping)
         return new_class_mapping
+    
+    def reduceHoILabels(self, hoi_labels, reduced_objs):
+        new_labels = []
+        for label in hoi_labels:
+            if label['obj'] in reduced_objs:
+                new_labels.append(label)
+        return new_labels
     
     def getBareBonesStats(self, class_mapping):
         stats = {}
