@@ -25,21 +25,39 @@ def rpn(x):
 
     return x
 
-def fullyConnected(x):
-    assert(len(x) == 1)
-    rois = x[0]
+def fullyConnected(stream=None):
+    def fullyConnectedFixed(x):
+        assert(len(x) == 1)
+        rois = x[0]
+        
+        dense_1 = TimeDistributed(
+            Flatten(),
+            name = '%s_flatten' % stream
+        )(rois)
+        
+        dense_1 = TimeDistributed(
+            Dense(4096, activation='relu', kernel_initializer=RandomNormal(stddev=0.01)),
+            name = '%s_fc1' % stream
+        )(dense_1)
+        
+        dense_1 = Dropout(
+            rate=0.5,
+            name = '%s_dropout1' % stream
+        )(dense_1)
+        
+        dense_2 = TimeDistributed(
+            Dense(4096, activation='relu', kernel_initializer=RandomNormal(stddev=0.01)),
+            name = '%s_fc2' % stream
+        )(dense_1)
+        
+        dense_2 = Dropout(
+            rate=0.5,
+            name = '%s_dropout2' % stream
+        )(dense_2)
     
-    dense_1 = TimeDistributed(Flatten())(rois)
-    dense_1 = TimeDistributed(
-        Dense(4096, activation='relu', kernel_initializer=RandomNormal(stddev=0.01))
-    )(dense_1)
-    dense_1 = Dropout(0.5)(dense_1)
-    dense_2 = TimeDistributed(
-        Dense(4096, activation='relu', kernel_initializer=RandomNormal(stddev=0.01))
-    )(dense_1)
-    dense_2 = Dropout(0.5)(dense_2)
-
-    return dense_2
+        return dense_2
+    
+    return fullyConnectedFixed
 
 
 class RoiPoolingConv(Layer):

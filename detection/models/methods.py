@@ -133,7 +133,9 @@ def get_hoi_rcnn_models(cfg, mode='train'):
             roi_input
         ])
         
-        object_features = layers.fullyConnected([
+        object_features = layers.fullyConnected(
+            stream = 'det'
+        )([
             object_rois
         ])
         
@@ -185,7 +187,9 @@ def get_hoi_rcnn_models(cfg, mode='train'):
             human_input
         ])
         
-        hoi_human_features = layers.fullyConnected([
+        hoi_human_features = layers.fullyConnected(
+            stream = 'human'
+        )([
             hoi_human_rois
         ])
 
@@ -193,9 +197,9 @@ def get_hoi_rcnn_models(cfg, mode='train'):
             keras.layers.Dense(
                 units=1 * nb_hoi_classes,
                 activation=None,
-                kernel_initializer=keras.initializers.RandomNormal(stddev=0.01),
-                name="scores4human"
-            )
+                kernel_initializer=keras.initializers.RandomNormal(stddev=0.01)
+            ),
+            name="scores4human"
         )(hoi_human_features)
             
         hoi_object_rois = layers.RoiPoolingConv(
@@ -205,7 +209,9 @@ def get_hoi_rcnn_models(cfg, mode='train'):
             object_input
         ])
         
-        hoi_object_features = layers.fullyConnected([
+        hoi_object_features = layers.fullyConnected(
+            stream = 'object'
+        )([
             hoi_object_rois
         ])
 
@@ -213,9 +219,9 @@ def get_hoi_rcnn_models(cfg, mode='train'):
             keras.layers.Dense(
                 units=1 * nb_hoi_classes,
                 activation=None,
-                kernel_initializer=keras.initializers.RandomNormal(stddev=0.01),
-                name="scores4object"
-            )
+                kernel_initializer=keras.initializers.RandomNormal(stddev=0.01)
+            ),
+            name="scores4object"
         )(hoi_object_features)
             
         hoi_score = keras.layers.Add()([hoi_human_scores, hoi_object_scores])

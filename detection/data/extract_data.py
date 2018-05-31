@@ -6,13 +6,16 @@ Created on Fri Apr 20 09:30:24 2018
 """
 from config import basic_config
 from config_helper import set_config
+import method_configs as mcfg
+
 import utils
 import os
 import numpy as np
 
 class object_data:
-    def __init__(self, newDir=True):
+    def __init__(self, newDir=True, method='faster'):
         self.newDir = newDir
+        self.method = method
         self.cfg = None
         self.labels = None
         self.trainGTMeta = None
@@ -43,7 +46,15 @@ class object_data:
 
     def load_data(self):
         cfg = basic_config(self.newDir)
-        cfg.fast_rcnn_config()
+        
+        if self.method == 'faster':
+            cfg.faster_rcnn_config()
+        elif self.method == 'fast':
+            cfg.fast_rcnn_config()
+        elif self.method == 'normal':
+            cfg.rcnn_config()
+
+        cfg = mcfg.rcnn_hoi_classes(cfg)
         cfg = set_config(cfg)
         cfg.get_args()
         cfg.update_paths()

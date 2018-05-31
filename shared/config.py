@@ -60,7 +60,6 @@ class basic_config:
    def __init__(self, newDir = True):
        self.newDir = newDir
        self.setBasicValues()
-       self.rcnn_config() #standard
        
    def setBasicValues(self):
        #paths
@@ -109,9 +108,9 @@ class basic_config:
        self.wp = 1
        
        #model callbacks
-       self.patience = None
+       self.patience = 100
        self.modelnamekey = ''
-       self.epoch_splits = None
+       self.epoch_splits = [100]
        self.init_lr = None
        self.include_eval = True
        self.include_validation = False
@@ -133,10 +132,15 @@ class basic_config:
        self.ydim=227
        self.cdim=3
        
+       # Basic stuff
+       self.pool_size = 3
+       self.init_lr = 0.0001
+       self.epoch_end = 60
+       self.epoch_splits = [40]
+       self.optimizer = 'sgd'
        self.backbone = 'alex'
        
        self.shape = (self.ydim, self.xdim)       
-       self.init_lr = 0.0001
 
        
    def fast_rcnn_config(self):
@@ -144,14 +148,12 @@ class basic_config:
        self.maxdim = 1000
        self.cdim  = 3
        
-       if self.backbone is None:
-           self.backbone = 'alex'
-       
-       if self.pool_size is None:
-           self.pool_size = 3
-       
-       if self.init_lr is None:
-           self.init_lr = 0.00001
+       # Basic stuff
+       self.pool_size = 3
+       self.init_lr = 0.00001
+       self.epoch_end = 60
+       self.optimizer = 'adam'
+       self.backbone = 'alex'
        
        self.train_cfg.batch_size = 1
        self.val_cfg.batch_size = 1
@@ -162,12 +164,12 @@ class basic_config:
        self.maxdim = 1000
        self.cdim  = 3
        
-       
-       if self.pool_size is None:
-           self.pool_size = 3
-       
-       if self.init_lr is None:
-           self.init_lr = 0.00001
+       # Basic stuff
+       self.pool_size = 3
+       self.init_lr = 0.00001
+       self.nb_batches = 1000
+       self.epoch_end = 60
+       self.optimizer = 'adam'
        
        self.order_of_dims = [0,1,2]
        self.par_order_of_dims = [0,2,3,1]

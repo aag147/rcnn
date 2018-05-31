@@ -5,7 +5,7 @@ Created on Sat Apr  7 13:30:30 2018
 @author: aag14
 """
 
-from models import AlexNet, VGG16, PairWiseStream, input_rois, fastClassifier, fastPairWiseStream, fastAlexNet
+from models import AlexNet, VGG16, PairWiseStream, input_rois, fastClassifier, fastPairWiseStream, fastAlexNet, AlexNetOLD
 from keras.layers import Add, Activation
 from keras.models import Model
 import numpy as np
@@ -41,9 +41,19 @@ def VGG16_Weights_notop(cfg):
 def VGG16_Weights(cfg):
     return cfg.weights_path + "vgg16_weights_tf.h5"
 
+def HO_RCNN_OLD(cfg):
+    K.set_image_dim_ordering('th')
+    weights = cfg.weights_path + "alexnet_weights.h5"
+#    weights = None
+    modelPrs = AlexNetOLD((3, 227, 227), weights, cfg.nb_classes, include='fc')
+    final_model = _final_stop(modelPrs.input, modelPrs.output, cfg)
+    return final_model
+
+
 def HO_RCNN(cfg):
     K.set_image_dim_ordering('tf')
     weights = AlexNet_Weights(cfg) if cfg.pretrained_weights == True else False
+#    weights = None
     modelPrs = AlexNet((227, 227, 3), weights, cfg.nb_classes, include='fc')
     modelObj = AlexNet((227, 227, 3), None, cfg.nb_classes, include='fc')
     

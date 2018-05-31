@@ -55,11 +55,11 @@ trainIterator = genTrain.begin()
 
 total_times = np.array([0.0,0.0])
 j = 0
-for i in range(genTrain.nb_batches):
-    if True:
+for i in range(1):
+    if False:
         X, y, imageMeta, imageDims, times = next(trainIterator)
 #        X, y, imageMeta, imageDims, times = next(trainIterator)
-    if True:
+    if False:
         img = cp.copy(X[0])
         img += 1.0
         img /= 2.0
@@ -73,45 +73,19 @@ for i in range(genTrain.nb_batches):
         props = np.reshape(Y1,(-1,1))
     
     Y1, Y2 = model_rpn.predict_on_batch(X)
-    pred_anchors = helper.deltas2Anchors(Y1, Y2, cfg, imageDims, do_regr=True)
+    all_pred_anchors = helper.deltas2Anchors(Y1, Y2, cfg, imageDims, do_regr=True)
 #    pred_anchors = pred_anchors[idxs,:]
     print('positives', np.sum(Y1>0.5))
-    print(pred_anchors.shape)
+    print(all_pred_anchors.shape)
 #    draw.drawPositiveAnchors(img, pred_anchors, cfg)
-    pred_anchors = helper.non_max_suppression_fast(pred_anchors, overlap_thresh=cfg.detection_nms_overlap_thresh)
+    t_start = time.time()
+    pred_anchors = helper.non_max_suppression_fast(all_pred_anchors, overlap_thresh=cfg.detection_nms_overlap_thresh)
+    t_end = time.time()
+    print('time', t_end-t_start)
     print('positives', np.sum(pred_anchors[:,4]>0.5))
     print(pred_anchors.shape)
     draw.drawAnchors(img, pred_anchors, cfg)
     draw.drawGTBoxes(img, imageMeta, imageDims)
     
-    rois, true_labels, true_boxes, IouS = filters_detection.prepareTargets(pred_anchors[:,0:4], imageMeta, imageDims, data.class_mapping, cfg)
-    print('positives', np.sum(true_labels[:,:,1:]))
-    if rois is None:
-        continue
-
-    norm_rois = filters_detection.prepareInputs(rois, imageDims)
-    boxes = helper.deltas2Boxes(true_labels, true_boxes[:,:,(cfg.nb_object_classes-1)*4:]*0.0, rois, cfg)
-    draw.drawAnchors(img, boxes, cfg)
-    
-    # reduce and filter
-    for k in range(2):
-        samples = helper.reduce_rois(true_labels, cfg)
-#        samples = list(range(cfg.detection_nms_max_boxes))
-        rois2 = rois[samples, :]
-        det_props2 = true_labels[:, samples, :]
-        det_deltas2 = true_boxes[:, samples, (cfg.nb_object_classes-1)*4:]*0.0
-    
-        boxes = helper.deltas2Boxes(det_props2, det_deltas2, rois2, cfg)    
-        draw.drawAnchors(img, boxes, cfg)
-#    
-#    utils.save_obj(y, cfg.data_path +'anchors/val/' + imageMeta['imageName'].split('.')[0])
-#    s = time.time()
-#    utils.load_obj(cfg.data_path +'anchors/val/' + imageMeta['imageName'].split('.')[0])
-#    f = time.time()
-#    print(f-s, times[1])
-    if j == 0:
-        break
-    j += 1
-#    break
 #print(f-s)
 

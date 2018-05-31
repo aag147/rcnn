@@ -294,6 +294,7 @@ def non_max_suppression_fast(boxes, overlap_thresh=0.5, max_boxes=300):
 
         if len(pick) >= max_boxes:
             break
+    print(indexes.shape)
     # return only the bounding boxes that were picked using the integer data type
     boxes = boxes[pick]
     return boxes
