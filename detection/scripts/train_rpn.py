@@ -68,7 +68,9 @@ if True:
     if type(cfg.my_weights)==str and len(cfg.my_weights) > 0:
         if cfg.use_shared_cnn:
             print('Loading shared weights...')
+            print(model_rpn.layers[11].get_weights()[0][0,0,0,0])
             model_rpn.load_weights(cfg.my_shared_weights, by_name=True)
+            print(model_rpn.layers[11].get_weights()[0][0,0,0,0])
             # Only train unique layers
             for i, layer in enumerate(model_rpn.layers):
                 layer.trainable = False

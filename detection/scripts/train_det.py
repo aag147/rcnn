@@ -27,7 +27,7 @@ from keras.callbacks import EarlyStopping, LearningRateScheduler, Callback
 from keras.optimizers import SGD, Adam
 import os
 
-from keras.models import load_model
+from keras.models import load_model, Model
 from keras.utils.generic_utils import get_custom_objects
 
 if True:
@@ -100,13 +100,16 @@ if True:
                 epochs = cfg.epoch_end, initial_epoch=cfg.epoch_begin, callbacks=callbacks)
 
     # Save stuff
+    shared_cnn = Model(model_detection.input, model_detection.layers[17].output)
     for i in range(10):
         modelpath = cfg.my_weights_path + 'model-theend%d.h5' % i
         weightspath = cfg.my_weights_path + 'weights-theend%d.h5' % i
         if not os.path.exists(modelpath):
             model_detection.save(modelpath)
             model_detection.save_weights(weightspath)
+            shared_cnn.save(cfg.my_weights_path + 'shared_model.h5')
             break
+    
 
     
     print('Path:', cfg.my_results_path)
