@@ -44,8 +44,8 @@ if True:
     print('Loading data...')
     data = data(True, method='normal')
     cfg = data.cfg
-    cfg.order_of_dims = [2,0,1]
-    cfg.par_order_of_dims = [0,1,2,3]
+#    cfg.order_of_dims = [2,0,1]
+#    cfg.par_order_of_dims = [0,1,2,3]
     
     class_mapping = data.class_mapping
     
@@ -55,10 +55,11 @@ if True:
     
     trainIterator = genTest.begin()
     
-if False:
+if True:
     print('Loading models...')
     model_tf_all = HO_RCNN(cfg)
-    model_th_all = HO_RCNN_OLD(cfg)
+#    model_th_all = HO_RCNN_OLD(cfg)
+    model_th_all = model_old
     
     model_tf = Model(inputs=model_tf_all.input, outputs=model_tf_all.layers[26].output)  
     model_th = Model(inputs=model_th_all.input, outputs=model_th_all.layers[26].output)
@@ -70,16 +71,16 @@ if False:
     w_th = model_th.layers[1].get_weights()
   
 
-if False:
+if True:
     trainer_tf = model_trainer(model=model_tf_all, genTrain=genTrain, genVal=None, genTest=None, task=cfg.task)
     trainer_tf.compileModel(cfg)
     
-    trainer_th = model_trainer(model=model_old, genTrain=genTrain, genVal=None, genTest=None, task=cfg.task)
+    trainer_th = model_trainer(model=model_th_all, genTrain=genTrain, genVal=None, genTest=None, task=cfg.task)
     trainer_th.compileModel(cfg)
     
     
     
-if True:
+if False:
     imageID = 'HICO_train2015_00000015.jpg'
     [dataXP_new, dataXB_new] = image.getX2Data([imageID], genTrain.imagesMeta, genTrain.images_path, genTrain.cfg)
     dataXW_new = image.getDataPairWiseStream([imageID], genTrain.imagesMeta, genTrain.cfg)
@@ -104,10 +105,10 @@ for i in range(1):
     img += 1.0
     img /= 2.0
     
-    pred_th = model_old.predict_on_batch(X)
-    X[0] = X[0].transpose([0,2,3,1])
-    X[1] = X[1].transpose([0,2,3,1])
-    X[2] = X[2].transpose([0,2,3,1])
+    pred_th = model_th_all.predict_on_batch(X)
+#    X[0] = X[0].transpose([0,2,3,1])
+#    X[1] = X[1].transpose([0,2,3,1])
+#    X[2] = X[2].transpose([0,2,3,1])
     pred_tf = model_tf_all.predict_on_batch(X)
 #    pred_tf = pred_tf.transpose([0,3,1,2])
     diff = pred_tf - pred_th

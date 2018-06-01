@@ -15,8 +15,7 @@ from keras.layers.core import Lambda
 from keras.engine.topology import Layer
 from keras.initializers import TruncatedNormal
 
-from keras import backend as K
-K.set_image_dim_ordering('th')
+#K.set_image_dim_ordering('th')
 
 from keras.layers import Flatten, Dense, Dropout, Reshape, Permute, Activation, \
     Input, merge
@@ -26,34 +25,33 @@ from keras.utils.layer_utils import convert_all_kernels_in_model
 
 import tensorflow as tf
 
-import alexnet as alex
 
-def VGG_16(weights_path=None, nb_classes=1000, include='all'):
+def VGG16(input_shape, weights_path=None, nb_classes=1000, include='all'):
     #https://gist.github.com/baraldilorenzo/07d7802847aaad0a35d3
     #https://github.com/fchollet/deep-learning-models/blob/master/vgg16.py
-    input_shape=(224,224,3)
     model = Sequential(name='VGG16')
-    model.add(Conv2D(64, (3, 3), activation='relu', padding='same'), input_shape=input_shape)
+    model.add(Conv2D(64, (3, 3), activation='relu', padding='same', input_shape=input_shape))
     model.add(Conv2D(64, (3, 3), activation='relu', padding='same'))
     model.add(MaxPooling2D((2,2), strides=(2,2)))
-
+    
     model.add(Conv2D(128, (3, 3), activation='relu', padding='same'))
     model.add(Conv2D(128, (3, 3), activation='relu', padding='same'))
     model.add(MaxPooling2D((2,2), strides=(2,2)))
 
-    model.add(Conv2D(256, (3, 3), activation='relu'), padding='same')
-    model.add(Conv2D(256, (3, 3), activation='relu'), padding='same')
-    model.add(Conv2D(256, (3, 3), activation='relu'), padding='same')
+    model.add(Conv2D(256, (3, 3), activation='relu', padding='same'))
+    model.add(Conv2D(256, (3, 3), activation='relu', padding='same'))
+    model.add(Conv2D(256, (3, 3), activation='relu', padding='same'))
     model.add(MaxPooling2D((2,2), strides=(2,2)))
 
-    model.add(Conv2D(512, (3, 3), activation='relu'), padding='same')
-    model.add(Conv2D(512, (3, 3), activation='relu'), padding='same')
-    model.add(Conv2D(512, (3, 3), activation='relu'), padding='same')
+    model.add(Conv2D(512, (3, 3), activation='relu', padding='same'))
+    model.add(Conv2D(512, (3, 3), activation='relu', padding='same'))
+    model.add(Conv2D(512, (3, 3), activation='relu', padding='same'))
     model.add(MaxPooling2D((2,2), strides=(2,2)))
 
-    model.add(Convolution2D(512, (3, 3), activation='relu'), padding='same')
-    model.add(Convolution2D(512, (3, 3), activation='relu'), padding='same')
-    model.add(Convolution2D(512, (3, 3), activation='relu'), padding='same')
+    model.add(Convolution2D(512, (3, 3), activation='relu', padding='same'))
+    model.add(Convolution2D(512, (3, 3), activation='relu', padding='same'))
+    model.add(Convolution2D(512, (3, 3), activation='relu', padding='same'))
+    
     model.add(MaxPooling2D((2,2), strides=(2,2)))
 
     model.add(Flatten())
@@ -68,19 +66,10 @@ def VGG_16(weights_path=None, nb_classes=1000, include='all'):
     return model
 
 
-def AlexNet2(weights_path=None, nb_classes=1000, include = 'all'):
-    inputs = Input(shape=(227,227,3))
-    outputs = alex.create_model(inputs)
-    model = Model(inputs=inputs, outputs=outputs)
-    model = final_model(model, weights_path, nb_classes, include)
-    return model
-
-def AlexNet(weights_path=None, nb_classes=1000, include = 'all'):
+def AlexNet(input_shape, weights_path=None, nb_classes=1000, include = 'all'):
     #https://github.com/duggalrahul/AlexNet-Experiments-Keras/blob/master/convnets-keras/convnetskeras/convnets.py
-    inputs = Input(shape=(3,227,227))
-
+    inputs = Input(shape=input_shape)
     conv_1 = Conv2D(96, (11, 11), strides=(4,4), activation='relu', kernel_initializer='TruncatedNormal')(inputs)
-
     conv_2 = MaxPooling2D((3, 3), strides=(2,2))(conv_1)
     conv_2 = crosschannelnormalization()(conv_2)
     conv_2 = ZeroPadding2D((2,2))(conv_2)
@@ -120,8 +109,8 @@ def AlexNet(weights_path=None, nb_classes=1000, include = 'all'):
 
     return model
 
-def PairWiseStream(weights_path=None, nb_classes=1000, include = 'all'):
-    inputs = Input(shape=(2,64,64))
+def PairWiseStream(input_shape, weights_path=None, nb_classes=1000, include = 'all'):
+    inputs = Input(shape=input_shape)
     model = Sequential()
     conv_1 = Conv2D(64, (5, 5), activation='relu')(inputs)
     conv_1 = MaxPooling2D((2,2), strides=(2,2))(conv_1)
@@ -155,7 +144,7 @@ def final_model(model, weights_path, nb_classes, include):
     return model
 
 def input_rois():
-    input_rois = Input(shape=(None, 4))
+    input_rois = Input(shape=(5,))
     return input_rois
 
 def rpn(base_layers, num_anchors):
@@ -168,12 +157,13 @@ def rpn(base_layers, num_anchors):
     return [x_class, x_regr, base_layers]
 
 
-def classifier(base_layers, input_rois, num_rois=10, nb_classes=21):
+def classifier(base_layers, input_rois, cfg, nb_classes=21):
     # compile times on theano tend to be very high, so we use smaller ROI pooling regions to workaround
 
-    pooling_regions = 7
-
-    out_roi_pool = RoiPoolingConv(pooling_regions, num_rois)([base_layers, input_rois])
+    cfg.pooling_regions = 7
+#    print(K.shape(base_layers))
+#    print(K.shape(input_rois))
+    out_roi_pool = RoiPoolingConv(cfg)([base_layers, input_rois])
 
     dense_1 = Flatten()(out_roi_pool)
     dense_1 = Dense(4096, activation='relu', kernel_initializer='TruncatedNormal')(dense_1)
@@ -185,7 +175,7 @@ def classifier(base_layers, input_rois, num_rois=10, nb_classes=21):
     # note: no regression target for bg class
 #    out_regr = Dense(4 * (nb_classes - 1), activation='linear', kernel_initializer='zero')(dense_3)
 
-    return [out_class]
+    return out_class
 
 
 class RoiPoolingConv(Layer):
@@ -209,22 +199,21 @@ class RoiPoolingConv(Layer):
         3D tensor with shape:
         `(1, num_rois, channels, pool_size, pool_size)`
     '''
-    def __init__(self, pool_size, num_rois, **kwargs):
-        K.set_image_dim_ordering('tf')
+    def __init__(self, cfg, **kwargs):
+#        K.set_image_dim_ordering('tf')
         self.dim_ordering = K.image_dim_ordering()
         assert self.dim_ordering in {'tf'}, 'dim_ordering must be in {tf}'
-
-        self.pool_size = pool_size
-        self.num_rois = num_rois
+        self.pool_size = cfg.pool_size
+#        self.num_rois = cfg.num_rois
+        self.batch_size = cfg.train_cfg.batch_size
 
         super(RoiPoolingConv, self).__init__(**kwargs)
 
     def build(self, input_shape):
         self.nb_channels = input_shape[0][3]
-#        super([RoiPoolingConv], self).build()
 
     def compute_output_shape(self, input_shape):
-        return None, self.num_rois, self.pool_size, self.pool_size, self.nb_channels
+        return None, self.pool_size, self.pool_size, self.nb_channels
 
     def call(self, x):
 
@@ -233,30 +222,65 @@ class RoiPoolingConv(Layer):
         img = x[0]
         rois = x[1]
 
-        outputs = []
+#        outputs = []
+#        print('act_img', img.shape)
+#        print('act_rois', rois.shape)
+#        for spl_idx in range(imgs.shape[0]):
+#            img = imgs[spl_idx]
+#            outputs = []
+#        for roi_idx in range(min(self.num_rois, rois.shape[1]-10)):
 
-        for roi_idx in range(min(self.num_rois, rois.shape[1])):
-
-            x = rois[0, roi_idx, 0]
-            y = rois[0, roi_idx, 1]
-            w = rois[0, roi_idx, 2]
-            h = rois[0, roi_idx, 3]
+#            x_raw = rois[1, roi_idx, 0]
+#            y_raw = rois[31, roi_idx, 1]
+#            w_raw = rois[32, roi_idx, 2]
+#            h_raw = rois[1, roi_idx, 3]
+            
+#            x_raw = 0
+#            y_raw = 0
+#            w_raw = 12
+#            h_raw = 12
 
             #NOTE: the RoiPooling implementation differs between theano and tensorflow due to the lack of a resize op
             # in theano. The theano implementation is much less efficient and leads to long compile times
-            x = K.cast(x, 'int32')
-            y = K.cast(y, 'int32')
-            w = K.cast(w, 'int32')
-            h = K.cast(h, 'int32')
+#            x = K.cast(x_raw, 'int32')
+#            y = K.cast(y_raw, 'int32')
+#            w = K.cast(w_raw, 'int32')
+#            h = K.cast(h_raw, 'int32')
+#            crop = img[:, y:y+h, x:x+w, :]
+#            crop = K.permute_dimensions(crop, (0, 2, 3, 1))
+#            print('crop', crop.shape)
+#            rs = tf.image.resize_images(crop, (self.pool_size, self.pool_size))
+#            print('rs', rs.shape)
+#            rs = tf.Print(rs, [tf.shape(rs)])
+#            rs = K.print_tensor(rs, message='Value of rs')
+#            outputs.append(rs)
+#        rois = tf.Print(rois, ['val: ', tf.shape(rois)])
+        
+#        final_output = tf.Print(final_output, ['Value: ', tf.shape(final_output)])
+#        final_output = K.concatenate(outputs, axis=0)
+#        print('fo', final_output.shape)
+#        all_outputs.append(final_output)
+#        final_outputs = K.concatenate(all_outputs, axis=0)
+#        print('fo', final_output.shape)
+#        final_outputs = K.permute_dimensions(final_output, (0, 1, 4, 2, 3))
+#        print('fo', final_output.shape)
 
-            rs = tf.image.resize_images(img[:, y:y+h, x:x+w, :], (self.pool_size, self.pool_size))
-            outputs.append(rs)
-
-        final_output = K.concatenate(outputs, axis=0)
-        final_output = K.reshape(final_output, (1, self.num_rois, self.pool_size, self.pool_size, self.nb_channels))
-        final_output = K.permute_dimensions(final_output, (0, 1, 2, 3, 4))
+#        batch_size = self.batch_size
+#        rois = K.reshape(rois, (batch_size, 5))
+        box_ind = K.cast(rois[:,0], 'int32')
+        rois    = rois[:,1:]
+        final_output = tf.image.crop_and_resize(img, boxes=rois, box_ind=box_ind, crop_size=(self.pool_size, self.pool_size))
+#        print('fo', final_output.shape)
+#        final_output = tf.Print(final_output, ['Value: ', tf.shape(final_output)])
+#        final_output = K.reshape(final_output, (batch_size, self.pool_size, self.pool_size, self.nb_channels))
 
         return final_output
+
+    def get_config(self):
+        config = {'pool_size': self.pool_size,
+                  'batch_size': self.batch_size}
+        base_config = super(RoiPoolingConv, self).get_config()
+        return dict(list(base_config.items()) + list(config.items()))
 
 
 def crosschannelnormalization(alpha=1e-4, k=2, beta=0.75, n=5, **kwargs):

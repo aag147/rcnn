@@ -9,37 +9,21 @@ import cv2 as cv
 import numpy as np
 import utils
 import sys
-import random
-import copy as cp
 
 #%% Y DATA
-def getYData(imagesID, imagesMeta, GTMeta, cfg, batch_size=None):
+def getYData(imagesID, imagesMeta, GTMeta, cfg):
     dataLabels = []
-    dataHumanBBs    = []
-    dataObjectBBs    = []
+    dataBBs    = []
     for imageID in imagesID:
         imageMeta = imagesMeta[imageID]
-        relsY = []
-        relsH = []
-        relsO = []
-        i = 0
         for relID, rel in imageMeta['rels'].items():
             labels, prsGT, objGT = getGTDataRel(rel, GTMeta[imageID], cfg)
-            relsY.append(labels)
-            relsH.append(prsGT)
-            relsO.append(objGT)
-            i += 1
-            if batch_size is not None and i >= batch_size:
-                break
-        relsY = utils.getMatrixLabels(cfg.nb_classes, relsY)
-        dataLabels.append(relsY)
-        dataHumanBBs.append(relsH)
-        dataObjectBBs.append(relsO)
-    dataLabels = np.vstack(dataLabels)
-    dataLabels = np.expand_dims(dataLabels, axis=0)
-    dataHumanBBs = np.array(dataHumanBBs)
-    dataObjectBBs = np.array(dataObjectBBs)
-    return dataLabels, dataHumanBBs, dataObjectBBs
+            dataLabels.append(labels)
+            dataBBs.append(prsGT + objGT)
+    dataLabels = (dataLabels)
+    dataBBs = np.array(dataBBs)
+    dataLabels = utils.getMatrixLabels(cfg.nb_classes, dataLabels)
+    return dataLabels, dataBBs
 
 
 def getGTLabels(myRel, GTMeta, cfg):
@@ -63,66 +47,41 @@ def getGTDataRel(rel, GTMeta, cfg):
     return labels, prsGT, objGT
 
 
-#%% Fast DATA
-def getImage(imageMeta, data_path, cfg):
-    image = cv.imread(data_path + imageMeta['imageName'])
-    image = cv.cvtColor(image, cv.COLOR_BGR2RGB)
-    imageClean, scale, padds = preprocessImage(image, cfg)
-    return imageClean, scale
-
-def getBoxes(imageMeta, cfg):
-    image = cv.imread(data_path + imageMeta['imageName'])
-    image = cv.cvtColor(image, cv.COLOR_BGR2RGB)
-    imageClean, scale, padds = preprocessImage(image, cfg)
-    return imageClean, scale
-
 #%% X DATA
 ## Get model ready data ##
-def getXData(imagesMeta, imagesID, images_path, cfg, batchIdx):
+def getXData(imagesID, imagesMeta, data_path, cfg):
     dataX = []
     dataH = []
     dataO = []
     IDs   = []
     for imageID in imagesID:
         imageMeta = imagesMeta[imageID]
-        img = cv.imread(images_path + imageMeta['imageName'])
-#        img = cv.cvtColor(img, cv.COLOR_BGR2RGB)
-        assert(img is not None)
-        assert(img.shape[0] > 10)
-        assert(img.shape[1] > 10)
-        assert(img.shape[2] == 3)
+#        print(data_path + imageMeta['imageName'])
+        image = cv.imread(data_path + imageMeta['imageName'])
+#        sys.stdout.write('\r' + str(imageID))
+#        sys.stdout.flush()
+        image = cv.cvtColor(image, cv.COLOR_BGR2RGB)
+        imageClean, scale, padds = preprocessImage(image, cfg)
         
-        imgRedux, scale = preprocessImage(img, cfg)
-        tmpH = []
-        tmpO = []
+#        scaleX = imageClean.shape[1] / float(image.shape[1])
+#        scaleY = imageClean.shape[0] / float(image.shape[0])
+#        scales = [scaleX, scaleY]
+#        print(imageClean.shape, image.shape, scales)
+        
         for relID, rel in imageMeta['rels'].items():
-            h, o = getDataFromRel(rel['prsBB'], rel['objBB'], scale, [0,0], imgRedux.shape, cfg)
-            tmpH.append([batchIdx] + h)
-            tmpO.append([batchIdx] + o)
-        tmpH = np.array(tmpH)
-        tmpO = np.array(tmpO)
-        if len(tmpH)>0 and cfg.flip_image and random.choice([True, False]):
-            imgRedux = np.fliplr(imgRedux)
-            tmp = cp.copy(tmpH[:,2])
-            tmpH[:,2] = 1.0 -  tmpH[:,4]
-            tmpH[:,4] = 1.0 -  tmp
-            tmp = cp.copy(tmpO[:,2])
-            tmpO[:,2] = 1.0 -  tmpO[:,4]
-            tmpO[:,4] = 1.0 -  tmp
-         
-        dataX.append(imgRedux)
-        dataH.append(tmpH)
-        dataO.append(tmpO)
-        IDs.append(imageID)
-        batchIdx += 1
+            h, o = getDataFromRel(rel['prsBB'], rel['objBB'], scale, padds, imageClean.shape, cfg)
+            dataX.append(imageClean)
+            dataH.append(h)
+            dataO.append(o)
+            IDs.append(imageID)
     dataX = np.array(dataX)
     dataH = np.array(dataH)
     dataO = np.array(dataO)
-#    print(dataX.shape, dataH.shape, dataO.shape)
     IDs = np.array(IDs)
     
 #    dataH = np.expand_dims(dataH, axis=1)
 #    dataO = np.expand_dims(dataO, axis=1)
+    
     return [dataX, dataH, dataO], IDs
 
 def getX2Data(imagesID, imagesMeta, data_path, cfg):
@@ -147,48 +106,41 @@ def getX2Data(imagesID, imagesMeta, data_path, cfg):
 
 #%% Fast rcnn
 ## Resize and normalize image ##
-def preprocessImage(img, cfg):
-    img = cv.cvtColor(img, cv.COLOR_BGR2RGB)
-    img = img.astype(np.float32, copy=False)
-    shape = img.shape
-    if shape[0] < shape[1]:
+def preprocessImage(image, cfg):
+    shape = image.shape
+    if shape[0] > shape[1]:
         newHeight = cfg.mindim
         scale = float(newHeight) / shape[0]
         newWidth = int(shape[1] * scale)
-        if newWidth > cfg.maxdim:
-            newWidth = cfg.maxdim
-            scale = newWidth / shape[1]
-            newHeight = shape[0] * scale
+#        if newWidth > cfg.maxdim:
+#            newWidth = cfg.maxdim
+#            scale = newWidth / shape[1]
+#            newHeight = shape[0] * scale
     else:
         newWidth = cfg.mindim
         scale = float(newWidth) / shape[1]
         newHeight = int(shape[0] * scale)
-        if newHeight > cfg.maxdim:
-            newHeight = cfg.maxdim
-            scale = newHeight / shape[0]
-            newWidth = shape[1] * scale
-
-
-    newWidth = round(newWidth)
-    newHeight = round(newHeight)
-
-    scaleWidth = float(newWidth) / img.shape[1]
-    scaleHeight = float(newHeight) / img.shape[0]
+#        if newHeight > cfg.maxdim:
+#            newHeight = cfg.maxdim
+#            scale = newHeight / shape[0]
+#            newWidth = shape[1] * scale
+            
+#    print('shape', image.shape)
+    newWidth = cfg.xdim
+    newHeight = cfg.ydim
+    scaleWidth = float(newWidth) / image.shape[1]
+    scaleHeight = float(newHeight) / image.shape[0]
     scales = [scaleHeight, scaleWidth]
-    # Rescale
-    img = cv.resize(img, (newWidth, newHeight)).astype(np.float32)
-    # Normalize
-    if False or cfg.use_channel_mean:
-        img -= cfg.img_channel_mean
-        img /= cfg.img_scaling_factor
-    else:
-#        img = (img - np.min(img)) / np.max(img)
-        img /= 127.5
-        img -= 1.0
-    # Transpose
-    img = img.transpose(cfg.order_of_dims)
-    return img, scales
-
+    image = cv.resize(image, (newWidth, newHeight)).astype(np.float32)
+    image = (image - np.min(image)) / np.max(image)
+#    print('shape', image.shape)
+#    padWidth = int((cfg.maxdim - newWidth) / 2.0)
+#    padHeight = int((cfg.maxdim - newHeight) / 2.0)
+#    padding = np.zeros([cfg.maxdim, cfg.maxdim, cfg.cdim])
+#    padding[padHeight:padHeight+newHeight, padWidth:padWidth+newWidth, :] = image
+#    print('finalshape', padding.shape)
+    image = image.transpose(cfg.order_of_dims)
+    return image, scales, [0, 0]
     
 def getDataFromBB(bb, scales, padds, shape, cfg):
     xmin = bb['xmin'] * scales[1] + padds[1] #* (1/cfg.img_out_reduction[0]))
@@ -206,22 +158,14 @@ def getDataFromRel(prsBB, objBB, scales, padds, shape, cfg):
     return dataH, dataO
 
 #%% rcnn
-def preprocessCrop(img, cfg):
-    img = img.astype(np.float32, copy=False)
-    img = cv.resize(img, cfg.shape).astype(np.float32)
-    img = cv.cvtColor(img, cv.COLOR_BGR2RGB)
+def preprocessCrop(image, cfg):
+    image = cv.resize(image, cfg.shape).astype(np.float32)
 #    image = (image - np.mean(image)) / np.std(image)
 #    print(np.max(image))
 #    print('im', np.min(image), np.max(image), np.isfinite(image).all())
-    if False:# or cfg.use_channel_mean:
-        img -= cfg.img_channel_mean
-        img /= cfg.img_scaling_factor
-    else:
-        img = (img - np.min(img)) / np.max(img)
-#        img /= 127.5
-#        img -= 1.0
-    img = img.transpose(cfg.order_of_dims)
-    return img
+    image = (image - np.min(image)) / np.max(image)
+    image = image.transpose(cfg.order_of_dims)
+    return image
 
 def preprocessRel(prsCrop, objCrop, image, cfg):
     prsCrop = preprocessCrop(prsCrop, cfg)

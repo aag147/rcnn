@@ -13,7 +13,7 @@ import numpy as np
 from keras import backend as K
 from keras.layers.core import Lambda
 from keras.engine.topology import Layer
-from keras.initializers import TruncatedNormal, RandomNormal
+from keras.initializers import TruncatedNormal, RandomNormal, Ones
 import keras.applications as keras_models
 from keras import regularizers
 
@@ -194,15 +194,15 @@ def fastPairWiseStream(input_shape, weights_path=None, nb_classes=1000, include 
 def PairWiseStream(input_shape, weights_path=None, nb_classes=1000, include = 'all'):
     inputs = Input(shape=input_shape)
     model = Sequential()
-    conv_1 = Conv2D(64, (5, 5), activation='relu', kernel_initializer=RandomNormal(stddev=0.01))(inputs)
+    conv_1 = Conv2D(64, (5, 5), activation='relu', kernel_initializer=Ones())(inputs)
     conv_1 = MaxPooling2D((2,2), strides=(2,2))(conv_1)
     
-    conv_2 = Conv2D(32, (5, 5), activation='relu', kernel_initializer=RandomNormal(stddev=0.01))(conv_1)
+    conv_2 = Conv2D(32, (5, 5), activation='relu', kernel_initializer=Ones())(conv_1)
     conv_2 = MaxPooling2D((2,2), strides=(2,2))(conv_2)
     
     fc = Flatten()(conv_2)
-    fc = Dense(256, activation='relu', kernel_initializer=RandomNormal(stddev=0.01))(fc)
-    fc = Dense(nb_classes, kernel_initializer=RandomNormal(stddev=0.01))(fc)
+    fc = Dense(256, activation='relu', kernel_initializer=Ones())(fc)
+    fc = Dense(nb_classes, kernel_initializer=Ones())(fc)
     
     model = Model(inputs=inputs, outputs=fc)
     
@@ -221,7 +221,7 @@ def final_model(model, weights_path, nb_classes, include):
         output = model.layers[-8].output
         model = Model(inputs=model.input, outputs=output)
     elif include == 'fc':
-        output = Dense(nb_classes, kernel_initializer=RandomNormal(stddev=0.01))(model.layers[-2].output)
+        output = Dense(nb_classes, kernel_initializer=Ones())(model.layers[-2].output)
         model = Model(inputs=model.input, outputs=output)
 
     return model
