@@ -17,7 +17,6 @@ class DataGenerator():
     
     def __init__(self, imagesMeta, GTMeta, labels, cfg, data_type='train'):
       'Initialization'
-      self.mean  = cfg.img_channel_mean
       self.data_type = data_type
       if data_type == 'train':
           g_cfg = cfg.train_cfg

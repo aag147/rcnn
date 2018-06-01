@@ -56,7 +56,6 @@ class data:
             cfg.fast_rcnn_config()
         elif self.method == 'normal':
             cfg.rcnn_config()
-
         cfg = mcfg.rcnn_hoi_classes(cfg)
         cfg = set_config(cfg)
         cfg.get_args()

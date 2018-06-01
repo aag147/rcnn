@@ -27,13 +27,8 @@ np.seterr(all='raise')
 if True:
     # Load data
     print('Loading data...')
-    data = data()
+    data = data(method='normal')
     cfg = data.cfg
-    cfg.rcnn_config()
-    
-    
-    cfg.order_of_dims = [0,1,2]
-    cfg.par_order_of_dims = [0,2,3,1]
     
     # Create batch generators
     genTrain = DataGenerator(imagesMeta=data.trainMeta, GTMeta = data.trainGTMeta, cfg=cfg, data_type='train')
@@ -42,8 +37,8 @@ if True:
 
 if True:    
     # Save config
-#    utils.saveConfig(cfg)
-#    utils.saveSplit(cfg, list(data.trainMeta.keys()), list(data.valMeta.keys()))
+    utils.saveConfig(cfg)
+    utils.saveSplit(cfg, list(data.trainMeta.keys()), list(data.valMeta.keys()))
     
     # Create model
     print('Creating model...')

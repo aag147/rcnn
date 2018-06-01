@@ -59,7 +59,6 @@ class basic_config:
    def __init__(self, newDir = True):
        self.newDir = newDir
        self.setBasicValues()
-       self.rcnn_config() #standard
        
    def setBasicValues(self):
        #paths
@@ -93,6 +92,8 @@ class basic_config:
        
        self.winShape = (64, 64)
        self.flip_image = False
+       self.order_of_dims = [0,1,2]
+       self.par_order_of_dims = [0,2,3,1]
        
        #model
        self.task = None
@@ -166,8 +167,6 @@ class basic_config:
        self.epoch_end = 60
        self.optimizer = 'adam'
        
-       self.order_of_dims = [0,1,2]
-       self.par_order_of_dims = [0,2,3,1]
        self.winShape = (64, 64)
        
        self.train_cfg.batch_size = 1

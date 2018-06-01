@@ -18,7 +18,7 @@ import keras.applications as keras_models
 from keras import regularizers
 
 from keras.layers import Flatten, Dense, Dropout, Reshape, Permute, Activation, \
-    Input, merge
+    Input, merge, TimeDistributed
 from keras.layers.merge import concatenate
 from keras.layers.convolutional import Convolution2D, MaxPooling2D, ZeroPadding2D
 from keras.utils.layer_utils import convert_all_kernels_in_model
@@ -135,16 +135,16 @@ def final_model(model, weights_path, nb_classes, include):
     if K.image_dim_ordering() == 'th':
        convert_all_kernels_in_model(model)
     
-    if include not in {'fc', 'all'}:
+    if include == 'none':
         output = model.layers[-8].output
         model = Model(inputs=model.input, outputs=output)
-    else:
+    elif include == 'fc':
         output = Dense(nb_classes)(model.layers[-2].output)
         model = Model(inputs=model.input, outputs=output)
     return model
 
 def input_rois():
-    input_rois = Input(shape=(5,))
+    input_rois = Input(shape=(None, 5))
     return input_rois
 
 def rpn(base_layers, num_anchors):
@@ -178,6 +178,46 @@ def classifier(base_layers, input_rois, cfg, nb_classes=21):
     return out_class
 
 
+
+###############
+##### FAST ####
+###############
+def fastPairWiseStream(input_shape, weights_path=None, nb_classes=1000, include = 'all'):
+    inputs = Input(shape=input_shape)
+    model = Sequential()
+    conv_1 = TimeDistributed(Conv2D(64, (5, 5), activation='relu', kernel_initializer=RandomNormal(stddev=0.01)))(inputs)
+    conv_1 = TimeDistributed(MaxPooling2D((2,2), strides=(2,2)))(conv_1)
+    
+    conv_2 = TimeDistributed(Conv2D(32, (5, 5), activation='relu', kernel_initializer=RandomNormal(stddev=0.01)))(conv_1)
+    conv_2 = TimeDistributed(MaxPooling2D((2,2), strides=(2,2)))(conv_2)
+    
+    fc = TimeDistributed(Flatten())(conv_2)
+    fc = TimeDistributed(Dense(256, activation='relu', kernel_initializer=RandomNormal(stddev=0.01)))(fc)
+    fc = TimeDistributed(Dense(nb_classes, kernel_initializer=RandomNormal(stddev=0.01)))(fc)
+    
+    model = Model(inputs=inputs, outputs=fc)
+    
+    model = final_model(model, weights_path, nb_classes, include)
+    return model
+
+def fastClassifier(base_layers, input_rois, cfg, nb_classes=21):    
+    cfg.pooling_regions = 7
+    out_roi_pool = RoiPoolingConv(cfg)([base_layers, input_rois])
+    
+    dense_1 = TimeDistributed(Flatten())(out_roi_pool)
+    dense_1 = TimeDistributed(
+        Dense(4096, activation='relu', kernel_initializer=RandomNormal(stddev=0.01))
+    )(dense_1)
+    dense_1 = Dropout(0.5)(dense_1)
+    dense_2 = TimeDistributed(
+        Dense(4096, activation='relu', kernel_initializer=RandomNormal(stddev=0.01))
+    )(dense_1)
+    dense_2 = Dropout(0.5)(dense_2)
+    
+    out_class = TimeDistributed(Dense(nb_classes, kernel_initializer=RandomNormal(stddev=0.01)))(dense_2)
+
+    return out_class
+
 class RoiPoolingConv(Layer):
     '''ROI pooling layer for 2D inputs.
     See Spatial Pyramid Pooling in Deep Convolutional Networks for Visual Recognition,
@@ -200,9 +240,7 @@ class RoiPoolingConv(Layer):
         `(1, num_rois, channels, pool_size, pool_size)`
     '''
     def __init__(self, cfg, **kwargs):
-#        K.set_image_dim_ordering('tf')
-        self.dim_ordering = K.image_dim_ordering()
-        assert self.dim_ordering in {'tf'}, 'dim_ordering must be in {tf}'
+        assert K.image_dim_ordering() in {'tf'}, 'dim_ordering must be in {tf}'
         self.pool_size = cfg.pool_size
 #        self.num_rois = cfg.num_rois
         self.batch_size = cfg.train_cfg.batch_size
@@ -213,67 +251,18 @@ class RoiPoolingConv(Layer):
         self.nb_channels = input_shape[0][3]
 
     def compute_output_shape(self, input_shape):
-        return None, self.pool_size, self.pool_size, self.nb_channels
+        return 1, None, self.nb_channels, self.pool_size, self.pool_size
 
     def call(self, x):
 
         assert(len(x) == 2)
-
         img = x[0]
-        rois = x[1]
-
-#        outputs = []
-#        print('act_img', img.shape)
-#        print('act_rois', rois.shape)
-#        for spl_idx in range(imgs.shape[0]):
-#            img = imgs[spl_idx]
-#            outputs = []
-#        for roi_idx in range(min(self.num_rois, rois.shape[1]-10)):
-
-#            x_raw = rois[1, roi_idx, 0]
-#            y_raw = rois[31, roi_idx, 1]
-#            w_raw = rois[32, roi_idx, 2]
-#            h_raw = rois[1, roi_idx, 3]
-            
-#            x_raw = 0
-#            y_raw = 0
-#            w_raw = 12
-#            h_raw = 12
-
-            #NOTE: the RoiPooling implementation differs between theano and tensorflow due to the lack of a resize op
-            # in theano. The theano implementation is much less efficient and leads to long compile times
-#            x = K.cast(x_raw, 'int32')
-#            y = K.cast(y_raw, 'int32')
-#            w = K.cast(w_raw, 'int32')
-#            h = K.cast(h_raw, 'int32')
-#            crop = img[:, y:y+h, x:x+w, :]
-#            crop = K.permute_dimensions(crop, (0, 2, 3, 1))
-#            print('crop', crop.shape)
-#            rs = tf.image.resize_images(crop, (self.pool_size, self.pool_size))
-#            print('rs', rs.shape)
-#            rs = tf.Print(rs, [tf.shape(rs)])
-#            rs = K.print_tensor(rs, message='Value of rs')
-#            outputs.append(rs)
-#        rois = tf.Print(rois, ['val: ', tf.shape(rois)])
-        
-#        final_output = tf.Print(final_output, ['Value: ', tf.shape(final_output)])
-#        final_output = K.concatenate(outputs, axis=0)
-#        print('fo', final_output.shape)
-#        all_outputs.append(final_output)
-#        final_outputs = K.concatenate(all_outputs, axis=0)
-#        print('fo', final_output.shape)
-#        final_outputs = K.permute_dimensions(final_output, (0, 1, 4, 2, 3))
-#        print('fo', final_output.shape)
-
-#        batch_size = self.batch_size
-#        rois = K.reshape(rois, (batch_size, 5))
+        rois = x[1][0]
         box_ind = K.cast(rois[:,0], 'int32')
         rois    = rois[:,1:]
-        final_output = tf.image.crop_and_resize(img, boxes=rois, box_ind=box_ind, crop_size=(self.pool_size, self.pool_size))
-#        print('fo', final_output.shape)
-#        final_output = tf.Print(final_output, ['Value: ', tf.shape(final_output)])
-#        final_output = K.reshape(final_output, (batch_size, self.pool_size, self.pool_size, self.nb_channels))
 
+        final_output = tf.image.crop_and_resize(img, boxes=rois, box_ind=box_ind, crop_size=(self.pool_size, self.pool_size), method="bilinear")
+        final_output = K.expand_dims(final_output, axis=0)
         return final_output
 
     def get_config(self):

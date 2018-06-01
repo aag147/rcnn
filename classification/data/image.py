@@ -178,7 +178,7 @@ def preprocessImage(img, cfg):
     # Rescale
     img = cv.resize(img, (newWidth, newHeight)).astype(np.float32)
     # Normalize
-    if False or cfg.use_channel_mean:
+    if False:# or cfg.use_channel_mean:
         img -= cfg.img_channel_mean
         img /= cfg.img_scaling_factor
     else:
