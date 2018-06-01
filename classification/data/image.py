@@ -182,9 +182,9 @@ def preprocessImage(img, cfg):
         img -= cfg.img_channel_mean
         img /= cfg.img_scaling_factor
     else:
-        img = (img - np.min(img)) / np.max(img)
-#        img /= 127.5
-#        img -= 1.0
+#        img = (img - np.min(img)) / np.max(img)
+        img /= 127.5
+        img -= 1.0
     # Transpose
     img = img.transpose(cfg.order_of_dims)
     return img, scales

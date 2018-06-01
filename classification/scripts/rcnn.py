@@ -17,6 +17,7 @@ from model_trainer import model_trainer
 import load_data
 from generators import DataGenerator
 from methods import HO_RCNN
+import image
 
 import numpy as np
 

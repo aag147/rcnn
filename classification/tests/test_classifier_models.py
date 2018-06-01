@@ -20,7 +20,7 @@ from load_data import data
 from old_generators import DataGenerator
 import losses
 from methods import HO_RCNN, HO_RCNN_OLD
-import utils
+import utils, image
 #import draw
 
 
@@ -55,14 +55,13 @@ if True:
     
     trainIterator = genTest.begin()
     
-if True:
+if False:
     print('Loading models...')
     model_tf_all = HO_RCNN(cfg)
     model_th_all = HO_RCNN_OLD(cfg)
     
     model_tf = Model(inputs=model_tf_all.input, outputs=model_tf_all.layers[26].output)  
     model_th = Model(inputs=model_th_all.input, outputs=model_th_all.layers[26].output)
-    
 
     model_tf.compile(loss='mse', optimizer='sgd', metrics=['accuracy'])
     model_th.compile(loss='mse', optimizer='sgd', metrics=['accuracy'])
@@ -71,18 +70,31 @@ if True:
     w_th = model_th.layers[1].get_weights()
   
 
-if True:
+if False:
     trainer_tf = model_trainer(model=model_tf_all, genTrain=genTrain, genVal=None, genTest=None, task=cfg.task)
     trainer_tf.compileModel(cfg)
     
-    trainer_th = model_trainer(model=model_th_all, genTrain=genTrain, genVal=None, genTest=None, task=cfg.task)
+    trainer_th = model_trainer(model=model_old, genTrain=genTrain, genVal=None, genTest=None, task=cfg.task)
     trainer_th.compileModel(cfg)
     
     
-    trainer_th.trainModel(cfg)
-    print('Testing model on test...')
-    resTest = trainer_th.evaluateModel(genTest)    
-    print("F1 (test!):", resTest.F1, "nb_zeros", resTest.nb_zeros)
+    
+if True:
+    imageID = 'HICO_train2015_00000015.jpg'
+    [dataXP_new, dataXB_new] = image.getX2Data([imageID], genTrain.imagesMeta, genTrain.images_path, genTrain.cfg)
+    dataXW_new = image.getDataPairWiseStream([imageID], genTrain.imagesMeta, genTrain.cfg)
+    y_new, _, _ = image.getYData([imageID], genTrain.imagesMeta, genTrain.GTMeta, genTrain.cfg)
+    
+    
+    dataXP_new = dataXP_new[0]
+    dataXB_new = dataXB_new[0]
+    dataXW_new = dataXW_new[0]
+    y_new = y_new[0]
+    
+#    trainer_th.trainModel(cfg)
+#    print('Testing model on test...')
+#    resTest = trainer_th.evaluateModel(genTest)    
+#    print("F1 (test!):", resTest.F1, "nb_zeros", resTest.nb_zeros)
 
 j = 0
 for i in range(1):
@@ -92,8 +104,10 @@ for i in range(1):
     img += 1.0
     img /= 2.0
     
-    pred_th = model_th_all.predict_on_batch(X)
-    X = [X[0].transpose([0,2,3,1])]
+    pred_th = model_old.predict_on_batch(X)
+    X[0] = X[0].transpose([0,2,3,1])
+    X[1] = X[1].transpose([0,2,3,1])
+    X[2] = X[2].transpose([0,2,3,1])
     pred_tf = model_tf_all.predict_on_batch(X)
 #    pred_tf = pred_tf.transpose([0,3,1,2])
     diff = pred_tf - pred_th

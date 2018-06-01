@@ -55,7 +55,7 @@ if True:
     
     def getDETData(x_class, x_deltas, imageMeta, imageDims, cfg):
         pred_anchors = helper.deltas2Anchors(x_class, x_deltas, cfg, imageDims, do_regr=True)
-        pred_anchors = helper.non_max_suppression_fast(pred_anchors, overlap_thresh=cfg.detection_nms_overlap_thresh)
+        pred_anchors = helper.non_max_suppression_fast(pred_anchors, overlap_thresh=cfg.rpn_nms_overlap_thresh)
         pred_anchors = pred_anchors[:,0:4]
         
         rois, true_labels, true_boxes, IouS = filters_detection.prepareTargets(pred_anchors, imageMeta, imageDims, data.class_mapping, cfg)

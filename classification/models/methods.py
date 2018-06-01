@@ -55,7 +55,7 @@ def HO_RCNN(cfg):
     weights = AlexNet_Weights(cfg) if cfg.pretrained_weights == True else False
 #    weights = None
     modelPrs = AlexNet((227, 227, 3), weights, cfg.nb_classes, include='fc')
-    modelObj = AlexNet((227, 227, 3), None, cfg.nb_classes, include='fc')
+    modelObj = AlexNet((227, 227, 3), weights, cfg.nb_classes, include='fc')
     
     modelPar = PairWiseStream(input_shape=(64,64,2), nb_classes = cfg.nb_classes, include='fc')             
     
