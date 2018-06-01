@@ -91,7 +91,7 @@ if True:
 #                      metrics={'rpn_out_class':'categorical_accuracy'}) 
     
 
-if False:    
+if True:    
     # train
     callbacks = [callbacks.MyModelCheckpointInterval(cfg), \
                  callbacks.SaveLog2File(cfg), \
