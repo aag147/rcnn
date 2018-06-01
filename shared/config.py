@@ -25,8 +25,8 @@ class basic_config:
    def get_results_paths(self):
       if len(self.my_results_path) > 0 or not self.newDir:
           return
-      if len(self.my_results_dir) > 0:
-          path = self.part_results_path + self.dataset + "/" + self.my_results_dir + '/'
+      if len(self.my_results_dir) > 0 and not self.use_shared_cnn:
+          path = self.part_results_path + self.my_results_dir + '/'
       else:
           for fid in range(100):
             path = self.part_results_path + self.dataset + "/" + self.modelnamekey + '%d/' % fid
@@ -34,13 +34,27 @@ class basic_config:
                 os.mkdir(path)
                 os.mkdir(path + 'weights/')
                 break
+            
       self.my_results_path = path
       self.my_weights_path = path + 'weights/'
+      
+      if self.my_weights is not None:
+          self.my_shared_weights = self.my_weights_path + self.my_weights
+      
+      if self.use_shared_cnn:
+          self.my_shared_weights = self.part_results_path + self.my_results_dir + '/weights/' + self.my_weights
+      
+   def get_detections_path(self):
+       if len(self.my_detections_dir) == 0:
+          return
+       
+       self.my_detections_path = self.part_results_path + self.dataset + "/" + self.my_detections_dir + '/detections/'
       
       
    def update_paths(self):
        self.get_data_path()
        self.get_results_paths()
+       self.get_detections_path()
       
    def __init__(self, newDir = True):
        self.newDir = newDir
@@ -55,13 +69,17 @@ class basic_config:
        self.my_results_path = ''
        self.my_weights_path = ''
        self.my_results_dir = ''
+       self.my_detections_dir = ''
+       self.my_detections_path = ''
        self.move_path = None
-       self.move = 0
+       self.move = False
+       self.use_shared_cnn = False
        
        #basics
        self.dataset = 'HICO'
        self.inputs  = None
        self.max_classes = None
+       self.backbone = None
        
        #generator
        self.train_cfg = self.gen_config()
@@ -73,6 +91,9 @@ class basic_config:
        self.minIoU = 0.5
        self.testdata = 'genTest'
        
+       self.winShape = (64, 64)
+       self.flip_image = False
+       
        #model
        self.task = None
        self.pretrained_weights = True
@@ -83,9 +104,9 @@ class basic_config:
        self.wp = 1
        
        #model callbacks
-       self.patience = None
+       self.patience = 100
        self.modelnamekey = ''
-       self.epoch_splits = None
+       self.epoch_splits = [100]
        self.init_lr = None
        self.include_eval = True
        self.include_validation = False
@@ -95,28 +116,105 @@ class basic_config:
        self.epoch_begin = None
        self.epoch_end = None
        
+       #fast data preprocesses
+       self.rpn_uniform_sampling = False
+       
    def rcnn_config(self):
        self.xdim=227
        self.ydim=227
        self.cdim=3
+              
+       # Basic stuff
+       self.init_lr = 0.0001
+       self.epoch_begin = 0
+       self.epoch_end = 60
+       self.epoch_splits = [30]
+       self.optimizer = 'sgd'
+       self.backbone = 'alex'
        
-       self.shape = (self.ydim, self.xdim)
-       self.order_of_dims = [2,0,1]
-       self.par_order_of_dims = [0,1,2,3]
-       self.winShape = (64, 64)
+       self.shape = (self.ydim, self.xdim)       
+
        
    def fast_rcnn_config(self):
-       self.mindim = 400
-       self.maxdim = 600
-       self.xdim = 224
-       self.ydim = 224
+       self.mindim = 600
+       self.maxdim = 1000
        self.cdim  = 3
        
-       self.pool_size = 7
+       
+       # Basic stuff
+       self.pool_size = 3
+       self.init_lr = 0.00001
+       self.epoch_begin = 0
+       self.epoch_end = 60
+       self.optimizer = 'adam'
+       self.backbone = 'alex'
+       
+       self.train_cfg.batch_size = 1
+       self.val_cfg.batch_size = 1
+       self.test_cfg.batch_size = 1      
+       
+   def faster_rcnn_config(self):
+       self.mindim = 600
+       self.maxdim = 1000
+       self.cdim  = 3
+       
+       # Basic stuff
+       self.pool_size = 3
+       self.init_lr = 0.00001
+       self.nb_batches = 1000
+       self.epoch_begin = 0
+       self.epoch_end = 60
+       self.optimizer = 'adam'
        
        self.order_of_dims = [0,1,2]
        self.par_order_of_dims = [0,2,3,1]
        self.winShape = (64, 64)
+       
+       self.train_cfg.batch_size = 1
+       self.val_cfg.batch_size = 1
+       self.test_cfg.batch_size = 1
+       
+       self.rpn_regr_std = 4.0
+       self.det_regr_std = [8.0, 8.0, 4.0, 4.0]
+       
+       #rpn filters
+       self.nb_shared_layers = 17
+       self.rpn_stride = 16
+       self.nb_rpn_proposals = 128
+        
+       self.anchor_sizes = [64, 128, 256, 512]
+       self.anchor_ratios = [[1, 1], [1, 2], [2, 1]]
+        
+       self.rpn_min_overlap = 0.3
+       self.rpn_max_overlap = 0.7
+       
+       self.rpn_nms_max_boxes=300
+       self.rpn_nms_overlap_thresh=0.7
+
+        
+       # detection filters
+       self.detection_max_overlap = 0.5
+       self.detection_min_overlap = 0.0
+       self.nb_detection_rois = 64
+       
+       self.det_nms_max_boxes=300
+       self.det_nms_overlap_thresh=0.90
+        
+       # hoi filters
+       self.hoi_max_overlap = 0.5
+       self.hoi_min_overlap = 0.1
+       self.hoi_nms_overlap_thresh=0.5
+       
+       self.hoi_pos_share  = 4
+       self.hoi_neg1_share = 12
+       self.hoi_neg2_share = 16
+       
+       self.nb_hoi_rois = 32
+        
+       # model
+       self.nb_anchors = len(self.anchor_sizes) * len(self.anchor_ratios)
+#       self.nb_object_classes = 81
+       self.nb_hoi_classes = 600
        
    def get_args(self):
        try:
