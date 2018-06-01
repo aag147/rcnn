@@ -15,7 +15,7 @@ import utils
 from model_trainer import model_trainer
 from load_data import data
 from generators import DataGenerator
-from methods import HO_RCNN
+from methods import HO_RCNN, HO_RCNN_tf
 
 import numpy as np
 
@@ -32,8 +32,8 @@ if True:
     cfg.rcnn_config()
     
     
-    cfg.order_of_dims = [2,0,1]
-    cfg.par_order_of_dims = [0,1,2,3]
+    cfg.order_of_dims = [0,1,2]
+    cfg.par_order_of_dims = [0,2,3,1]
     
     # Create batch generators
     genTrain = DataGenerator(imagesMeta=data.trainMeta, GTMeta = data.trainGTMeta, cfg=cfg, data_type='train')
@@ -47,7 +47,7 @@ if True:
     
     # Create model
     print('Creating model...')
-    model = HO_RCNN(cfg)
+    model = HO_RCNN_tf(cfg)
     trainer = model_trainer(model=model, genTrain=genTrain, genVal=genVal, genTest=genTest, task=cfg.task)
     trainer.compileModel(cfg)
     

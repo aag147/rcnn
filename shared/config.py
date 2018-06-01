@@ -121,46 +121,78 @@ class basic_config:
    def get_args(self):
        try:
           argv = sys.argv[1:]
-          opts, args = getopt.getopt(argv,"m:c:x:d:w:v:t:b:s:f:h:")
+          opts, args = getopt.getopt(argv,"ab:c:d:e:f:g:hi:l:m:n:o:r:s:tuw:x:")
        except getopt.GetoptError:
           print('.py -m <my_model> -c <my_method> -x <max_classes> -d <dataset>')
           sys.exit(2)
      
+#    augment, backbone, cfg_method, dataset, epoch_split, final_epoch, generator_type, input_roi_dir, learning_rate, model, nb_batches, optimizer, results_dir, start_epoch, transfor data, uniform_sampling, weighing, ma(x)_classes
        for opt, arg in opts:
           print(opt, arg)
-          if opt == '-v':
-#             path = self.part_results_path + arg
-             self.my_results_dir = arg
-#             self.my_results_path = path
-#             self.my_weights_path = path + 'weights/'
-          if opt == '-m':
-             self.my_weights = arg
+          if opt == '-a':
+             # augmentation
+             self.flip_image = True
+          if opt == '-b':
+             # backbone
+             self.backbone = arg
           if opt == '-c':
+             # cfg method
              assert hasattr(mcfg, arg), 'method cfg needs to exist'
              self = getattr(mcfg, arg)(self)
-          if opt == '-x':
-              assert arg.isdigit(), 'max_classes must be int'
-              self.max_classes = int(arg)
-          if opt == '-b':
-              assert arg.isdigit(), 'nb_batches must be int'
-              self.train_cfg.nb_batches = int(arg)
-              self.val_cfg.nb_batches = int(arg)
           if opt == '-d':
+              # dataset
               self.dataset = arg
-          if opt == '-w':
-              assert (arg.isdigit() or arg=='-1'), 'weight must be int'
-              self.wp = int(arg)
-          if opt == '-t':
-              self.testdata = arg
-          if opt == '-s':
-              assert arg.isdigit(), 'move must be int'
-              self.move = int(arg)
-          if opt == '-f':
-              assert arg.isdigit(), 'final epoch must be int'
-              self.epoch_end = int(arg)
-          if opt == '-h':
+          if opt == '-e':
+              # epoch learning rate split
               assert arg.isdigit(), 'epoch learning split must be int'
               self.epoch_splits = [int(arg)]
+          if opt == '-f':
+              # final epoch
+              assert arg.isdigit(), 'final epoch must be int'
+              self.epoch_end = int(arg)
+          if opt == '-g':
+              # generator iterator type
+              self.train_cfg.type = arg
+          if opt == '-h':
+              # fine-tune with shared CNN
+              self.use_shared_cnn = True
+          if opt == '-i':
+              # roi input directory for detection
+              self.my_detections_dir = arg
+          if opt == '-l':
+              # initial learning rate
+              self.init_lr = float(arg)
+          if opt == '-m':
+              # loadable model/weights
+              self.my_weights = arg
+          if opt == '-n':
+              # number of batches per epoch
+              assert arg.isdigit(), 'nb_batches must be int'
+              self.train_cfg.nb_batches = int(arg)
+          if opt == '-o':
+              # optimizer
+              self.optimizer = arg
+          if opt == '-r':
+              # use results directory from previous model
+              self.my_results_dir = arg
+          if opt == '-s':
+              # start epoch
+              assert arg.isdigit(), 'start epoch must be int'
+              self.epoch_begin = int(arg)
+          if opt == '-t':
+              # transfer data to scratch
+              self.move = True
+          if opt == '-u':
+              # use uniform rpn proposal sampling
+              self.rpn_uniform_sampling = True
+          if opt == '-w':
+              # weighing in loss
+              assert (arg.isdigit() or arg=='-1'), 'weight must be int'
+              self.wp = int(arg)
+          if opt == '-x':
+              # max classes
+              assert arg.isdigit(), 'max_classes must be int'
+              self.max_classes = int(arg)
               
    def set_class_weights(self, labels, imagesMeta):
        if self.wp >= 0: 
