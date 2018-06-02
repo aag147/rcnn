@@ -74,7 +74,7 @@ class object_data:
             reduced_objs = self.getReduxIdxs(class_mapping, cfg)
             
             class_mapping = self.reduceMapping(reduced_objs)
-            hoi_labels, reduced_hoi_map = self.reduceHoILabels(hoi_labels, reduced_objs) if hoi_labels is not None else None
+            hoi_labels, reduced_hoi_map = self.reduceHoILabels(hoi_labels, reduced_objs) if hoi_labels is not None else None, None
             
             trainGTMeta = self.reduceData(trainGTMeta, reduced_objs, reduced_hoi_map)
             testGTMeta = self.reduceData(testGTMeta, reduced_objs, reduced_hoi_map)

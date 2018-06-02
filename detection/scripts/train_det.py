@@ -59,11 +59,7 @@ if True:
         print('Uniform anchor sampling')
     else:
         print('Non-Uniform anchor sampling')
-        
-    if cfg.use_channel_mean:
-        print('Channel mean preprocessing')
-    else:
-        print('Image mean/std preprocessing')
+
         
     if type(cfg.my_weights)==str and len(cfg.my_weights) > 0:
         if cfg.use_shared_cnn:

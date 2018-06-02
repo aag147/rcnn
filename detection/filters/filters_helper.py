@@ -500,13 +500,9 @@ def _getRelMap(rels):
 def preprocessImage(img, cfg):
     img = img.astype(np.float32, copy=False)
     img = cv.cvtColor(img, cv.COLOR_BGR2RGB)
-    
-    if False:#cfg.use_channel_mean:
-        img -= cfg.img_channel_mean
-    else:
-#        img = (img - np.min(img)) / np.max(img)
-        img /= 127.5
-        img -= 1.0
+
+    img /= 127.5
+    img -= 1.0
     
     img_shape = img.shape
     img_size_min = np.min(img_shape[0:2])
