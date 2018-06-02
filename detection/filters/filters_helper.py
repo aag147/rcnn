@@ -377,7 +377,7 @@ def bboxes2COCOformat(bboxes, imageMeta, class_mapping, scale=[1,1], rpn_stride=
     return results
 
 def bboxes2HOIformat(h_bboxes, o_bboxes, hoi_labels):
-    hoi_labels = hoi_labels.astype(int).tolist()
+    hoi_labels = [np.where(x==1)[0].tolist() for x in hoi_labels]
     h_bboxes = [[round(float(x), 2) for x in box] for box in h_bboxes.tolist()]
     o_bboxes = [[round(float(x), 2) for x in box] for box in o_bboxes.tolist()]
     return h_bboxes, o_bboxes, hoi_labels
