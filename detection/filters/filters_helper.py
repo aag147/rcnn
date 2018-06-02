@@ -69,7 +69,7 @@ def deltas2Boxes(props, deltas, rois, cfg):
 #        print('dl',regr[0], regr[1], regr[2], regr[3])
 #        print('bb',x, y, w, h)
 #        bboxes[labelID].append([x, y, (x + w), (y + h), prop])
-        boxes.append([x, y, w, h, prop, labelID])
+        boxes.append([x, y, w, h, labelID, prop])
 
     boxes = np.array(boxes)
     return boxes
@@ -77,7 +77,7 @@ def deltas2Boxes(props, deltas, rois, cfg):
 def non_max_suppression_boxes(bboxes, cfg):
     # add some nms to reduce many boxes
     new_bboxes = []
-    labelIDs = bboxes[:,5]
+    labelIDs = bboxes[:,4]
     for i in range(cfg.nb_object_classes):
         idxs = np.where(labelIDs == i)[0]
         sub_bboxes = bboxes[idxs,:]
@@ -297,7 +297,6 @@ def non_max_suppression_fast(boxes, overlap_thresh=0.5, max_boxes=300):
     boxes = boxes[pick]
     return boxes
 
-
 def reduce_rois(true_labels, cfg):
     #############################
     ######## Parameters #########
@@ -331,12 +330,152 @@ def reduce_rois(true_labels, cfg):
 
     sel_samples = selected_pos_samples + selected_neg_samples
     return sel_samples
+
+
+
+def getCOCOMapping():
+    coco_mapping = {'bottle': 44, 'backpack': 27, 'handbag': 31, 'dog': 18, 'giraffe': 25, 'sink': 81, 'bench': 15, 'truck': 8, 'teddy bear': 88, 'book': 84, 'umbrella': 28, 'chair': 62, 'scissors': 87, 'toilet': 70, 'cat': 17, 'frisbee': 34, 'toothbrush': 90, 'oven': 79, 'baseball glove': 40, 'kite': 38, 'dining table': 67, 'parking meter': 14, 'bowl': 51, 'skis': 35, 'remote': 75, 'fire hydrant': 11, 'suitcase': 33, 'bird': 16, 'person': 1, 'zebra': 24, 'hair drier': 89, 'wine glass': 46, 'donut': 60, 'airplane': 5, 'elephant': 22, 'bus': 6, 'mouse': 74, 'boat': 9, 'tv': 72, 'horse': 19, 'car': 3, 'potted plant': 64, 'baseball bat': 39, 'train': 7, 'keyboard': 76, 'spoon': 50, 'tie': 32, 'motorcycle': 4, 'clock': 85, 'orange': 55, 'skateboard': 41, 'cup': 47, 'bed': 65, 'sandwich': 54, 'sports ball': 37, 'cake': 61, 'banana': 52, 'vase': 86, 'knife': 49, 'couch': 63, 'pizza': 59, 'cell phone': 77, 'stop sign': 13, 'microwave': 78, 'apple': 53, 'laptop': 73, 'carrot': 57, 'broccoli': 56, 'fork': 48, 'sheep': 20, 'cow': 21, 'hot dog': 58, 'surfboard': 42, 'tennis racket': 43, 'snowboard': 36, 'traffic light': 10, 'bicycle': 2, 'refrigerator': 82, 'bear': 23, 'toaster': 80}
+    return coco_mapping
+
+def bboxes2COCOformat(bboxes, imageMeta, class_mapping, scale=[1,1], rpn_stride=1, shape=[1,1], roundoff=False):
+    results = []
+    coco_mapping = getCOCOMapping()
+    inv_class_mapping = {idx:label for label,idx in class_mapping.items()}
+    for bbox in bboxes:
+        label = bbox[4]
+        label = inv_class_mapping[label]
+        label = coco_mapping[label]
+        prop = bbox[5]
+        coords = bbox[:4]
+        xmin = ((coords[0]) * rpn_stride / scale[0])
+        ymin = ((coords[1]) * rpn_stride / scale[1])
+        width = ((coords[2]) *  rpn_stride / scale[0])
+        height = ((coords[3]) * rpn_stride / scale[1])
+        coords = [xmin, ymin, width, height]
+        coords = [round(float(x),2) for x in coords]
+        
+        res = {'image_id': int(imageMeta['id']), 'category_id': int(label), 'bbox': coords, 'score': round(float(prop),4)}
+#        coords.append(prop)
+#        res = coords
+        results.append(res)
+#    results = np.array(results)
+    return results
+
+
+def _computeIoUs(bbox, gt_bboxes):
+    area = (bbox[2] - bbox[0]) * (bbox[3] - bbox[1])
+    gt_areas = (gt_bboxes[:,2] - gt_bboxes[:,0]) * (gt_bboxes[:,3] - gt_bboxes[:,1])
+    
+    # find the intersection
+    xx1_int = np.maximum(bbox[0], gt_bboxes[:,0])
+    yy1_int = np.maximum(bbox[1], gt_bboxes[:,1])
+    xx2_int = np.minimum(bbox[2], gt_bboxes[:,2])
+    yy2_int = np.minimum(bbox[3], gt_bboxes[:,3])
+
+    ww_int = np.maximum(0, xx2_int - xx1_int)
+    hh_int = np.maximum(0, yy2_int - yy1_int)
+
+    area_int = ww_int * hh_int
+    # find the union
+    area_union = area + gt_areas - area_int
+
+    # compute the ratio of overlap
+    overlap = area_int / (area_union + 1e-6)
+    
+    return overlap
+
+def _transformBBoxes(bboxes, dosplit=True):
+    hbboxes = []
+    obboxes = []
+    gt_allboxes = []
+
+    
+    bboxes = bboxes[bboxes[:,5].argsort()[::-1]]
+    
+    for bbox in bboxes:
+        label = bbox[4]
+        prop = bbox[5]
+        (xmin, ymin, width, height) = bbox[:4]
+        xmax = xmin + width
+        ymax = ymin + height
+        trans_bbox = [xmin, ymin, xmax, ymax, label, prop]
+        
+        if not dosplit:
+            gt_allboxes.append(trans_bbox)
+        if label == 1: #human
+            hbboxes.append(trans_bbox)
+        elif label > 1: #object
+            obboxes.append(trans_bbox)
+            
+    if not dosplit:
+        return np.array(gt_allboxes)
+            
+    if len(hbboxes) > 10:
+        hbboxes = np.array(hbboxes)[:,:10]
+    if len(obboxes) > 10:
+        obboxes = np.array(obboxes)[:,:10]
+
+    return hbboxes, obboxes   
+
+
+def _transformGTBBox(gt_bboxes, class_mapping, scale=[1,1], rpn_stride=1, shape=[1,1], roundoff=False, dosplit=True):
+    gt_hbboxes = []
+    gt_obboxes = []
+    gt_allboxes = []
+    
+    for gt_bbox in gt_bboxes:
+        label = gt_bbox['label']
+        label = class_mapping[label]
+        xmin = ((gt_bbox['xmin']) * scale[0] / rpn_stride) / shape[0]
+        xmax = ((gt_bbox['xmax']-0.01) * scale[0] / rpn_stride) / shape[0]
+        ymin = ((gt_bbox['ymin']) * scale[1] / rpn_stride) / shape[1]
+        ymax = ((gt_bbox['ymax']-0.01) * scale[1] / rpn_stride) / shape[1]
+        if roundoff:
+            xmin=int(round(xmin)); xmax=int(round(xmax))
+            ymin=int(round(ymin)); ymax=int(round(ymax))
+            
+        trans_gt_bbox = [xmin, ymin, xmax, ymax, label]
+        
+        if not dosplit:
+            gt_allboxes.append(trans_gt_bbox)
+        if label == 1: #human
+            gt_hbboxes.append(trans_gt_bbox)
+        elif label > 1: #object
+            gt_obboxes.append(trans_gt_bbox)
+        
+        
+    if not dosplit:
+        return np.array(gt_allboxes)
+        
+    gt_hbboxes = np.array(gt_hbboxes)
+    gt_obboxes = np.array(gt_obboxes)
+
+    return gt_hbboxes, gt_obboxes   
+
+
+def _getRelMap(rels):
+    nb_prs = len(np.unique(rels[:,0]))
+    nb_obj = len(np.unique(rels[:,1]))
+    
+    prsidxs = np.unique(rels[:,0])
+    prsidxs = {idx:i for i,idx in enumerate(prsidxs)}
+    
+    objidxs = np.unique(rels[:,1])
+    objidxs = {idx:i for i,idx in enumerate(objidxs)}
+    
+    rel_map = np.ones((nb_prs, nb_obj)) * -1
+    
+    for rel in rels:
+        rel_map[prsidxs[rel[0]], objidxs[rel[1]]] = rel[2]
+    return rel_map
+
+
        
 def preprocessImage(img, cfg):
     img = img.astype(np.float32, copy=False)
     img = cv.cvtColor(img, cv.COLOR_BGR2RGB)
     
-    if cfg.use_channel_mean:
+    if False:#cfg.use_channel_mean:
         img -= cfg.img_channel_mean
     else:
 #        img = (img - np.min(img)) / np.max(img)

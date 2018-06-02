@@ -197,7 +197,7 @@ class basic_config:
        self.nb_detection_rois = 64
        
        self.det_nms_max_boxes=300
-       self.det_nms_overlap_thresh=0.90
+       self.det_nms_overlap_thresh=0.5
         
        # hoi filters
        self.hoi_max_overlap = 0.5

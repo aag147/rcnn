@@ -22,95 +22,6 @@ import utils
 import filters_helper as helper
 
 
-def _transformBBoxes(bboxes):
-    hbboxes = []
-    obboxes = []
-    bboxes = bboxes[bboxes[:,4].argsort()[::-1]]
-    
-    for bbox in bboxes:
-        label = bbox[5]
-        (xmin, ymin, width, height) = bbox[:4]
-        xmax = xmin + width
-        ymax = ymin + height
-        trans_bbox = [xmin, ymin, xmax, ymax, label]
-        
-        if label == 1: #human
-            hbboxes.append(trans_bbox)
-        elif label > 1: #object
-            obboxes.append(trans_bbox)
-            
-    hbboxes = np.array(hbboxes)[:,:10]
-    obboxes = np.array(obboxes)[:,:10]
-
-    return hbboxes, obboxes   
-
-
-def _transformGTBBox(gt_bboxes, class_mapping, scale=[1,1], rpn_stride=1, shape=[1,1], roundoff=False):
-    gt_hbboxes = []
-    gt_obboxes = []
-    
-    for gt_bbox in gt_bboxes:
-        label = gt_bbox['label']
-        label = class_mapping[label]
-        xmin = ((gt_bbox['xmin']) * scale[0] / rpn_stride) / shape[0]
-        xmax = ((gt_bbox['xmax']-0.01) * scale[0] / rpn_stride) / shape[0]
-        ymin = ((gt_bbox['ymin']) * scale[1] / rpn_stride) / shape[1]
-        ymax = ((gt_bbox['ymax']-0.01) * scale[1] / rpn_stride) / shape[1]
-        if roundoff:
-            xmin=int(round(xmin)); xmax=int(round(xmax))
-            ymin=int(round(ymin)); ymax=int(round(ymax))
-            
-        trans_gt_bbox = [xmin, ymin, xmax, ymax, label]
-        
-        if label == 1: #human
-            gt_hbboxes.append(trans_gt_bbox)
-        elif label > 1: #object
-            gt_obboxes.append(trans_gt_bbox)
-            
-    gt_hbboxes = np.array(gt_hbboxes)
-    gt_obboxes = np.array(gt_obboxes)
-
-    return gt_hbboxes, gt_obboxes   
-
-
-def _getRelMap(rels):
-    nb_prs = len(np.unique(rels[:,0]))
-    nb_obj = len(np.unique(rels[:,1]))
-    
-    prsidxs = np.unique(rels[:,0])
-    prsidxs = {idx:i for i,idx in enumerate(prsidxs)}
-    
-    objidxs = np.unique(rels[:,1])
-    objidxs = {idx:i for i,idx in enumerate(objidxs)}
-    
-    rel_map = np.ones((nb_prs, nb_obj)) * -1
-    
-    for rel in rels:
-        rel_map[prsidxs[rel[0]], objidxs[rel[1]]] = rel[2]
-    return rel_map
-
-def _computeIoUs(bbox, gt_bboxes):
-    area = (bbox[2] - bbox[0]) * (bbox[3] - bbox[1])
-    gt_areas = (gt_bboxes[:,2] - gt_bboxes[:,0]) * (gt_bboxes[:,3] - gt_bboxes[:,1])
-    
-    # find the intersection
-    xx1_int = np.maximum(bbox[0], gt_bboxes[:,0])
-    yy1_int = np.maximum(bbox[1], gt_bboxes[:,1])
-    xx2_int = np.minimum(bbox[2], gt_bboxes[:,2])
-    yy2_int = np.minimum(bbox[3], gt_bboxes[:,3])
-
-    ww_int = np.maximum(0, xx2_int - xx1_int)
-    hh_int = np.maximum(0, yy2_int - yy1_int)
-
-    area_int = ww_int * hh_int
-    # find the union
-    area_union = area + gt_areas - area_int
-
-    # compute the ratio of overlap
-    overlap = area_int / (area_union + 1e-6)
-    
-    return overlap
-
 def prepareTargets(bboxes, imageMeta, imageDims, cfg, class_mapping):    
     #############################
     ########## Image ############
@@ -136,15 +47,15 @@ def prepareTargets(bboxes, imageMeta, imageDims, cfg, class_mapping):
     #############################
     ########## bboxes ###########
     #############################    
-    hbboxes, obboxes = _transformBBoxes(bboxes)
+    hbboxes, obboxes = helper._transformBBoxes(bboxes)
     
     
     #############################
     ##### Ground truth boxes ####
     #############################
-    gthboxes, gtoboxes = _transformGTBBox(gt_bboxes, class_mapping, scale=scale, rpn_stride=cfg.rpn_stride)
+    gthboxes, gtoboxes = helper._transformGTBBox(gt_bboxes, class_mapping, scale=scale, rpn_stride=cfg.rpn_stride)
     
-    gt_relmap  = _getRelMap(gt_rels)
+    gt_relmap  = helper._getRelMap(gt_rels)
     
     #############################
     ## Unite humans and objects #
@@ -155,11 +66,11 @@ def prepareTargets(bboxes, imageMeta, imageDims, cfg, class_mapping):
     obb_map   = np.zeros((hbboxes.shape[0], obboxes.shape[0], 4))
     
     for hidx, hbox in enumerate(hbboxes):
-        h_ious = _computeIoUs(hbox, gthboxes)
+        h_ious = helper._computeIoUs(hbox, gthboxes)
             
         for oidx, obox in enumerate(obboxes):
             objlabel = int(obox[4])
-            o_ious = _computeIoUs(obox, gtoboxes)
+            o_ious = helper._computeIoUs(obox, gtoboxes)
                         
             for gth_idx, h_iou in enumerate(h_ious):
                 for gto_idx, o_iou in enumerate(o_ious):
