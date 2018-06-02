@@ -55,7 +55,7 @@ def prepareTargets(bboxes, imageMeta, imageDims, cfg, class_mapping):
     #############################
     ##### Ground truth boxes ####
     #############################
-    gthboxes, gtoboxes = helper._transformGTBBox(gt_bboxes, class_mapping, scale=scale, rpn_stride=cfg.rpn_stride)
+    gthboxes, gtoboxes = helper._transformGTBBox(gt_bboxes, class_mapping, gt_rels, scale=scale, rpn_stride=cfg.rpn_stride)
     
     gt_relmap  = helper._getRelMap(gt_rels)
     

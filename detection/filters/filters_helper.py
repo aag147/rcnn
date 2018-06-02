@@ -441,12 +441,15 @@ def _transformBBoxes(bboxes, dosplit=True):
     return hbboxes, obboxes   
 
 
-def _transformGTBBox(gt_bboxes, class_mapping, scale=[1,1], rpn_stride=1, shape=[1,1], roundoff=False, dosplit=True):
+def _transformGTBBox(gt_bboxes, class_mapping, gt_rels, scale=[1,1], rpn_stride=1, shape=[1,1], roundoff=False, dosplit=True):
     gt_hbboxes = []
     gt_obboxes = []
     gt_allboxes = []
     
-    for gt_bbox in gt_bboxes:
+    h_idxs = gt_rels[:,0]
+    o_idxs = gt_rels[:,1]
+    
+    for b_idx, gt_bbox in enumerate(gt_bboxes):
         label = gt_bbox['label']
         label = class_mapping[label]
         xmin = ((gt_bbox['xmin']) * scale[0] / rpn_stride) / shape[0]
@@ -461,9 +464,9 @@ def _transformGTBBox(gt_bboxes, class_mapping, scale=[1,1], rpn_stride=1, shape=
         
         if not dosplit:
             gt_allboxes.append(trans_gt_bbox)
-        if label == 1: #human
+        if b_idx in h_idxs: #human
             gt_hbboxes.append(trans_gt_bbox)
-        elif label > 1: #object
+        elif b_idx in o_idxs: #object
             gt_obboxes.append(trans_gt_bbox)
         
         
