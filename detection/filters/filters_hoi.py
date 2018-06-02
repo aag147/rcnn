@@ -74,6 +74,8 @@ def prepareTargets(bboxes, imageMeta, imageDims, cfg, class_mapping):
             objlabel = int(obox[4])
             o_ious = helper._computeIoUs(obox, gtoboxes)
                         
+        
+#            print(gt_relmap.shape, len(h_ious), len(o_ious))
             for gth_idx, h_iou in enumerate(h_ious):
                 for gto_idx, o_iou in enumerate(o_ious):
                     gt_obj   = int(gtoboxes[gto_idx, 4])

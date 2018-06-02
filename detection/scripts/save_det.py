@@ -73,7 +73,7 @@ genIterator = genTrain.begin()
 detMeta = {}
 
 for i in range(genTrain.nb_batches):
-#    X, y, imageMeta, imageDims, times = next(genIterator)
+    X, y, imageMeta, imageDims, times = next(genIterator)
     imageID = imageMeta['id']
     
     
@@ -129,9 +129,9 @@ for i in range(genTrain.nb_batches):
     detMeta[imageID] = {'imageName': imageMeta['imageName'], 'h_bboxes':h_bboxes, 'o_bboxes':o_bboxes, 'hoi_labels':hoi_labels}
     
     utils.update_progress_new(i+1, genTrain.nb_batches, total_times[i,:], imageMeta['id'])
-    break    
+#    break    
 
-path = cfg.part_results_path + "COCO/det" + cfg.my_results_dir + '/hoi_input'
+path = cfg.my_results_path + '/hoi_input'
 utils.save_dict(detMeta, path)
 print()
 print(np.mean(total_times, axis=0))
