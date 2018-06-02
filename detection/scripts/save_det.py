@@ -73,46 +73,46 @@ genIterator = genTrain.begin()
 detMeta = {}
 
 for i in range(genTrain.nb_batches):
-#    X, y, imageMeta, imageDims, times = next(genIterator)
-#    imageID = imageMeta['id']
-#    
-#    
-#    s_rpn = time.time()
-#    Y1, Y2, F = model_rpn.predict_on_batch(X)
-#    f_rpn = time.time()
-#    
-#    pred_anchors = helper.deltas2Anchors(Y1, Y2, cfg, imageDims, do_regr=True)
-#    pred_anchors = helper.non_max_suppression_fast(pred_anchors, overlap_thresh=cfg.rpn_nms_overlap_thresh)
-#    pred_anchors = pred_anchors[:,0:4]
-#    
-#    rois, target_props, target_deltas, IouS = filters_detection.prepareTargets(pred_anchors, imageMeta, imageDims, data.class_mapping, cfg)
-#    rois_norm = filters_detection.prepareInputs(rois, imageDims)
-#    
-#    f_rpn_post = time.time()
-#    
-#    
-#    s_det = time.time()
-#    if True:
-#        allrois = np.zeros((1,cfg.rpn_nms_max_boxes, 5))
-#        allY1 = np.zeros((1,cfg.rpn_nms_max_boxes, cfg.nb_object_classes))
-#        allY2 = np.zeros((1,cfg.rpn_nms_max_boxes, (cfg.nb_object_classes-1)*4))
-#        for batchidx in range(math.ceil(cfg.rpn_nms_max_boxes / cfg.nb_detection_rois)):
-#            Y1, Y2 = model_detection.predict_on_batch([F, rois_norm])
-#            
-#            sidx = batchidx * cfg.nb_detection_rois
-#            fidx = min(cfg.rpn_nms_max_boxes, sidx + cfg.nb_detection_rois)
-#            allrois[:,sidx:fidx,:] = rois_norm[:,:fidx-sidx,:]
-#            allY1[:,sidx:fidx,:] = Y1[:,:fidx-sidx,:]
-#            allY2[:,sidx:fidx,:] = Y2[:,:fidx-sidx,:]
-#        
-#    f_det = time.time()
-#    rois = filters_detection.unprepareInputs(allrois, imageDims)
-#    boxes = helper.deltas2Boxes(allY1, allY2, rois, cfg)
-#    
-#    if len(boxes)==0:
-#        detMeta[imageID] = None
-#        continue
-#    
+    X, y, imageMeta, imageDims, times = next(genIterator)
+    imageID = imageMeta['id']
+    
+    
+    s_rpn = time.time()
+    Y1, Y2, F = model_rpn.predict_on_batch(X)
+    f_rpn = time.time()
+    
+    pred_anchors = helper.deltas2Anchors(Y1, Y2, cfg, imageDims, do_regr=True)
+    pred_anchors = helper.non_max_suppression_fast(pred_anchors, overlap_thresh=cfg.rpn_nms_overlap_thresh)
+    pred_anchors = pred_anchors[:,0:4]
+    
+    rois, target_props, target_deltas, IouS = filters_detection.prepareTargets(pred_anchors, imageMeta, imageDims, data.class_mapping, cfg)
+    rois_norm = filters_detection.prepareInputs(rois, imageDims)
+    
+    f_rpn_post = time.time()
+    
+    
+    s_det = time.time()
+    if True:
+        allrois = np.zeros((1,cfg.rpn_nms_max_boxes, 5))
+        allY1 = np.zeros((1,cfg.rpn_nms_max_boxes, cfg.nb_object_classes))
+        allY2 = np.zeros((1,cfg.rpn_nms_max_boxes, (cfg.nb_object_classes-1)*4))
+        for batchidx in range(math.ceil(cfg.rpn_nms_max_boxes / cfg.nb_detection_rois)):
+            Y1, Y2 = model_detection.predict_on_batch([F, rois_norm])
+            
+            sidx = batchidx * cfg.nb_detection_rois
+            fidx = min(cfg.rpn_nms_max_boxes, sidx + cfg.nb_detection_rois)
+            allrois[:,sidx:fidx,:] = rois_norm[:,:fidx-sidx,:]
+            allY1[:,sidx:fidx,:] = Y1[:,:fidx-sidx,:]
+            allY2[:,sidx:fidx,:] = Y2[:,:fidx-sidx,:]
+        
+    f_det = time.time()
+    rois = filters_detection.unprepareInputs(allrois, imageDims)
+    boxes = helper.deltas2Boxes(allY1, allY2, rois, cfg)
+    
+    if len(boxes)==0:
+        detMeta[imageID] = None
+        continue
+    
     boxes_nms = helper.non_max_suppression_boxes(boxes, cfg, cfg.det_nms_overlap_thresh)
     h_bboxes, o_bboxes, hoi_labels, _ = filters_hoi.prepareTargets(boxes_nms, imageMeta, imageDims, cfg, class_mapping)
 
