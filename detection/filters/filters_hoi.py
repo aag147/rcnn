@@ -87,7 +87,16 @@ def prepareTargets(bboxes, imageMeta, imageDims, cfg, class_mapping):
                             hbb_map[hidx, oidx, :] = hbox[:4]
                             obb_map[hidx, oidx, :] = obox[:4]
                     elif h_iou >= cfg.hoi_max_overlap and o_iou >= cfg.hoi_max_overlap:
-                        gt_label = int(gt_relmap[gth_idx, gto_idx])
+                        
+                        try:
+                            gt_label = int(gt_relmap[gth_idx, gto_idx])
+                        except:
+                            print()
+                            print(gt_rels)
+                            print(gt_bboxes)
+                            print(gt_bboxes.shape, gthboxes.shape, gtoboxes.shape)
+                            print(gt_relmap.shape, len(h_ious), len(o_ious))
+                            raise
                         if gt_label >= 0:
                             val_map[hidx, oidx] = 3
                             label_map[hidx, oidx, gt_label] = 1

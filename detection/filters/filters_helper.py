@@ -15,6 +15,7 @@ sys.path.append('../layers/')
 import numpy as np
 import cv2 as cv
 import math
+import copy as cp
 
 def unnormalizeRoIs(norm_rois, imageDims):
     shape = imageDims['output_shape']
@@ -434,8 +435,8 @@ def _transformBBoxes(bboxes, dosplit=True):
     if len(hbboxes)==0 or len(obboxes)==0:
         return None, None
     
-    hbboxes = np.array(hbboxes)[:,:10]
-    obboxes = np.array(obboxes)[:,:10]
+    obboxes = np.array(obboxes + cp.copy(hbboxes))
+    hbboxes = np.array(hbboxes)
 
     return hbboxes, obboxes   
 
