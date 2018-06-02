@@ -213,7 +213,7 @@ class basic_config:
        # model
        self.nb_anchors = len(self.anchor_sizes) * len(self.anchor_ratios)
 #       self.nb_object_classes = 81
-       self.nb_hoi_classes = 600
+#       self.nb_hoi_classes = 600
        
    def get_args(self):
        try:

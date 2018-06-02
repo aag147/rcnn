@@ -74,11 +74,10 @@ class object_data:
             reduced_objs = self.getReduxIdxs(class_mapping, cfg)
             
             class_mapping = self.reduceMapping(reduced_objs)
-            if hoi_labels is not None:
-                hoi_labels = self.reduceHoILabels(hoi_labels, reduced_objs)
+            hoi_labels, reduced_hoi_map = self.reduceHoILabels(hoi_labels, reduced_objs) if hoi_labels is not None else None
             
-            trainGTMeta = self.reduceData(trainGTMeta, reduced_objs)
-            testGTMeta = self.reduceData(testGTMeta, reduced_objs)
+            trainGTMeta = self.reduceData(trainGTMeta, reduced_objs, reduced_hoi_map)
+            testGTMeta = self.reduceData(testGTMeta, reduced_objs, reduced_hoi_map)
 #            valGTMeta = self.reduceData(valGTMeta, reduced_objs)
 #            trainMeta = utils.reduceTestData(trainMeta, reduced_idxs)
 #            testMeta = utils.reduceTestData(testMeta, reduced_idxs)
@@ -86,6 +85,8 @@ class object_data:
             
             
         cfg.nb_object_classes = len(class_mapping)
+        cfg.nb_classes = len(hoi_labels) if hoi_labels is not None else 0
+        cfg.nb_hoi_classes = cfg.nb_classes
 #        cfg.set_class_weights(class_mapping, trainGTMeta)
 #        _, valMeta = utils.splitData(list(trainMeta.keys()), trainMeta)
         self.cfg = cfg
@@ -113,7 +114,7 @@ class object_data:
 #                reduced_idxs.append(idx)
         return objs
     
-    def reduceData(self, imagesMeta, reduced_objs):
+    def reduceData(self, imagesMeta, reduced_objs, reduced_hoi_map=None):
         reduced_imagesMeta = {}
         for imageID, imageMeta in imagesMeta.items():
             new_objs = []
@@ -129,10 +130,11 @@ class object_data:
                     objsidxs[idx] = len(new_prs) + len(new_objs) - 1
                     
             if len(new_objs) > 0:
+                
                 if 'rels' in imageMeta:
                     for idx, rel in enumerate(imageMeta['rels']):    
                         if rel[0] in objsidxs and rel[1] in objsidxs:
-                            new_rels.append([objsidxs[rel[0]], objsidxs[rel[1]], rel[2]])
+                            new_rels.append([objsidxs[rel[0]], objsidxs[rel[1]], reduced_hoi_map[rel[2]]])
                     new_rels = np.array(new_rels)
                 reduced_imagesMeta[imageID] = {'imageName':imageMeta['imageName'], 'objects':new_prs+new_objs, 'rels':new_rels}
         return reduced_imagesMeta   
@@ -147,10 +149,12 @@ class object_data:
     
     def reduceHoILabels(self, hoi_labels, reduced_objs):
         new_labels = []
-        for label in hoi_labels:
+        reduced_map = {}
+        for idx, label in enumerate(hoi_labels):
             if label['obj'] in reduced_objs:
                 new_labels.append(label)
-        return new_labels
+                reduced_map[idx] = len(reduced_map)
+        return new_labels, reduced_map
     
     def getBareBonesStats(self, class_mapping):
         stats = {}

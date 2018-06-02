@@ -47,7 +47,7 @@ if True:
     labels = data.hoi_labels
     
     # Create batch generators
-    genTrain = DataGenerator(imagesMeta = data.testGTMeta, cfg=cfg, data_type='test', do_meta=True)
+    genTrain = DataGenerator(imagesMeta = data.trainGTMeta, cfg=cfg, data_type='train', do_meta=True)
     
 if True:
     model_rpn, model_detection, model_hoi, model_all = methods.get_hoi_rcnn_models(cfg, mode='train')
@@ -73,7 +73,7 @@ genIterator = genTrain.begin()
 detMeta = {}
 
 for i in range(genTrain.nb_batches):
-    X, y, imageMeta, imageDims, times = next(genIterator)
+#    X, y, imageMeta, imageDims, times = next(genIterator)
     imageID = imageMeta['id']
     
     
