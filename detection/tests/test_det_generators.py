@@ -162,7 +162,7 @@ for i in range(1):
     boxes = helper.deltas2Boxes(allY1, allY2, rois, cfg)
     draw.drawAnchors(img, boxes, cfg)
     
-    boxes_nms = helper.non_max_suppression_boxes(boxes, cfg)
+    boxes_nms = helper.non_max_suppression_boxes(boxes, cfg, cfg.det_nms_overlap_thresh)
     draw.drawAnchors(img, boxes_nms, cfg)
     break
 

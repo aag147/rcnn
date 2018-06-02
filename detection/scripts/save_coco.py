@@ -74,7 +74,6 @@ coco_res = []
 
 for i in range(genTrain.nb_batches):
     X, y, imageMeta, imageDims, times = next(genIterator)
-    print(imageMeta['imageName'])    
     
     s_rpn = time.time()
     Y1, Y2, F = model_rpn.predict_on_batch(X)
@@ -111,7 +110,7 @@ for i in range(genTrain.nb_batches):
     if len(boxes)==0:
         continue
     
-    boxes_nms = helper.non_max_suppression_boxes(boxes, cfg)
+    boxes_nms = helper.non_max_suppression_boxes(boxes, cfg, nms_overlap_thresh=0.5)
     f_det_post = time.time()
     
     total_times[i, :] = [f_rpn-s_rpn, f_rpn_post-f_rpn, f_det-s_det, f_det_post-f_det]
@@ -120,11 +119,9 @@ for i in range(genTrain.nb_batches):
     coco_res += cocoformat
     
     utils.update_progress_new(i+1, genTrain.nb_batches, total_times[i,:], imageMeta['id'])
-    
-    if i > 1:
-        break
+
 
 path = cfg.part_results_path + "COCO/det" + cfg.my_results_dir + 'results'
 utils.save_dict(coco_res, path)
 print()
-print(times)
+print(total_times)

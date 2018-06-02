@@ -6,6 +6,11 @@ Created on Sat Jun  2 10:06:36 2018
 """
 import filters_helper as helper
 
+img_ids, category_ids = helper.getCOCOIDs(data.testGTMeta, class_mapping)
+path = cfg.part_data_path + 'COCO/img_ids'
+utils.save_dict(img_ids, path)
+path = cfg.part_data_path + 'COCO/category_ids'
+utils.save_dict(category_ids, path)
 
 
 cocoform = helper.bboxes2COCOformat(boxes_nms, imageMeta, class_mapping, imageDims['scale'], cfg.rpn_stride)

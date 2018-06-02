@@ -48,6 +48,8 @@ def prepareTargets(bboxes, imageMeta, imageDims, cfg, class_mapping):
     ########## bboxes ###########
     #############################    
     hbboxes, obboxes = helper._transformBBoxes(bboxes)
+    if hbboxes is None:
+        return None, None, None, None
     
     
     #############################
@@ -110,6 +112,7 @@ def prepareTargets(bboxes, imageMeta, imageDims, cfg, class_mapping):
     final_obbs   = obb_map[val_idxs[0], val_idxs[1], :]
     
     
+    
     ##############################
     # Three sample sources redux #
     ##############################
@@ -118,12 +121,32 @@ def prepareTargets(bboxes, imageMeta, imageDims, cfg, class_mapping):
     negative2_idxs = np.where(final_vals==1)[0]      
     
     selected_pos_samples = positive_idxs
+    selected_neg1_samples = negative1_idxs
     selected_neg2_samples = negative2_idxs
+    
+    
+    if len(negative1_idxs) > 24:
+        selected_neg1_samples = np.random.choice(negative1_idxs, cfg.hoi_neg1_share, replace=False)
+        
+    if len(negative2_idxs) > 32:
+        selected_neg2_samples = np.random.choice(negative2_idxs, cfg.hoi_neg2_share, replace=False) 
+    
+    
+    selected_samples = selected_pos_samples.tolist() + selected_neg1_samples.tolist() + selected_neg2_samples.tolist()
+    final_hbbs = final_hbbs[selected_samples,:]
+    final_obbs = final_obbs[selected_samples,:]
+    final_labels = final_labels[selected_samples,:]
+    final_vals   = final_vals[selected_samples]
+    
+    return final_hbbs, final_obbs, final_labels, final_vals
+    
+    
     if len(positive_idxs) > cfg.hoi_pos_share:
         selected_pos_samples = np.random.choice(positive_idxs, cfg.hoi_pos_share, replace=False)
+        
     if len(negative1_idxs) > cfg.hoi_neg1_share:
         selected_neg1_samples = np.random.choice(negative1_idxs, cfg.hoi_neg1_share, replace=False)
-    else:
+    elif len(negative1_idxs)>0:
         selected_neg1_samples = np.random.choice(negative1_idxs, cfg.hoi_neg1_share, replace=True)
         
     if len(negative2_idxs) + len(selected_neg1_samples) + len(selected_pos_samples) > cfg.nb_hoi_rois:

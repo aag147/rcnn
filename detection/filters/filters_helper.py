@@ -39,14 +39,14 @@ def normalizeRoIs(rois, imageDims):
     return norm_rois
 
 
-def deltas2Boxes(props, deltas, rois, cfg):
+def deltas2Boxes(props, deltas, rois, cfg, exclude_bg = True):
     nb_rois_in_batch = props.shape[1]
     bboxes = {}
     boxes = []
     
     for ii in range(nb_rois_in_batch):
 #        if np.max(props[0, ii, :]) < bbox_threshold or np.argmax(props[0, ii, :]) == 0:
-        if np.argmax(props[0, ii, :]) == 0:
+        if np.argmax(props[0, ii, :]) == 0 and exclude_bg:
             continue
         
         labelID = np.argmax(props[0, ii, :])
@@ -74,7 +74,7 @@ def deltas2Boxes(props, deltas, rois, cfg):
     boxes = np.array(boxes)
     return boxes
 
-def non_max_suppression_boxes(bboxes, cfg):
+def non_max_suppression_boxes(bboxes, cfg, nms_overlap_thresh=0.5):
     # add some nms to reduce many boxes
     new_bboxes = []
     labelIDs = bboxes[:,4]
@@ -83,7 +83,7 @@ def non_max_suppression_boxes(bboxes, cfg):
         sub_bboxes = bboxes[idxs,:]
         if sub_bboxes.shape[0] == 0:
             continue
-        boxes_nms = non_max_suppression_fast(sub_bboxes, overlap_thresh=cfg.det_nms_overlap_thresh)
+        boxes_nms = non_max_suppression_fast(sub_bboxes, overlap_thresh=nms_overlap_thresh)
         new_bboxes.extend(boxes_nms)
         
     new_bboxes = np.array(new_bboxes)
@@ -337,6 +337,21 @@ def getCOCOMapping():
     coco_mapping = {'bottle': 44, 'backpack': 27, 'handbag': 31, 'dog': 18, 'giraffe': 25, 'sink': 81, 'bench': 15, 'truck': 8, 'teddy bear': 88, 'book': 84, 'umbrella': 28, 'chair': 62, 'scissors': 87, 'toilet': 70, 'cat': 17, 'frisbee': 34, 'toothbrush': 90, 'oven': 79, 'baseball glove': 40, 'kite': 38, 'dining table': 67, 'parking meter': 14, 'bowl': 51, 'skis': 35, 'remote': 75, 'fire hydrant': 11, 'suitcase': 33, 'bird': 16, 'person': 1, 'zebra': 24, 'hair drier': 89, 'wine glass': 46, 'donut': 60, 'airplane': 5, 'elephant': 22, 'bus': 6, 'mouse': 74, 'boat': 9, 'tv': 72, 'horse': 19, 'car': 3, 'potted plant': 64, 'baseball bat': 39, 'train': 7, 'keyboard': 76, 'spoon': 50, 'tie': 32, 'motorcycle': 4, 'clock': 85, 'orange': 55, 'skateboard': 41, 'cup': 47, 'bed': 65, 'sandwich': 54, 'sports ball': 37, 'cake': 61, 'banana': 52, 'vase': 86, 'knife': 49, 'couch': 63, 'pizza': 59, 'cell phone': 77, 'stop sign': 13, 'microwave': 78, 'apple': 53, 'laptop': 73, 'carrot': 57, 'broccoli': 56, 'fork': 48, 'sheep': 20, 'cow': 21, 'hot dog': 58, 'surfboard': 42, 'tennis racket': 43, 'snowboard': 36, 'traffic light': 10, 'bicycle': 2, 'refrigerator': 82, 'bear': 23, 'toaster': 80}
     return coco_mapping
 
+def getCOCOIDs(imagesMeta, class_mapping):
+    coco_mapping = getCOCOMapping()
+    
+    category_ids = []
+    img_ids = []
+    
+    for label in list(class_mapping.keys()):
+        if label == 'bg':
+            continue
+        category_ids.append(coco_mapping[label])
+    for imageID, _ in imagesMeta.items():
+        img_ids.append(int(imageID))
+    return img_ids, category_ids
+    
+
 def bboxes2COCOformat(bboxes, imageMeta, class_mapping, scale=[1,1], rpn_stride=1, shape=[1,1], roundoff=False):
     results = []
     coco_mapping = getCOCOMapping()
@@ -360,6 +375,12 @@ def bboxes2COCOformat(bboxes, imageMeta, class_mapping, scale=[1,1], rpn_stride=
         results.append(res)
 #    results = np.array(results)
     return results
+
+def bboxes2HOIformat(h_bboxes, o_bboxes, hoi_labels):
+    hoi_labels = hoi_labels.astype(int).tolist()
+    h_bboxes = [[round(float(x), 2) for x in box] for box in h_bboxes.tolist()]
+    o_bboxes = [[round(float(x), 2) for x in box] for box in o_bboxes.tolist()]
+    return h_bboxes, o_bboxes, hoi_labels
 
 
 def _computeIoUs(bbox, gt_bboxes):
@@ -409,11 +430,12 @@ def _transformBBoxes(bboxes, dosplit=True):
             
     if not dosplit:
         return np.array(gt_allboxes)
-            
-    if len(hbboxes) > 10:
-        hbboxes = np.array(hbboxes)[:,:10]
-    if len(obboxes) > 10:
-        obboxes = np.array(obboxes)[:,:10]
+
+    if len(hbboxes)==0 or len(obboxes)==0:
+        return None, None
+    
+    hbboxes = np.array(hbboxes)[:,:10]
+    obboxes = np.array(obboxes)[:,:10]
 
     return hbboxes, obboxes   
 
