@@ -28,14 +28,15 @@ class basic_config:
       if len(self.my_results_dir) > 0 and not self.use_shared_cnn:
           path = self.part_results_path + self.my_results_dir + '/'
       else:
+          print("New directory...")
           for fid in range(100):
             my_results_dir = self.dataset + "/" + self.modelnamekey + '%d/' % fid
-            path = self.part_results_path + self.my_results_dir
+            path = self.part_results_path + my_results_dir
             if not os.path.exists(path):
                 os.mkdir(path)
                 os.mkdir(path + 'weights/')
                 break
-          if not self.use_shared_cnn:
+          if len(self.my_results_path) == 0:
               self.my_results_dir = my_results_dir
             
       self.my_results_path = path

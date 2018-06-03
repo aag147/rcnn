@@ -130,10 +130,8 @@ for i in range(genTrain.nb_batches):
     h_bboxes, o_bboxes, hoi_labels, val_map = helper.bboxes2HOIformat(h_bboxes, o_bboxes, hoi_labels, val_map)
     detMeta[imageID] = {'imageName': imageMeta['imageName'], 'h_bboxes':h_bboxes, 'o_bboxes':o_bboxes, 'hoi_labels':hoi_labels, 'val_map':val_map}
     
-    import draw
-    draw.drawAnchors((X[0]+1.0)/2.0, boxes_nms, cfg)
     
-    utils.update_progress_new(i+1, genTrain.nb_batches, total_times[i,:], imageMeta['id'])
+    utils.update_progress_new(i+1, genTrain.nb_batches, imageMeta['id'])
 #    break    
 
 path = cfg.my_results_path + '/hoi_input'
