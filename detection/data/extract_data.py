@@ -42,7 +42,9 @@ class object_data:
             print('Moving data...')
             utils.moveData(from_path, to_path)
         print('Data already moved...')
-        self.cfg.data_path = to_path+'/'
+#        self.cfg.data_path = to_path+'/'
+        
+        self.cfg.my_save_path = self.cfg.move_path + '/results/' + self.cfg.my_results_dir + '/'
 
     def load_data(self):
         cfg = basic_config(self.newDir)
@@ -64,9 +66,11 @@ class object_data:
         testGTMeta = utils.load_dict(cfg.data_path + 'test_objs')
         class_mapping = utils.load_dict(cfg.data_path + 'class_mapping')
         hoi_labels = None
+        reduced_hoi_map = None
         
         if os.path.exists(cfg.data_path + 'labels.JSON'):
             hoi_labels = utils.load_dict(cfg.data_path + 'labels')
+            
             
         if cfg.max_classes is not None:
             # Reduce data to include only max_classes number of different classes
@@ -74,7 +78,8 @@ class object_data:
             reduced_objs = self.getReduxIdxs(class_mapping, cfg)
             
             class_mapping = self.reduceMapping(reduced_objs)
-            hoi_labels, reduced_hoi_map = self.reduceHoILabels(hoi_labels, reduced_objs) if hoi_labels is not None else None, None
+            if hoi_labels is not None:
+                hoi_labels, reduced_hoi_map = self.reduceHoILabels(hoi_labels, reduced_objs)
             
             trainGTMeta = self.reduceData(trainGTMeta, reduced_objs, reduced_hoi_map)
             testGTMeta = self.reduceData(testGTMeta, reduced_objs, reduced_hoi_map)
@@ -89,6 +94,7 @@ class object_data:
         cfg.nb_hoi_classes = cfg.nb_classes
 #        cfg.set_class_weights(class_mapping, trainGTMeta)
 #        _, valMeta = utils.splitData(list(trainMeta.keys()), trainMeta)
+        
         self.cfg = cfg
         
         if cfg.move:

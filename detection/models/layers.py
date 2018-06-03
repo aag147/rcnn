@@ -60,6 +60,44 @@ def fullyConnected(stream=None):
     return fullyConnectedFixed
 
 
+def pairwiseStream():
+    def pairwiseStreamFixed(x):
+        pattern = x[0]
+        conv_1 = TimeDistributed(
+            Conv2D(64, (5, 5), activation='relu', kernel_initializer=RandomNormal(stddev=0.01)),
+            name = 'pairwise_conv1a'
+        )(pattern)
+        
+        conv_1 = TimeDistributed(
+            MaxPooling2D((2,2), strides=(2,2)),
+            name = 'pairwise_max1'
+        )(conv_1)
+    
+        conv_2 = TimeDistributed(
+            Conv2D(32, (5, 5), activation='relu', kernel_initializer=RandomNormal(stddev=0.01)),
+            name = 'pairwise_conv2a'
+        )(conv_1)
+        
+        conv_2 = TimeDistributed(
+            MaxPooling2D((2,2), strides=(2,2)),
+            name = 'pairwise_max2'
+        )(conv_2)
+        
+        dense1 = TimeDistributed(
+            Flatten(),
+            name = 'pairwise_flatten'
+        )(conv_2)
+        
+        dense1 = TimeDistributed(
+            Dense(256, activation='relu', kernel_initializer=RandomNormal(stddev=0.01)),
+            name = 'pairwise_fc1'
+        )(dense1)
+        
+        return dense1
+    
+    return pairwiseStreamFixed
+
+
 class RoiPoolingConv(Layer):
     '''ROI pooling layer for 2D inputs.
     See Spatial Pyramid Pooling in Deep Convolutional Networks for Visual Recognition,

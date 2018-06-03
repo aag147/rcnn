@@ -29,13 +29,15 @@ class basic_config:
           path = self.part_results_path + self.my_results_dir + '/'
       else:
           for fid in range(100):
-            path = self.part_results_path + self.dataset + "/" + self.modelnamekey + '%d/' % fid
+            self.my_results_dir = self.dataset + "/" + self.modelnamekey + '%d/' % fid
+            path = self.part_results_path + self.my_results_dir
             if not os.path.exists(path):
                 os.mkdir(path)
                 os.mkdir(path + 'weights/')
                 break
             
       self.my_results_path = path
+      self.my_save_path = path
       self.my_weights_path = path + 'weights/'
       
       if self.my_weights is not None:

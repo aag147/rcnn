@@ -99,6 +99,25 @@ def plotLosses(log):
     plt.legend(['train', 'test'], loc='upper left')
     plt.show()
 
+
+def drawHoIComplete(img, h_bbox, o_bbox, pattern, labels, label_mapping):
+    f, spl = plt.subplots(2,2)
+    spl = spl.ravel()    
+    
+    hbox = drawProposalBox(h_bbox)
+    obox = drawProposalBox(o_bbox)
+    spl[0].imshow(img)
+    spl[0].plot(hbox[0,:], hbox[1,:])
+    spl[0].plot(obox[0,:], obox[1,:])
+    
+    spl[2].imshow(pattern[:,:,0])
+    spl[3].imshow(pattern[:,:,1])
+    
+    print('label', label_mapping[np.argmax(labels)])
+    
+
+
+
 def drawCrops(imagesID, imagesMeta, imagesCrops, images):
     f, spl = plt.subplots(2,2)
     spl = spl.ravel()

@@ -114,20 +114,24 @@ for i in range(genTrain.nb_batches):
         continue
     
     boxes_nms = helper.non_max_suppression_boxes(boxes, cfg, cfg.det_nms_overlap_thresh)
-    h_bboxes, o_bboxes, hoi_labels, _ = filters_hoi.prepareTargets(boxes_nms, imageMeta, imageDims, cfg, class_mapping)
+    h_bboxes, o_bboxes, hoi_labels, val_map = filters_hoi.prepareTargets(boxes_nms, imageMeta, imageDims, cfg, class_mapping)
 
     if h_bboxes is None:
         detMeta[imageID] = None
         continue
     
+    patterns = filters_hoi.prepareInteractionPatterns(h_bboxes, o_bboxes, cfg)
+    h_bboxes_norm, o_bboxes_norm = filters_hoi.prepareInputs(h_bboxes, o_bboxes, imageDims)
+    
     f_det_post = time.time()
     
-    total_times[i, :] = [f_rpn-s_rpn, f_rpn_post-f_rpn, f_det-s_det, f_det_post-f_det]
+    total_times[i, :] = [f_rpn-s_rpn, f_rpn_post-f_rpn, f_det-s_det, f_det_post-f_det]    
     
+    h_bboxes, o_bboxes, hoi_labels, val_map = helper.bboxes2HOIformat(h_bboxes, o_bboxes, hoi_labels, val_map)
+    detMeta[imageID] = {'imageName': imageMeta['imageName'], 'h_bboxes':h_bboxes, 'o_bboxes':o_bboxes, 'hoi_labels':hoi_labels, 'val_map':val_map}
     
-    h_bboxes, o_bboxes, hoi_labels = helper.bboxes2HOIformat(h_bboxes, o_bboxes, hoi_labels)
-
-    detMeta[imageID] = {'imageName': imageMeta['imageName'], 'h_bboxes':h_bboxes, 'o_bboxes':o_bboxes, 'hoi_labels':hoi_labels}
+    import draw
+    draw.drawAnchors((X[0]+1.0)/2.0, boxes_nms, cfg)
     
     utils.update_progress_new(i+1, genTrain.nb_batches, total_times[i,:], imageMeta['id'])
 #    break    
@@ -135,4 +139,5 @@ for i in range(genTrain.nb_batches):
 path = cfg.my_results_path + '/hoi_input'
 utils.save_dict(detMeta, path)
 print()
-print(np.mean(total_times, axis=0))
+print('Path:', cfg.my_results_path)
+print('Times', np.mean(total_times, axis=0))

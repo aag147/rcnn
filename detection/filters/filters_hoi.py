@@ -21,6 +21,71 @@ import copy as cp
 import utils
 import filters_helper as helper
 
+def loadData(imageInput, imageDims, cfg, batchidx = None):
+    if imageInput is None:
+        return None, None, None
+    allh_bboxes = np.array(imageInput['h_bboxes'])
+    allo_bboxes = np.array(imageInput['o_bboxes'])
+    all_labels = np.array(imageInput['hoi_labels'])
+    all_patterns = np.array(imageInput['patterns'])
+    val_map = np.array(imageInput['patterns'])
+    
+    if batchidx is None:
+        samples = helper.reduce_hoi_rois(val_map, cfg)
+        h_bboxes = allh_bboxes[:,samples, :]
+        o_bboxes = allo_bboxes[:, samples, :]
+        labels = all_labels[:, samples, :]
+        patterns = all_patterns[:, samples, :]
+    else:
+        h_bboxes = np.zeros((1, cfg.nb_hoi_rois, 4))
+        o_bboxes = np.zeros((1, cfg.nb_hoi_rois, 4))
+        labels  = np.zeros((1, cfg.nb_hoi_rois, cfg.nb_hoi_classes))
+        patterns= np.zeros((1, cfg.nb_hoi_rois, cfg.winShape[0], cfg.winShape[1], 2))
+        
+        sidx = batchidx * cfg.nb_hoi_rois
+        fidx = min(allh_bboxes.shape[1], sidx + cfg.nb_hoi_rois)
+        h_bboxes[:,:fidx-sidx,:] = allh_bboxes[:,sidx:fidx, :]
+        o_bboxes[:,:fidx-sidx,:] = allo_bboxes[:, sidx:fidx, :]
+        labels[:,:fidx-sidx,:] = all_labels[:, sidx:fidx, :]
+        patterns[:,:fidx-sidx,:] = all_patterns[:, sidx:fidx, :]
+    
+    
+    patterns = prepareInteractionPatterns(h_bboxes, o_bboxes, cfg)
+    h_bboxes, o_bboxes = prepareInputs(h_bboxes, o_bboxes, imageDims)
+    return h_bboxes, o_bboxes, patterns, labels
+
+
+def prepareInputs(h_bboxes, o_bboxes, imageDims):
+    #(xmin,ymin,width,height) -> (idx,ymin,xmin,ymax,xmax)
+    
+    #Humans
+    newh_bboxes = cp.copy(h_bboxes)
+    newh_bboxes = newh_bboxes[:,(1,0,3,2)]
+    newh_bboxes[:,2] = newh_bboxes[:,2] + newh_bboxes[:,0]
+    newh_bboxes[:,3] = newh_bboxes[:,3] + newh_bboxes[:,1]
+    
+    newh_bboxes = helper.normalizeRoIs(newh_bboxes, imageDims)
+    
+    newh_bboxes = np.insert(newh_bboxes, 0, 0, axis=1)
+    newh_bboxes = np.expand_dims(newh_bboxes, axis=0)
+    
+    #Objects
+    newo_bboxes = cp.copy(o_bboxes)
+    newo_bboxes = newo_bboxes[:,(1,0,3,2)]
+    newo_bboxes[:,2] = newo_bboxes[:,2] + newo_bboxes[:,0]
+    newo_bboxes[:,3] = newo_bboxes[:,3] + newo_bboxes[:,1]
+    
+    newo_bboxes = helper.normalizeRoIs(newo_bboxes, imageDims)
+    
+    newo_bboxes = np.insert(newo_bboxes, 0, 0, axis=1)
+    newo_bboxes = np.expand_dims(newo_bboxes, axis=0)
+    
+    return newh_bboxes, newo_bboxes
+
+def prepareInteractionPatterns(final_hbbs, final_obbs, cfg):
+    patterns = helper.getDataPairWiseStream(final_hbbs, final_obbs, cfg)
+    patterns = np.expand_dims(patterns, axis=0)
+    return patterns
 
 def prepareTargets(bboxes, imageMeta, imageDims, cfg, class_mapping):    
     #############################
@@ -48,7 +113,7 @@ def prepareTargets(bboxes, imageMeta, imageDims, cfg, class_mapping):
     ########## bboxes ###########
     #############################    
     hbboxes, obboxes = helper._transformBBoxes(bboxes)
-    if hbboxes is None:
+    if hbboxes is None or obboxes is None:
         return None, None, None, None
     
     
@@ -66,6 +131,10 @@ def prepareTargets(bboxes, imageMeta, imageDims, cfg, class_mapping):
     label_map = np.zeros((hbboxes.shape[0], obboxes.shape[0], cfg.nb_hoi_classes))
     hbb_map   = np.zeros((hbboxes.shape[0], obboxes.shape[0], 4))
     obb_map   = np.zeros((hbboxes.shape[0], obboxes.shape[0], 4))
+    
+#    print(gt_bboxes)
+#    print(gthboxes)
+#    print(gtoboxes)
     
     for hidx, hbox in enumerate(hbboxes):
         h_ious = helper._computeIoUs(hbox, gthboxes)
@@ -86,17 +155,11 @@ def prepareTargets(bboxes, imageMeta, imageDims, cfg, class_mapping):
                             val_map[hidx, oidx] = 1
                             hbb_map[hidx, oidx, :] = hbox[:4]
                             obb_map[hidx, oidx, :] = obox[:4]
+                                                                                    
                     elif h_iou >= cfg.hoi_max_overlap and o_iou >= cfg.hoi_max_overlap:
                         
-                        try:
-                            gt_label = int(gt_relmap[gth_idx, gto_idx])
-                        except:
-                            print()
-                            print(gt_rels)
-                            print(gt_bboxes)
-                            print(gt_bboxes.shape, gthboxes.shape, gtoboxes.shape)
-                            print(gt_relmap.shape, len(h_ious), len(o_ious))
-                            raise
+                        gt_label = int(gt_relmap[gth_idx, gto_idx])
+
                         if gt_label >= 0:
                             val_map[hidx, oidx] = 3
                             label_map[hidx, oidx, gt_label] = 1
@@ -115,11 +178,20 @@ def prepareTargets(bboxes, imageMeta, imageDims, cfg, class_mapping):
     ### Reshape and remove bads ##
     ##############################
     val_idxs = np.where(val_map>0)
+#    print(val_idxs)
+#    print(hbb_map.shape, obb_map.shape)
     final_vals = cp.copy(val_map[val_idxs[0], val_idxs[1]])
     final_labels = label_map[val_idxs[0], val_idxs[1]]
     final_hbbs   = hbb_map[val_idxs[0], val_idxs[1], :]
     final_obbs   = obb_map[val_idxs[0], val_idxs[1], :]
     
+#    return val_map, hbb_map, obb_map, final_hbbs, final_obbs
+    
+    # (_,_,xmax,ymax) -> (_,_,width,height)
+    final_hbbs[:,2] -= final_hbbs[:,0]
+    final_hbbs[:,3] -= final_hbbs[:,1]
+    final_obbs[:,2] -= final_obbs[:,0]
+    final_obbs[:,3] -= final_obbs[:,1]
     
     
     ##############################

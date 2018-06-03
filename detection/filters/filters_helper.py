@@ -377,11 +377,20 @@ def bboxes2COCOformat(bboxes, imageMeta, class_mapping, scale=[1,1], rpn_stride=
 #    results = np.array(results)
     return results
 
-def bboxes2HOIformat(h_bboxes, o_bboxes, hoi_labels):
-    hoi_labels = [np.where(x==1)[0].tolist() for x in hoi_labels]
+def bboxes2HOIformat(h_bboxes, o_bboxes, hoi_labels, val_map):
+    hoi_labels = [np.where(x==1)[0].tolist() for x in hoi_labels.astype(int)]
     h_bboxes = [[round(float(x), 2) for x in box] for box in h_bboxes.tolist()]
     o_bboxes = [[round(float(x), 2) for x in box] for box in o_bboxes.tolist()]
-    return h_bboxes, o_bboxes, hoi_labels
+    val_map = val_map.astype(int).tolist()
+    return h_bboxes, o_bboxes, hoi_labels, val_map
+
+
+def bboxes2DETformat(bboxes, target_labels, target_deltas, cfg):
+    target_labels = [int(np.argmax(x)) for x in target_labels]
+    bboxes = [[round(float(x), 4) for x in box] for box in bboxes.tolist()]
+    target_deltas = [[round(float(row[x]), 4) for x in np.where(row!=0)[0].tolist()] for row in target_deltas[:,(cfg.nb_object_classes-1)*4:]]
+    return bboxes, target_labels, target_deltas
+
 
 
 def _computeIoUs(bbox, gt_bboxes):
@@ -448,6 +457,7 @@ def _transformGTBBox(gt_bboxes, class_mapping, gt_rels, scale=[1,1], rpn_stride=
     
     h_idxs = gt_rels[:,0]
     o_idxs = gt_rels[:,1]
+
     
     for b_idx, gt_bbox in enumerate(gt_bboxes):
         label = gt_bbox['label']
@@ -532,17 +542,17 @@ def normalizeGTboxes(gtboxes, scale=[1,1], rpn_stride=1, shape=[1,1], roundoff=F
     return gtnormboxes
 
 def _getSinglePairWiseStream(thisBB, thatBB, width, height, newWidth, newHeight, cfg):
-    xmin = max(0, thisBB['xmin'] - thatBB['xmin'])
-    xmax = width - max(0, thatBB['xmax'] - thisBB['xmax'])
-    ymin = max(0, thisBB['ymin'] - thatBB['ymin'])
-    ymax = height - max(0, thatBB['ymax'] - thisBB['ymax'])
-    
+    xmin = max(0, thisBB[0] - thatBB[0])
+    xmax = width - max(0, thatBB[0]+thatBB[2] - (thisBB[0]+thisBB[2]))
+    ymin = max(0, thisBB[1] - thatBB[1])
+    ymax = height - max(0, thatBB[1]+thatBB[3] - (thisBB[1]+thisBB[3]))
+        
     attWin = np.zeros([height,width])
     attWin[ymin:ymax, xmin:xmax] = 1
     attWin = cv.resize(attWin, (newWidth, newHeight), interpolation = cv.INTER_NEAREST)
     attWin = attWin.astype(np.int)
 
-    xPad = int(abs(newWidth - cfg.winShape[0]) / 2)
+    xPad = int(abs(newWidth - cfg.winShape[1]) / 2)
     yPad = int(abs(newHeight - cfg.winShape[0]) / 2)
     attWinPad = np.zeros(cfg.winShape).astype(np.int)
 #        print(attWin.shape, attWinPad.shape, xPad, yPad)
@@ -550,11 +560,11 @@ def _getSinglePairWiseStream(thisBB, thatBB, width, height, newWidth, newHeight,
     attWinPad[yPad:yPad+newHeight, xPad:xPad+newWidth] = attWin
     return attWinPad
 
-def _getPairWiseStream(prsBB, objBB, cfg):
-    width = max(prsBB['xmax'], objBB['xmax']) - min(prsBB['xmin'], objBB['xmin'])
-    height = max(prsBB['ymax'], objBB['ymax']) - min(prsBB['ymin'], objBB['ymin'])
+def _getPairWiseStream(hbbox, obbox, cfg):
+    width = max(hbbox[0]+hbbox[2], obbox[0]+obbox[2]) - min(hbbox[0], obbox[0])
+    height = max(hbbox[1]+hbbox[3], obbox[1]+obbox[3]) - min(hbbox[1], obbox[1])
     if width > height:
-        newWidth = cfg.winShape[0]
+        newWidth = cfg.winShape[1]
         apr = newWidth / width
         newHeight = int(height*apr) 
     else:
@@ -562,18 +572,50 @@ def _getPairWiseStream(prsBB, objBB, cfg):
         apr = newHeight / height
         newWidth = int(width*apr)
         
-    prsWin = _getSinglePairWiseStream(prsBB, objBB, width, height, newWidth, newHeight, cfg)
-    objWin = _getSinglePairWiseStream(objBB, prsBB, width, height, newWidth, newHeight, cfg)
+    prsWin = _getSinglePairWiseStream(hbbox, obbox, width, height, newWidth, newHeight, cfg)
+    objWin = _getSinglePairWiseStream(obbox, hbbox, width, height, newWidth, newHeight, cfg)
     
     return [prsWin, objWin]
 
-def getDataPairWiseStream(imagesID, imagesMeta, cfg):
+def getDataPairWiseStream(hbboxes, obboxes, cfg):
+    hbboxes *= cfg.rpn_stride
+    hbboxes = hbboxes.astype(int)
+    obboxes *= cfg.rpn_stride
+    obboxes = obboxes.astype(int)
+    
     dataPar = []
-    for imageID in imagesID:
-        imageMeta = imagesMeta[imageID]
-        for relID, rel in imageMeta['rels'].items():
-            relWin = _getPairWiseStream(rel['prsBB'], rel['objBB'], cfg)
-            dataPar.append(relWin)
+    for pairidx in range(hbboxes.shape[0]):
+        relWin = _getPairWiseStream(hbboxes[pairidx], obboxes[pairidx], cfg)
+        dataPar.append(relWin)
     dataPar = np.array(dataPar)
     dataPar = dataPar.transpose(cfg.par_order_of_dims)
     return dataPar
+
+def reduce_hoi_rois(val_map, cfg):
+    positive_idxs = np.where(val_map==3)[0]
+    negative1_idxs = np.where(val_map==2)[0]
+    negative2_idxs = np.where(val_map==1)[0]      
+    
+    selected_pos_samples = positive_idxs
+    selected_neg1_samples = negative1_idxs
+    selected_neg2_samples = negative2_idxs
+    
+    if len(positive_idxs) > cfg.hoi_pos_share:
+        selected_pos_samples = np.random.choice(positive_idxs, cfg.hoi_pos_share, replace=False)
+        
+    if len(negative1_idxs) > cfg.hoi_neg1_share:
+        selected_neg1_samples = np.random.choice(negative1_idxs, cfg.hoi_neg1_share, replace=False)
+    elif len(negative1_idxs)>0:
+        selected_neg1_samples = np.random.choice(negative1_idxs, cfg.hoi_neg1_share, replace=True)
+        
+    if len(negative2_idxs) + len(selected_neg1_samples) + len(selected_pos_samples) > cfg.nb_hoi_rois:
+        selected_neg2_samples = np.random.choice(negative2_idxs, cfg.hoi_neg2_share, replace=False)
+    elif len(negative2_idxs) > 0:
+        selected_neg2_samples = np.random.choice(negative2_idxs, cfg.nb_hoi_rois - len(selected_pos_samples) - len(selected_neg1_samples), replace=True)
+    else:
+        selected_neg1_samples = np.random.choice(negative1_idxs, cfg.nb_hoi_rois - len(selected_pos_samples), replace=True)
+        
+
+    selected_samples = selected_pos_samples.tolist() + selected_neg1_samples.tolist() + selected_neg2_samples.tolist()
+    return selected_samples
+

@@ -30,6 +30,7 @@ def get_hoi_rcnn_models(cfg, mode='train'):
         roi_shape = (None, 5)
         human_shape = (None, 5)
         object_shape = (None, 5)
+        interaction_shape = (None, cfg.winShape[0], cfg.winShape[1], 2)
         features_shape = (None, None, 512)
     
         ########################
@@ -51,6 +52,11 @@ def get_hoi_rcnn_models(cfg, mode='train'):
         object_input = keras.layers.Input(
             shape=object_shape,
             name="input_object"
+        )
+        
+        interaction_input = keras.layers.Input(
+            shape=interaction_shape,
+            name="input_interaction"
         )
         
         features_input = keras.layers.Input(
@@ -177,9 +183,11 @@ def get_hoi_rcnn_models(cfg, mode='train'):
         hoi_inputs = [
             img_input,
             human_input,
-            object_input
+            object_input,
+            interaction_input
         ]
         
+        ## HUMAN ##
         hoi_human_rois = layers.RoiPoolingConv(
             pool_size=pool_size
         )([
@@ -202,6 +210,7 @@ def get_hoi_rcnn_models(cfg, mode='train'):
             name="scores4human"
         )(hoi_human_features)
             
+        ## OBJECT ##
         hoi_object_rois = layers.RoiPoolingConv(
             pool_size=pool_size
         )([
@@ -224,8 +233,23 @@ def get_hoi_rcnn_models(cfg, mode='train'):
             name="scores4object"
         )(hoi_object_features)
             
-        hoi_score = keras.layers.Add()([hoi_human_scores, hoi_object_scores])
-        
+            
+        ## INTERACTION ##
+        hoi_pattern_features = layers.pairwiseStream(
+        )([
+            interaction_input
+        ])
+        hoi_pattern_scores = keras.layers.TimeDistributed(
+            keras.layers.Dense(
+                units=1 * nb_hoi_classes,
+                activation=None,
+                kernel_initializer=keras.initializers.RandomNormal(stddev=0.01)
+            ),
+            name = 'scores4pattern'
+        )(hoi_pattern_features)
+            
+        ## FINAL ##
+        hoi_score = keras.layers.Add()([hoi_human_scores, hoi_object_scores, hoi_pattern_scores])
         
         hoi_final_score = keras.layers.Activation(
             "sigmoid",

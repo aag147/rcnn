@@ -12,6 +12,7 @@ import cv2 as cv
 import filters_hoi,\
        filters_rpn
 import time
+import utils
 
 class DataGenerator():
     
@@ -39,7 +40,6 @@ class DataGenerator():
       self.images_path = self.data_path + 'images/'
       self.images_path = self.images_path + self.data_type + '/'
       self.rois_path = cfg.my_detections_path
-#      self.rois_path = self.rois_path + self.data_type + '/'
       self.cfg = cfg
 
       self.dataID = list(imagesMeta.keys())
@@ -50,6 +50,9 @@ class DataGenerator():
           self.dataID.sort()
       
       self.imagesMeta = imagesMeta
+      self.imagesInputs = utils.loadDict(self.rois_path)
+      
+      
       self.nb_images = len(self.dataID)
       self.nb_samples = None
       if self.nb_batches is None:
@@ -72,12 +75,14 @@ class DataGenerator():
 
         for imageID in imageIDs:
             imageMeta = self.imagesMeta[imageID]
+            imageInputs = self.imagesInputs[imageID]
+            
             imageMeta['id'] = imageID
             io_start = time.time()
             img, imageDims = filters_rpn.prepareInputs(imageMeta, self.images_path, self.cfg)
             io_end = time.time()
             pp_start = time.time()
-            hbb, obb, ip, target_props = filters_hoi.loadData(imageMeta, self.rois_path, self.cfg)
+            hbb, obb, ip, target_props = filters_hoi.loadData(self.images_path, imageDims, self.cfg)
             pp_end = time.time()
             if hbb is None:
                 return None

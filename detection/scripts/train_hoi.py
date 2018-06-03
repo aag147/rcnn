@@ -59,19 +59,24 @@ if True:
     else:
         print('Non-Uniform anchor sampling')
         
-    if cfg.use_channel_mean:
-        print('Channel mean preprocessing')
-    else:
-        print('Image mean/std preprocessing')
-        
+
     if type(cfg.my_weights)==str and len(cfg.my_weights) > 0:
-        print('Loading my weights...')
-        loss_cls = losses.hoi_loss_cls
-        
-        get_custom_objects().update({"hoi_loss_cls_fixed_num": loss_cls})
-        
-        path = cfg.my_weights_path + cfg.my_weights
-        model_hoi = load_model(path)
+        if cfg.use_shared_cnn:
+            print('Loading shared weights...')
+            print(model_hoi.layers[11].get_weights()[0][0,0,0,0])
+            model_hoi.load_weights(cfg.my_shared_weights, by_name=True)
+            print(model_hoi.layers[11].get_weights()[0][0,0,0,0])
+            # Only train unique layers
+            for i, layer in enumerate(model_hoi.layers):
+                layer.trainable = False
+                if i == cfg.nb_shared_layers:
+                    break
+        else:
+            print('Loading my weights...')
+            loss_cls = losses.hoi_loss_cls
+            get_custom_objects().update({"hoi_loss_cls_fixed_num": loss_cls})
+            
+            model_hoi = load_model(cfg.my_shared_weights) 
     
     
     model_hoi.compile(optimizer=opt,\
