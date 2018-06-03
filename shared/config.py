@@ -167,7 +167,6 @@ class basic_config:
        # Basic stuff
        self.pool_size = 3
        self.init_lr = 0.00001
-       self.train_cfg.nb_batches = 1000
        self.epoch_begin = 0
        self.epoch_end = 60
        self.optimizer = 'adam'
