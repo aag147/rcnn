@@ -49,7 +49,12 @@ if True:
     # Create batch generators
     genTrain = DataGenerator(imagesMeta = data.trainGTMeta, cfg=cfg, data_type='train', do_meta=True)
     
+    if not os.path.exists(cfg.my_save_path):
+        os.makedirs(cfg.my_save_path)
+    print('results path', cfg.my_save_path)
+
 if True:
+    
     model_rpn, model_detection, model_hoi, model_all = methods.get_hoi_rcnn_models(cfg, mode='train')
     model_rpn, model_detection, model_hoi = methods.get_hoi_rcnn_models(cfg, mode='test')
     if type(cfg.my_weights)==str and len(cfg.my_weights)>0:
@@ -134,8 +139,8 @@ for i in range(genTrain.nb_batches):
     utils.update_progress_new(i+1, genTrain.nb_batches, imageMeta['id'])
 #    break    
 
-path = cfg.my_results_path + '/hoi_input'
+path = cfg.my_save_path + 'hoi_input'
 utils.save_dict(detMeta, path)
 print()
-print('Path:', cfg.my_results_path)
+print('Path:', cfg.my_save_path)
 print('Times', np.mean(total_times, axis=0))
