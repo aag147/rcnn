@@ -27,6 +27,7 @@ class basic_config:
           return
       if len(self.my_results_dir) > 0 and not self.use_shared_cnn:
           path = self.part_results_path + self.my_results_dir + '/'
+          self.new_results_dir = self.my_results_dir
       else:
           print("New directory...")
           for fid in range(100):
@@ -36,8 +37,7 @@ class basic_config:
                 os.mkdir(path)
                 os.mkdir(path + 'weights/')
                 break
-          if len(self.my_results_path) == 0:
-              self.my_results_dir = my_results_dir
+          self.new_results_dir = my_results_dir
             
       self.my_results_path = path
       self.my_save_path = path

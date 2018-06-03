@@ -44,7 +44,7 @@ class object_data:
         print('Data already moved...')
 #        self.cfg.data_path = to_path+'/'
         
-        self.cfg.my_save_path = self.cfg.move_path + '/results/' + self.cfg.my_results_dir + '/'
+        self.cfg.my_save_path = self.cfg.move_path + '/results/' + self.cfg.new_results_dir + '/'
 
     def load_data(self):
         cfg = basic_config(self.newDir)
