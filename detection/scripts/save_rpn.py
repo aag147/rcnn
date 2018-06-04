@@ -90,8 +90,8 @@ if True:
         if bboxes is None:
             detMeta[imageID] = None
         else:
-            bboxes, target_labels, target_deltas = helper.bboxes2DETformat(bboxes, target_labels, target_deltas, cfg)
-            detMeta[imageID] = {'imageName': imageMeta['imageName'], 'rois':bboxes, 'target_props':target_labels, 'target_deltas':target_deltas}
+            bboxes_clean, target_labels_clean, target_deltas_clean = helper.bboxes2DETformat(bboxes, target_labels, target_deltas, cfg)
+            detMeta[imageID] = {'imageName': imageMeta['imageName'], 'rois':bboxes_clean, 'target_props':target_labels_clean, 'target_deltas':target_deltas_clean}
                 
         times = list(times) + [p_end-p_start,pp_end-pp_start]
         alltimes[batchidx,:] = times

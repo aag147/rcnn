@@ -388,8 +388,13 @@ def bboxes2HOIformat(h_bboxes, o_bboxes, hoi_labels, val_map):
 def bboxes2DETformat(bboxes, target_labels, target_deltas, cfg):
     target_labels = [int(np.argmax(x)) for x in target_labels]
     bboxes = [[round(float(x), 4) for x in box] for box in bboxes.tolist()]
-    target_deltas = [[round(float(row[x]), 4) for x in np.where(row!=0)[0].tolist()] for row in target_deltas[:,(cfg.nb_object_classes-1)*4:]]
-    return bboxes, target_labels, target_deltas
+    new_deltas = []
+    for idx, row in enumerate(target_deltas[:,(cfg.nb_object_classes-1)*4:]):
+        coord = []
+        for x in row[(target_labels[idx]-1)*4:(target_labels[idx])*4].tolist():
+            coord.append(round(float(x), 4))
+        new_deltas.append(coord)
+    return bboxes, target_labels, new_deltas
 
 
 
