@@ -319,6 +319,16 @@ def getVectorLabels(YMatrix):
         Y[sIdx] = y
     return Y
 
+def getMatrixDeltas(nb_classes, deltas, labels):
+    YMatrix = np.zeros((len(labels), (nb_classes-1)*4))
+    sIdx = 0
+    for sidx in len(labels):
+        ds = deltas[sidx,:]
+        l = labels[sidx,:]
+        YMatrix[sidx, (l-1)*4:l*4] = ds
+        sIdx += 1
+    return YMatrix    
+
 
 #%% IOU 
 def get_iou(bb1, bb2, include_union = True):

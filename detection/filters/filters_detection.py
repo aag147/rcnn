@@ -19,6 +19,11 @@ def loadData(imageMeta, rois_path, cfg, batchidx = None):
     alltarget_props = np.array(roisMeta['target_props'])
     alltarget_deltas = np.array(roisMeta['target_deltas'])
     
+    alltarget_deltas = utils.getMatrixDeltas(cfg.nb_object_classes, alltarget_deltas, alltarget_props)
+    alltarget_props = utils.getMatrixLabels(cfg.nb_object_classes, alltarget_props)
+    
+    print(alltarget_deltas.shape)
+    print(alltarget_props.shape)
     if batchidx is None:
         samples = helper.reduce_rois(alltarget_props, cfg)
         rois = allrois[:,samples, :]
