@@ -100,12 +100,12 @@ def plotLosses(log):
     plt.show()
 
 
-def drawHoIComplete(img, h_bbox, o_bbox, pattern, labels, label_mapping):
+def drawHoIComplete(img, h_bbox, o_bbox, pattern, labels, label_mapping, cfg):
     f, spl = plt.subplots(2,2)
     spl = spl.ravel()    
     
-    hbox = drawProposalBox(h_bbox)
-    obox = drawProposalBox(o_bbox)
+    hbox = drawProposalBox(h_bbox * cfg.rpn_stride)
+    obox = drawProposalBox(o_bbox * cfg.rpn_stride)
     spl[0].imshow(img)
     spl[0].plot(hbox[0,:], hbox[1,:])
     spl[0].plot(obox[0,:], obox[1,:])

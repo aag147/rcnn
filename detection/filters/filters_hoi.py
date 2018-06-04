@@ -28,8 +28,10 @@ def loadData(imageInput, imageDims, cfg, batchidx = None):
     allo_bboxes = np.array(imageInput['o_bboxes'])
     all_labels = (imageInput['hoi_labels'])
     val_map = np.array(imageInput['val_map'])
-    print(all_labels)
     all_labels = utils.getMatrixLabels(cfg.nb_hoi_classes, all_labels)
+    
+    if len(np.where(val_map==3))==0:
+        return None, None, None
     
     if batchidx is None:
         samples = helper.reduce_hoi_rois(val_map, cfg)
@@ -79,15 +81,15 @@ def unprepareInputs(h_bboxes_norm, o_bboxes_norm, imageDims):
 
 def prepareInputs(h_bboxes, o_bboxes, imageDims):
     #(xmin,ymin,width,height) -> (idx,ymin,xmin,ymax,xmax)
-    
     #Humans
     newh_bboxes = cp.copy(h_bboxes)
+    
     newh_bboxes = newh_bboxes[:,(1,0,3,2)]
     newh_bboxes[:,2] = newh_bboxes[:,2] + newh_bboxes[:,0]
     newh_bboxes[:,3] = newh_bboxes[:,3] + newh_bboxes[:,1]
     
     newh_bboxes = helper.normalizeRoIs(newh_bboxes, imageDims)
-    
+
     newh_bboxes = np.insert(newh_bboxes, 0, 0, axis=1)
     newh_bboxes = np.expand_dims(newh_bboxes, axis=0)
     
@@ -98,7 +100,7 @@ def prepareInputs(h_bboxes, o_bboxes, imageDims):
     newo_bboxes[:,3] = newo_bboxes[:,3] + newo_bboxes[:,1]
     
     newo_bboxes = helper.normalizeRoIs(newo_bboxes, imageDims)
-    
+
     newo_bboxes = np.insert(newo_bboxes, 0, 0, axis=1)
     newo_bboxes = np.expand_dims(newo_bboxes, axis=0)
     
@@ -118,6 +120,7 @@ def prepareTargets(bboxes, imageMeta, imageDims, cfg, class_mapping):
     
     scale = imageDims['scale']
     shape = imageDims['shape']
+    output_shape = imageDims['output_shape']
     
     #############################
     ###### Set Parameters #######
@@ -209,6 +212,18 @@ def prepareTargets(bboxes, imageMeta, imageDims, cfg, class_mapping):
     
 #    return val_map, hbb_map, obb_map, final_hbbs, final_obbs
     
+    # Crop to image boundary
+    final_hbbs[:,0] = np.maximum(0.0, final_hbbs[:,0])
+    final_hbbs[:,1] = np.maximum(0.0, final_hbbs[:,1])
+    final_hbbs[:,2] = np.minimum(output_shape[1], final_hbbs[:,2])
+    final_hbbs[:,3] = np.minimum(output_shape[0], final_hbbs[:,3])
+    
+    final_obbs[:,0] = np.maximum(0.0, final_obbs[:,0])
+    final_obbs[:,1] = np.maximum(0.0, final_obbs[:,1])
+    final_obbs[:,2] = np.minimum(output_shape[1], final_obbs[:,2])
+    final_obbs[:,3] = np.minimum(output_shape[0], final_obbs[:,3])
+    
+    
     # (_,_,xmax,ymax) -> (_,_,width,height)
     final_hbbs[:,2] -= final_hbbs[:,0]
     final_hbbs[:,3] -= final_hbbs[:,1]
@@ -274,62 +289,6 @@ def prepareTargets(bboxes, imageMeta, imageDims, cfg, class_mapping):
 ########################
 ###### OUT DATED #######
 ########################
-
-def apply_regr(x, y, w, h, tx, ty, tw, th):
-    try:
-        cx = x + w / 2.
-        cy = y + h / 2.
-        cx1 = tx * w + cx
-        cy1 = ty * h + cy
-        w1 = math.exp(tw) * w
-        h1 = math.exp(th) * h
-        x1 = cx1 - w1 / 2.
-        y1 = cy1 - h1 / 2.
-        x1 = int(round(x1))
-        y1 = int(round(y1))
-        w1 = int(round(w1))
-        h1 = int(round(h1))
-
-        return x1, y1, w1, h1
-
-    except ValueError:
-        return x, y, w, h
-    except OverflowError:
-        return x, y, w, h
-    except Exception as e:
-        print(e)
-        return x, y, w, h
-
-def deltas_to_bb(object_scores, object_deltas, rois, cfg):
-    bbox_threshold = cfg.hoi_bbox_threshold
-    nb_rois_in_batch = object_scores.shape[1]
-    bboxes = []
-    labels = []
-    
-    for ii in range(nb_rois_in_batch):
-        if np.max(object_scores[0, ii, :]) < bbox_threshold or np.argmax(object_scores[0, ii, :]) == 0:
-            continue
-
-        labelID = np.argmax(object_scores[0, ii, :])
-        prop = np.max(object_scores[0, ii, :])
-        (batchID, x, y, w, h) = rois[0, ii, :]
-        try:
-            (tx, ty, tw, th) = object_deltas[0, ii, 4 * labelID:4 * (labelID + 1)]
-#            tx /= cfg.classifier_regr_std[0]
-#            ty /= cfg.classifier_regr_std[1]
-#            tw /= cfg.classifier_regr_std[2]
-#            th /= cfg.classifier_regr_std[3]
-            x, y, w, h = apply_regr(x, y, w, h, tx, ty, tw, th)
-        except Exception as e:
-            print(e)
-            pass
-        bboxes.append([x, y, (x + w), (y + h)])
-        labels.append([labelID, prop])
-        
-    labels = np.array(labels)
-    bboxes = np.array(bboxes)
-    return labels, bboxes
-    
     
     
     
