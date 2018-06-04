@@ -95,7 +95,6 @@ def extractMetaData(metaData, labels):
                 rels.append(rel)
 
 
-
         if bboxes:
             imagesMeta[imageID.split('.')[0]] = {'imageName': imageID, 'objects': bboxes, 'rels':rels}
 #    print(mlk)
@@ -119,4 +118,4 @@ if __name__ == "__main__":
     print("Extract meta data")
     tmpTrainMeta = extractMetaData(bbDataTrain, labels)
 
-    utils.save_dict(tmpTrainMeta, url+'test_objs')
+#    utils.save_dict(tmpTrainMeta, url+'test_objs')

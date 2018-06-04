@@ -26,34 +26,56 @@ def loadData(imageInput, imageDims, cfg, batchidx = None):
         return None, None, None
     allh_bboxes = np.array(imageInput['h_bboxes'])
     allo_bboxes = np.array(imageInput['o_bboxes'])
-    all_labels = np.array(imageInput['hoi_labels'])
-    all_patterns = np.array(imageInput['patterns'])
-    val_map = np.array(imageInput['patterns'])
+    all_labels = (imageInput['hoi_labels'])
+    val_map = np.array(imageInput['val_map'])
+    print(all_labels)
+    all_labels = utils.getMatrixLabels(cfg.nb_hoi_classes, all_labels)
     
     if batchidx is None:
         samples = helper.reduce_hoi_rois(val_map, cfg)
-        h_bboxes = allh_bboxes[:,samples, :]
-        o_bboxes = allo_bboxes[:, samples, :]
-        labels = all_labels[:, samples, :]
-        patterns = all_patterns[:, samples, :]
+        h_bboxes = allh_bboxes[samples, :]
+        o_bboxes = allo_bboxes[samples, :]
+        labels = all_labels[samples,:]
     else:
-        h_bboxes = np.zeros((1, cfg.nb_hoi_rois, 4))
-        o_bboxes = np.zeros((1, cfg.nb_hoi_rois, 4))
-        labels  = np.zeros((1, cfg.nb_hoi_rois, cfg.nb_hoi_classes))
-        patterns= np.zeros((1, cfg.nb_hoi_rois, cfg.winShape[0], cfg.winShape[1], 2))
+        h_bboxes = np.zeros((cfg.nb_hoi_rois, 4))
+        o_bboxes = np.zeros((cfg.nb_hoi_rois, 4))
+        labels  = np.zeros((cfg.nb_hoi_rois, cfg.nb_hoi_classes))
+        patterns= np.zeros((cfg.nb_hoi_rois, cfg.winShape[0], cfg.winShape[1], 2))
         
         sidx = batchidx * cfg.nb_hoi_rois
         fidx = min(allh_bboxes.shape[1], sidx + cfg.nb_hoi_rois)
-        h_bboxes[:,:fidx-sidx,:] = allh_bboxes[:,sidx:fidx, :]
-        o_bboxes[:,:fidx-sidx,:] = allo_bboxes[:, sidx:fidx, :]
-        labels[:,:fidx-sidx,:] = all_labels[:, sidx:fidx, :]
-        patterns[:,:fidx-sidx,:] = all_patterns[:, sidx:fidx, :]
+        h_bboxes[:,:fidx-sidx,:] = allh_bboxes[sidx:fidx, :]
+        o_bboxes[:,:fidx-sidx,:] = allo_bboxes[sidx:fidx, :]
+        labels[:,:fidx-sidx,:] = all_labels[sidx:fidx, :]
     
-    
-    patterns = prepareInteractionPatterns(h_bboxes, o_bboxes, cfg)
+    labels = np.expand_dims(labels, axis=0)
+    patterns = prepareInteractionPatterns(cp.copy(h_bboxes), cp.copy(o_bboxes), cfg)
     h_bboxes, o_bboxes = prepareInputs(h_bboxes, o_bboxes, imageDims)
     return h_bboxes, o_bboxes, patterns, labels
 
+def unprepareInputs(h_bboxes_norm, o_bboxes_norm, imageDims):
+    #(idx,ymin,xmin,ymax,xmax) -> (xmin,ymin,width,height)
+    
+    #Humans
+    h_bboxes = cp.copy(h_bboxes_norm)
+    h_bboxes = h_bboxes[0,:,1:]
+    h_bboxes = h_bboxes[:,(1,0,3,2)]
+
+    h_bboxes[:,2] = h_bboxes[:,2] - h_bboxes[:,0]
+    h_bboxes[:,3] = h_bboxes[:,3] - h_bboxes[:,1]
+    
+    h_bboxes = helper.unnormalizeRoIs(h_bboxes, imageDims)
+    
+    #Objects
+    o_bboxes = cp.copy(o_bboxes_norm)
+    o_bboxes = o_bboxes[0,:,1:]
+    o_bboxes = o_bboxes[:,(1,0,3,2)]
+
+    o_bboxes[:,2] = o_bboxes[:,2] - o_bboxes[:,0]
+    o_bboxes[:,3] = o_bboxes[:,3] - o_bboxes[:,1]
+    
+    o_bboxes = helper.unnormalizeRoIs(o_bboxes, imageDims)
+    return h_bboxes, o_bboxes
 
 def prepareInputs(h_bboxes, o_bboxes, imageDims):
     #(xmin,ymin,width,height) -> (idx,ymin,xmin,ymax,xmax)

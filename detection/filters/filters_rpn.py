@@ -15,7 +15,7 @@ import os
 
 def prepareInputs(imageMeta, images_path, cfg):
     img = cv.imread(images_path + imageMeta['imageName'])
-    assert(img is not None)
+    assert(img is not None), 'invalid path: %s' % images_path + imageMeta['imageName']
     assert(img.shape[0] > 10)
     assert(img.shape[1] > 10)
     assert(img.shape[2] == 3)

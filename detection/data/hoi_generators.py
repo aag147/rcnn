@@ -50,7 +50,7 @@ class DataGenerator():
           self.dataID.sort()
       
       self.imagesMeta = imagesMeta
-      self.imagesInputs = utils.loadDict(self.rois_path)
+      self.imagesInputs = utils.load_dict(self.rois_path + 'hoiputs')
       
       
       self.nb_images = len(self.dataID)
@@ -77,20 +77,21 @@ class DataGenerator():
             imageMeta = self.imagesMeta[imageID]
             imageInputs = self.imagesInputs[imageID]
             
+            if imageInputs is None:
+                return None
+            
             imageMeta['id'] = imageID
             io_start = time.time()
             img, imageDims = filters_rpn.prepareInputs(imageMeta, self.images_path, self.cfg)
             io_end = time.time()
             pp_start = time.time()
-            hbb, obb, ip, target_props = filters_hoi.loadData(self.images_path, imageDims, self.cfg)
+            hbb, obb, ip, target_labels = filters_hoi.loadData(imageInputs, imageDims, self.cfg)
             pp_end = time.time()
-            if hbb is None:
-                return None
             times = np.array([io_end-io_start, pp_end-pp_start])
             
         if self.do_meta:
-            return [img, hbb, obb, ip], target_props, imageMeta, imageDims, times
-        return [img, hbb, obb, ip], target_props
+            return [img, hbb, obb, ip], target_labels, imageMeta, imageDims, times
+        return [img, hbb, obb, ip], target_labels
 
     #%% Different forms of generators     
     def _generateIterativeImageCentricBatches(self):

@@ -124,25 +124,25 @@ class object_data:
         reduced_imagesMeta = {}
         for imageID, imageMeta in imagesMeta.items():
             new_objs = []
-            new_prs = []
             new_rels = []
             objsidxs = {}
+            hasObjs = False
             for idx, obj in enumerate(imageMeta['objects']):
-                if obj['label'] == 'person':
-                    new_prs.append(obj)
-                    objsidxs[idx] = len(new_prs) + len(new_objs) - 1
-                elif obj['label'] in reduced_objs:
-                    new_objs.append(obj)
-                    objsidxs[idx] = len(new_prs) + len(new_objs) - 1
+                if obj['label'] not in reduced_objs:
+                    continue
+                if obj['label'] != 'person':
+                    hasObjs = True
+                new_objs.append(obj)
+                objsidxs[idx] = len(new_objs) - 1
                     
-            if len(new_objs) > 0:
-                
+            if hasObjs:
                 if 'rels' in imageMeta:
                     for idx, rel in enumerate(imageMeta['rels']):    
                         if rel[0] in objsidxs and rel[1] in objsidxs:
                             new_rels.append([objsidxs[rel[0]], objsidxs[rel[1]], reduced_hoi_map[rel[2]]])
                     new_rels = np.array(new_rels)
-                reduced_imagesMeta[imageID] = {'imageName':imageMeta['imageName'], 'objects':new_prs+new_objs, 'rels':new_rels}
+
+                reduced_imagesMeta[imageID] = {'imageName':imageMeta['imageName'], 'objects':new_objs, 'rels':new_rels}
         return reduced_imagesMeta   
 
     def reduceMapping(self, reduced_objs):

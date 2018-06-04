@@ -113,7 +113,9 @@ def drawHoIComplete(img, h_bbox, o_bbox, pattern, labels, label_mapping):
     spl[2].imshow(pattern[:,:,0])
     spl[3].imshow(pattern[:,:,1])
     
-    print('label', label_mapping[np.argmax(labels)])
+    lbs = ', '.join([label_mapping[x]['pred_ing'] for x in np.where(labels==1)[0]]) + ' ' + label_mapping[np.where(labels==1)[0][0]]['obj'] if np.sum(labels)>0 else 'none'
+    
+    print('label:', lbs)
     
 
 

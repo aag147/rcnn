@@ -125,21 +125,17 @@ for i in range(genTrain.nb_batches):
         detMeta[imageID] = None
         continue
     
-    patterns = filters_hoi.prepareInteractionPatterns(h_bboxes, o_bboxes, cfg)
-    h_bboxes_norm, o_bboxes_norm = filters_hoi.prepareInputs(h_bboxes, o_bboxes, imageDims)
     
     f_det_post = time.time()
     
     total_times[i, :] = [f_rpn-s_rpn, f_rpn_post-f_rpn, f_det-s_det, f_det_post-f_det]    
     
-    h_bboxes, o_bboxes, hoi_labels, val_map = helper.bboxes2HOIformat(h_bboxes, o_bboxes, hoi_labels, val_map)
-    detMeta[imageID] = {'imageName': imageMeta['imageName'], 'h_bboxes':h_bboxes, 'o_bboxes':o_bboxes, 'hoi_labels':hoi_labels, 'val_map':val_map}
-    
-    
-    utils.update_progress_new(i+1, genTrain.nb_batches, imageMeta['id'])
-#    break    
+    h_bboxes_hoi, o_bboxes_hoi, hoi_labels_hoi, val_map_hoi = helper.bboxes2HOIformat(h_bboxes, o_bboxes, hoi_labels, val_map)
+    detMeta[imageID] = {'imageName': imageMeta['imageName'], 'h_bboxes':h_bboxes_hoi, 'o_bboxes':o_bboxes_hoi, 'hoi_labels':hoi_labels_hoi, 'val_map':val_map_hoi}
 
-path = cfg.my_save_path + 'hoi_input'
+    utils.update_progress_new(i+1, genTrain.nb_batches, imageMeta['id'])
+
+path = cfg.my_save_path + 'hoiputs'
 utils.save_dict(detMeta, path)
 print()
 print('Path:', cfg.my_save_path)
