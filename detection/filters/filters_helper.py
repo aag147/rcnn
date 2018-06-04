@@ -304,8 +304,8 @@ def reduce_rois(true_labels, cfg):
     #############################    
     nb_detection_rois = cfg.nb_detection_rois
     
-    bg_samples = np.where(true_labels[0, :, 0] == 1)
-    fg_samples = np.where(true_labels[0, :, 0] == 0)
+    bg_samples = np.where(true_labels[:, 0] == 1)
+    fg_samples = np.where(true_labels[:, 0] == 0)
 
     if len(bg_samples) > 0:
         bg_samples = bg_samples[0]

@@ -73,9 +73,6 @@ def prepareInputs(rois, imageDims):
     new_rois = np.insert(new_rois, 0, 0, axis=1)
     new_rois = np.expand_dims(new_rois, axis=0)
     
-    new_rois = np.insert(new_rois, 0, 0, axis=1)
-    new_rois = np.expand_dims(new_rois, axis=0)
-    
     return new_rois
 
 
