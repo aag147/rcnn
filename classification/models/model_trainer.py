@@ -88,6 +88,9 @@ class model_trainer:
     
     def saveModel(self, cfg):
         for fid in range(100):
-            path = cfg.my_weights_path + 'weights-thend%d.h5' % fid
-            if not os.path.exists(path):
-                self.model.save_weights(path)
+            weight_path = cfg.my_weights_path + 'weights-thend%d.h5' % fid
+            model_path = cfg.my_weights_path + 'model-thend%d.h5' % fid
+            if not os.path.exists(weight_path):
+                self.model.save_weights(weight_path)
+                self.model.save(model_path)
+                break
