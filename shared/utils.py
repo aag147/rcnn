@@ -306,6 +306,8 @@ def getMatrixLabels(nb_classes, Y):
     YMatrix = np.zeros((len(Y), nb_classes))
     sIdx = 0
     for y in Y:
+        if y is not np.ndarray:
+            y = [y]
         for clIdx in y:
             YMatrix[sIdx][clIdx] = 1
         sIdx += 1
@@ -322,9 +324,11 @@ def getVectorLabels(YMatrix):
 def getMatrixDeltas(nb_classes, deltas, labels):
     YMatrix = np.zeros((len(labels), (nb_classes-1)*4))
     sIdx = 0
-    for sidx in len(labels):
-        ds = deltas[sidx,:]
-        l = labels[sidx,:]
+    for sidx in range(len(labels)):
+        ds = deltas[sidx]
+        l = labels[sidx]
+        if l == 0:
+            continue
         YMatrix[sidx, (l-1)*4:l*4] = ds
         sIdx += 1
     return YMatrix    

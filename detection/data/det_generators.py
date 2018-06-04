@@ -82,7 +82,7 @@ class DataGenerator():
             img, imageDims = filters_rpn.prepareInputs(imageMeta, self.images_path, self.cfg)
             io_end = time.time()
             pp_start = time.time()
-            rois, target_props, target_deltas = filters_detection.loadData(imageMeta, self.rois_path, self.cfg)
+            rois, target_props, target_deltas = filters_detection.loadData(imageMeta, self.rois_path, imageDims, self.cfg)
 #            Y = filters_detection.prepareTargets(imageMeta, imageDims, self.cfg)
             pp_end = time.time()
             if rois is None:

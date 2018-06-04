@@ -10,7 +10,7 @@ import utils
 
 import filters_helper as helper
 
-def loadData(imageMeta, rois_path, cfg, batchidx = None):
+def loadData(imageMeta, rois_path, imageDims, cfg, batchidx = None):
     roisMeta = utils.load_dict(rois_path + str(int(imageMeta['imageName'].split('.')[0])))
 #    roisMeta = utils.load_dict(rois_path + imageMeta['imageName'])
     if roisMeta is None:
@@ -26,19 +26,23 @@ def loadData(imageMeta, rois_path, cfg, batchidx = None):
     print(alltarget_props.shape)
     if batchidx is None:
         samples = helper.reduce_rois(alltarget_props, cfg)
-        rois = allrois[:,samples, :]
-        target_props = alltarget_props[:, samples, :]
-        target_deltas = alltarget_deltas[:, samples, :]
+        rois = allrois[samples, :]
+        target_props = alltarget_props[samples, :]
+        target_deltas = alltarget_deltas[samples, :]
     else:
-        rois = np.zeros((1, cfg.nb_detection_rois, 5))
-        target_props = np.zeros((1, cfg.nb_detection_rois, cfg.nb_object_classes))
-        target_deltas = np.zeros((1, cfg.nb_detection_rois, (cfg.nb_object_classes-1)*4*2))
+        rois = np.zeros((cfg.nb_detection_rois, 5))
+        target_props = np.zeros((cfg.nb_detection_rois, cfg.nb_object_classes))
+        target_deltas = np.zeros((cfg.nb_detection_rois, (cfg.nb_object_classes-1)*4*2))
         
         sidx = batchidx * cfg.nb_detection_rois
         fidx = min(cfg.detection_nms_max_boxes, sidx + cfg.nb_detection_rois)
-        rois[:,:fidx-sidx,:] = allrois[:,sidx:fidx, :]
-        target_props[:,:fidx-sidx,:] = alltarget_props[:, sidx:fidx, :]
-        target_deltas[:,:fidx-sidx,:] = alltarget_deltas[:, sidx:fidx, :]
+        rois[:fidx-sidx,:] = allrois[sidx:fidx, :]
+        target_props[:fidx-sidx,:] = alltarget_props[sidx:fidx, :]
+        target_deltas[:fidx-sidx,:] = alltarget_deltas[sidx:fidx, :]
+        
+    target_props = np.expand_dims(target_props, axis=0)
+    target_deltas = np.expand_dims(target_deltas, axis=0)
+    rois = prepareInputs(rois, imageDims)
     
     return rois, target_props, target_deltas
 
@@ -65,6 +69,9 @@ def prepareInputs(rois, imageDims):
     new_rois[:,3] = new_rois[:,3] + new_rois[:,1]
     
     new_rois = helper.normalizeRoIs(new_rois, imageDims)
+    
+    new_rois = np.insert(new_rois, 0, 0, axis=1)
+    new_rois = np.expand_dims(new_rois, axis=0)
     
     new_rois = np.insert(new_rois, 0, 0, axis=1)
     new_rois = np.expand_dims(new_rois, axis=0)
