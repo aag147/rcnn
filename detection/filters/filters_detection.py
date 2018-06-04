@@ -11,7 +11,7 @@ import utils
 import filters_helper as helper
 
 def loadData(imageMeta, rois_path, cfg, batchidx = None):
-    roisMeta = utils.load_dict(rois_path + int(imageMeta['imageName'].split('.')[0]))
+    roisMeta = utils.load_dict(rois_path + str(int(imageMeta['imageName'].split('.')[0])))
 #    roisMeta = utils.load_dict(rois_path + imageMeta['imageName'])
     if roisMeta is None:
         return None, None, None
