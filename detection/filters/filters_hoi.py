@@ -30,8 +30,8 @@ def loadData(imageInput, imageDims, cfg, batchidx = None):
     val_map = np.array(imageInput['val_map'])
     all_labels = utils.getMatrixLabels(cfg.nb_hoi_classes, all_labels)
     
-    if len(np.where(val_map==3))==0:
-        return None, None, None
+    if len(np.where(val_map==3)[0])==0:
+        return None, None, None, None
     
     if batchidx is None:
         samples = helper.reduce_hoi_rois(val_map, cfg)

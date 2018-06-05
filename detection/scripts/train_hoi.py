@@ -21,7 +21,7 @@ import utils,\
        losses,\
        callbacks,\
        filters_helper as helper
-from det_generators import DataGenerator
+from hoi_generators import DataGenerator
     
 from keras.callbacks import EarlyStopping, LearningRateScheduler, Callback
 from keras.optimizers import SGD, Adam

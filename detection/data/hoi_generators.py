@@ -56,9 +56,22 @@ class DataGenerator():
       self.nb_images = len(self.dataID)
       self.nb_samples = None
       if self.nb_batches is None:
-          self.nb_batches = self.nb_images
+          self.nb_batches = self.countValidImages()
       
       
+    def countValidImages(self):
+        nb_batches = 0
+        for imageID, imageInputs in self.imagesInputs.items():
+            if imageInputs is None:
+                continue
+
+            val_map = np.array(imageInputs['val_map'])
+            if len(np.where(val_map==3)[0])==0:
+                continue
+            nb_batches += 1
+            
+        return nb_batches
+    
       
     def begin(self):
         'Generates batches of samples'
@@ -87,6 +100,8 @@ class DataGenerator():
             pp_start = time.time()
             hbb, obb, ip, target_labels = filters_hoi.loadData(imageInputs, imageDims, self.cfg)
             pp_end = time.time()
+            if hbb is None:
+                return None
             times = np.array([io_end-io_start, pp_end-pp_start])
             
         if self.do_meta:

@@ -614,13 +614,19 @@ def reduce_hoi_rois(val_map, cfg):
         selected_neg1_samples = np.random.choice(negative1_idxs, cfg.hoi_neg1_share, replace=True)
         
     if len(negative2_idxs) + len(selected_neg1_samples) + len(selected_pos_samples) > cfg.nb_hoi_rois:
-        selected_neg2_samples = np.random.choice(negative2_idxs, cfg.hoi_neg2_share, replace=False)
+        selected_neg2_samples = np.random.choice(negative2_idxs, cfg.nb_hoi_rois - len(selected_pos_samples) - len(selected_neg1_samples), replace=False)
     elif len(negative2_idxs) > 0:
         selected_neg2_samples = np.random.choice(negative2_idxs, cfg.nb_hoi_rois - len(selected_pos_samples) - len(selected_neg1_samples), replace=True)
     else:
         selected_neg1_samples = np.random.choice(negative1_idxs, cfg.nb_hoi_rois - len(selected_pos_samples), replace=True)
         
-
     selected_samples = selected_pos_samples.tolist() + selected_neg1_samples.tolist() + selected_neg2_samples.tolist()
+    
+    
+    if len(selected_samples) != 32:
+        print(positive_idxs)
+        print(selected_pos_samples.shape, selected_neg1_samples.shape, selected_neg2_samples.shape)
+    
+    
     return selected_samples
 

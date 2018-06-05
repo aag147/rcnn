@@ -255,12 +255,18 @@ def get_hoi_rcnn_models(cfg, mode='train'):
             "sigmoid",
             name="hoi_out_class"
         )(hoi_score)
+
         
-        hoi_outputs = [
-            hoi_final_score,
-            human_input,
-            object_input
-        ]
+        if mode=='test':    
+            hoi_outputs = [
+                hoi_final_score,
+                human_input,
+                object_input
+            ]
+        else:
+            hoi_outputs = [
+                hoi_final_score
+            ]
         
         model_hoi = keras.models.Model(inputs=hoi_inputs, outputs=hoi_outputs)
         
