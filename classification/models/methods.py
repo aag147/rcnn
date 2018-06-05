@@ -26,7 +26,7 @@ def _final_stop(inputs, outputs, cfg):
     if type(cfg.my_weights)==str and len(cfg.my_weights) > 0:
         print('Loading my weights...')        
         loss_ce  = losses.weigthed_binary_crossentropy(cfg.wp,1)
-        roi_pooling = RoiPoolingConv(cfg)
+        roi_pooling = RoiPoolingConv
         get_custom_objects().update({"weighted_loss": loss_ce})
         get_custom_objects().update({'RoiPoolingConv': roi_pooling})
         

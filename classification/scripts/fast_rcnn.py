@@ -50,7 +50,7 @@ if True:
     trainer = model_trainer(model=model, genTrain=genTrain, genVal=genVal, genTest=genTest, task=cfg.task)
     trainer.compileModel(cfg)
 
-if False:    
+if True:    
     # Train model
     print('Training model...')
     trainer.trainModel(cfg)
