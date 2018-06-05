@@ -16,6 +16,7 @@ from model_trainer import model_trainer
 import load_data
 from fast_generators import DataGenerator
 from methods import Fast_HO_RCNN
+import models
 
 import numpy as np
 

@@ -81,7 +81,7 @@ if True:
     
     model_hoi.compile(optimizer=opt,\
                       loss=[losses.hoi_loss_cls(cfg.wp)],\
-                      metrics={'hoi_out_class':'accuracy'}) 
+                      metrics={'hoi_out_class':'binary_accuracy'}) 
 
 
     

@@ -5,7 +5,7 @@ Created on Sat Apr  7 13:30:30 2018
 @author: aag14
 """
 
-from models import AlexNet, VGG16, PairWiseStream, classifier, input_rois, AlexNet_tf, fastClassifier, fastPairWiseStream
+from models import AlexNet, VGG16, PairWiseStream, classifier, input_rois, AlexNet_tf, fastClassifier, fastPairWiseStream, RoiPoolingConv
 from keras.layers import Add, Activation
 from keras.models import Model
 import numpy as np
@@ -26,7 +26,10 @@ def _final_stop(inputs, outputs, cfg):
     if type(cfg.my_weights)==str and len(cfg.my_weights) > 0:
         print('Loading my weights...')        
         loss_ce  = losses.weigthed_binary_crossentropy(cfg.wp,1)
+        roi_pooling = RoiPoolingConv(cfg)
         get_custom_objects().update({"weighted_loss": loss_ce})
+        get_custom_objects().update({'RoiPoolingConv': roi_pooling})
+        
         path = cfg.my_weights_path + cfg.my_weights
         assert os.path.exists(path), 'invalid path: %s' % path
         model = load_model(path)   
