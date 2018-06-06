@@ -40,6 +40,8 @@ if True:
 
 trainIterator = genTrain.begin()
 
+
+print('save path', cfg.data_path +'anchors/train/')
 alltimes = np.zeros((genTrain.nb_batches, 4))
 for batchidx in range(genTrain.nb_batches):
     X, [Y1,Y2,M], imageMeta, imageDims, times = next(trainIterator)
