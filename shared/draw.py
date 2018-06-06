@@ -13,6 +13,7 @@ import copy as cp
 import os
 import glob
 import itertools
+import math
 
 
 def plot_hoi_stats(stats):
@@ -117,7 +118,35 @@ def drawHoIComplete(img, h_bbox, o_bbox, pattern, labels, label_mapping, cfg):
     
     print('label:', lbs)
     
+def drawPositiveHoIs(img, h_bbox, o_bbox, labels, label_mapping, imageMeta, imageDims, cfg):
+    import filters_helper as helper
+    ps_idxs = np.where(np.sum(labels>0.5, axis=1)>0)[0]
+    nb_imgs = len(ps_idxs)
+    
+    f, spl = plt.subplots(math.ceil((nb_imgs+2)/2), 2)
+    spl = spl.ravel()    
+    
+    # GT Boxes
+    gt_boxes = helper.normalizeGTboxes(imageMeta['objects'], scale=imageDims['scale'], roundoff=True)
+    for bb in gt_boxes:
+        bbox = drawBoundingBox(bb)
+        spl[0].imshow(img)
+        spl[0].plot(bbox[0,:], bbox[1,:])
 
+    spl_idx = 2    
+    print(ps_idxs)
+    for i in range(nb_imgs): 
+        idx = ps_idxs[i]
+        hbox = drawProposalBox(h_bbox[idx,:] * cfg.rpn_stride)
+        obox = drawProposalBox(o_bbox[idx,:] * cfg.rpn_stride)
+        spl[spl_idx].imshow(img)
+        spl[spl_idx].plot(hbox[0,:], hbox[1,:])
+        spl[spl_idx].plot(obox[0,:], obox[1,:])
+        print(labels.shape)
+        lbs = ', '.join([label_mapping[x]['pred_ing'] for x in np.where(labels[idx,:]>0.5)[0]]) + ' ' + label_mapping[np.where(labels[idx,:]>0.5)[0][0]]['obj'] if np.sum(labels[idx,:])>0 else 'none'
+        print('label:', lbs)
+        spl_idx += 1
+    
 
 
 def drawCrops(imagesID, imagesMeta, imagesCrops, images):

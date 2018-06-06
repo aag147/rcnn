@@ -377,6 +377,39 @@ def bboxes2COCOformat(bboxes, imageMeta, class_mapping, scale=[1,1], rpn_stride=
 #    results = np.array(results)
     return results
 
+
+def hoiBBoxes2COCOformat(hbboxes, obboxes, hoi_preds, imageMeta, scale=[1,1], rpn_stride=1):
+    hbboxes = cp.copy(hbboxes)
+    obboxes = cp.copy(obboxes)
+    hbboxes[:,0] = ((hbboxes[:,0]) * rpn_stride / scale[0])
+    hbboxes[:,1] = ((hbboxes[:,1]) * rpn_stride / scale[1])
+    hbboxes[:,2] = ((hbboxes[:,2]) * rpn_stride / scale[0])
+    hbboxes[:,3] = ((hbboxes[:,3]) * rpn_stride / scale[1])
+    
+    #(..,width,height) ->  (..,xmax,ymax)
+    hbboxes[:,2] = hbboxes[:,2] + hbboxes[:,0]
+    hbboxes[:,3] = hbboxes[:,3] + hbboxes[:,1]
+    
+    results = []
+    nb_boxes = hbboxes.shape[0]
+    for bidx in nb_boxes:
+        hbbox = hbboxes[bidx,:]
+        obbox = obboxes[bidx,:]
+        preds = hoi_preds[bidx]
+        labels = np.where(preds>0.5)[0].tolist()
+        props = preds[labels]
+        nb_preds = len(labels)
+
+        hbbox = [round(float(x),2) for x in hbbox.tolist()]
+        obbox = [round(float(x),2) for x in obbox.tolist()]
+        
+        for pidx in range(nb_preds):
+            label = labels[pidx]    
+            prop = props[pidx]
+            res = {'image_id': (imageMeta['id']), 'category_id': int(label), 'hbbox': hbbox, 'obbox': obbox, 'score': round(float(prop),4)}
+        results.append(res)
+    return results
+
 def bboxes2HOIformat(h_bboxes, o_bboxes, hoi_labels, val_map):
     hoi_labels = [np.where(x==1)[0].tolist() for x in hoi_labels.astype(int)]
     h_bboxes = [[round(float(x), 2) for x in box] for box in h_bboxes.tolist()]
@@ -396,6 +429,12 @@ def bboxes2DETformat(bboxes, target_labels, target_deltas, cfg):
         new_deltas.append(coord)
     return bboxes, target_labels, new_deltas
 
+def bboxes2RPNformat(target_labels, target_deltas, val_map, cfg):
+    target_labels = cp.copy(target_labels[0])
+    target_deltas = cp.copy(target_deltas[0])
+    val_map = cp.copy(val_map[0])
+
+    return target_labels, target_deltas, val_map 
 
 
 def _computeIoUs(bbox, gt_bboxes):
@@ -491,8 +530,30 @@ def _transformGTBBox(gt_bboxes, class_mapping, gt_rels, scale=[1,1], rpn_stride=
     gt_hbboxes = np.array(gt_hbboxes)
     gt_obboxes = np.array(gt_obboxes)
 
-    return gt_hbboxes, gt_obboxes   
+    return gt_hbboxes, gt_obboxes
 
+
+def _getRealRels(rels):
+    nb_rels = rels.shape[0]
+    prsidxs = np.unique(rels[:,0])
+    prsidxs = {idx:i for i,idx in enumerate(prsidxs)}
+    
+    objidxs = np.unique(rels[:,1])
+    objidxs = {idx:i for i,idx in enumerate(objidxs)}
+    
+    newPrsrels = [prsidxs[x] for x in rels[:,0]]
+    newObjrels = [objidxs[x] for x in rels[:,1]]
+    newLabels = [x for x in rels[:,2]]
+    new_rels = np.array([newPrsrels] + [newObjrels] + [newLabels] + ([[0] * nb_rels])).transpose()
+    return new_rels
+    
+    uniquePrsidxs = np.unique(rels[:,0])
+    newPrsidxs = np.argsort(uniquePrsidxs)
+    
+    uniqueObjidxs = np.unique(rels[:,1])
+    newObjidxs = np.argsort(uniqueObjidxs)
+    
+    return newPrsidxs, newObjidxs
 
 def _getRelMap(rels):
     nb_prs = len(np.unique(rels[:,0]))

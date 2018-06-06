@@ -118,10 +118,10 @@ for i in range(genTrain.nb_batches):
     cocoformat = helper.bboxes2COCOformat(boxes_nms, imageMeta, class_mapping, imageDims['scale'], cfg.rpn_stride)
     coco_res += cocoformat
     
-    utils.update_progress_new(i+1, genTrain.nb_batches, total_times[i,:], imageMeta['id'])
+    utils.update_progress_new(i+1, genTrain.nb_batches, imageMeta['id'])
 
 
-path = cfg.part_results_path + "COCO/det" + cfg.my_results_dir + 'results'
+path = cfg.part_results_path + "COCO/det" + cfg.my_results_dir + '/results'
 utils.save_dict(coco_res, path)
 print()
-print(total_times)
+print(np.mean(total_times))

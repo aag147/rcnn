@@ -16,6 +16,7 @@ sys.path.append('../data/')
 
 import extract_data
 from rpn_generators import DataGenerator
+import filters_helper as helper
 
 import numpy as np
 import utils
@@ -41,14 +42,16 @@ trainIterator = genTrain.begin()
 
 alltimes = np.zeros((genTrain.nb_batches, 4))
 for batchidx in range(genTrain.nb_batches):
-    X, y, imageMeta, imageDims, times = next(trainIterator)
+    X, [Y1,Y2,M], imageMeta, imageDims, times = next(trainIterator)
     
     
     times = list(times) + [0,0]
     alltimes[batchidx,:] = times
     
-    utils.save_obj(y, cfg.data_path +'anchors/train/' + imageMeta['imageName'].split('.')[0])
-    utils.update_progress_new(batchidx, genTrain.nb_batches, times, imageMeta['imageName'])
-    
+    target_labels, target_deltas, val_map = helper.bboxes2RPNformat(Y1, Y2, M, cfg)
+    rpnMeta = {'target_labels': target_labels, 'target_deltas': target_deltas, 'val_map': val_map}
+    utils.save_obj(rpnMeta, cfg.data_path +'anchors/train/' + imageMeta['imageName'].split('.')[0])
+    utils.update_progress_new(batchidx, genTrain.nb_batches, imageMeta['imageName'])
+    break
 
 print('Times', np.mean(alltimes, axis=0))

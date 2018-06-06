@@ -13,6 +13,6 @@ path = cfg.part_data_path + 'COCO/category_ids'
 utils.save_dict(category_ids, path)
 
 
-cocoform = helper.bboxes2COCOformat(boxes_nms, imageMeta, class_mapping, imageDims['scale'], cfg.rpn_stride)
-path = cfg.part_data_path + 'COCO/results'
-utils.save_dict(cocoform, path)
+#cocoform = helper.bboxes2COCOformat(boxes_nms, imageMeta, class_mapping, imageDims['scale'], cfg.rpn_stride)
+#path = cfg.part_data_path + 'COCO/results'
+#utils.save_dict(cocoform, path)

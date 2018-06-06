@@ -30,8 +30,46 @@ def loadTargets(imageMeta, anchors_path):
     path = anchors_path + imageMeta['imageName'].split('.')[0]
     if not os.path.exists(path + '.pkl'):
         return None
-    y_rpn_cls, y_rpn_regr = utils.load_obj(path)
+    target_labels, target_deltas = utils.load_obj(path)
     return [y_rpn_cls, y_rpn_regr]
+
+
+
+def reduceTargets(y_rpn_overlap, y_rpn_regr, y_is_box_valid, cfg):
+    #############################
+    ##### Reduce GT anchors #####
+    #############################
+    # one issue is that the RPN has many more negative than positive regions, so we turn off some of the negative
+    # regions. We also limit it to 256 regions.
+    pos_locs = np.where(np.logical_and(y_rpn_overlap[0, :, :, :] == 1, y_is_box_valid[0, :, :, :] == 1))
+    neg_locs = np.where(np.logical_and(y_rpn_overlap[0, :, :, :] == 0, y_is_box_valid[0, :, :, :] == 1))
+
+    num_pos = len(pos_locs[0])
+    num_regions = cfg.nb_rpn_proposals
+        
+    if len(pos_locs[0]) > num_regions/2:
+        val_locs = random.sample(range(len(pos_locs[0])), len(pos_locs[0]) - int(num_regions/2))
+        y_is_box_valid[0, pos_locs[0][val_locs], pos_locs[1][val_locs], pos_locs[2][val_locs]] = 0
+        num_pos = int(num_regions/2)
+    
+    if len(neg_locs[0]) + num_pos > num_regions:
+        if cfg.rpn_uniform_sampling:
+            val_locs = random.sample(range(len(neg_locs[0])), len(neg_locs[0]) - num_pos)
+        else:
+            val_locs = random.sample(range(len(neg_locs[0])), len(neg_locs[0]) - (num_regions - num_pos))
+        y_is_box_valid[0, neg_locs[0][val_locs], neg_locs[1][val_locs], neg_locs[2][val_locs]] = 0
+    
+    
+    #############################
+    ###### Combine outputs ######
+    #############################
+    # y_rpn_overlap: objectiveness score - 0/1
+    # y_is_box_valid: should box be included in loss - 0/1
+    # y_rpn_regr: regression deltas - x,y,w,h
+    y_rpn_cls = np.concatenate([y_is_box_valid, y_rpn_overlap], axis=3)
+    y_rpn_regr *= cfg.rpn_regr_std
+    y_rpn_regr = np.concatenate([np.repeat(y_rpn_overlap, 4, axis=3), y_rpn_regr], axis=3)
+    return [np.copy(y_rpn_cls), np.copy(y_rpn_regr)]
 
 def prepareTargets(imageMeta, imageDims, cfg):
 
@@ -187,6 +225,8 @@ def prepareTargets(imageMeta, imageDims, cfg):
     
 #    y_rpn_regr = np.transpose(y_rpn_regr, (2, 0, 1))
     y_rpn_regr = np.expand_dims(y_rpn_regr, axis=0)
+    
+    return [np.copy(y_rpn_overlap), np.copy(y_rpn_regr), np.copy(y_is_box_valid)]
     
     #############################
     ##### Reduce GT anchors #####

@@ -50,32 +50,25 @@ if True:
     # Create batch generators
     genTrain = DataGenerator(imagesMeta = data.testGTMeta, cfg=cfg, data_type='test', do_meta=True)
     
-if True:
-    model_rpn, model_detection, model_hoi, model_all = methods.get_hoi_rcnn_models(cfg, mode='train')
+if False:
+#    model_rpn, model_detection, model_hoi, model_all = methods.get_hoi_rcnn_models(cfg, mode='train')
     model_rpn, model_detection, model_hoi = methods.get_hoi_rcnn_models(cfg, mode='test')
     if type(cfg.my_weights)==str and len(cfg.my_weights)>0:
         print('Loading my weights...')
-#        path = cfg.my_weights_path + cfg.my_weights
-#        path = cfg.part_results_path + "COCO/" + cfg.my_results_dir + '/weights/' + cfg.my_weights
-#        print(path)
-#        assert os.path.exists(path), 'invalid path: %s' % path
-#        print(model_rpn.layers[19].get_weights()[0][0,0,0,0])
-#        before = model_rpn.get_weights()
-#        model_rpn.load_weights(path, by_name=False)
-#        print(model_rpn.layers[19].get_weights()[0][0,0,0,0])
-#        after = model_rpn.get_weights()
-        
-#        for i, layer in enumerate(model_rpn.layers):
-#            layer.trainable = False
-#            if i == cfg.nb_shared_layers:
-#                break
-##        
-#        path = cfg.part_results_path + "COCO/" + cfg.my_results_dir + '/weights/' + cfg.my_weights
-#        print(path)
-#        assert os.path.exists(path), 'invalid path: %s' % path
-#        print(model_detection.layers[11].get_weights()[0][0,0,0,0])
-#        model_detection.load_weights(path, by_name=False)
-#        print(model_detection.layers[11].get_weights()[0][0,0,0,0])
+        path = cfg.my_weights_path + cfg.my_weights
+        path = cfg.part_results_path + "COCO/rpn" + cfg.my_results_dir + '/weights/' + cfg.my_weights
+        print(path)
+        assert os.path.exists(path), 'invalid path: %s' % path
+        print(model_rpn.layers[19].get_weights()[0][0,0,0,0])
+        model_rpn.load_weights(path, by_name=False)
+        print(model_rpn.layers[19].get_weights()[0][0,0,0,0])
+       
+        path = cfg.part_results_path + "COCO/det" + cfg.my_results_dir + '/weights/' + cfg.my_weights
+        print(path)
+        assert os.path.exists(path), 'invalid path: %s' % path
+        print(model_detection.layers[4].get_weights()[0][0,0])
+        model_detection.load_weights(path, by_name=True)
+        print(model_detection.layers[4].get_weights()[0][0,0])
         
         
 
@@ -103,15 +96,15 @@ genIterator = genTrain.begin()
 
 #final_hbbs, final_obbs, final_labels, final_vals = filters_hoi.prepareTargets(boxes_nms, imageMeta, imageDims, cfg, class_mapping)
 
-for i in range(1):
+for i in range(0):
     X, y, imageMeta, imageDims, times = next(genIterator)
     print(imageMeta['imageName'])
 
-    path = cfg.part_results_path + "COCO/rpn" + cfg.my_results_dir + '/weights/' + cfg.my_weights
-    assert os.path.exists(path), 'invalid path: %s' % path
-    print(model_rpn.layers[11].get_weights()[0][0,0,0,0])
-    model_rpn.load_weights(path, by_name=False)
-    print(model_rpn.layers[11].get_weights()[0][0,0,0,0])
+#    path = cfg.part_results_path + "COCO/rpn" + cfg.my_results_dir + '/weights/' + cfg.my_weights
+#    assert os.path.exists(path), 'invalid path: %s' % path
+#    print(model_rpn.layers[11].get_weights()[0][0,0,0,0])
+#    model_rpn.load_weights(path, by_name=False)
+#    print(model_rpn.layers[11].get_weights()[0][0,0,0,0])
     
     Y1, Y2, F = model_rpn.predict_on_batch(X)
     
@@ -123,45 +116,41 @@ for i in range(1):
     rois_norm = filters_detection.prepareInputs(rois, imageDims)
     
     
-    path = cfg.part_results_path + "COCO/det" + cfg.my_results_dir + '/weights/' + cfg.my_weights
-    assert os.path.exists(path), 'invalid path: %s' % path
-#    print(model_detection.layers[11].get_weights()[0][0,0,0,0])
-    model_detection.load_weights(path, by_name=True)
-#    print(model_detection.layers[11].get_weights()[0][0,0,0,0])
+#    path = cfg.part_results_path + "COCO/det" + cfg.my_results_dir + '/weights/' + cfg.my_weights
+#    assert os.path.exists(path), 'invalid path: %s' % path
+##    print(model_detection.layers[11].get_weights()[0][0,0,0,0])
+#    model_detection.load_weights(path, by_name=True)
+##    print(model_detection.layers[11].get_weights()[0][0,0,0,0])
     
     
     if True:
-        allrois = np.zeros((1,cfg.rpn_nms_max_boxes, 5))
         allY1 = np.zeros((1,cfg.rpn_nms_max_boxes, cfg.nb_object_classes))
         allY2 = np.zeros((1,cfg.rpn_nms_max_boxes, (cfg.nb_object_classes-1)*4))
         for batchidx in range(math.ceil(cfg.rpn_nms_max_boxes / cfg.nb_detection_rois)):
-#            rois_norm, target_props, target_deltas = filters_detection.loadData(imageMeta, rois_path, cfg, batchidx)
-            Y1, Y2 = model_detection.predict_on_batch([F, rois_norm])
-            
             sidx = batchidx * cfg.nb_detection_rois
             fidx = min(cfg.rpn_nms_max_boxes, sidx + cfg.nb_detection_rois)
-            allrois[:,sidx:fidx,:] = rois_norm[:,:fidx-sidx,:]
+            batch_rois = rois_norm[:,sidx:fidx,:]
+            Y1, Y2 = model_detection.predict_on_batch([F, batch_rois])
+
             allY1[:,sidx:fidx,:] = Y1[:,:fidx-sidx,:]
             allY2[:,sidx:fidx,:] = Y2[:,:fidx-sidx,:]
+
+    draw.drawGTBoxes((X[0]+1.0)/2.0, imageMeta, imageDims)
     
-    img = cp.copy(X[0])
-    img += 1.0
-    img /= 2.0
-    draw.drawGTBoxes(img, imageMeta, imageDims)
-    
-    rois = filters_detection.unprepareInputs(allrois, imageDims)
+    rois = filters_detection.unprepareInputs(rois_norm, imageDims)
     boxes = helper.deltas2Boxes(allY1, allY2, rois, cfg)
-    draw.drawAnchors(img, boxes, cfg)
+    draw.drawAnchors((X[0]+1.0)/2.0, boxes, cfg)
     
-    boxes_nms = helper.non_max_suppression_boxes(boxes, cfg, cfg.det_nms_overlap_thresh)
-    draw.drawAnchors(img, boxes_nms, cfg)
+    boxes_nms = helper.non_max_suppression_boxes(boxes, cfg, 0.5)
+    draw.drawAnchors((X[0]+1.0)/2.0, boxes_nms, cfg)
     
-    h_bboxes, o_bboxes, hoi_labels, final_vals = filters_hoi.prepareTargets(boxes_nms, imageMeta, imageDims, cfg, class_mapping)
-#    h_bboxes_norm, o_bboxes_norm = filters_hoi.prepareInputs(h_bboxes, o_bboxes, imageDims)
-    h_bboxes_hoi, o_bboxes_hoi, hoi_labels_hoi, val_map_hoi = helper.bboxes2HOIformat(h_bboxes, o_bboxes, hoi_labels, final_vals)
-    patterns = filters_hoi.prepareInteractionPatterns(h_bboxes, o_bboxes, cfg)
-    for hoiidx in range(10):
-        draw.drawHoIComplete((X[0]+1.0)/2.0, h_bboxes[hoiidx,:], o_bboxes[hoiidx,:], patterns[0,hoiidx,::], hoi_labels[hoiidx,:], labels)
-    break
+    if False:
+        h_bboxes, o_bboxes, hoi_labels, final_vals = filters_hoi.prepareTargets(boxes_nms, imageMeta, imageDims, cfg, class_mapping)
+    #    h_bboxes_norm, o_bboxes_norm = filters_hoi.prepareInputs(h_bboxes, o_bboxes, imageDims)
+        h_bboxes_hoi, o_bboxes_hoi, hoi_labels_hoi, val_map_hoi = helper.bboxes2HOIformat(h_bboxes, o_bboxes, hoi_labels, final_vals)
+        patterns = filters_hoi.prepareInteractionPatterns(h_bboxes, o_bboxes, cfg)
+        for hoiidx in range(10):
+            draw.drawHoIComplete((X[0]+1.0)/2.0, h_bboxes[hoiidx,:], o_bboxes[hoiidx,:], patterns[0,hoiidx,::], hoi_labels[hoiidx,:], labels)
+        break
 
 

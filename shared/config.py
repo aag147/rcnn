@@ -187,6 +187,8 @@ class basic_config:
         
        self.anchor_sizes = [64, 128, 256, 512]
        self.anchor_ratios = [[1, 1], [1, 2], [2, 1]]
+       
+       self.nb_anchors = len(self.anchor_sizes) * len(self.anchor_ratios)
         
        self.rpn_min_overlap = 0.3
        self.rpn_max_overlap = 0.7
@@ -204,7 +206,7 @@ class basic_config:
        self.det_nms_overlap_thresh=0.8
         
        # hoi filters
-       self.hoi_max_overlap = 0.5
+       self.hoi_max_overlap = 0.4
        self.hoi_min_overlap = 0.1
        self.hoi_nms_overlap_thresh=0.5
        
@@ -215,7 +217,6 @@ class basic_config:
        self.nb_hoi_rois = 32
         
        # model
-       self.nb_anchors = len(self.anchor_sizes) * len(self.anchor_ratios)
 #       self.nb_object_classes = 81
 #       self.nb_hoi_classes = 600
        
