@@ -14,6 +14,13 @@ import detection.models.models as models,\
 K.set_image_dim_ordering('tf')
 
 def get_hoi_rcnn_models(cfg, mode='train'):
+    
+        if mode=='test':
+            print('Loaded test models....')
+        else:
+            print('Loaded train models....')
+    
+    
         ########################
         ###### Parameters ######
         ########################
@@ -64,10 +71,17 @@ def get_hoi_rcnn_models(cfg, mode='train'):
             name="input_features"
         )        
         
+        img_hoi_input = keras.layers.Input(
+            shape=image_shape,
+            name='input_image'
+        )
+        
         ########################
         ####### Backbone #######
         ########################
         output_features = models.VGG16(cfg.weights_path)(img_input)
+        
+        output_features_hoi = models.VGG16(cfg.weights_path)(img_hoi_input)
         
         ########################
         ######### RPN ##########
@@ -181,7 +195,7 @@ def get_hoi_rcnn_models(cfg, mode='train'):
         ######### HOI ##########
         ########################       
         hoi_inputs = [
-            img_input,
+            img_hoi_input,
             human_input,
             object_input,
             interaction_input
@@ -191,7 +205,7 @@ def get_hoi_rcnn_models(cfg, mode='train'):
         hoi_human_rois = layers.RoiPoolingConv(
             pool_size=pool_size
         )([
-            output_features,
+            output_features_hoi,
             human_input
         ])
         
@@ -214,7 +228,7 @@ def get_hoi_rcnn_models(cfg, mode='train'):
         hoi_object_rois = layers.RoiPoolingConv(
             pool_size=pool_size
         )([
-            output_features,
+            output_features_hoi,
             object_input
         ])
         
@@ -271,12 +285,12 @@ def get_hoi_rcnn_models(cfg, mode='train'):
         model_hoi = keras.models.Model(inputs=hoi_inputs, outputs=hoi_outputs)
         
         
-        if mode=='test':
-            return model_rpn, model_detection, model_hoi    
+#        if mode=='test':
+#            return model_rpn, model_detection, model_hoi    
 
         ########################
         ######### ALL ##########
         ########################   
-        model_all = keras.models.Model([img_input,roi_input], rpn_outputs + detection_outputs)
+#        model_all = keras.models.Model([img_input,roi_input], rpn_outputs + detection_outputs)
         
-        return model_rpn, model_detection, model_hoi, model_all
+        return model_rpn, model_detection, model_hoi

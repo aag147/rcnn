@@ -72,8 +72,9 @@ def computeMAP(bboxes, imageMeta, imageDims, class_mapping, cfg):
     
 
 
-def computeHOIAP(batch, newGTMeta, category_id):
+def computeHOIAP(batch, GTMeta, nb_gt_samples, hoi_id):
     import filters_helper as helper
+    
     props = np.array([x['score'] for x in batch])
     
     sorted_idxs = props.argsort()[::-1]
@@ -82,13 +83,14 @@ def computeHOIAP(batch, newGTMeta, category_id):
     tp = np.zeros((nb_hois))
     fp = np.zeros((nb_hois))
     
+    
     for idx in sorted_idxs:
         hoi = batch[idx]
         hbbox = hoi['hbbox']
         obbox = hoi['obbox']
         imageID = hoi['image_id']
     
-        GTs = newGTMeta[imageID]
+        GTs = GTMeta[imageID]
         gt_hbboxes = GTs['gt_hbboxes']
         gt_obboxes = GTs['gt_obboxes']
         gt_rels = GTs['gt_rels']
@@ -97,13 +99,13 @@ def computeHOIAP(batch, newGTMeta, category_id):
         best_idx = -1
         
         for gt_idx, gt_rel in enumerate(gt_rels):
-            gt_hbbox = gt_hbboxes[gt_rel[0]]
-            gt_obbox = gt_obboxes[gt_rel[1]]
+            gt_hbbox = gt_hbboxes[gt_rel[0]:gt_rel[0]+1]
+            gt_obbox = gt_obboxes[gt_rel[1]:gt_rel[1]+1]
             gt_label = gt_rel[2]
             
-            if gt_label != category_id:
+            if gt_label != hoi_id:
                 continue
-            
+                        
             hum_overlap = helper._computeIoUs(hbbox, gt_hbbox)[0]
             obj_overlap = helper._computeIoUs(obbox, gt_obbox)[0]
             
@@ -114,24 +116,39 @@ def computeHOIAP(batch, newGTMeta, category_id):
         if max_iou > 0.5:
             if gt_rels[best_idx,3] == 0:
                 tp[idx] = 1 # true positive
-                newGTMeta[imageID]['gt_rels'][best_idx,3] = 1
+                GTMeta[imageID]['gt_rels'][best_idx,3] = 1
             else:
                 fp[idx] = 1 # false positive (double)
         else:
             fp[idx] = 1 # false positive
-
-        
-    return tp
-        
-#    AP  = np.sum(vals[:,0] * vals[:,2])
     
-#    return AP
+    tp = np.cumsum(tp)
+    fp = np.cumsum(fp)
+    
+    recall = tp / nb_gt_samples[hoi_id]
+#    recall = tp / 1
+    precision = tp / (fp+tp)
+    
+    APs = np.zeros((11))
+    for r in range(0,11):
+        idxs = np.where(recall>= r/10.0)[0]
+        if len(idxs) == 0:
+            p = 0.0
+        else:
+            p = np.max(precision[idxs])
+        APs[r] = p
+        
+    
+    mAP = np.mean(APs)
+    return mAP
+
     
 
 
 def computeHOImAP(COCO_mapping, imagesMeta, class_mapping, hoi_mapping, cfg):
     import filters_helper as helper
 
+    nb_gt_samples = np.zeros((len(hoi_mapping)))
     newGTMeta = {}
     for imageID, imageMeta in imagesMeta.items():
         gt_bboxes = imageMeta['objects']
@@ -139,16 +156,22 @@ def computeHOImAP(COCO_mapping, imagesMeta, class_mapping, hoi_mapping, cfg):
         gt_hbboxes, gt_obboxes = helper._transformGTBBox(gt_bboxes, class_mapping, gt_rels, dosplit=True)
         gt_rels = helper._getRealRels(gt_rels)
         newGTMeta[imageID] = {'gt_hbboxes': gt_hbboxes, 'gt_obboxes': gt_obboxes, 'gt_rels': gt_rels}
+        
+        for gt_rel in gt_rels:
+            nb_gt_samples[gt_rel[2]] += 1
     
     AP_map = np.zeros((len(hoi_mapping)))
         
-    for lidx, category_id in enumerate(hoi_mapping):
-        batch = [x for x in COCO_mapping if x['category_id']==category_id]
-        AP = computeHOIAP(batch, newGTMeta, category_id)
-#        AP_map[lidx] = AP
+    for hoi_id, hoi_label in enumerate(hoi_mapping):
+
+        batch = [x for x in COCO_mapping if x['category_id']==hoi_id]
+        if len(batch)==0:
+            continue
+        AP = computeHOIAP(batch, newGTMeta, nb_gt_samples, hoi_id)
+        AP_map[hoi_id] = AP
         
     mAP = np.mean(AP_map)
-    return AP
+    return mAP, AP_map
             
 
 

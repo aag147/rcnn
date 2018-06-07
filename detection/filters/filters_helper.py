@@ -381,6 +381,8 @@ def bboxes2COCOformat(bboxes, imageMeta, class_mapping, scale=[1,1], rpn_stride=
 def hoiBBoxes2COCOformat(hbboxes, obboxes, hoi_preds, imageMeta, scale=[1,1], rpn_stride=1):
     hbboxes = cp.copy(hbboxes)
     obboxes = cp.copy(obboxes)
+    
+    # humans
     hbboxes[:,0] = ((hbboxes[:,0]) * rpn_stride / scale[0])
     hbboxes[:,1] = ((hbboxes[:,1]) * rpn_stride / scale[1])
     hbboxes[:,2] = ((hbboxes[:,2]) * rpn_stride / scale[0])
@@ -390,9 +392,19 @@ def hoiBBoxes2COCOformat(hbboxes, obboxes, hoi_preds, imageMeta, scale=[1,1], rp
     hbboxes[:,2] = hbboxes[:,2] + hbboxes[:,0]
     hbboxes[:,3] = hbboxes[:,3] + hbboxes[:,1]
     
+    # objects
+    obboxes[:,0] = ((obboxes[:,0]) * rpn_stride / scale[0])
+    obboxes[:,1] = ((obboxes[:,1]) * rpn_stride / scale[1])
+    obboxes[:,2] = ((obboxes[:,2]) * rpn_stride / scale[0])
+    obboxes[:,3] = ((obboxes[:,3]) * rpn_stride / scale[1])
+    
+    #(..,width,height) ->  (..,xmax,ymax)
+    obboxes[:,2] = obboxes[:,2] + obboxes[:,0]
+    obboxes[:,3] = obboxes[:,3] + obboxes[:,1]
+    
     results = []
     nb_boxes = hbboxes.shape[0]
-    for bidx in nb_boxes:
+    for bidx in range(nb_boxes):
         hbbox = hbboxes[bidx,:]
         obbox = obboxes[bidx,:]
         preds = hoi_preds[bidx]
@@ -407,7 +419,7 @@ def hoiBBoxes2COCOformat(hbboxes, obboxes, hoi_preds, imageMeta, scale=[1,1], rp
             label = labels[pidx]    
             prop = props[pidx]
             res = {'image_id': (imageMeta['id']), 'category_id': int(label), 'hbbox': hbbox, 'obbox': obbox, 'score': round(float(prop),4)}
-        results.append(res)
+            results.append(res)
     return results
 
 def bboxes2HOIformat(h_bboxes, o_bboxes, hoi_labels, val_map):
