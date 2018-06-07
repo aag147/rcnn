@@ -73,7 +73,7 @@ class DataGenerator():
             imageMeta = self.imagesMeta[imageID]
             imageMeta['id'] = imageID
             
-            path = self.cfg.data_path +'anchors/train/' + imageMeta['imageName'].split('.')[0] + '.JSON'
+            path = self.images_path + imageMeta['imageName'].split('.')[0] + '.pkl'
             if os.path.exists(path):
                 return None, None, None, None, None
             
