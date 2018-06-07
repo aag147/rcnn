@@ -20,7 +20,6 @@ from rpn_generators import DataGenerator
 import numpy as np
 import utils
 import time
-import draw
 import metrics
 import filters_helper as helper
 import methods
@@ -42,7 +41,7 @@ np.seterr(all='raise')
 #plt.close("all")
 
 
-if False:
+if True:
     # Load data
     print('Loading data...')
     data = extract_data.object_data(False)
@@ -87,18 +86,18 @@ j = 0
 
 genIterator = genTrain.begin()
 
-#coco_res = []
-#for i in range(genTrain.nb_batches):
+coco_res = []
+for i in range(genTrain.nb_batches):
 
-#    X, y, imageMeta, imageDims, times = next(genIterator)
-#    utils.update_progress_new(i+1, genTrain.nb_batches, imageMeta['id'])
-#    
-#    h_bboxes, o_bboxes, hoi_labels = hoi_forward.forward_pass([X, y, imageMeta, imageDims], [model_rpn, model_detection, model_hoi], cfg, class_mapping)       
-#
-#    if h_bboxes is None:
-#        continue
-#    cocoformat = helper.hoiBBoxes2COCOformat(h_bboxes, o_bboxes, hoi_labels, imageMeta, imageDims['scale'], cfg.rpn_stride)
-#    coco_res += cocoformat
+    X, y, imageMeta, imageDims, times = next(genIterator)
+    utils.update_progress_new(i+1, genTrain.nb_batches, imageMeta['id'])
+    
+    h_bboxes, o_bboxes, hoi_labels = hoi_forward.forward_pass([X, y, imageMeta, imageDims], [model_rpn, model_detection, model_hoi], cfg, class_mapping)       
+
+    if h_bboxes is None:
+        continue
+    cocoformat = helper.hoiBBoxes2COCOformat(h_bboxes, o_bboxes, hoi_labels, imageMeta, imageDims['scale'], cfg.rpn_stride)
+    coco_res += cocoformat
     
 
 mAP, AP = metrics.computeHOImAP(coco_res, imagesMeta, class_mapping, labels, cfg)
