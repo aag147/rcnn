@@ -75,7 +75,7 @@ class DataGenerator():
             
             path = self.anchors_path + imageMeta['imageName'].split('.')[0] + '.pkl'
             if os.path.exists(path):
-                return None, [None,None,None], None, None, None
+                return None, [None,None,None], imageMeta, None, None
             
             io_start = time.time()
             img, imageDims = filters_rpn.prepareInputs(imageMeta, self.images_path, self.cfg)
