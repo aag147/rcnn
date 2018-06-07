@@ -49,7 +49,7 @@ if True:
     
 if True:
     # Create batch generators
-    genTrain = DataGenerator(imagesMeta = data.testGTMeta, cfg=cfg, data_type='test', do_meta=True)
+    genTrain = DataGenerator(imagesMeta = data.trainGTMeta, cfg=cfg, data_type='train', do_meta=True)
     
 if False:
 #    model_rpn, model_detection, model_hoi, model_all = methods.get_hoi_rcnn_models(cfg, mode='train')
@@ -77,7 +77,7 @@ j = 0
 genIterator = genTrain.begin()
 
 
-for i in range(1000):
+for i in range(0):
     
     #################
     ##### train #####

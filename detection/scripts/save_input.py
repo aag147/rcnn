@@ -46,6 +46,9 @@ alltimes = np.zeros((genTrain.nb_batches, 4))
 for batchidx in range(genTrain.nb_batches):
     X, [Y1,Y2,M], imageMeta, imageDims, times = next(trainIterator)
     
+    utils.update_progress_new(batchidx+1, genTrain.nb_batches, imageMeta['imageName'])
+    if X is None:
+        continue
     
     times = list(times) + [0,0]
     alltimes[batchidx,:] = times
@@ -53,7 +56,5 @@ for batchidx in range(genTrain.nb_batches):
     target_labels, target_deltas, val_map = helper.bboxes2RPNformat(Y1, Y2, M, cfg)
     rpnMeta = {'target_labels': target_labels, 'target_deltas': target_deltas, 'val_map': val_map}
     utils.save_obj(rpnMeta, cfg.data_path +'anchors/train/' + imageMeta['imageName'].split('.')[0])
-    utils.update_progress_new(batchidx, genTrain.nb_batches, imageMeta['imageName'])
-    break
 
 print('Times', np.mean(alltimes, axis=0))

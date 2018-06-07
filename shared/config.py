@@ -24,6 +24,7 @@ class basic_config:
    
    def get_results_paths(self):
       if len(self.my_results_path) > 0 or not self.newDir:
+          self.new_results_dir = ''
           return
       if len(self.my_results_dir) > 0 and not self.use_shared_cnn:
           path = self.part_results_path + self.my_results_dir + '/'

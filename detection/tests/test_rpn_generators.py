@@ -54,8 +54,25 @@ if True:
 trainIterator = genTrain.begin()
 
 total_times = np.array([0.0,0.0])
+
+i = 0
+imageMeta = imagesMeta['200365']
+#
+#newImageMeta = {'imageName': imageMeta['imageName'], 'objects': []}
+#for obj in imageMeta['objects']:
+#    if obj['label'] == 'hot dog':
+#        if obj['ymax'] - obj['ymin'] < 30:
+#            continue
+#    newImageMeta['objects'].append(obj)
+        
+import filters_rpn
+img, imageDims = filters_rpn.prepareInputs(imageMeta, cfg.data_path + 'images/train/', cfg)
+draw.drawGTBoxes((img[0]+1.0)/2.0, imageMeta, imageDims)
+
+utils.save_dict(imagesMeta, cfg.data_path + 'imagesMeta')
+
 j = 0
-for i in range(1):
+for i in range(0):
     if False:
         X, y, imageMeta, imageDims, times = next(trainIterator)
 #        X, y, imageMeta, imageDims, times = next(trainIterator)

@@ -11,6 +11,7 @@ import math as m
 import cv2 as cv
 import filters_rpn
 import time
+import os
 
 class DataGenerator():
     
@@ -71,6 +72,11 @@ class DataGenerator():
         for imageID in imageIDs:
             imageMeta = self.imagesMeta[imageID]
             imageMeta['id'] = imageID
+            
+            path = self.cfg.data_path +'anchors/train/' + imageMeta['imageName'].split('.')[0]
+            if os.path.exists(path):
+                return None, None, None, None, None
+            
             io_start = time.time()
             img, imageDims = filters_rpn.prepareInputs(imageMeta, self.images_path, self.cfg)
             io_end = time.time()
