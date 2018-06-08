@@ -19,11 +19,11 @@ def unprepareInputs(norm_rois, imageDims):
     #out: bboxes of (xmin,ymin,width,height) in range [0,output_shape]
     
     rois = np.copy(norm_rois)
-    rois = rois[0,:,1:]
-    rois = rois[:,(1,0,3,2)]
+    rois = rois[:,:,1:]
+    rois = rois[:,:,(1,0,3,2)]
 
-    rois[:,2] = rois[:,2] - rois[:,0]
-    rois[:,3] = rois[:,3] - rois[:,1]
+    rois[:,:,2] = rois[:,:,2] - rois[:,:,0]
+    rois[:,:,3] = rois[:,:,3] - rois[:,:,1]
     
     rois = helper.unnormalizeRoIs(rois, imageDims)
     return rois
@@ -33,14 +33,12 @@ def prepareInputs(rois, imageDims):
     #out: bboxes of (idx,ymin,xmin,ymax,xmax) in range [0,1]
     
     new_rois = np.copy(rois)
-    new_rois = new_rois[:,(1,0,3,2)]
-    new_rois[:,2] = new_rois[:,2] + new_rois[:,0]
-    new_rois[:,3] = new_rois[:,3] + new_rois[:,1]
+    new_rois = new_rois[:,:,(1,0,3,2)]
+    new_rois[:,:,2] = new_rois[:,:,2] + new_rois[:,:,0]
+    new_rois[:,:,3] = new_rois[:,:,3] + new_rois[:,:,1]
     
     new_rois = helper.normalizeRoIs(new_rois, imageDims)
-    
-    new_rois = np.insert(new_rois, 0, 0, axis=1)
-    new_rois = np.expand_dims(new_rois, axis=0)
+    new_rois = np.insert(new_rois, 0, 0, axis=2)
     
     return new_rois
 
@@ -72,8 +70,8 @@ def reduceTargets(bboxes, target_labels, target_deltas, cfg, batchidx=None):
     ## Pick reduced indexes ##
     if batchidx is None:        
         nb_detection_rois = cfg.nb_detection_rois
-        bg_samples = np.where(target_labels[:, 0] == 1)
-        fg_samples = np.where(target_labels[:, 0] == 0)
+        bg_samples = np.where(target_labels[0,:, 0] == 1)
+        fg_samples = np.where(target_labels[0,:, 0] == 0)
     
         if len(bg_samples) > 0:
             bg_samples = bg_samples[0]

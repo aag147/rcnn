@@ -47,9 +47,9 @@ def loadTargets(imageMeta, anchors_path, cfg):
     path = anchors_path + imageMeta['imageName'].split('.')[0]
     if not os.path.exists(path + '.pkl'):
         return None
-    target_labels, target_deltas, val_map = utils.load_obj(path)
+    Y = utils.load_obj(path)
     
-    return [target_labels, target_deltas, val_map]
+    return list(Y)
 
 
 def reduceTargets(Y, cfg):

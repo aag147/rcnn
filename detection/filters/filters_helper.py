@@ -21,10 +21,10 @@ def unnormalizeRoIs(norm_rois, imageDims):
     shape = imageDims['output_shape']
 
     rois = np.zeros_like(norm_rois)
-    rois[:,0] = norm_rois[:,0] * (shape[1]-0)
-    rois[:,1] = norm_rois[:,1] * (shape[0]-0)
-    rois[:,2] = norm_rois[:,2] * (shape[1]-0)
-    rois[:,3] = norm_rois[:,3] * (shape[0]-0)
+    rois[:,:,0] = norm_rois[:,:,0] * (shape[1]-0)
+    rois[:,:,1] = norm_rois[:,:,1] * (shape[0]-0)
+    rois[:,:,2] = norm_rois[:,:,2] * (shape[1]-0)
+    rois[:,:,3] = norm_rois[:,:,3] * (shape[0]-0)
 
     return rois
 
@@ -32,10 +32,10 @@ def normalizeRoIs(rois, imageDims):
     shape = imageDims['output_shape']
 
     norm_rois = np.zeros_like(rois)
-    norm_rois[:,0] = rois[:,0] / (shape[0]-0)
-    norm_rois[:,1] = rois[:,1] / (shape[1]-0)
-    norm_rois[:,2] = rois[:,2] / (shape[0]-0)
-    norm_rois[:,3] = rois[:,3] / (shape[1]-0)
+    norm_rois[:,:,0] = rois[:,:,0] / (shape[0]-0)
+    norm_rois[:,:,1] = rois[:,:,1] / (shape[1]-0)
+    norm_rois[:,:,2] = rois[:,:,2] / (shape[0]-0)
+    norm_rois[:,:,3] = rois[:,:,3] / (shape[1]-0)
 
     return norm_rois
 
