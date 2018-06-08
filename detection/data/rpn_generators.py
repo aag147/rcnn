@@ -12,6 +12,7 @@ import cv2 as cv
 import filters_rpn
 import time
 import os
+import sys
 
 class DataGenerator():
     
@@ -82,9 +83,15 @@ class DataGenerator():
             io_end = time.time()
             pp_start = time.time()
             Y = filters_rpn.loadTargets(imageMeta, self.anchors_path, self.cfg)
-            if Y is None:
-                Y = filters_rpn.prepareTargets(imageMeta, imageDims, self.cfg)
-            Y = filters_rpn.reduceTargets(Y, self.cfg)
+            
+            try:
+                if Y is None:
+                    Y = filters_rpn.prepareTargets(imageMeta, imageDims, self.cfg)                
+            except:
+                print(imageID)
+                print ("Unexpected error:", sys.exc_info()[0])
+                raise
+#            Y = filters_rpn.reduceTargets(Y, self.cfg)
             pp_end = time.time()
             times = np.array([io_end-io_start, pp_end-pp_start])
             
