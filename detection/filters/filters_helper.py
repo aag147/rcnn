@@ -610,9 +610,9 @@ def normalizeGTboxes(gtboxes, scale=[1,1], rpn_stride=1, shape=[1,1], roundoff=F
 #        print(bbox)
         # get the GT box coordinates, and resize to account for image resizing
         xmin = ((bbox['xmin']) * scale[0] / rpn_stride) / shape[0]
-        xmax = ((bbox['xmax']-0.00001) * scale[0] / rpn_stride) / shape[0]
+        xmax = ((bbox['xmax']-0.01) * scale[0] / rpn_stride) / shape[0]
         ymin = ((bbox['ymin']) * scale[1] / rpn_stride) / shape[1]
-        ymax = ((bbox['ymax']-0.00001) * scale[1] / rpn_stride) / shape[1]
+        ymax = ((bbox['ymax']-0.01) * scale[1] / rpn_stride) / shape[1]
         if roundoff:
             xmin=int(round(xmin)); xmax=int(round(xmax))
             ymin=int(round(ymin)); ymax=int(round(ymax))

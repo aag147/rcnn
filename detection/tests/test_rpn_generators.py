@@ -56,6 +56,7 @@ trainIterator = genTrain.begin()
 total_times = np.array([0.0,0.0])
 
 i = 0
+import filters_rpn
 for imageID, imageMeta in data.trainGTMeta.items():
     utils.update_progress_new(i+1, len(data.trainGTMeta), imageID)
     
@@ -64,6 +65,8 @@ for imageID, imageMeta in data.trainGTMeta.items():
         if obj['xmax'] <= obj['xmin']+1 or obj['ymax'] <= obj['ymin']+1:
             print(imageID)
             print(obj)
+            img, imageDims = filters_rpn.prepareInputs(imageMeta, cfg.data_path + 'images/train/', cfg)
+            draw.drawGTBoxes((img[0]+1.0)/2.0, imageMeta, imageDims)
     i += 1
 
 #i = 0
