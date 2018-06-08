@@ -358,10 +358,10 @@ def get_iou(bb1, bb2, include_union = True):
     float
         in [0, 1]
     """
-    assert bb1['xmin'] < bb1['xmax']
-    assert bb1['ymin'] < bb1['ymax']
-    assert bb2['xmin'] < bb2['xmax']
-    assert bb2['ymin'] < bb2['ymax']
+    assert bb1['xmin'] < bb1['xmax'], bb1
+    assert bb1['ymin'] < bb1['ymax'], bb1
+    assert bb2['xmin'] < bb2['xmax'], bb2
+    assert bb2['ymin'] < bb2['ymax'], bb2
 
     # determine the coordinates of the intersection rectangle
     x_left = max(bb1['xmin'], bb2['xmin'])

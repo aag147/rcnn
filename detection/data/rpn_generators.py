@@ -81,9 +81,10 @@ class DataGenerator():
             img, imageDims = filters_rpn.prepareInputs(imageMeta, self.images_path, self.cfg)
             io_end = time.time()
             pp_start = time.time()
-            Y = filters_rpn.loadTargets(imageMeta, self.anchors_path)
+            Y = filters_rpn.loadTargets(imageMeta, self.anchors_path, self.cfg)
             if Y is None:
                 Y = filters_rpn.prepareTargets(imageMeta, imageDims, self.cfg)
+            Y = filters_rpn.reduceTargets(Y, self.cfg)
             pp_end = time.time()
             times = np.array([io_end-io_start, pp_end-pp_start])
             

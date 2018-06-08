@@ -41,50 +41,13 @@ if True:
 
     # data
     genTrain = DataGenerator(imagesMeta = data.trainGTMeta, cfg=cfg, data_type='train', do_meta=False)
-    #genVal = DataGenerator(imagesMeta = data.valGTMeta, cfg=cfg, data_type='val')
-    #genTest = DataGenerator(imagesMeta = data.testGTMeta, cfg=cfg, data_type='test') 
 
-    # models
-    model_rpn, model_detection, model_hoi, model_all = methods.get_hoi_rcnn_models(cfg)
-    
-    print('Obj. classes', cfg.nb_object_classes)
-    if cfg.optimizer == 'adam':
-        print('Adam opt', 'lr:', cfg.init_lr)
-        opt = Adam(lr = cfg.init_lr)
-    else:
-        print('SGD opt', 'lr:', cfg.init_lr)
-        opt = SGD(lr = cfg.init_lr, momentum = 0.9, decay = 0.0005, nesterov=False)
-        
-    if cfg.rpn_uniform_sampling:
-        print('Uniform anchor sampling')
-    else:
-        print('Non-Uniform anchor sampling')
-        
-    if type(cfg.my_weights)==str and len(cfg.my_weights) > 0:
-        if cfg.use_shared_cnn:
-            print('Loading shared weights...')
-            print(model_rpn.layers[11].get_weights()[0][0,0,0,0])
-            model_rpn.load_weights(cfg.my_shared_weights, by_name=True)
-            print(model_rpn.layers[11].get_weights()[0][0,0,0,0])
-            # Only train unique layers
-            for i, layer in enumerate(model_rpn.layers):
-                layer.trainable = False
-                if i == cfg.nb_shared_layers:
-                    break
-        else:
-            print('Loading my weights...')
-            loss_cls = losses.rpn_loss_cls(cfg.nb_anchors)
-            loss_rgr = losses.rpn_loss_regr(cfg.nb_anchors)
-            
-            get_custom_objects().update({"rpn_loss_cls_fixed_num": loss_cls})
-            get_custom_objects().update({"rpn_loss_regr_fixed_num": loss_rgr})
-            
-            model_rpn = load_model(cfg.my_shared_weights)     
-    
-    model_rpn.compile(optimizer=opt,\
-                      loss=[losses.rpn_loss_cls(cfg.nb_anchors), losses.rpn_loss_regr(cfg.nb_anchors)])
-#                      metrics={'rpn_out_class':'categorical_accuracy'}) 
-    
+    # models        -0.0135234 -0.013523407
+    Models = methods.AllModels(cfg, mode='train', do_rpn=True)
+    Models.compile_models()
+    model_rpn, _, _ = Models.get_models()
+
+    print(model_rpn.layers[18].get_weights()[0][0,0,0,0])
 
 if True:    
     # train
@@ -97,14 +60,10 @@ if True:
                 steps_per_epoch = genTrain.nb_batches, \
                 epochs = cfg.epoch_end, initial_epoch=cfg.epoch_begin, callbacks=callbacks)
 
+    print(model_rpn.layers[18].get_weights()[0][0,0,0,0])
+
     # Save stuff
-    for i in range(10):
-        modelpath = cfg.my_weights_path + 'model-theend%d.h5' % i
-        weightspath = cfg.my_weights_path + 'weights-theend%d.h5' % i
-        if not os.path.exists(modelpath):
-            model_rpn.save(modelpath)
-            model_rpn.save_weights(weightspath)
-            break
+    Models.save_model()
 
     
     print('Path:', cfg.my_results_path)

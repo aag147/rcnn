@@ -51,39 +51,14 @@ if True:
     
 #if True:
     # Create batch generators
-    imagesMeta = data.testGTMeta
-    genTrain = DataGenerator(imagesMeta = imagesMeta, cfg=cfg, data_type='test', do_meta=True)
+    genTrain = DataGenerator(imagesMeta = data.trainGTMeta, cfg=cfg, data_type='train', do_meta=True)
     
 #if True:
 #    model_rpn, model_detection, model_hoi, model_all = methods.get_hoi_rcnn_models(cfg, mode='train')
-    model_rpn, model_detection, model_hoi = methods.get_hoi_rcnn_models(cfg, mode='test')
-    if type(cfg.my_weights)==str and len(cfg.my_weights)>0:
-        print('Loading my weights...')
-        
-        path = cfg.part_results_path + "COCO/rpn" + cfg.my_results_dir + '/weights/' + cfg.my_weights
-        assert os.path.exists(path), 'invalid path: %s' % path
-        print(model_rpn.layers[11].get_weights()[0][0,0,0,0])
-        model_rpn.load_weights(path, by_name=False)
-        print(model_rpn.layers[11].get_weights()[0][0,0,0,0])
-        
-        path = cfg.part_results_path + "COCO/det" + cfg.my_results_dir + '/weights/' + cfg.my_weights
-        assert os.path.exists(path), 'invalid path: %s' % path
-        print(model_detection.layers[4].get_weights()[0][0,0])
-        model_detection.load_weights(path, by_name=True)
-        print(model_detection.layers[4].get_weights()[0][0,0])
-        
-        path = cfg.part_results_path + 'HICO/hoi5c/weights/' + cfg.my_weights
-        assert os.path.exists(path), 'invalid path: %s' % path
-        print(model_hoi.layers[23].get_weights()[0][0,0,0,0])
-        model_hoi.load_weights(path, by_name=False)
-        print(model_hoi.layers[23].get_weights()[0][0,0,0,0])
+    Models = methods.AllModels(cfg, mode='test', do_rpn=True, do_det=True, do_hoi=True)
+    model_rpn, model_detection, model_hoi = Models.get_models()
     
-
-        print(model_rpn.layers[11].get_weights()[0][0,0,0,0])
-
 total_times = np.array([0.0,0.0])
-j = 0
-
 genIterator = genTrain.begin()
 
 coco_res = []
@@ -100,9 +75,12 @@ for i in range(genTrain.nb_batches):
     coco_res += cocoformat
     
 
-mAP, AP = metrics.computeHOImAP(coco_res, imagesMeta, class_mapping, labels, cfg)
+path = cfg.part_results_path + 'HICO/hoi5c/hoi_output'
+utils.save_dict(coco_res, path)
 
+mAP, AP = metrics.computeHOImAP(coco_res, data.trainGTMeta, class_mapping, labels, cfg)
 saveMeta = {'mAP': mAP, 'AP': AP.tolist()}
-
 path = cfg.part_results_path + 'HICO/hoi5c/hoimap'
 utils.save_dict(saveMeta, path)
+
+print('mAP', mAP)

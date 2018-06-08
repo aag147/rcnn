@@ -34,7 +34,7 @@ def loadData(imageInput, imageDims, cfg, batchidx = None):
         return None, None, None, None
     
     if batchidx is None:
-        samples = helper.reduce_hoi_rois(val_map, cfg)
+        samples = reduce_hoi_rois(val_map, cfg)
         h_bboxes = allh_bboxes[samples, :]
         o_bboxes = allo_bboxes[samples, :]
         labels = all_labels[samples,:]
@@ -54,6 +54,38 @@ def loadData(imageInput, imageDims, cfg, batchidx = None):
     patterns = prepareInteractionPatterns(cp.copy(h_bboxes), cp.copy(o_bboxes), cfg)
     h_bboxes, o_bboxes = prepareInputs(h_bboxes, o_bboxes, imageDims)
     return h_bboxes, o_bboxes, patterns, labels
+
+def reduce_hoi_rois(val_map, cfg):
+    positive_idxs = np.where(val_map==3)[0]
+    negative1_idxs = np.where(val_map==2)[0]
+    negative2_idxs = np.where(val_map==1)[0]      
+    
+    selected_pos_samples = positive_idxs
+    selected_neg1_samples = negative1_idxs
+    selected_neg2_samples = negative2_idxs
+    
+    if len(positive_idxs) > cfg.hoi_pos_share:
+        selected_pos_samples = np.random.choice(positive_idxs, cfg.hoi_pos_share, replace=False)
+        
+    if len(negative1_idxs) > cfg.hoi_neg1_share:
+        selected_neg1_samples = np.random.choice(negative1_idxs, cfg.hoi_neg1_share, replace=False)
+    elif len(negative1_idxs)>0:
+        selected_neg1_samples = np.random.choice(negative1_idxs, cfg.hoi_neg1_share, replace=True)
+        
+    if len(negative2_idxs) + len(selected_neg1_samples) + len(selected_pos_samples) > cfg.nb_hoi_rois:
+        selected_neg2_samples = np.random.choice(negative2_idxs, cfg.nb_hoi_rois - len(selected_pos_samples) - len(selected_neg1_samples), replace=False)
+    elif len(negative2_idxs) > 0:
+        selected_neg2_samples = np.random.choice(negative2_idxs, cfg.nb_hoi_rois - len(selected_pos_samples) - len(selected_neg1_samples), replace=True)
+    else:
+        selected_neg1_samples = np.random.choice(negative1_idxs, cfg.nb_hoi_rois - len(selected_pos_samples), replace=True)
+        
+    selected_samples = selected_pos_samples.tolist() + selected_neg1_samples.tolist() + selected_neg2_samples.tolist()
+    
+    
+    assert(len(selected_samples) == 32)
+
+    return selected_samples
+
 
 def unprepareInputs(h_bboxes_norm, o_bboxes_norm, imageDims):
     #(idx,ymin,xmin,ymax,xmax) -> (xmin,ymin,width,height)
@@ -107,7 +139,7 @@ def prepareInputs(h_bboxes, o_bboxes, imageDims):
     return newh_bboxes, newo_bboxes
 
 def prepareInteractionPatterns(final_hbbs, final_obbs, cfg):
-    patterns = helper.getDataPairWiseStream(final_hbbs, final_obbs, cfg)
+    patterns = getDataPairWiseStream(final_hbbs, final_obbs, cfg)
     patterns = np.expand_dims(patterns, axis=0)
     return patterns
 
@@ -257,173 +289,58 @@ def prepareTargets(bboxes, imageMeta, imageDims, cfg, class_mapping):
     final_vals   = final_vals[selected_samples]
     
     return final_hbbs, final_obbs, final_labels, final_vals
-    
-    
-    if len(positive_idxs) > cfg.hoi_pos_share:
-        selected_pos_samples = np.random.choice(positive_idxs, cfg.hoi_pos_share, replace=False)
+
+
+
+#############################
+#### Interaction Pattern ####
+#############################
+def _getSinglePairWiseStream(thisBB, thatBB, width, height, newWidth, newHeight, cfg):
+    xmin = max(0, thisBB[0] - thatBB[0])
+    xmax = width - max(0, thatBB[0]+thatBB[2] - (thisBB[0]+thisBB[2]))
+    ymin = max(0, thisBB[1] - thatBB[1])
+    ymax = height - max(0, thatBB[1]+thatBB[3] - (thisBB[1]+thisBB[3]))
         
-    if len(negative1_idxs) > cfg.hoi_neg1_share:
-        selected_neg1_samples = np.random.choice(negative1_idxs, cfg.hoi_neg1_share, replace=False)
-    elif len(negative1_idxs)>0:
-        selected_neg1_samples = np.random.choice(negative1_idxs, cfg.hoi_neg1_share, replace=True)
-        
-    if len(negative2_idxs) + len(selected_neg1_samples) + len(selected_pos_samples) > cfg.nb_hoi_rois:
-        selected_neg2_samples = np.random.choice(negative2_idxs, cfg.hoi_neg2_share, replace=False)
-    elif len(negative2_idxs) > 0:
-        selected_neg2_samples = np.random.choice(negative2_idxs, cfg.nb_hoi_rois - len(selected_pos_samples) - len(selected_neg1_samples), replace=True)
+    attWin = np.zeros([height,width])
+    attWin[ymin:ymax, xmin:xmax] = 1
+    attWin = cv.resize(attWin, (newWidth, newHeight), interpolation = cv.INTER_NEAREST)
+    attWin = attWin.astype(np.int)
+
+    xPad = int(abs(newWidth - cfg.winShape[1]) / 2)
+    yPad = int(abs(newHeight - cfg.winShape[0]) / 2)
+    attWinPad = np.zeros(cfg.winShape).astype(np.int)
+#        print(attWin.shape, attWinPad.shape, xPad, yPad)
+#        print(height, width, newHeight, newWidth)
+    attWinPad[yPad:yPad+newHeight, xPad:xPad+newWidth] = attWin
+    return attWinPad
+
+def _getPairWiseStream(hbbox, obbox, cfg):
+    width = max(hbbox[0]+hbbox[2], obbox[0]+obbox[2]) - min(hbbox[0], obbox[0])
+    height = max(hbbox[1]+hbbox[3], obbox[1]+obbox[3]) - min(hbbox[1], obbox[1])
+    if width > height:
+        newWidth = cfg.winShape[1]
+        apr = newWidth / width
+        newHeight = int(height*apr) 
     else:
-        selected_neg1_samples = np.random.choice(negative1_idxs, cfg.nb_hoi_rois - len(selected_pos_samples), replace=True)
+        newHeight = cfg.winShape[0]
+        apr = newHeight / height
+        newWidth = int(width*apr)
         
-
-    selected_samples = selected_pos_samples.tolist() + selected_neg1_samples.tolist() + selected_neg2_samples.tolist()
-    final_hbbs = final_hbbs[selected_samples,:]
-    final_obbs = final_obbs[selected_samples,:]
-    final_labels = final_labels[selected_samples,:]
-    final_vals   = final_vals[selected_samples]
-                
+    prsWin = _getSinglePairWiseStream(hbbox, obbox, width, height, newWidth, newHeight, cfg)
+    objWin = _getSinglePairWiseStream(obbox, hbbox, width, height, newWidth, newHeight, cfg)
     
-    return final_hbbs, final_obbs, final_labels, final_vals
+    return [prsWin, objWin]
 
-
-
-########################
-###### OUT DATED #######
-########################
+def getDataPairWiseStream(hbboxes, obboxes, cfg):
+    hbboxes *= cfg.rpn_stride
+    hbboxes = hbboxes.astype(int)
+    obboxes *= cfg.rpn_stride
+    obboxes = obboxes.astype(int)
     
-    
-    
-######## CRAP #############
-    #############################
-    #### Initialize matrices ####
-    #############################
-#    combinations = np.array([len(hpredlabels), len(opredlabels)])
-#    combinations = {i:j for j in range(len(opredlabels)) for i in range(len(hpredlabels))}
-#    combinations = {i:{j:[] for j in range(len(opredlabels))} for i in range(len(hpredlabels))}
-#    all_human_boxes = []
-#    all_object_boxes = []
-#    all_labels = []
-#    all_type = []
-#    
-#    Xh = np.zeros([nb_hoi_rois, 5])
-#    Xo = np.zeros([nb_hoi_rois, 5])
-#    Yc = np.zeros([nb_hoi_rois, nb_hoi_classes])
-#    Xi = np.zeros([10, 4])
-#    
-#    
-#    olabels = [obj['label'] for obj in obboxes]
-#    #############################
-#    ## Objects 2 Ground Truths ##
-#    #############################     
-#    human_overlaps = np.zeros([len(hpredlabels), len(gthboxes)])
-#    for hidx in range(hpredbboxes.shape[0]):
-#        (xmin, ymin, xmax, ymax) = hpredbboxes[hidx, :]
-#        xmin = int(round(xmin))
-#        ymin = int(round(ymin))
-#        xmax = int(round(xmax))
-#        ymax = int(round(ymax))
-#        ht = {'xmin': xmin, 'ymin': ymin, 'xmax': xmax, 'ymax': ymax}
-#        for gthidx, gth in enumerate(gthboxes):
-#            curr_iou = utils.get_iou(gth, ht)
-#            human_overlaps[hidx, gthidx] = curr_iou
-#        
-#    object_overlaps = np.zeros([len(opredlabels), len(gtoboxes)])
-#    for oidx in range(opredbboxes.shape[0]):
-#        (xmin, ymin, xmax, ymax) = opredbboxes[oidx, :]
-#        ot = {'xmin': xmin, 'ymin': ymin, 'xmax': xmax, 'ymax': ymax}
-#        print('pred', ot)
-#        for gtoidx, gto in enumerate(gtoboxes):
-#            print('truh', gto)
-#            curr_iou = utils.get_iou(gto, ot)
-#            if opredlabels[oidx]==olabels[gtoidx]:
-#                overlap = curr_iou
-#            elif opredlabels[oidx] in olabels:
-#                overlap = 0.0
-#            else:
-#                overlap = -2
-#            object_overlaps[oidx, gtoidx] = overlap
-#    
-#    print(human_overlaps)
-#    print(object_overlaps)
-#    #############################
-#    ##### Produce H/O pairs #####
-#    #############################         
-#    for relidx, rel in enumerate(rels):
-#        gthidx = rel[0]; gtoidx = rel[1]
-#        hoi_label = rel[2]
-#        for hidx, hiou in enumerate(human_overlaps[:,gthidx]):
-#            for oidx, oiou in enumerate(object_overlaps[:,gtoidx]):
-#                if hoi_max_overlap <= hiou and hoi_max_overlap <= oiou:
-#                    label = hoi_label
-#                elif hoi_min_overlap <= hiou and hoi_min_overlap <= oiou:
-#                    label = -1
-#                elif oiou==-2:
-#                    label = -2
-#                else:
-#                    label = -3
-#                if len(combinations[hidx][oidx])==1 and combinations[hidx][oidx][0]<0:
-#                    if label > combinations[hidx][oidx][0]:
-#                        combinations[hidx][oidx] = [label]
-#                    continue
-#                elif len(combinations[hidx][oidx])>0 and label < 0:
-#                    continue
-#                combinations[hidx][oidx].append(label)
-#
-#                
-#    #############################
-#    ## Matrix pairs to vectors ##
-#    #############################    
-#    for hidx, oidxs in combinations.items():
-#        for oidx, labels in oidxs.items():
-#            if len(labels)==1 and labels[0] == -1:
-#                all_type.append(-1)
-#                labels = [0]
-#            elif len(labels)==1 and labels[0] == -2:
-#                all_type.append(-2)
-#                labels = [0]
-#            elif len(labels)==1 and labels[0] == -3:
-#                all_type.append(-3)
-#                labels = [0]
-#            elif len(labels)>0:
-#                if -1 in labels:
-#                    labels.remove(-1)
-#                all_type.append(1)
-#                labels = labels
-#
-#            labels = utils.getMatrixLabels(nb_hoi_classes, [labels])
-#            labels = np.squeeze(labels)
-#            all_labels.append(labels)
-#            (xmin, ymin, xmax, ymax) = hpredbboxes[hidx, :]
-#            all_human_boxes.append([ymin/shape[0], xmin/shape[1], ymax/shape[0], xmax/shape[1]])
-#            (xmin, ymin, xmax, ymax) = opredbboxes[hidx, :]
-#            all_object_boxes.append([ymin/shape[0], xmin/shape[1], ymax/shape[0], xmax/shape[1]])
-#        
-#    all_human_boxes = np.array(all_human_boxes)
-#    all_object_boxes = np.array(all_object_boxes)
-#    all_labels = np.array(all_labels)
-#    all_type = np.array(all_type)
-#
-#    ##############################
-#    # Three sample sources redux #
-#    ##############################
-#    valid_idxs = np.where(all_type != -3)
-#    positive_idxs = np.where(all_type==1)
-#    negative1_idxs = np.where(all_type==-1)
-#    negative2_idxs = np.where(all_type==-2)    
-#    
-#    return all_human_boxes[valid_idxs,:], all_object_boxes[valid_idxs,:], Xi, all_labels[valid_idxs,:], all_type
-#    
-#    if len(positive_idxs) > nb_hoi_positives:
-#        selected_pos_samples = np.random.choice(positive_idxs, nb_hoi_positives, replace=False)
-#    if len(negative1_idxs) > nb_hoi_negatives1:
-#        selected_neg1_samples = np.random.choice(negative1_idxs, nb_hoi_negatives1, replace=False)
-#    if len(negative2_idxs) > nb_hoi_negatives2:
-#        selected_neg2_samples = np.random.choice(negative2_idxs, nb_hoi_negatives2, replace=False)
-#
-#    selected_samples = selected_pos_samples + selected_neg1_samples + selected_neg2_samples
-#    
-#    valid_human_boxes = all_human_boxes[selected_samples,:]
-#    valid_object_boxes = all_object_boxes[selected_samples,:]
-#    valid_labels = all_labels[selected_samples,:]
-#    
-#    
-#    return valid_human_boxes, valid_object_boxes, Xi, valid_labels
+    dataPar = []
+    for pairidx in range(hbboxes.shape[0]):
+        relWin = _getPairWiseStream(hbboxes[pairidx], obboxes[pairidx], cfg)
+        dataPar.append(relWin)
+    dataPar = np.array(dataPar)
+    dataPar = dataPar.transpose(cfg.par_order_of_dims)
+    return dataPar

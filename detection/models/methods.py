@@ -7,18 +7,201 @@ Created on Mon May  7 15:40:50 2018
 
 import keras
 from keras import backend as K
+import os
+import losses
+import numpy as np
 
+from keras.models import load_model
+from keras.optimizers import SGD, Adam
+from keras.utils.generic_utils import get_custom_objects
 
 import detection.models.models as models,\
        layers
 K.set_image_dim_ordering('tf')
 
-def get_hoi_rcnn_models(cfg, mode='train'):
-    
-        if mode=='test':
-            print('Loaded test models....')
+
+class AllModels:
+    def __init__(self, cfg, mode='train', do_rpn=False, do_det=False, do_hoi=False):
+        self.mode = mode
+        self.cfg = cfg
+        
+        self.do_rpn = do_rpn
+        self.do_det = do_det
+        self.do_hoi = do_hoi
+        
+        self.model_rpn = None
+        self.model_det = None
+        self.model_hoi = None
+        
+        assert mode=='test' or np.sum([self.do_rpn, self.do_det, self.do_hoi])==1, 'Use only one model when training'
+        
+        if self.mode == 'train' and not cfg.use_shared_cnn:
+            self.load_models()
         else:
-            print('Loaded train models....')
+            self.create_models()
+            self.load_weights()
+
+    def save_model(self):
+        cfg = self.cfg
+        
+        if self.do_rpn:
+            model = self.model_rpn
+        if self.do_det:
+            model = self.model_det
+        if self.do_hoi:
+            model = self.model_hoi
+        
+        for i in range(10):
+            modelpath = cfg.my_weights_path + 'model-theend%d.h5' % i
+            weightspath = cfg.my_weights_path + 'weights-theend%d.h5' % i
+            if not os.path.exists(modelpath):
+                model.save(modelpath)
+                model.save_weights(weightspath)
+                break
+        
+    def compile_models(self):
+        if self.mode == 'test':
+            return
+        
+        cfg = self.cfg
+        print('Compiling models...')
+        if cfg.optimizer == 'adam':
+            print('     Opt.:', 'Adam')
+            opt = Adam(lr = cfg.init_lr)
+        else:
+            print('     Opt.:', 'SGD')
+            opt = SGD(lr = cfg.init_lr, momentum = 0.9, decay = 0.0005, nesterov=False)
+        print('     Learning rate:', cfg.init_lr)
+        if self.do_rpn:
+            if cfg.rpn_uniform_sampling:
+                print('     Uniform anchor sampling')
+            else:
+                print('     Non-Uniform anchor sampling')
+            self.model_rpn.compile(optimizer=opt,\
+                      loss=[losses.rpn_loss_cls(cfg.nb_anchors), losses.rpn_loss_regr(cfg.nb_anchors)])
+        if self.do_det:
+            self.model_det.compile(optimizer=opt,\
+                      loss=[losses.class_loss_cls, losses.class_loss_regr(cfg.nb_object_classes-1)],\
+                      metrics={'det_out_class':'categorical_accuracy'}) 
+        if self.do_hoi:
+            self.model_hoi.compile(optimizer=opt,\
+                      loss=[losses.hoi_loss_cls(cfg.wp)])
+        
+        
+    def get_models(self):
+        return self.model_rpn, self.model_det, self.model_hoi
+        
+
+    
+    def _load_shared_weights(self, model):
+        cfg = self.cfg
+        assert os.path.exists(cfg.my_shared_weights), 'invalid path: %s' % cfg.my_shared_weights
+        model.load_weights(cfg.my_shared_weights, by_name=True)
+        # Only train unique layers
+        for i, layer in enumerate(model.layers):
+            layer.trainable = False
+            if i == cfg.nb_shared_layers:
+                break    
+        return model
+    
+    def load_weights(self):
+        cfg = self.cfg
+        
+        
+        if type(cfg.my_weights)==str and len(cfg.my_weights)>0:
+            print('Loading my weights...')
+            
+            if self.do_rpn:    
+                rpn_before = self.model_rpn.layers[11].get_weights()[0][0,0,0,0]
+                if self.mode == 'test':
+                    print('     Loading test RPN weights...')
+                    path = cfg.part_results_path + "COCO/rpn" + cfg.my_results_dir + '/weights/' + cfg.my_weights
+                    assert os.path.exists(path), 'invalid path: %s' % path
+                    self.model_rpn.load_weights(path, by_name=False)
+                
+                elif cfg.use_shared_cnn:
+                    print('     Loading shared train RPN weights...')
+                    self.model_rpn = self._load_shared_weights(self.model_rpn)
+                    
+                rpn_after = self.model_rpn.layers[11].get_weights()[0][0,0,0,0]
+                assert rpn_before != rpn_after, 'RPN weights have not been loaded'
+                
+            
+            if self.do_det:
+                det_before = self.model_det.layers[4].get_weights()[0][0,0]
+                if self.mode == 'test':
+                    print('     Loading test DET weights...')
+                    path = cfg.part_results_path + "COCO/det" + cfg.my_results_dir + '/weights/' + cfg.my_weights
+                    assert os.path.exists(path), 'invalid path: %s' % path
+                    self.model_det.load_weights(path, by_name=True)
+                    
+                elif cfg.use_shared_cnn:
+                    print('     Loading shared train DET weights...')
+                    self.model_det = self._load_shared_weights(self.model_det)
+                
+                det_after = self.model_det.layers[4].get_weights()[0][0,0]
+                assert det_before != det_after, 'DET weights have not been loaded'
+            
+            if self.do_hoi:
+                hoi_before = self.model_hoi.layers[23].get_weights()[0][0,0,0,0]
+                if self.mode == 'test':
+                    print('     Loading test HOI weights...')
+                    path = cfg.part_results_path + 'HICO/hoi5c/weights/' + cfg.my_weights
+                    assert os.path.exists(path), 'invalid path: %s' % path
+                    self.model_hoi.load_weights(path, by_name=False)
+                
+                elif cfg.use_shared_cnn:
+                    print('     Loading shared train HOI weights...')
+                    self.model_hoi = self._load_shared_weights(self.model_hoi)
+                
+                hoi_after = self.model_hoi.layers[23].get_weights()[0][0,0,0,0]
+                assert hoi_before != hoi_after, 'HOI weights have not been loaded'
+        
+    
+            if self.do_rpn:
+                rpn_final = self.model_rpn.layers[11].get_weights()[0][0,0,0,0]
+                assert rpn_after == rpn_final, 'RPN weights have been overwritten'
+            
+            if self.do_det:
+                det_final = self.model_det.layers[4].get_weights()[0][0,0]            
+                assert det_after == det_final, 'DET weights have been overwritten'
+
+
+    def load_models(self):
+        cfg = self.cfg
+        
+        if self.do_rpn:
+            print('Loading RPN model...')        
+            loss_cls = losses.rpn_loss_cls(cfg.nb_anchors)
+            loss_rgr = losses.rpn_loss_regr(cfg.nb_anchors)
+            
+            get_custom_objects().update({"rpn_loss_cls_fixed_num": loss_cls})
+            get_custom_objects().update({"rpn_loss_regr_fixed_num": loss_rgr})
+            
+            assert os.path.exists(cfg.my_shared_weights), 'invalid path: %s' % cfg.my_shared_weights
+            self.model_rpn = load_model(cfg.my_shared_weights)
+
+
+        if self.do_det:        
+            print('Loading DET model...')        
+            loss_cls = losses.class_loss_cls
+            loss_rgr = losses.class_loss_regr(cfg.nb_object_classes-1)
+            
+            get_custom_objects().update({"class_loss_cls": loss_cls})
+            get_custom_objects().update({"class_loss_regr_fixed_num": loss_rgr})
+            
+            assert os.path.exists(cfg.my_shared_weights), 'invalid path: %s' % cfg.my_shared_weights
+            self.model_det = load_model(cfg.my_shared_weights)
+            
+
+
+    def create_models(self):
+        cfg = self.cfg
+        
+        if self.mode=='test':
+            print('Creating test models....')
+        else:
+            print('Creating train models....')
     
     
         ########################
@@ -28,7 +211,8 @@ def get_hoi_rcnn_models(cfg, mode='train'):
         pool_size = cfg.pool_size
         nb_object_classes = cfg.nb_object_classes
         nb_hoi_classes =cfg.nb_hoi_classes
-        print('nb classes', nb_object_classes)
+        print('     Obj. classes:', nb_object_classes)
+        print('     HOI classes:', nb_hoi_classes)
     
         ########################
         ##### Input shapes #####
@@ -79,218 +263,219 @@ def get_hoi_rcnn_models(cfg, mode='train'):
         ########################
         ####### Backbone #######
         ########################
-        output_features = models.VGG16(cfg.weights_path)(img_input)
-        
+        output_features = models.VGG16(cfg.weights_path)(img_input)     
         output_features_hoi = models.VGG16(cfg.weights_path)(img_hoi_input)
         
         ########################
         ######### RPN ##########
         ########################
-        rpn_inputs = [
-            img_input
-        ]
-        
-        rpn_features = layers.rpn([
-             output_features
-        ])
-        
-        x_class = keras.layers.Conv2D(
-            filters=nb_anchors,
-            kernel_size=(1, 1),
-            activation='sigmoid',
-            kernel_initializer=keras.initializers.RandomNormal(stddev=0.01),
-            name='rpn_out_class'
-        )(rpn_features)
-        
-        x_deltas = keras.layers.Conv2D(
-            filters=nb_anchors * 4,
-            kernel_size=(1, 1), 
-            activation='linear', 
-            kernel_initializer=keras.initializers.RandomNormal(stddev=0.01),
-            name='rpn_out_regress'
-        )(rpn_features)
-        
-        if mode=='test':
-            rpn_outputs = [
-                x_class,
-                x_deltas,
-                output_features
+        if self.do_rpn:
+            rpn_inputs = [
+                img_input
             ]
-        else:
-            rpn_outputs = [
-                x_class,
-                x_deltas
-            ]
-        
-        model_rpn = keras.models.Model(inputs=rpn_inputs, outputs=rpn_outputs)
-        
-        # Only train from conv3_1
-        for i, layer in enumerate(model_rpn.layers):
-            layer.trainable = False
-            if i > 6:
-                break
+            
+            rpn_features = layers.rpn([
+                 output_features
+            ])
+            
+            x_class = keras.layers.Conv2D(
+                filters=nb_anchors,
+                kernel_size=(1, 1),
+                activation='sigmoid',
+                kernel_initializer=keras.initializers.RandomNormal(stddev=0.01),
+                name='rpn_out_class'
+            )(rpn_features)
+            
+            x_deltas = keras.layers.Conv2D(
+                filters=nb_anchors * 4,
+                kernel_size=(1, 1), 
+                activation='linear', 
+                kernel_initializer=keras.initializers.RandomNormal(stddev=0.01),
+                name='rpn_out_regress'
+            )(rpn_features)
+            
+            if self.mode=='test':
+                rpn_outputs = [
+                    x_class,
+                    x_deltas,
+                    output_features
+                ]
+            else:
+                rpn_outputs = [
+                    x_class,
+                    x_deltas
+                ]
+            
+            model_rpn = keras.models.Model(inputs=rpn_inputs, outputs=rpn_outputs)
+            
+            # Only train from conv3_1
+            for i, layer in enumerate(model_rpn.layers):
+                layer.trainable = False
+                if i > 6:
+                    break
         
         ########################
         ###### Detection #######
         ########################
-        if mode=='test':    
-            detection_inputs = [
-                features_input,
+        if self.do_det:
+            if self.mode=='test':    
+                detection_inputs = [
+                    features_input,
+                    roi_input
+                ]
+            else:
+                detection_inputs = [
+                    img_input,
+                    roi_input
+                ]
+                
+            pool_features_input = features_input if self.mode=='test' else output_features
+                
+            object_rois = layers.RoiPoolingConv(
+                pool_size=pool_size,
+            )([
+                pool_features_input,
                 roi_input
-            ]
-        else:
-            detection_inputs = [
-                img_input,
-                roi_input
+            ])
+            
+            object_features = layers.fullyConnected(
+                stream = 'det'
+            )([
+                object_rois
+            ])
+            
+            
+            object_scores = keras.layers.TimeDistributed(
+                keras.layers.Dense(
+                    units=nb_object_classes,
+                    activation='softmax',
+                    kernel_initializer=keras.initializers.RandomNormal(stddev=0.01)
+                ),
+                name="det_out_class"
+            )(object_features)
+            
+            object_deltas = keras.layers.TimeDistributed(
+                keras.layers.Dense(
+                    units=4 * (nb_object_classes - 1),
+                    activation="linear",
+                    kernel_initializer=keras.initializers.RandomNormal(stddev=0.001)
+                ),
+                name="det_out_regress"
+            )(object_features)
+    
+            detection_outputs = [
+                object_scores,
+                object_deltas
             ]
             
-        pool_features_input = features_input if mode=='test' else output_features
-            
-        object_rois = layers.RoiPoolingConv(
-            pool_size=pool_size,
-        )([
-            pool_features_input,
-            roi_input
-        ])
-        
-        object_features = layers.fullyConnected(
-            stream = 'det'
-        )([
-            object_rois
-        ])
-        
-        
-        object_scores = keras.layers.TimeDistributed(
-            keras.layers.Dense(
-                units=nb_object_classes,
-                activation='softmax',
-                kernel_initializer=keras.initializers.RandomNormal(stddev=0.01)
-            ),
-            name="det_out_class"
-        )(object_features)
-        
-        object_deltas = keras.layers.TimeDistributed(
-            keras.layers.Dense(
-                units=4 * (nb_object_classes - 1),
-                activation="linear",
-                kernel_initializer=keras.initializers.RandomNormal(stddev=0.001)
-            ),
-            name="det_out_regress"
-        )(object_features)
-
-        detection_outputs = [
-            object_scores,
-            object_deltas
-        ]
-        
-        model_detection = keras.models.Model(inputs=detection_inputs, outputs=detection_outputs)
-
-        # Only train from conv3_1
-        for i, layer in enumerate(model_detection.layers):
-            layer.trainable = False
-            if i > 6:
-                break
+            model_det = keras.models.Model(inputs=detection_inputs, outputs=detection_outputs)
+    
+            # Only train from conv3_1
+            for i, layer in enumerate(model_det.layers):
+                layer.trainable = False
+                if i > 6:
+                    break
 
         ########################
         ######### HOI ##########
-        ########################       
-        hoi_inputs = [
-            img_hoi_input,
-            human_input,
-            object_input,
-            interaction_input
-        ]
-        
-        ## HUMAN ##
-        hoi_human_rois = layers.RoiPoolingConv(
-            pool_size=pool_size
-        )([
-            output_features_hoi,
-            human_input
-        ])
-        
-        hoi_human_features = layers.fullyConnected(
-            stream = 'human'
-        )([
-            hoi_human_rois
-        ])
-
-        hoi_human_scores = keras.layers.TimeDistributed(
-            keras.layers.Dense(
-                units=1 * nb_hoi_classes,
-                activation=None,
-                kernel_initializer=keras.initializers.RandomNormal(stddev=0.01)
-            ),
-            name="scores4human"
-        )(hoi_human_features)
-            
-        ## OBJECT ##
-        hoi_object_rois = layers.RoiPoolingConv(
-            pool_size=pool_size
-        )([
-            output_features_hoi,
-            object_input
-        ])
-        
-        hoi_object_features = layers.fullyConnected(
-            stream = 'object'
-        )([
-            hoi_object_rois
-        ])
-
-        hoi_object_scores = keras.layers.TimeDistributed(
-            keras.layers.Dense(
-                units=1 * nb_hoi_classes,
-                activation=None,
-                kernel_initializer=keras.initializers.RandomNormal(stddev=0.01)
-            ),
-            name="scores4object"
-        )(hoi_object_features)
-            
-            
-        ## INTERACTION ##
-        hoi_pattern_features = layers.pairwiseStream(
-        )([
-            interaction_input
-        ])
-        hoi_pattern_scores = keras.layers.TimeDistributed(
-            keras.layers.Dense(
-                units=1 * nb_hoi_classes,
-                activation=None,
-                kernel_initializer=keras.initializers.RandomNormal(stddev=0.01)
-            ),
-            name = 'scores4pattern'
-        )(hoi_pattern_features)
-            
-        ## FINAL ##
-        hoi_score = keras.layers.Add()([hoi_human_scores, hoi_object_scores, hoi_pattern_scores])
-        
-        hoi_final_score = keras.layers.Activation(
-            "sigmoid",
-            name="hoi_out_class"
-        )(hoi_score)
-
-        
-        if mode=='test':    
-            hoi_outputs = [
-                hoi_final_score,
+        ########################    
+        if self.do_hoi:
+            hoi_inputs = [
+                img_hoi_input,
                 human_input,
+                object_input,
+                interaction_input
+            ]
+            
+            ## HUMAN ##
+            hoi_human_rois = layers.RoiPoolingConv(
+                pool_size=pool_size
+            )([
+                output_features_hoi,
+                human_input
+            ])
+            
+            hoi_human_features = layers.fullyConnected(
+                stream = 'human'
+            )([
+                hoi_human_rois
+            ])
+    
+            hoi_human_scores = keras.layers.TimeDistributed(
+                keras.layers.Dense(
+                    units=1 * nb_hoi_classes,
+                    activation=None,
+                    kernel_initializer=keras.initializers.RandomNormal(stddev=0.01)
+                ),
+                name="scores4human"
+            )(hoi_human_features)
+                
+            ## OBJECT ##
+            hoi_object_rois = layers.RoiPoolingConv(
+                pool_size=pool_size
+            )([
+                output_features_hoi,
                 object_input
-            ]
-        else:
-            hoi_outputs = [
-                hoi_final_score
-            ]
-        
-        model_hoi = keras.models.Model(inputs=hoi_inputs, outputs=hoi_outputs)
-        
-        
-#        if mode=='test':
-#            return model_rpn, model_detection, model_hoi    
+            ])
+            
+            hoi_object_features = layers.fullyConnected(
+                stream = 'object'
+            )([
+                hoi_object_rois
+            ])
+    
+            hoi_object_scores = keras.layers.TimeDistributed(
+                keras.layers.Dense(
+                    units=1 * nb_hoi_classes,
+                    activation=None,
+                    kernel_initializer=keras.initializers.RandomNormal(stddev=0.01)
+                ),
+                name="scores4object"
+            )(hoi_object_features)
+                
+                
+            ## INTERACTION ##
+            hoi_pattern_features = layers.pairwiseStream(
+            )([
+                interaction_input
+            ])
+            hoi_pattern_scores = keras.layers.TimeDistributed(
+                keras.layers.Dense(
+                    units=1 * nb_hoi_classes,
+                    activation=None,
+                    kernel_initializer=keras.initializers.RandomNormal(stddev=0.01)
+                ),
+                name = 'scores4pattern'
+            )(hoi_pattern_features)
+                
+            ## FINAL ##
+            hoi_score = keras.layers.Add()([hoi_human_scores, hoi_object_scores, hoi_pattern_scores])
+            
+            hoi_final_score = keras.layers.Activation(
+                "sigmoid",
+                name="hoi_out_class"
+            )(hoi_score)
+    
+            
+            if self.mode=='test':    
+                hoi_outputs = [
+                    hoi_final_score,
+                    human_input,
+                    object_input
+                ]
+            else:
+                hoi_outputs = [
+                    hoi_final_score
+                ]
+            
+            model_hoi = keras.models.Model(inputs=hoi_inputs, outputs=hoi_outputs)
+
 
         ########################
         ######### ALL ##########
         ########################   
 #        model_all = keras.models.Model([img_input,roi_input], rpn_outputs + detection_outputs)
         
-        return model_rpn, model_detection, model_hoi
+        self.model_rpn = model_rpn
+        self.model_det = model_det
+        self.model_hoi = model_hoi

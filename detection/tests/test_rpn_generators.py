@@ -43,7 +43,7 @@ if True:
     # Create batch generators
     genTrain = DataGenerator(imagesMeta = data.trainGTMeta, cfg=cfg, data_type='train')
     
-if True:
+if False:
     model_rpn, model_detection, model_hoi, model_all = methods.get_hoi_rcnn_models(cfg)
     if type(cfg.my_weights)==str and len(cfg.my_weights) > 0:
         print('Loading my weights...')
@@ -54,6 +54,14 @@ if True:
 trainIterator = genTrain.begin()
 
 total_times = np.array([0.0,0.0])
+
+i = 0
+for imageID, imageMeta in data.trainGTMeta.items():
+    utils.update_progress_new(i+1, len(data.trainGTMeta), imageID)
+    for obj in imageMeta['objects']:
+        if obj['xmax'] <= obj['xmin']:
+            print(imageID)
+    i += 1
 
 #i = 0
 #imageMeta = imagesMeta['200365']

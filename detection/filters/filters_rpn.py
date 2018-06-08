@@ -26,16 +26,19 @@ def prepareInputs(imageMeta, images_path, cfg):
     return np.copy(imgRedux), imgDims
 
 
-def loadTargets(imageMeta, anchors_path):
+def loadTargets(imageMeta, anchors_path, cfg):
     path = anchors_path + imageMeta['imageName'].split('.')[0]
     if not os.path.exists(path + '.pkl'):
         return None
-    target_labels, target_deltas = utils.load_obj(path)
-    return [y_rpn_cls, y_rpn_regr]
+    target_labels, target_deltas, val_map = utils.load_obj(path)
+    
+    return [target_labels, target_deltas, val_map]
 
 
-
-def reduceTargets(y_rpn_overlap, y_rpn_regr, y_is_box_valid, cfg):
+def reduceTargets(Y, cfg):
+    [y_rpn_overlap, y_rpn_regr, y_is_box_valid] = Y
+    
+    
     #############################
     ##### Reduce GT anchors #####
     #############################
