@@ -16,13 +16,15 @@ sys.path.append('../data/')
 
 import extract_data
 from rpn_generators import DataGenerator
-import filters_helper as helper
+import filters_helper as helper,\
+       filters_rpn
 
 import numpy as np
 import utils
 import time
 import cv2 as cv
 import copy as cp
+import os
 
 np.seterr(all='raise')
 
@@ -34,23 +36,33 @@ if True:
     print('Loading data...')
     data = extract_data.object_data()
     cfg = data.cfg
-    
-    # Create batch generators
-    genTrain = DataGenerator(imagesMeta = data.trainGTMeta, cfg=cfg, data_type='train')
-
-trainIterator = genTrain.begin()
 
 
-print('save path', cfg.data_path +'anchors/train/')
-alltimes = np.zeros((genTrain.nb_batches, 4))
-for batchidx in range(genTrain.nb_batches):
-    X, [Y1,Y2,M], imageMeta, imageDims, times = next(trainIterator)
-    
-    utils.update_progress_new(batchidx+1, genTrain.nb_batches, imageMeta['imageName'])
-    if X is None:
+imagesMeta = data.trainGTMeta
+nb_images = len(imagesMeta)
+
+images_path = cfg.data_path + 'images/train/'
+anchors_path = cfg.data_path + 'anchors/train/'
+
+print('images path', images_path)
+print('anchors path', anchors_path)
+alltimes = np.zeros((nb_images, 4))
+
+for batchidx, (imageID, imageMeta) in enumerate(imagesMeta.items()):
+    path = anchors_path + imageMeta['imageName'].split('.')[0] + '.pkl'
+    if os.path.exists(path):
         continue
     
-    times = list(times) + [0,0]
+    io_start = time.time()
+    img, imageDims = filters_rpn.prepareInputs(imageMeta, images_path, cfg)
+    io_end = time.time()
+    pp_start = time.time()
+    [Y1,Y2,M] = filters_rpn.prepareTargets(imageMeta, imageDims, cfg)
+    pp_end = time.time()
+    
+    utils.update_progress_new(batchidx+1, nb_images, imageMeta['imageName'])
+    
+    times = [io_end-io_start, pp_end-pp_start] + [0,0]
     alltimes[batchidx,:] = times
     
     target_labels, target_deltas, val_map = helper.bboxes2RPNformat(Y1, Y2, M, cfg)

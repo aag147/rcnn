@@ -12,8 +12,12 @@ import filters_helper as helper
 import utils
 import os
 
-
+#######################
+#### PROCESS INPUT ####
+#######################
 def prepareInputs(imageMeta, images_path, cfg):
+    #in: imageMeta
+    #out: preprocessed image and imageDims
     img = cv.imread(images_path + imageMeta['imageName'])
     assert(img is not None), 'invalid path: %s' % images_path + imageMeta['imageName']
     assert(img.shape[0] > 10)
@@ -25,8 +29,21 @@ def prepareInputs(imageMeta, images_path, cfg):
     imgRedux = np.expand_dims(imgRedux, axis=0)
     return np.copy(imgRedux), imgDims
 
+def unprepareInputs(img, imgDims, cfg):
+    #in: preprocessed image
+    #out: preprocessed image shifted from [-1,1] to [0,1]
+    img = np.copy(img)
+    img = img[0]
+    img = helper.unpreprocessImage(img, cfg)
+    return img, imgDims
 
+
+#######################
+### PROCESS TARGETS ###
+#######################
 def loadTargets(imageMeta, anchors_path, cfg):
+    #in: imageMeta
+    #out: non-reduced targets
     path = anchors_path + imageMeta['imageName'].split('.')[0]
     if not os.path.exists(path + '.pkl'):
         return None
@@ -36,6 +53,8 @@ def loadTargets(imageMeta, anchors_path, cfg):
 
 
 def reduceTargets(Y, cfg):
+    #in: non-reduced targets
+    #out: reduced targets
     [y_rpn_overlap, y_rpn_regr, y_is_box_valid] = Y
     
     
@@ -74,8 +93,10 @@ def reduceTargets(Y, cfg):
     y_rpn_regr = np.concatenate([np.repeat(y_rpn_overlap, 4, axis=3), y_rpn_regr], axis=3)
     return [np.copy(y_rpn_cls), np.copy(y_rpn_regr)]
 
-def prepareTargets(imageMeta, imageDims, cfg):
-
+def createTargets(imageMeta, imageDims, cfg):
+    #in: imageMeta
+    #out: non-reduced targets
+    
     #############################
     ########## Image ############
     #############################
@@ -230,38 +251,3 @@ def prepareTargets(imageMeta, imageDims, cfg):
     y_rpn_regr = np.expand_dims(y_rpn_regr, axis=0)
     
     return [np.copy(y_rpn_overlap), np.copy(y_rpn_regr), np.copy(y_is_box_valid)]
-    
-    #############################
-    ##### Reduce GT anchors #####
-    #############################
-    # one issue is that the RPN has many more negative than positive regions, so we turn off some of the negative
-    # regions. We also limit it to 256 regions.
-    pos_locs = np.where(np.logical_and(y_rpn_overlap[0, :, :, :] == 1, y_is_box_valid[0, :, :, :] == 1))
-    neg_locs = np.where(np.logical_and(y_rpn_overlap[0, :, :, :] == 0, y_is_box_valid[0, :, :, :] == 1))
-
-    num_pos = len(pos_locs[0])
-    num_regions = cfg.nb_rpn_proposals
-        
-    if len(pos_locs[0]) > num_regions/2:
-        val_locs = random.sample(range(len(pos_locs[0])), len(pos_locs[0]) - int(num_regions/2))
-        y_is_box_valid[0, pos_locs[0][val_locs], pos_locs[1][val_locs], pos_locs[2][val_locs]] = 0
-        num_pos = int(num_regions/2)
-    
-    if len(neg_locs[0]) + num_pos > num_regions:
-        if cfg.rpn_uniform_sampling:
-            val_locs = random.sample(range(len(neg_locs[0])), len(neg_locs[0]) - num_pos)
-        else:
-            val_locs = random.sample(range(len(neg_locs[0])), len(neg_locs[0]) - (num_regions - num_pos))
-        y_is_box_valid[0, neg_locs[0][val_locs], neg_locs[1][val_locs], neg_locs[2][val_locs]] = 0
-    
-    
-    #############################
-    ###### Combine outputs ######
-    #############################
-    # y_rpn_overlap: objectiveness score - 0/1
-    # y_is_box_valid: should box be included in loss - 0/1
-    # y_rpn_regr: regression deltas - x,y,w,h
-    y_rpn_cls = np.concatenate([y_is_box_valid, y_rpn_overlap], axis=3)
-    y_rpn_regr *= cfg.rpn_regr_std
-    y_rpn_regr = np.concatenate([np.repeat(y_rpn_overlap, 4, axis=3), y_rpn_regr], axis=3)
-    return [np.copy(y_rpn_cls), np.copy(y_rpn_regr)]

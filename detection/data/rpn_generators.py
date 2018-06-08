@@ -74,26 +74,18 @@ class DataGenerator():
             imageMeta = self.imagesMeta[imageID]
             imageMeta['id'] = imageID
             
-            path = self.anchors_path + imageMeta['imageName'].split('.')[0] + '.pkl'
-            if os.path.exists(path):
-                return None, [None,None,None], imageMeta, None, None
-            
             io_start = time.time()
             img, imageDims = filters_rpn.prepareInputs(imageMeta, self.images_path, self.cfg)
             io_end = time.time()
             pp_start = time.time()
             Y = filters_rpn.loadTargets(imageMeta, self.anchors_path, self.cfg)
             
-            try:
-                if Y is None:
-                    Y = filters_rpn.prepareTargets(imageMeta, imageDims, self.cfg)                
-            except:
-                print(imageID)
-                print ("Unexpected error:", sys.exc_info()[0])
-                raise
+            if Y is None:
+                Y = filters_rpn.prepareTargets(imageMeta, imageDims, self.cfg)
+
             Y = filters_rpn.reduceTargets(Y, self.cfg)
             pp_end = time.time()
-            times = np.array([io_end-io_start, pp_end-pp_start])
+            times = [io_end-io_start, pp_end-pp_start]
             
         if self.do_meta:
             return img, Y, imageMeta, imageDims, times

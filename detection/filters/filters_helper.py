@@ -40,14 +40,14 @@ def normalizeRoIs(rois, imageDims):
     return norm_rois
 
 
-def deltas2Boxes(props, deltas, rois, cfg, exclude_bg = True):
+def deltas2Boxes(props, deltas, rois, cfg):
     nb_rois_in_batch = props.shape[1]
     bboxes = {}
     boxes = []
     
     for ii in range(nb_rois_in_batch):
 #        if np.max(props[0, ii, :]) < bbox_threshold or np.argmax(props[0, ii, :]) == 0:
-        if np.argmax(props[0, ii, :]) == 0 and exclude_bg:
+        if np.argmax(props[0, ii, :]) == 0:
             continue
         
         labelID = np.argmax(props[0, ii, :])
@@ -602,6 +602,12 @@ def preprocessImage(img, cfg):
     img = cv.resize(img, None, None, fx=img_scale, fy=img_scale,
                     interpolation=cv.INTER_LINEAR)
     return img, [img_scale, img_scale]
+
+def unpreprocessImage(img, cfg):
+    img += 1.0
+    img /= 2.0
+    
+    return img
 
        
 def normalizeGTboxes(gtboxes, scale=[1,1], rpn_stride=1, shape=[1,1], roundoff=False):

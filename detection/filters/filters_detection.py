@@ -10,46 +10,15 @@ import utils
 
 import filters_helper as helper
 
-def loadData(imageMeta, rois_path, imageDims, cfg, batchidx = None):
-    roisMeta = utils.load_dict(rois_path + str(int(imageMeta['imageName'].split('.')[0])))
-#    roisMeta = utils.load_dict(rois_path + imageMeta['imageName'])
-    if roisMeta is None:
-        return None, None, None
-    allrois = np.array(roisMeta['rois'])
-    alltarget_props = np.array(roisMeta['target_props'])
-    alltarget_deltas = np.array(roisMeta['target_deltas'])
-    
-    alltarget_deltas = utils.getMatrixDeltas(cfg.nb_object_classes, alltarget_deltas, alltarget_props)
-    alltarget_props = utils.getMatrixLabels(cfg.nb_object_classes, alltarget_props)
-    
-    print(alltarget_deltas.shape)
-    print(alltarget_props.shape)
-    if batchidx is None:
-        samples = helper.reduce_rois(alltarget_props, cfg)
-        rois = allrois[samples, :]
-        target_props = alltarget_props[samples, :]
-        target_deltas = alltarget_deltas[samples, :]
-    else:
-        rois = np.zeros((cfg.nb_detection_rois, 5))
-        target_props = np.zeros((cfg.nb_detection_rois, cfg.nb_object_classes))
-        target_deltas = np.zeros((cfg.nb_detection_rois, (cfg.nb_object_classes-1)*4*2))
-        
-        sidx = batchidx * cfg.nb_detection_rois
-        fidx = min(cfg.detection_nms_max_boxes, sidx + cfg.nb_detection_rois)
-        rois[:fidx-sidx,:] = allrois[sidx:fidx, :]
-        target_props[:fidx-sidx,:] = alltarget_props[sidx:fidx, :]
-        target_deltas[:fidx-sidx,:] = alltarget_deltas[sidx:fidx, :]
-        
-    target_props = np.expand_dims(target_props, axis=0)
-    target_deltas = np.expand_dims(target_deltas, axis=0)
-    rois = prepareInputs(rois, imageDims)
-    
-    return rois, target_props, target_deltas
 
+#######################
+#### PROCESS INPUT ####
+#######################
 def unprepareInputs(norm_rois, imageDims):
-    #(idx,ymin,xmin,ymax,xmax) -> (xmin,ymin,width,height)
+    #in: bboxes of (idx,ymin,xmin,ymax,xmax) in range [0,1]
+    #out: bboxes of (xmin,ymin,width,height) in range [0,output_shape]
     
-    rois = copy.copy(norm_rois)
+    rois = np.copy(norm_rois)
     rois = rois[0,:,1:]
     rois = rois[:,(1,0,3,2)]
 
@@ -60,10 +29,10 @@ def unprepareInputs(norm_rois, imageDims):
     return rois
 
 def prepareInputs(rois, imageDims):
-    #(xmin,ymin,width,height) -> (idx,ymin,xmin,ymax,xmax)
+    #in: bboxes of (xmin,ymin,width,height) in range [0,output_shape]
+    #out: bboxes of (idx,ymin,xmin,ymax,xmax) in range [0,1]
     
-#    print(rois.shape)
-    new_rois = copy.copy(rois)
+    new_rois = np.copy(rois)
     new_rois = new_rois[:,(1,0,3,2)]
     new_rois[:,2] = new_rois[:,2] + new_rois[:,0]
     new_rois[:,3] = new_rois[:,3] + new_rois[:,1]
@@ -75,12 +44,84 @@ def prepareInputs(rois, imageDims):
     
     return new_rois
 
+#######################
+### PROCESS TARGETS ###
+#######################
+def loadTargets(imageMeta, rois_path, imageDims, cfg, batchidx = None):
+    roisMeta = utils.load_dict(rois_path + str(int(imageMeta['imageName'].split('.')[0])))
+    if roisMeta is None:
+        return None, None, None
+    allbboxes = np.array(roisMeta['proposals'])
+    alltarget_labels = np.array(roisMeta['target_labels'])
+    alltarget_deltas = np.array(roisMeta['target_deltas'])
+    
+    alltarget_deltas = utils.getMatrixDeltas(cfg.nb_object_classes, alltarget_deltas, alltarget_labels)
+    alltarget_labels = utils.getMatrixLabels(cfg.nb_object_classes, alltarget_labels)
 
-def prepareTargets(rois, imageMeta, imageDims, class_mapping, cfg):    
+    allbboxes = prepareInputs(allbboxes, imageDims)    
+    alltarget_labels = np.expand_dims(alltarget_labels, axis=0)
+    alltarget_deltas = np.expand_dims(alltarget_deltas, axis=0)
+    
+    rois_redux, target_props_redux, target_deltas_redux = reduceTargets(allbboxes, alltarget_labels, alltarget_deltas, cfg)
+        
+    
+    return rois_redux, target_props_redux, target_deltas_redux
+
+
+def reduceTargets(bboxes, target_labels, target_deltas, cfg, batchidx=None):
+    ## Pick reduced indexes ##
+    if batchidx is None:        
+        nb_detection_rois = cfg.nb_detection_rois
+        bg_samples = np.where(target_labels[:, 0] == 1)
+        fg_samples = np.where(target_labels[:, 0] == 0)
+    
+        if len(bg_samples) > 0:
+            bg_samples = bg_samples[0]
+        else:
+            bg_samples = []
+    
+        if len(fg_samples) > 0:
+            fg_samples = fg_samples[0]
+        else:
+            fg_samples = []
+    
+        # Half positives, half negatives
+        if len(fg_samples) < nb_detection_rois // 4:
+            selected_pos_samples = fg_samples.tolist()
+        else:
+            selected_pos_samples = np.random.choice(fg_samples, nb_detection_rois // 4, replace=False).tolist()
+        try:
+            selected_neg_samples = np.random.choice(bg_samples, nb_detection_rois - len(selected_pos_samples),
+                                                    replace=False).tolist()
+        except:
+            selected_neg_samples = np.random.choice(bg_samples, nb_detection_rois - len(selected_pos_samples),
+                                                    replace=True).tolist()
+    
+        sel_samples = selected_pos_samples + selected_neg_samples
+    else:
+        bboxes = np.zeros((cfg.nb_detection_rois, 5))
+        target_props = np.zeros((cfg.nb_detection_rois, cfg.nb_object_classes))
+        target_deltas = np.zeros((cfg.nb_detection_rois, (cfg.nb_object_classes-1)*4*2))
+        
+        sidx = batchidx * cfg.nb_detection_rois
+        fidx = min(cfg.detection_nms_max_boxes, sidx + cfg.nb_detection_rois)
+        sel_samples = list(range(sidx,fidx))
+        
+    
+    ## Reduce data by picked indexes ##  
+    bboxes = bboxes[sel_samples, :]
+    target_props = target_labels[sel_samples, :]
+    target_deltas = target_deltas[sel_samples, :]
+    
+    return bboxes, target_props, target_deltas
+    
+
+
+def createTargets(bboxes, imageMeta, imageDims, class_mapping, cfg):    
     #############################
     ########## Image ############
     #############################
-    bboxes = imageMeta['objects']
+    gt_bboxes = imageMeta['objects']
     
     scale = imageDims['scale']
 #    shape = imageDims['shape']
@@ -104,13 +145,13 @@ def prepareTargets(rois, imageMeta, imageDims, class_mapping, cfg):
     #############################
     ##### Ground truth boxes ####
     #############################
-    gta = helper.normalizeGTboxes(bboxes, scale=scale, rpn_stride=rpn_stride)
+    gta = helper.normalizeGTboxes(gt_bboxes, scale=scale, rpn_stride=rpn_stride)
 
     #############################
     #### Ground truth objects ###
     #############################
-    for ix in range(rois.shape[0]):
-        (xmin, ymin, width, height) = rois[ix, :]
+    for ix in range(bboxes.shape[0]):
+        (xmin, ymin, width, height) = bboxes[ix, :]
 #        xmin = int(round(xmin))
 #        ymin = int(round(ymin))
 #        xmax = int(round(xmax))
@@ -137,7 +178,7 @@ def prepareTargets(rois, imageMeta, imageDims, class_mapping, cfg):
                 # hard negative example
                 cls_name = 'bg'
             elif detection_max_overlap <= best_iou:
-                cls_name = bboxes[best_bbox]['label']                
+                cls_name = gt_bboxes[best_bbox]['label']                
                 tx, ty, tw, th = helper.get_GT_deltas(gta[best_bbox], rt)
 #                bxmin, bymin, bw, bh = helper.apply_regr([xmin,ymin,width,height], [tx,ty,tw,th])
 #                print(best_iou)
@@ -180,168 +221,5 @@ def prepareTargets(rois, imageMeta, imageDims, class_mapping, cfg):
     true_labels = np.array(y_class_num)
     true_boxes = np.concatenate([y_class_regr_label, y_class_regr_coords], axis=1)
 
-    return rois, true_labels, true_boxes, IoUs
     return rois, np.expand_dims(true_labels, axis=0), np.expand_dims(true_boxes, axis=0), IoUs
 
-
-########################
-###### OUT DATED #######
-########################
-
-def apply_regr_np(X, T):
-    try:
-        x = X[0, :, :]
-        y = X[1, :, :]
-        w = X[2, :, :]
-        h = X[3, :, :]
-
-        tx = T[0, :, :]
-        ty = T[1, :, :]
-        tw = T[2, :, :]
-        th = T[3, :, :]
-
-        cx = x + w / 2.
-        cy = y + h / 2.
-        cx1 = tx * w + cx
-        cy1 = ty * h + cy
-
-        w1 = np.exp(tw.astype(np.float64)) * w
-        h1 = np.exp(th.astype(np.float64)) * h
-        x1 = cx1 - w1 / 2.
-        y1 = cy1 - h1 / 2.
-
-        x1 = np.round(x1)
-        y1 = np.round(y1)
-        w1 = np.round(w1)
-        h1 = np.round(h1)
-        return np.stack([x1, y1, w1, h1])
-    except Exception as e:
-        print(e)
-        return X
-
-
-def non_max_suppression_fast(boxes, overlap_thresh=0.9, max_boxes=300):
-    # I changed this method with boxes already contains probabilities, so don't need prob send in this method
-    # TODO: Caution!!! now the boxes actually is [x1, y1, x2, y2, prob] format!!!! with prob built in
-    if len(boxes) == 0:
-        return []
-    # normalize to np.array
-    boxes = np.array(boxes)
-    # grab the coordinates of the bounding boxes
-    x1 = boxes[:, 0]
-    y1 = boxes[:, 1]
-    x2 = boxes[:, 2]
-    y2 = boxes[:, 3]
-
-    np.testing.assert_array_less(x1, x2)
-    np.testing.assert_array_less(y1, y2)
-
-    if boxes.dtype.kind == "i":
-        boxes = boxes.astype("float")
-
-    pick = []
-    area = (x2 - x1) * (y2 - y1)
-    # sorted by boxes last element which is prob
-    indexes = np.argsort([i[-1] for i in boxes])
-
-    while len(indexes) > 0:
-        last = len(indexes) - 1
-        i = indexes[last]
-        pick.append(i)
-
-        # find the intersection
-        xx1_int = np.maximum(x1[i], x1[indexes[:last]])
-        yy1_int = np.maximum(y1[i], y1[indexes[:last]])
-        xx2_int = np.minimum(x2[i], x2[indexes[:last]])
-        yy2_int = np.minimum(y2[i], y2[indexes[:last]])
-
-        ww_int = np.maximum(0, xx2_int - xx1_int)
-        hh_int = np.maximum(0, yy2_int - yy1_int)
-
-        area_int = ww_int * hh_int
-        # find the union
-        area_union = area[i] + area[indexes[:last]] - area_int
-
-        # compute the ratio of overlap
-        overlap = area_int / (area_union + 1e-6)
-
-        # delete all indexes from the index list that have
-        indexes = np.delete(indexes, np.concatenate(([last], np.where(overlap > overlap_thresh)[0])))
-
-        if len(pick) >= max_boxes:
-            break
-    # return only the bounding boxes that were picked using the integer data type
-    boxes = boxes[pick]
-    return boxes
-
-
-def deltas_to_roi(rpn_layer, regr_layer, cfg):
-    # regr_layer = regr_layer / cfg.std_scaling
-    # [dx,dy,dw,dh] -> (xmin,ymin,xmax,ymax)
-    
-    #############################
-    ######## Parameters #########
-    #############################    
-    max_boxes=cfg.nms_max_boxes
-    overlap_thresh=cfg.nms_overlap_tresh
-
-    anchor_sizes = cfg.anchor_sizes
-    anchor_ratios = cfg.anchor_ratios
-
-    assert rpn_layer.shape[0] == 1
-
-    (rows, cols) = rpn_layer.shape[1:3]
-
-    anc_idx = 0
-    A = np.zeros((4, rpn_layer.shape[1], rpn_layer.shape[2], rpn_layer.shape[3]))
-
-    for anchor_size in anchor_sizes:
-        for anchor_ratio in anchor_ratios:
-            
-            anchor_x = (anchor_size * anchor_ratio[0]) / cfg.rpn_stride
-            anchor_y = (anchor_size * anchor_ratio[1]) / cfg.rpn_stride
-            
-            regr = regr_layer[0, :, :, 4 * anc_idx:4 * anc_idx + 4]
-            regr = np.transpose(regr, (2, 0, 1))
-
-            X, Y = np.meshgrid(np.arange(cols), np.arange(rows))
-            
-            A[0, :, :, anc_idx] = X - anchor_x / 2
-            A[1, :, :, anc_idx] = Y - anchor_y / 2
-            A[2, :, :, anc_idx] = anchor_x
-            A[3, :, :, anc_idx] = anchor_y
-            
-            A[:, :, :, anc_idx] = apply_regr_np(A[:, :, :, anc_idx], regr)
-
-            A[2, :, :, anc_idx] = np.maximum(1, A[2, :, :, anc_idx])
-            A[3, :, :, anc_idx] = np.maximum(1, A[3, :, :, anc_idx])
-            A[2, :, :, anc_idx] += A[0, :, :, anc_idx]
-            A[3, :, :, anc_idx] += A[1, :, :, anc_idx]
-
-            A[0, :, :, anc_idx] = np.maximum(0, A[0, :, :, anc_idx])
-            A[1, :, :, anc_idx] = np.maximum(0, A[1, :, :, anc_idx])
-            A[2, :, :, anc_idx] = np.minimum(cols - 1, A[2, :, :, anc_idx])
-            A[3, :, :, anc_idx] = np.minimum(rows - 1, A[3, :, :, anc_idx])
-
-            anc_idx += 1
-
-    all_boxes = np.reshape(A.transpose((0, 3, 1, 2)), (4, -1)).transpose((1, 0))
-    all_probs = rpn_layer.transpose((0, 3, 1, 2)).reshape((-1))
-
-    x1 = all_boxes[:, 0]
-    y1 = all_boxes[:, 1]
-    x2 = all_boxes[:, 2]
-    y2 = all_boxes[:, 3]
-
-    ids = np.where((x1 - x2 >= 0) | (y1 - y2 >= 0))
-
-    all_boxes = np.delete(all_boxes, ids, 0)
-    all_probs = np.delete(all_probs, ids, 0)
-
-    # I guess boxes and prob are all 2d array, I will concat them
-    all_boxes = np.hstack((all_boxes, np.array([[p] for p in all_probs])))
-    
-    result = non_max_suppression_fast(all_boxes, overlap_thresh=overlap_thresh, max_boxes=max_boxes)
-    # omit the last column which is prob
-    result = result[:, 0: -1]
-    return result

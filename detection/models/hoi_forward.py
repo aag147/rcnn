@@ -50,7 +50,7 @@ def forward_pass(X, models, cfg, class_mapping):
     rois = filters_detection.unprepareInputs(rois_norm, imageDims)
     boxes = helper.deltas2Boxes(allY1, allY2, rois, cfg)
     
-    if boxes is None:
+    if len(boxes) == 0:
         return None, None, None
     
     boxes_nms = helper.non_max_suppression_boxes(boxes, cfg, cfg.det_nms_overlap_thresh_test)
