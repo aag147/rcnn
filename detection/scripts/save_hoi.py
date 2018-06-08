@@ -41,7 +41,7 @@ np.seterr(all='raise')
 #plt.close("all")
 
 
-if True:
+if False:
     # Load data
     print('Loading data...')
     data = extract_data.object_data(False)

@@ -29,7 +29,7 @@ def forward_pass(X, models, cfg, class_mapping):
     pred_anchors = pred_anchors[:,0:4]
     
     # det prepare
-    rois, target_props, target_deltas, IouS = filters_detection.prepareTargets(pred_anchors, imageMeta, imageDims, class_mapping, cfg)
+    rois, target_props, target_deltas, IouS = filters_detection.createTargets(pred_anchors, imageMeta, imageDims, class_mapping, cfg)
     rois_norm = filters_detection.prepareInputs(rois, imageDims)    
     
     # det predict

@@ -56,9 +56,11 @@ def loadTargets(imageMeta, rois_path, imageDims, cfg, batchidx = None):
     alltarget_deltas = utils.getMatrixDeltas(cfg.nb_object_classes, alltarget_deltas, alltarget_labels)
     alltarget_labels = utils.getMatrixLabels(cfg.nb_object_classes, alltarget_labels)
 
-    allbboxes = prepareInputs(allbboxes, imageDims)    
+    allbboxes = np.expand_dims(allbboxes, axis=0)
     alltarget_labels = np.expand_dims(alltarget_labels, axis=0)
     alltarget_deltas = np.expand_dims(alltarget_deltas, axis=0)
+    
+    allbboxes = prepareInputs(allbboxes, imageDims)    
     
     rois_redux, target_props_redux, target_deltas_redux = reduceTargets(allbboxes, alltarget_labels, alltarget_deltas, cfg)
         
@@ -219,5 +221,5 @@ def createTargets(bboxes, imageMeta, imageDims, class_mapping, cfg):
     true_labels = np.array(y_class_num)
     true_boxes = np.concatenate([y_class_regr_label, y_class_regr_coords], axis=1)
 
-    return rois, np.expand_dims(true_labels, axis=0), np.expand_dims(true_boxes, axis=0), IoUs
+    return np.expand_dims(rois, axis=0), np.expand_dims(true_labels, axis=0), np.expand_dims(true_boxes, axis=0), IoUs
 
