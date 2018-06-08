@@ -91,7 +91,7 @@ class DataGenerator():
                 print(imageID)
                 print ("Unexpected error:", sys.exc_info()[0])
                 raise
-#            Y = filters_rpn.reduceTargets(Y, self.cfg)
+            Y = filters_rpn.reduceTargets(Y, self.cfg)
             pp_end = time.time()
             times = np.array([io_end-io_start, pp_end-pp_start])
             

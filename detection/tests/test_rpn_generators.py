@@ -58,9 +58,12 @@ total_times = np.array([0.0,0.0])
 i = 0
 for imageID, imageMeta in data.trainGTMeta.items():
     utils.update_progress_new(i+1, len(data.trainGTMeta), imageID)
+    
     for obj in imageMeta['objects']:
-        if obj['xmax'] <= obj['xmin']:
+        
+        if obj['xmax'] <= obj['xmin']+1 or obj['ymax'] <= obj['ymin']+1:
             print(imageID)
+            print(obj)
     i += 1
 
 #i = 0

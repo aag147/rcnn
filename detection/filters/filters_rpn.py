@@ -121,7 +121,7 @@ def prepareTargets(imageMeta, imageDims, cfg):
     #############################
     ##### Ground truth boxes ####
     #############################
-    gta = helper.normalizeGTboxes(bboxes, scale=scale, roundoff=True)
+    gta = helper.normalizeGTboxes(bboxes, scale=scale, roundoff=False)
 #    draw.drawHOI(image, gta[0,:], gta[0,:])
      
     #############################
