@@ -257,8 +257,6 @@ def non_max_suppression_fast(boxes, overlap_thresh=0.5, max_boxes=300):
     x2 = x1+w
     y2 = y1+h
     
-    print(np.sum((x2 - x1) < 0))
-    print(np.sum((y2 - y1) < 0))
 
     np.testing.assert_array_less(x1, x2)
     np.testing.assert_array_less(y1, y2)

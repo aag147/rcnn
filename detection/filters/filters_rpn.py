@@ -30,8 +30,8 @@ def prepareInputs(imageMeta, images_path, cfg):
     return np.copy(imgRedux), imgDims
 
 def unprepareInputs(img, imgDims, cfg):
-    #in: preprocessed image
-    #out: preprocessed image shifted from [-1,1] to [0,1]
+    #in: preprocessed image [{1}, {height}, {width}, {3}] in range [-1,1]
+    #out: preprocessed image [{height}, {width}, {3}] in range [0,1]
     img = np.copy(img)
     img = img[0]
     img = helper.unpreprocessImage(img, cfg)

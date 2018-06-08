@@ -57,7 +57,7 @@ for batchidx, (imageID, imageMeta) in enumerate(imagesMeta.items()):
     img, imageDims = filters_rpn.prepareInputs(imageMeta, images_path, cfg)
     io_end = time.time()
     pp_start = time.time()
-    [Y1,Y2,M] = filters_rpn.prepareTargets(imageMeta, imageDims, cfg)
+    [Y1,Y2,M] = filters_rpn.createTargets(imageMeta, imageDims, cfg)
     pp_end = time.time()
     
     utils.update_progress_new(batchidx+1, nb_images, imageMeta['imageName'])

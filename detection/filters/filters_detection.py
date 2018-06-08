@@ -46,6 +46,10 @@ def prepareInputs(rois, imageDims):
 ### PROCESS TARGETS ###
 #######################
 def loadTargets(imageMeta, rois_path, imageDims, cfg, batchidx = None):
+    #out: rois [{1}, {...}, (1,ymin,xmin,ymax,xmax)]
+    #out: labels [{1}, {...}, {nb_object_classes}]
+    #out: deltas [{1}, {...}, (dx,dy,dw,dh) * (nb_object_classes-1)]
+    
     roisMeta = utils.load_dict(rois_path + str(int(imageMeta['imageName'].split('.')[0])))
     if roisMeta is None:
         return None, None, None
@@ -69,6 +73,10 @@ def loadTargets(imageMeta, rois_path, imageDims, cfg, batchidx = None):
 
 
 def reduceTargets(bboxes, target_labels, target_deltas, cfg, batchidx=None):
+    #out: rois [{1}, {batch_size}, (1,ymin,xmin,ymax,xmax)]
+    #out: labels [{1}, {batch_size}, {nb_object_classes}]
+    #out: deltas [{1}, {batch_size}, (dx,dy,dw,dh) * (nb_object_classes-1)]
+    
     ## Pick reduced indexes ##
     if batchidx is None:        
         nb_detection_rois = cfg.nb_detection_rois
@@ -117,7 +125,11 @@ def reduceTargets(bboxes, target_labels, target_deltas, cfg, batchidx=None):
     
 
 
-def createTargets(bboxes, imageMeta, imageDims, class_mapping, cfg):    
+def createTargets(bboxes, imageMeta, imageDims, class_mapping, cfg):
+    #out: rois [{1}, {...}, (1,ymin,xmin,ymax,xmax)]
+    #out: labels [{1}, {...}, {nb_object_classes}]
+    #out: deltas [{1}, {...}, (dx,dy,dw,dh) * (nb_object_classes-1)]
+    
     #############################
     ########## Image ############
     #############################
