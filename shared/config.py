@@ -241,7 +241,7 @@ class basic_config:
 #    augment, backbone, cfg_method, dataset, epoch_split, final_epoch, generator_type, input_roi_dir, learning_rate, model, nb_batches, optimizer, results_dir, start_epoch, transfor data, uniform_sampling, weighing, ma(x)_classes
        print('Parsing args...')
        for opt, arg in opts:
-          print('   ', opt, arg)
+          print('  ', opt, arg)
           if opt == '-a':
              # augmentation
              self.flip_image = True
