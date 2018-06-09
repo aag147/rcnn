@@ -82,7 +82,7 @@ for i in range(genTrain.nb_batches):
         continue
     
     #CONVERT
-    detMeta[imageID] = filters_hoi.convertData([all_hbboxes, all_obboxes, all_target_labels, val_map], cfg)
+    detMeta[imageID] = filters_hoi.convertData([all_hbboxes[0], all_obboxes[0], all_target_labels[0], val_map[0]], cfg)
     utils.update_progress_new(i+1, genTrain.nb_batches, imageMeta['id'])
 
 path = cfg.my_save_path + 'hoiputs'
