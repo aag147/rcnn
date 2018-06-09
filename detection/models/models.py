@@ -9,7 +9,7 @@ from keras.models import Sequential, Model
 from keras.layers.core import Flatten, Dense, Dropout
 from keras.layers.convolutional import Conv2D, Convolution2D, MaxPooling2D, ZeroPadding2D
 
-def VGG16(weights_path=None):
+def VGG16(weights_path=None, reg=None):
     #https://gist.github.com/baraldilorenzo/07d7802847aaad0a35d3
     #https://github.com/fchollet/deep-learning-models/blob/master/vgg16.py
     def _vgg(input_image):

@@ -24,13 +24,15 @@ class basic_config:
    
    def get_results_paths(self):
       if len(self.my_results_path) > 0 or not self.newDir:
+          print("   No directory (test)...")
           self.new_results_dir = ''
           return
       if len(self.my_results_dir) > 0 and not self.use_shared_cnn:
+          print("   Shared directory...")
           path = self.part_results_path + self.my_results_dir + '/'
           self.new_results_dir = self.my_results_dir + '/'
       else:
-          print("New directory...")
+          print("   New directory...")
           for fid in range(100):
             my_results_dir = self.dataset + "/" + self.modelnamekey + '%d/' % fid
             path = self.part_results_path + my_results_dir
@@ -58,9 +60,12 @@ class basic_config:
       
       
    def update_paths(self):
+       print('Updating paths...')
        self.get_data_path()
        self.get_results_paths()
        self.get_detections_path()
+       
+       print('   results_path:', self.my_results_path)
       
    def __init__(self, newDir = True):
        self.newDir = newDir
@@ -68,6 +73,7 @@ class basic_config:
        
    def setBasicValues(self):
        #paths
+       self.home_path = os.path.expanduser('~') + '/'
        self.part_results_path = ''
        self.part_data_path  = ''
        self.weights_path = ''
@@ -233,8 +239,9 @@ class basic_config:
           sys.exit(2)
      
 #    augment, backbone, cfg_method, dataset, epoch_split, final_epoch, generator_type, input_roi_dir, learning_rate, model, nb_batches, optimizer, results_dir, start_epoch, transfor data, uniform_sampling, weighing, ma(x)_classes
+       print('Parsing args...')
        for opt, arg in opts:
-          print(opt, arg)
+          print('   ', opt, arg)
           if opt == '-a':
              # augmentation
              self.flip_image = True
@@ -303,7 +310,7 @@ class basic_config:
    def set_class_weights(self, labels, imagesMeta):
        if self.wp >= 0: 
            return
-       print('Using class-specific weights!')
+       print('  Using class-specific weights!')
        stats, counts = utils.getLabelStats(imagesMeta, labels)
        p = counts / sum(counts)
        wp = 1 / p

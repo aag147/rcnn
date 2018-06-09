@@ -37,15 +37,19 @@ class object_data:
             return
         to_path += '/'+self.cfg.dataset
         
+        print('Moving data...')
         if not os.path.exists(to_path):
-#            self.remove_data()        
-            print('Moving data...')
             utils.moveData(from_path, to_path)
-        print('Data already moved...')
+            print('   Data has been moved...')
+        else:
+            print('   Data is already moved...')
         self.cfg.data_path = to_path+'/'
         
         self.cfg.my_save_path = self.cfg.move_path + '/results/' + self.cfg.new_results_dir
         self.cfg.my_detections_path = self.cfg.move_path + '/results/' + self.cfg.dataset + "/" + self.cfg.my_detections_dir + '/detections/'
+        print('   data_path:', self.cfg.data_path)
+        print('   save_path:', self.cfg.my_save_path)
+        print('   input_path:', self.cfg.my_detections_path)
 
     def load_data(self):
         cfg = basic_config(self.newDir)
@@ -74,6 +78,7 @@ class object_data:
             
             
         if cfg.max_classes is not None:
+            print('Reducing data...')
             # Reduce data to include only max_classes number of different classes
 #            _, counts = utils.getLabelStats(trainGTMeta, class_mapping)
             reduced_objs = self.getReduxIdxs(class_mapping, cfg)
@@ -100,8 +105,6 @@ class object_data:
         
         if cfg.move:
             self.move_data()
-            
-        print('Path:', cfg.my_results_path)
         
         self.class_mapping = class_mapping
         self.testGTMeta = testGTMeta

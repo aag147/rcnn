@@ -12,65 +12,6 @@ from sklearn.metrics import confusion_matrix
 
 
 #%%
-def computeAP(bboxes, gt_bboxes, label):
-    import filters_helper as helper
-    bboxes_sort = bboxes[bboxes[:,5].argsort(),:][::-1]
-    nb_gts = gt_bboxes.shape[0]
-    nb_bboxes = bboxes_sort.shape[0]
-    rd_constant = 1 / nb_gts
-    
-    vals = np.zeros((nb_bboxes, 3))
-    
-    print(label, bboxes.shape, gt_bboxes.shape)
-    
-    val_gts = np.ones((nb_gts))
-    tps = 0
-    for bidx, bbox in enumerate(bboxes_sort):
-        regr_overlaps = helper._computeIoUs(bbox, gt_bboxes) * val_gts
-        print(regr_overlaps)
-        
-        if np.max(regr_overlaps) > 0.5:
-            tps += 1
-            rd = rd_constant
-            val_gts[np.argmax(regr_overlaps)] = 0
-        else:
-            rd = 0
-        
-        p = tps / (bidx+1)
-        r = tps / nb_gts
-        vals[bidx,:] = [p, r, rd]
-        
-    print(vals)
-    AP  = np.sum(vals[:,0] * vals[:,2])
-    
-    return AP
-    
-
-def computeMAP(bboxes, imageMeta, imageDims, class_mapping, cfg):
-    import filters_helper as helper
-
-    #############################
-    ########## Image ############
-    #############################
-    gt_bboxes = imageMeta['objects']
-    
-    scale = imageDims['scale']
- 
-    bboxes = helper._transformBBoxes(bboxes, dosplit=False)
-    gt_bboxes = helper._transformGTBBox(gt_bboxes, class_mapping, scale=scale, rpn_stride=cfg.rpn_stride, dosplit=False)
-    unique_gt_labels = np.unique(gt_bboxes[:,4])
-    AP_map = np.zeros((len(unique_gt_labels)))
-        
-    for lidx, label in enumerate(unique_gt_labels):
-        gt_idxs = np.where(gt_bboxes[:,4]==label)[0]
-        bb_idxs = np.where(bboxes[:,4]==label)[0]
-        AP = computeAP(bboxes[bb_idxs,:], gt_bboxes[gt_idxs,:], label)
-        AP_map[lidx] = AP
-        
-    mAP = np.mean(AP_map)
-    return mAP
-    
-
 
 def computeHOIAP(batch, GTMeta, nb_gt_samples, hoi_id):
     import filters_helper as helper

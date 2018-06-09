@@ -72,17 +72,17 @@ class AllModels:
         cfg = self.cfg
         print('Compiling models...')
         if cfg.optimizer == 'adam':
-            print('     Opt.:', 'Adam')
+            print('   Opt.:', 'Adam')
             opt = Adam(lr = cfg.init_lr)
         else:
-            print('     Opt.:', 'SGD')
+            print('   Opt.:', 'SGD')
             opt = SGD(lr = cfg.init_lr, momentum = 0.9, decay = 0.0005, nesterov=False)
         print('     Learning rate:', cfg.init_lr)
         if self.do_rpn:
             if cfg.rpn_uniform_sampling:
-                print('     Uniform anchor sampling')
+                print('   Uniform anchor sampling')
             else:
-                print('     Non-Uniform anchor sampling')
+                print('   Non-Uniform anchor sampling')
             self.model_rpn.compile(optimizer=opt,\
                       loss=[losses.rpn_loss_cls(cfg.nb_anchors), losses.rpn_loss_regr(cfg.nb_anchors)])
         if self.do_det:
@@ -120,17 +120,17 @@ class AllModels:
             if self.do_rpn:    
                 rpn_before = self.model_rpn.layers[11].get_weights()[0][0,0,0,0]
                 if self.mode == 'test':
-                    print('     Loading test RPN weights...')
+                    print('   Loading test RPN weights...')
                     path = cfg.part_results_path + "COCO/rpn" + cfg.my_results_dir + '/weights/' + cfg.my_weights
                     assert os.path.exists(path), 'invalid path: %s' % path
                     self.model_rpn.load_weights(path, by_name=False)
                 
                 elif cfg.use_shared_cnn:
-                    print('     Loading shared train RPN weights...')
+                    print('   Loading shared train RPN weights...')
                     self.model_rpn = self._load_shared_weights(self.model_rpn)
                     
                 elif cfg.only_use_weights:
-                    print('     Loading train RPN weights...')
+                    print('   Loading train RPN weights...')
                     assert os.path.exists(cfg.my_shared_weights), 'invalid path: %s' % cfg.my_shared_weights
                     self.model_rpn.load_weights(cfg.my_shared_weights) 
                     
@@ -141,17 +141,17 @@ class AllModels:
             if self.do_det:
                 det_before = self.model_det.layers[4].get_weights()[0][0,0]
                 if self.mode == 'test':
-                    print('     Loading test DET weights...')
+                    print('   Loading test DET weights...')
                     path = cfg.part_results_path + "COCO/det" + cfg.my_results_dir + '/weights/' + cfg.my_weights
                     assert os.path.exists(path), 'invalid path: %s' % path
                     self.model_det.load_weights(path, by_name=True)
                     
                 elif cfg.use_shared_cnn:
-                    print('     Loading shared train DET weights...')
+                    print('   Loading shared train DET weights...')
                     self.model_det = self._load_shared_weights(self.model_det)
                     
                 elif cfg.only_use_weights:
-                    print('     Loading train DET weights...')
+                    print('   Loading train DET weights...')
                     assert os.path.exists(cfg.my_shared_weights), 'invalid path: %s' % cfg.my_shared_weights
                     self.model_det.load_weights(cfg.my_shared_weights) 
                 
@@ -161,17 +161,17 @@ class AllModels:
             if self.do_hoi:
                 hoi_before = self.model_hoi.layers[11].get_weights()[0][0,0,0,0]
                 if self.mode == 'test':
-                    print('     Loading test HOI weights...')
+                    print('   Loading test HOI weights...')
                     path = cfg.part_results_path + 'HICO/hoi5c/weights/' + cfg.my_weights
                     assert os.path.exists(path), 'invalid path: %s' % path
                     self.model_hoi.load_weights(path, by_name=False)
                 
                 elif cfg.use_shared_cnn:
-                    print('     Loading shared train HOI weights...')
+                    print('   Loading shared train HOI weights...')
                     self.model_hoi = self._load_shared_weights(self.model_hoi)
                     
                 elif cfg.only_use_weights:
-                    print('     Loading train HOI weights...')
+                    print('   Loading train HOI weights...')
                     assert os.path.exists(cfg.my_shared_weights), 'invalid path: %s' % cfg.my_shared_weights
                     self.model_hoi.load_weights(cfg.my_shared_weights) 
                 
@@ -240,8 +240,8 @@ class AllModels:
         pool_size = cfg.pool_size
         nb_object_classes = cfg.nb_object_classes
         nb_hoi_classes =cfg.nb_hoi_classes
-        print('     Obj. classes:', nb_object_classes)
-        print('     HOI classes:', nb_hoi_classes)
+        print('   Obj. classes:', nb_object_classes)
+        print('   HOI classes:', nb_hoi_classes)
     
         ########################
         ##### Input shapes #####
