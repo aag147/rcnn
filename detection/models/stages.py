@@ -81,7 +81,7 @@ class AllStages:
             return None, None, None
         
         if include=='pre':
-            return all_hbboxes, all_obboxes, all_target_labels
+            return all_hbboxes, all_obboxes, all_target_labels, val_map
         
         patterns = filters_hoi.createInteractionPatterns(all_hbboxes, all_obboxes, self.cfg)
         hbboxes_norm, obboxes_norm = filters_hoi.prepareInputs(all_hbboxes, all_obboxes, imageDims)
