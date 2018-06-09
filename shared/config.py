@@ -106,6 +106,7 @@ class basic_config:
        self.pretrained_weights = True
        self.my_weights = None
        self.only_use_weights = False
+       self.use_l2_reg = True
        
        #model compile
        self.optimizer = 'sgd'

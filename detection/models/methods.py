@@ -292,8 +292,8 @@ class AllModels:
         ########################
         ####### Backbone #######
         ########################
-        output_features = models.VGG16(cfg.weights_path)(img_input)     
-        output_features_hoi = models.VGG16(cfg.weights_path)(img_hoi_input)
+        output_features = models.VGG16(cfg.weights_path, reg=cfg.use_l2_reg)(img_input)     
+        output_features_hoi = models.VGG16(cfg.weights_path, reg=cfg.use_l2_reg)(img_hoi_input)
         
         ########################
         ######### RPN ##########

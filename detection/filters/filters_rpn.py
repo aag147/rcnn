@@ -48,7 +48,11 @@ def loadData(imageMeta, anchors_path, cfg):
     path = anchors_path + imageMeta['imageName'].split('.')[0]
     if not os.path.exists(path + '.pkl'):
         return None
-    all_target_labels, all_target_deltas, all_val_map = utils.load_obj(path)
+    
+    rpnMeta = utils.load_obj(path)
+    all_target_labels = np.array(rpnMeta['target_labels'])
+    all_target_deltas = np.array(rpnMeta['target_deltas'])
+    all_val_map       = np.array(rpnMeta['val_map'])
     
     all_target_labels   = np.expand_dims(all_target_labels, axis=0)
     all_target_deltas   = np.expand_dims(all_target_deltas, axis=0)

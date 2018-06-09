@@ -53,10 +53,11 @@ def deltas2Boxes(props, deltas, rois, imageDims, cfg):
     boxes = np.array(boxes)
     
     # Crop to image boundary
-    boxes[:,0] = np.maximum(0.0, boxes[:,0])
-    boxes[:,1] = np.maximum(0.0, boxes[:,1])
-    boxes[:,2] = np.minimum(output_shape[1] - boxes[:,0] - 0.01, boxes[:,2])
-    boxes[:,3] = np.minimum(output_shape[0] - boxes[:,1] - 0.01, boxes[:,3])    
+    if len(boxes) > 0:
+        boxes[:,0] = np.maximum(0.0, boxes[:,0])
+        boxes[:,1] = np.maximum(0.0, boxes[:,1])
+        boxes[:,2] = np.minimum(output_shape[1] - boxes[:,0] - 0.01, boxes[:,2])
+        boxes[:,3] = np.minimum(output_shape[0] - boxes[:,1] - 0.01, boxes[:,3])    
 
     return boxes
 
