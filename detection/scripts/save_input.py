@@ -65,8 +65,8 @@ for batchidx, (imageID, imageMeta) in enumerate(imagesMeta.items()):
     times = [io_end-io_start, pp_end-pp_start] + [0,0]
     alltimes[batchidx,:] = times
     
-    target_labels, target_deltas, val_map = helper.bboxes2RPNformat(Y1, Y2, M, cfg)
-    rpnMeta = {'target_labels': target_labels, 'target_deltas': target_deltas, 'val_map': val_map}
+    rpnMeta = filters_rpn.convertData([Y1, Y2, M], cfg)
     utils.save_obj(rpnMeta, cfg.data_path +'anchors/train/' + imageMeta['imageName'].split('.')[0])
+
 
 print('Times', np.mean(alltimes, axis=0))

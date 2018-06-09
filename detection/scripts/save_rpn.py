@@ -88,16 +88,15 @@ if True:
 
         
         if bboxes is None:
-            detMeta[imageID] = None
+            detMeta = None
         else:
-            bboxes_clean, target_labels_clean, target_deltas_clean = helper.bboxes2DETformat(bboxes, target_labels, target_deltas, cfg)
-            detMeta[imageID] = {'imageName': imageMeta['imageName'], 'rois':bboxes_clean, 'target_props':target_labels_clean, 'target_deltas':target_deltas_clean}
+            detMeta = filters_detection.convertData([bboxes, target_labels, target_deltas], cfg)
                 
+        utils.save_obj(detMeta, cfg.my_save_path + imageMeta['imageName'].split('.')[0])    
+        
         times = list(times) + [p_end-p_start,pp_end-pp_start]
         alltimes[batchidx,:] = times
         utils.update_progress_new(batchidx+1, genTrain.nb_batches, imageMeta['imageName'])
-        path = cfg.my_save_path + imageID
-        utils.save_dict(detMeta[imageID], path)
     
     print()
     print('Path:', cfg.my_save_path)

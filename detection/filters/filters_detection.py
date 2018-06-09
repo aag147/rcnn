@@ -43,9 +43,9 @@ def prepareInputs(rois, imageDims):
     return new_rois
 
 #######################
-### PROCESS TARGETS ###
+##### MANAGE DATA #####
 #######################
-def loadTargets(imageMeta, rois_path, imageDims, cfg, batchidx = None):
+def loadData(imageMeta, rois_path, imageDims, cfg, batchidx = None):
     #out: rois [{1}, {...}, (1,ymin,xmin,ymax,xmax)]
     #out: labels [{1}, {...}, {nb_object_classes}]
     #out: deltas [{1}, {...}, (dx,dy,dw,dh) * (nb_object_classes-1)]
@@ -53,35 +53,84 @@ def loadTargets(imageMeta, rois_path, imageDims, cfg, batchidx = None):
     roisMeta = utils.load_dict(rois_path + str(int(imageMeta['imageName'].split('.')[0])))
     if roisMeta is None:
         return None, None, None
-    allbboxes = np.array(roisMeta['proposals'])
-    alltarget_labels = np.array(roisMeta['target_labels'])
-    alltarget_deltas = np.array(roisMeta['target_deltas'])
+    all_bboxes = np.array(roisMeta['proposals'])
+    all_target_labels = np.array(roisMeta['target_labels'])
+    all_target_deltas = np.array(roisMeta['target_deltas'])
     
-    alltarget_deltas = utils.getMatrixDeltas(cfg.nb_object_classes, alltarget_deltas, alltarget_labels)
-    alltarget_labels = utils.getMatrixLabels(cfg.nb_object_classes, alltarget_labels)
+    all_target_deltas = utils.getMatrixDeltas(cfg.nb_object_classes, all_target_deltas, all_target_labels)
+    all_target_labels = utils.getMatrixLabels(cfg.nb_object_classes, all_target_labels)
 
-    allbboxes = np.expand_dims(allbboxes, axis=0)
-    alltarget_labels = np.expand_dims(alltarget_labels, axis=0)
-    alltarget_deltas = np.expand_dims(alltarget_deltas, axis=0)
+    all_bboxes = np.expand_dims(all_bboxes, axis=0)
+    all_target_labels = np.expand_dims(all_target_labels, axis=0)
+    all_target_deltas = np.expand_dims(all_target_deltas, axis=0)
     
-    allbboxes = prepareInputs(allbboxes, imageDims)    
+    return [all_bboxes, all_target_labels, all_target_deltas]
     
-    rois_redux, target_props_redux, target_deltas_redux = reduceTargets(allbboxes, alltarget_labels, alltarget_deltas, cfg)
-        
+    rois_redux, target_props_redux, target_deltas_redux = reduceData(all_bboxes, all_target_labels, all_target_deltas, cfg)
+
+    rois_redux = prepareInputs(rois_redux, imageDims) 
     
     return rois_redux, target_props_redux, target_deltas_redux
 
+def convertData(Y, cfg):
+    [all_bboxes, all_target_labels, all_target_deltas] = Y
+    
+    all_bboxes = np.copy(all_bboxes)
+    all_target_labels = np.copy(all_target_labels)
+    all_target_deltas = np.copy(all_target_deltas)
+    
+    all_target_labels = [int(np.argmax(x)) for x in all_target_labels]
+    all_bboxes = [[round(float(x), 4) for x in box] for box in all_bboxes.tolist()]
+    new_target_deltas = []
+    for idx, row in enumerate(all_target_deltas[:,(cfg.nb_object_classes-1)*4:]):
+        coord = []
+        for x in row[(all_target_labels[idx]-1)*4:(all_target_labels[idx])*4].tolist():
+            coord.append(round(float(x), 4))
+        new_target_deltas.append(coord)
+        
+        
+    detMeta = {'rois':all_bboxes, 'target_props':all_target_labels, 'target_deltas':new_target_deltas}
+    return detMeta
 
-def reduceTargets(bboxes, target_labels, target_deltas, cfg, batchidx=None):
-    #out: rois [{1}, {batch_size}, (1,ymin,xmin,ymax,xmax)]
+
+def convertResults(bboxes, imageMeta, class_mapping, scale, rpn_stride):
+    bboxes = np.copy(bboxes)
+    results = []
+    coco_mapping = helper.getCOCOMapping()
+    inv_class_mapping = {idx:label for label,idx in class_mapping.items()}
+    for bbox in bboxes:
+        label = bbox[4]
+        label = inv_class_mapping[label]
+        label = coco_mapping[label]
+        prop = bbox[5]
+        coords = bbox[:4]
+        xmin = ((coords[0]) * rpn_stride / scale[0])
+        ymin = ((coords[1]) * rpn_stride / scale[1])
+        width = ((coords[2]) *  rpn_stride / scale[0])
+        height = ((coords[3]) * rpn_stride / scale[1])
+        coords = [xmin, ymin, width, height]
+        coords = [round(float(x),2) for x in coords]
+        
+        res = {'image_id': int(imageMeta['id']), 'category_id': int(label), 'bbox': coords, 'score': round(float(prop),4)}
+        results.append(res)
+    return results
+        
+def reduceData(Y, cfg, batchidx=None):
+    #out: bboxes [{1}, {batch_size}, (0,ymin,xmin,ymax,xmax)]
     #out: labels [{1}, {batch_size}, {nb_object_classes}]
     #out: deltas [{1}, {batch_size}, (dx,dy,dw,dh) * (nb_object_classes-1)]
+    [all_bboxes, all_target_labels, all_target_deltas] = Y
+    
+    
+    bboxes = np.zeros((1, cfg.nb_detection_rois, 5))
+    target_labels = np.zeros((1, cfg.nb_detection_rois, cfg.nb_object_classes))
+    target_deltas = np.zeros((1, cfg.nb_detection_rois, (cfg.nb_object_classes-1)*4*2))
     
     ## Pick reduced indexes ##
     if batchidx is None:        
         nb_detection_rois = cfg.nb_detection_rois
-        bg_samples = np.where(target_labels[0,:, 0] == 1)
-        fg_samples = np.where(target_labels[0,:, 0] == 0)
+        bg_samples = np.where(all_target_labels[0,:, 0] == 1)
+        fg_samples = np.where(all_target_labels[0,:, 0] == 0)
     
         if len(bg_samples) > 0:
             bg_samples = bg_samples[0]
@@ -106,25 +155,25 @@ def reduceTargets(bboxes, target_labels, target_deltas, cfg, batchidx=None):
                                                     replace=True).tolist()
     
         sel_samples = selected_pos_samples + selected_neg_samples
-    else:
-        bboxes = np.zeros((cfg.nb_detection_rois, 5))
-        target_props = np.zeros((cfg.nb_detection_rois, cfg.nb_object_classes))
-        target_deltas = np.zeros((cfg.nb_detection_rois, (cfg.nb_object_classes-1)*4*2))
-        
+    else:        
         sidx = batchidx * cfg.nb_detection_rois
         fidx = min(cfg.detection_nms_max_boxes, sidx + cfg.nb_detection_rois)
         sel_samples = list(range(sidx,fidx))
         
     
+    assert(target_labels.shape[1] == cfg.nb_detection_rois)
+    
     ## Reduce data by picked indexes ##  
-    bboxes = bboxes[sel_samples, :]
-    target_props = target_labels[sel_samples, :]
-    target_deltas = target_deltas[sel_samples, :]
+    bboxes[:,:len(sel_samples),:]           = all_bboxes[:, sel_samples, :]
+    target_labels[:,:len(sel_samples),:]    = all_target_labels[:, sel_samples, :]
+    target_deltas[:,:len(sel_samples),:]    = all_target_deltas[:, sel_samples, :]
     
-    return bboxes, target_props, target_deltas
+    return bboxes, target_labels, target_deltas
     
 
-
+#######################
+### PROCESS TARGETS ###
+#######################
 def createTargets(bboxes, imageMeta, imageDims, class_mapping, cfg):
     #out: rois [{1}, {...}, (1,ymin,xmin,ymax,xmax)]
     #out: labels [{1}, {...}, {nb_object_classes}]
@@ -163,7 +212,7 @@ def createTargets(bboxes, imageMeta, imageDims, class_mapping, cfg):
     #### Ground truth objects ###
     #############################
     for ix in range(bboxes.shape[0]):
-        (xmin, ymin, width, height) = bboxes[ix, :]
+        (xmin, ymin, width, height) = bboxes[ix, :4]
 #        xmin = int(round(xmin))
 #        ymin = int(round(ymin))
 #        xmax = int(round(xmax))

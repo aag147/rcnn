@@ -11,7 +11,7 @@ import os
 import losses
 import numpy as np
 
-from keras.models import load_model
+from keras.models import load_model, Model
 from keras.optimizers import SGD, Adam
 from keras.utils.generic_utils import get_custom_objects
 
@@ -35,13 +35,13 @@ class AllModels:
         
         assert mode=='test' or np.sum([self.do_rpn, self.do_det, self.do_hoi])==1, 'Use only one model when training'
         
-        if self.mode == 'train' and not cfg.use_shared_cnn:
+        if self.mode == 'train' and not cfg.use_shared_cnn and not cfg.only_use_weights:
             self.load_models()
         else:
             self.create_models()
             self.load_weights()
 
-    def save_model(self):
+    def save_model(self, saveShared=False):
         cfg = self.cfg
         
         if self.do_rpn:
@@ -50,13 +50,19 @@ class AllModels:
             model = self.model_det
         if self.do_hoi:
             model = self.model_hoi
-        
+                    
         for i in range(10):
             modelpath = cfg.my_weights_path + 'model-theend%d.h5' % i
             weightspath = cfg.my_weights_path + 'weights-theend%d.h5' % i
             if not os.path.exists(modelpath):
                 model.save(modelpath)
                 model.save_weights(weightspath)
+                
+                if saveShared:
+                    shared_cnn = Model(model.input, model.layers[17].output)
+                    shared_cnn.save(cfg.my_weights_path + 'shared_model%d.h5' % i)
+                    shared_cnn.save_weights(cfg.my_weights_path + 'shared_weights%d.h5' % i)
+                
                 break
         
     def compile_models(self):
@@ -123,6 +129,11 @@ class AllModels:
                     print('     Loading shared train RPN weights...')
                     self.model_rpn = self._load_shared_weights(self.model_rpn)
                     
+                elif cfg.only_use_weights:
+                    print('     Loading train RPN weights...')
+                    assert os.path.exists(cfg.my_shared_weights), 'invalid path: %s' % cfg.my_shared_weights
+                    self.model_rpn.load_weights(cfg.my_shared_weights) 
+                    
                 rpn_after = self.model_rpn.layers[11].get_weights()[0][0,0,0,0]
                 assert rpn_before != rpn_after, 'RPN weights have not been loaded'
                 
@@ -138,12 +149,17 @@ class AllModels:
                 elif cfg.use_shared_cnn:
                     print('     Loading shared train DET weights...')
                     self.model_det = self._load_shared_weights(self.model_det)
+                    
+                elif cfg.only_use_weights:
+                    print('     Loading train DET weights...')
+                    assert os.path.exists(cfg.my_shared_weights), 'invalid path: %s' % cfg.my_shared_weights
+                    self.model_det.load_weights(cfg.my_shared_weights) 
                 
                 det_after = self.model_det.layers[4].get_weights()[0][0,0]
                 assert det_before != det_after, 'DET weights have not been loaded'
             
             if self.do_hoi:
-                hoi_before = self.model_hoi.layers[23].get_weights()[0][0,0,0,0]
+                hoi_before = self.model_hoi.layers[11].get_weights()[0][0,0,0,0]
                 if self.mode == 'test':
                     print('     Loading test HOI weights...')
                     path = cfg.part_results_path + 'HICO/hoi5c/weights/' + cfg.my_weights
@@ -153,8 +169,13 @@ class AllModels:
                 elif cfg.use_shared_cnn:
                     print('     Loading shared train HOI weights...')
                     self.model_hoi = self._load_shared_weights(self.model_hoi)
+                    
+                elif cfg.only_use_weights:
+                    print('     Loading train HOI weights...')
+                    assert os.path.exists(cfg.my_shared_weights), 'invalid path: %s' % cfg.my_shared_weights
+                    self.model_hoi.load_weights(cfg.my_shared_weights) 
                 
-                hoi_after = self.model_hoi.layers[23].get_weights()[0][0,0,0,0]
+                hoi_after = self.model_hoi.layers[11].get_weights()[0][0,0,0,0]
                 assert hoi_before != hoi_after, 'HOI weights have not been loaded'
         
     
@@ -192,6 +213,14 @@ class AllModels:
             
             assert os.path.exists(cfg.my_shared_weights), 'invalid path: %s' % cfg.my_shared_weights
             self.model_det = load_model(cfg.my_shared_weights)
+            
+        if self.do_hoi:
+            print('Loading HOI model...')        
+            loss_cls = losses.hoi_loss_cls
+            get_custom_objects().update({"hoi_loss_cls_fixed_num": loss_cls})
+            
+            assert os.path.exists(cfg.my_shared_weights), 'invalid path: %s' % cfg.my_shared_weights
+            self.model_hoi = load_model(cfg.my_shared_weights) 
             
 
 
@@ -306,10 +335,10 @@ class AllModels:
                     x_deltas
                 ]
             
-            model_rpn = keras.models.Model(inputs=rpn_inputs, outputs=rpn_outputs)
+            self.model_rpn = keras.models.Model(inputs=rpn_inputs, outputs=rpn_outputs)
             
             # Only train from conv3_1
-            for i, layer in enumerate(model_rpn.layers):
+            for i, layer in enumerate(self.model_rpn.layers):
                 layer.trainable = False
                 if i > 6:
                     break
@@ -368,10 +397,10 @@ class AllModels:
                 object_deltas
             ]
             
-            model_det = keras.models.Model(inputs=detection_inputs, outputs=detection_outputs)
+            self.model_det = keras.models.Model(inputs=detection_inputs, outputs=detection_outputs)
     
             # Only train from conv3_1
-            for i, layer in enumerate(model_det.layers):
+            for i, layer in enumerate(self.model_det.layers):
                 layer.trainable = False
                 if i > 6:
                     break
@@ -468,14 +497,10 @@ class AllModels:
                     hoi_final_score
                 ]
             
-            model_hoi = keras.models.Model(inputs=hoi_inputs, outputs=hoi_outputs)
+            self.model_hoi = keras.models.Model(inputs=hoi_inputs, outputs=hoi_outputs)
 
 
         ########################
         ######### ALL ##########
         ########################   
 #        model_all = keras.models.Model([img_input,roi_input], rpn_outputs + detection_outputs)
-        
-        self.model_rpn = model_rpn
-        self.model_det = model_det
-        self.model_hoi = model_hoi

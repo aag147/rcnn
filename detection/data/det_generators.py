@@ -82,16 +82,17 @@ class DataGenerator():
             img, imageDims = filters_rpn.prepareInputs(imageMeta, self.images_path, self.cfg)
             io_end = time.time()
             pp_start = time.time()
-            rois, target_props, target_deltas = filters_detection.loadData(imageMeta, self.rois_path, imageDims, self.cfg)
-#            Y = filters_detection.prepareTargets(imageMeta, imageDims, self.cfg)
+            Y_tmp = filters_detection.loadTargets(imageMeta, self.rois_path, imageDims, self.cfg)
             pp_end = time.time()
-            if rois is None:
+            if Y_tmp[0] is None:
                 return None
+            bboxes, target_labels, target_deltas = filters_detection.reduceTargets(Y_tmp, self.cfg)
+            bboxes = filters_detection.prepareInputs(bboxes, imageDims) 
             times = np.array([io_end-io_start, pp_end-pp_start])
             
         if self.do_meta:
-            return [img, rois], [target_props, target_deltas], imageMeta, imageDims, times
-        return [img, rois], [target_props, target_deltas]
+            return [img, bboxes], [target_labels, target_deltas], imageMeta, imageDims, times
+        return [img, bboxes], [target_labels, target_deltas]
 
     #%% Different forms of generators     
     def _generateIterativeImageCentricBatches(self):

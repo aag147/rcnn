@@ -21,92 +21,29 @@ import copy as cp
 import utils
 import filters_helper as helper
 
-def loadData(imageInput, imageDims, cfg, batchidx = None):
-    if imageInput is None:
-        return None, None, None
-    allh_bboxes = np.array(imageInput['h_bboxes'])
-    allo_bboxes = np.array(imageInput['o_bboxes'])
-    all_labels = (imageInput['hoi_labels'])
-    val_map = np.array(imageInput['val_map'])
-    all_labels = utils.getMatrixLabels(cfg.nb_hoi_classes, all_labels)
-    
-    if len(np.where(val_map==3)[0])==0:
-        return None, None, None, None
-    
-    if batchidx is None:
-        samples = reduce_hoi_rois(val_map, cfg)
-        h_bboxes = allh_bboxes[samples, :]
-        o_bboxes = allo_bboxes[samples, :]
-        labels = all_labels[samples,:]
-    else:
-        h_bboxes = np.zeros((cfg.nb_hoi_rois, 4))
-        o_bboxes = np.zeros((cfg.nb_hoi_rois, 4))
-        labels  = np.zeros((cfg.nb_hoi_rois, cfg.nb_hoi_classes))
-        patterns= np.zeros((cfg.nb_hoi_rois, cfg.winShape[0], cfg.winShape[1], 2))
-        
-        sidx = batchidx * cfg.nb_hoi_rois
-        fidx = min(allh_bboxes.shape[1], sidx + cfg.nb_hoi_rois)
-        h_bboxes[:,:fidx-sidx,:] = allh_bboxes[sidx:fidx, :]
-        o_bboxes[:,:fidx-sidx,:] = allo_bboxes[sidx:fidx, :]
-        labels[:,:fidx-sidx,:] = all_labels[sidx:fidx, :]
-    
-    labels = np.expand_dims(labels, axis=0)
-    patterns = prepareInteractionPatterns(cp.copy(h_bboxes), cp.copy(o_bboxes), cfg)
-    h_bboxes, o_bboxes = prepareInputs(h_bboxes, o_bboxes, imageDims)
-    return h_bboxes, o_bboxes, patterns, labels
-
-def reduce_hoi_rois(val_map, cfg):
-    positive_idxs = np.where(val_map==3)[0]
-    negative1_idxs = np.where(val_map==2)[0]
-    negative2_idxs = np.where(val_map==1)[0]      
-    
-    selected_pos_samples = positive_idxs
-    selected_neg1_samples = negative1_idxs
-    selected_neg2_samples = negative2_idxs
-    
-    if len(positive_idxs) > cfg.hoi_pos_share:
-        selected_pos_samples = np.random.choice(positive_idxs, cfg.hoi_pos_share, replace=False)
-        
-    if len(negative1_idxs) > cfg.hoi_neg1_share:
-        selected_neg1_samples = np.random.choice(negative1_idxs, cfg.hoi_neg1_share, replace=False)
-    elif len(negative1_idxs)>0:
-        selected_neg1_samples = np.random.choice(negative1_idxs, cfg.hoi_neg1_share, replace=True)
-        
-    if len(negative2_idxs) + len(selected_neg1_samples) + len(selected_pos_samples) > cfg.nb_hoi_rois:
-        selected_neg2_samples = np.random.choice(negative2_idxs, cfg.nb_hoi_rois - len(selected_pos_samples) - len(selected_neg1_samples), replace=False)
-    elif len(negative2_idxs) > 0:
-        selected_neg2_samples = np.random.choice(negative2_idxs, cfg.nb_hoi_rois - len(selected_pos_samples) - len(selected_neg1_samples), replace=True)
-    else:
-        selected_neg1_samples = np.random.choice(negative1_idxs, cfg.nb_hoi_rois - len(selected_pos_samples), replace=True)
-        
-    selected_samples = selected_pos_samples.tolist() + selected_neg1_samples.tolist() + selected_neg2_samples.tolist()
-    
-    
-    assert(len(selected_samples) == 32)
-
-    return selected_samples
-
-
+#######################
+#### PROCESS INPUT ####
+#######################
 def unprepareInputs(h_bboxes_norm, o_bboxes_norm, imageDims):
     #(idx,ymin,xmin,ymax,xmax) -> (xmin,ymin,width,height)
     
     #Humans
     h_bboxes = cp.copy(h_bboxes_norm)
-    h_bboxes = h_bboxes[0,:,1:]
-    h_bboxes = h_bboxes[:,(1,0,3,2)]
+    h_bboxes = h_bboxes[:,:,1:]
+    h_bboxes = h_bboxes[:,:,(1,0,3,2)]
 
-    h_bboxes[:,2] = h_bboxes[:,2] - h_bboxes[:,0]
-    h_bboxes[:,3] = h_bboxes[:,3] - h_bboxes[:,1]
+    h_bboxes[:,:,2] = h_bboxes[:,:,2] - h_bboxes[:,:,0]
+    h_bboxes[:,:,3] = h_bboxes[:,:,3] - h_bboxes[:,:,1]
     
     h_bboxes = helper.unnormalizeRoIs(h_bboxes, imageDims)
     
     #Objects
     o_bboxes = cp.copy(o_bboxes_norm)
-    o_bboxes = o_bboxes[0,:,1:]
-    o_bboxes = o_bboxes[:,(1,0,3,2)]
+    o_bboxes = o_bboxes[:,:,1:]
+    o_bboxes = o_bboxes[:,:,(1,0,3,2)]
 
-    o_bboxes[:,2] = o_bboxes[:,2] - o_bboxes[:,0]
-    o_bboxes[:,3] = o_bboxes[:,3] - o_bboxes[:,1]
+    o_bboxes[:,:,2] = o_bboxes[:,:,2] - o_bboxes[:,:,0]
+    o_bboxes[:,:,3] = o_bboxes[:,:,3] - o_bboxes[:,:,1]
     
     o_bboxes = helper.unnormalizeRoIs(o_bboxes, imageDims)
     return h_bboxes, o_bboxes
@@ -116,34 +53,163 @@ def prepareInputs(h_bboxes, o_bboxes, imageDims):
     #Humans
     newh_bboxes = cp.copy(h_bboxes)
     
-    newh_bboxes = newh_bboxes[:,(1,0,3,2)]
-    newh_bboxes[:,2] = newh_bboxes[:,2] + newh_bboxes[:,0]
-    newh_bboxes[:,3] = newh_bboxes[:,3] + newh_bboxes[:,1]
+    newh_bboxes = newh_bboxes[:,:,(1,0,3,2)]
+    newh_bboxes[:,:,2] = newh_bboxes[:,:,2] + newh_bboxes[:,:,0]
+    newh_bboxes[:,:,3] = newh_bboxes[:,:,3] + newh_bboxes[:,:,1]
     
     newh_bboxes = helper.normalizeRoIs(newh_bboxes, imageDims)
-
-    newh_bboxes = np.insert(newh_bboxes, 0, 0, axis=1)
-    newh_bboxes = np.expand_dims(newh_bboxes, axis=0)
+    newh_bboxes = np.insert(newh_bboxes, 0, 0, axis=2)
     
     #Objects
     newo_bboxes = cp.copy(o_bboxes)
-    newo_bboxes = newo_bboxes[:,(1,0,3,2)]
-    newo_bboxes[:,2] = newo_bboxes[:,2] + newo_bboxes[:,0]
-    newo_bboxes[:,3] = newo_bboxes[:,3] + newo_bboxes[:,1]
+    newo_bboxes = newo_bboxes[:,:,(1,0,3,2)]
+    newo_bboxes[:,:,2] = newo_bboxes[:,:,2] + newo_bboxes[:,:,0]
+    newo_bboxes[:,:,3] = newo_bboxes[:,:,3] + newo_bboxes[:,:,1]
     
     newo_bboxes = helper.normalizeRoIs(newo_bboxes, imageDims)
-
-    newo_bboxes = np.insert(newo_bboxes, 0, 0, axis=1)
-    newo_bboxes = np.expand_dims(newo_bboxes, axis=0)
+    newo_bboxes = np.insert(newo_bboxes, 0, 0, axis=2)    
     
     return newh_bboxes, newo_bboxes
 
-def prepareInteractionPatterns(final_hbbs, final_obbs, cfg):
-    patterns = getDataPairWiseStream(final_hbbs, final_obbs, cfg)
+
+#######################
+### PROCESS TARGETS ###
+#######################
+def loadData(imageInput, imageDims, cfg):
+    if imageInput is None:
+        return None, None, None, None
+    all_hbboxes = np.array(imageInput['h_bboxes'])
+    all_obboxes = np.array(imageInput['o_bboxes'])
+    all_target_labels = (imageInput['hoi_labels'])
+    val_map = np.array(imageInput['val_map'])
+        
+    all_target_labels = utils.getMatrixLabels(cfg.nb_hoi_classes, all_target_labels)
+    
+    if len(np.where(val_map==3)[0])==0:
+        return None, None, None, None
+    
+    all_hbboxes = np.expand_dims(all_hbboxes, axis=0)
+    all_obboxes = np.expand_dims(all_obboxes, axis=0)
+    all_target_labels = np.expand_dims(all_target_labels, axis=0)
+    val_map = np.expand_dims(val_map, axis=0)
+    
+    return all_hbboxes, all_obboxes, all_target_labels, val_map
+
+
+
+def convertData(Y, cfg):
+    [all_hbboxes, all_obboxes, all_target_labels, all_val_map] = Y
+    all_target_labels = [np.where(x==1)[0].tolist() for x in all_target_labels.astype(int)]
+    all_hbboxes = [[round(float(x), 2) for x in box] for box in all_hbboxes.tolist()]
+    all_obboxes = [[round(float(x), 2) for x in box] for box in all_obboxes.tolist()]
+    all_val_map = all_val_map.astype(int).tolist()
+    
+    hoiMeta = {'hbboxes':all_hbboxes, 'o_bboxes':all_obboxes, 'hoi_labels':all_target_labels, 'val_map':all_val_map}
+    return hoiMeta
+
+def convertResults(hbboxes, obboxes, predicted_labels, imageMeta, scale, rpn_stride):
+    hbboxes = np.copy(hbboxes)
+    obboxes = np.copy(obboxes)
+    
+    # humans
+    hbboxes[:,0] = ((hbboxes[:,0]) * rpn_stride / scale[0])
+    hbboxes[:,1] = ((hbboxes[:,1]) * rpn_stride / scale[1])
+    hbboxes[:,2] = ((hbboxes[:,2]) * rpn_stride / scale[0])
+    hbboxes[:,3] = ((hbboxes[:,3]) * rpn_stride / scale[1])
+    
+    #(..,width,height) ->  (..,xmax,ymax)
+    hbboxes[:,2] = hbboxes[:,2] + hbboxes[:,0]
+    hbboxes[:,3] = hbboxes[:,3] + hbboxes[:,1]
+    
+    # objects
+    obboxes[:,0] = ((obboxes[:,0]) * rpn_stride / scale[0])
+    obboxes[:,1] = ((obboxes[:,1]) * rpn_stride / scale[1])
+    obboxes[:,2] = ((obboxes[:,2]) * rpn_stride / scale[0])
+    obboxes[:,3] = ((obboxes[:,3]) * rpn_stride / scale[1])
+    
+    #(..,width,height) ->  (..,xmax,ymax)
+    obboxes[:,2] = obboxes[:,2] + obboxes[:,0]
+    obboxes[:,3] = obboxes[:,3] + obboxes[:,1]
+    
+    results = []
+    nb_boxes = hbboxes.shape[0]
+    for bidx in range(nb_boxes):
+        hbbox = hbboxes[bidx,:]
+        obbox = obboxes[bidx,:]
+        preds = predicted_labels[bidx]
+        labels = np.where(preds>0.5)[0].tolist()
+        props = preds[labels]
+        nb_preds = len(labels)
+
+        hbbox = [round(float(x),2) for x in hbbox.tolist()]
+        obbox = [round(float(x),2) for x in obbox.tolist()]
+        
+        for pidx in range(nb_preds):
+            label = labels[pidx]    
+            prop = props[pidx]
+            res = {'image_id': (imageMeta['id']), 'category_id': int(label), 'hbbox': hbbox, 'obbox': obbox, 'score': round(float(prop),4)}
+            results.append(res)
+    return results
+
+
+def reduceTargets(Y, cfg, batchidx=None):
+    #out: hbboxes [{1}, {batch_size}, (0,ymin,xmin,ymax,xmax)]
+    #out: obboxes [{1}, {batch_size}, (0,ymin,xmin,ymax,xmax)]
+    #out: labels [{1}, {batch_size}, {nb_hoi_classes}]
+    [all_hbboxes, all_obboxes, all_target_labels, val_map] = Y
+    
+    hbboxes = np.zeros((1, cfg.nb_hoi_rois, 4))
+    obboxes = np.zeros((1, cfg.nb_hoi_rois, 4))
+    target_labels  = np.zeros((1, cfg.nb_hoi_rois, cfg.nb_hoi_classes))
+    
+    ## Pick reduced indexes ##
+    if batchidx is None:        
+        positive_idxs = np.where(val_map[0]==3)[0]
+        negative1_idxs = np.where(val_map[0]==2)[0]
+        negative2_idxs = np.where(val_map[0]==1)[0]      
+        
+        selected_pos_samples = positive_idxs
+        selected_neg1_samples = negative1_idxs
+        selected_neg2_samples = negative2_idxs
+        
+        if len(positive_idxs) > cfg.hoi_pos_share:
+            selected_pos_samples = np.random.choice(positive_idxs, cfg.hoi_pos_share, replace=False)
+            
+        if len(negative1_idxs) > cfg.hoi_neg1_share:
+            selected_neg1_samples = np.random.choice(negative1_idxs, cfg.hoi_neg1_share, replace=False)
+        elif len(negative1_idxs)>0:
+            selected_neg1_samples = np.random.choice(negative1_idxs, cfg.hoi_neg1_share, replace=True)
+            
+        if len(negative2_idxs) + len(selected_neg1_samples) + len(selected_pos_samples) > cfg.nb_hoi_rois:
+            selected_neg2_samples = np.random.choice(negative2_idxs, cfg.nb_hoi_rois - len(selected_pos_samples) - len(selected_neg1_samples), replace=False)
+        elif len(negative2_idxs) > 0:
+            selected_neg2_samples = np.random.choice(negative2_idxs, cfg.nb_hoi_rois - len(selected_pos_samples) - len(selected_neg1_samples), replace=True)
+        else:
+            selected_neg1_samples = np.random.choice(negative1_idxs, cfg.nb_hoi_rois - len(selected_pos_samples), replace=True)
+            
+        sel_samples = selected_pos_samples.tolist() + selected_neg1_samples.tolist() + selected_neg2_samples.tolist()
+    else:        
+        sidx = batchidx * cfg.nb_hoi_rois
+        fidx = min(all_target_labels.shape[1], sidx + cfg.nb_hoi_rois)
+        sel_samples = list(range(sidx,fidx))
+        
+    assert(target_labels.shape[1] == cfg.nb_hoi_rois)
+    
+    ## Reduce data by picked indexes ##  
+    hbboxes[:,:len(sel_samples),:]          = all_hbboxes[:, sel_samples, :]
+    obboxes[:,:len(sel_samples),:]          = all_obboxes[:, sel_samples, :]
+    target_labels[:,:len(sel_samples),:]    = all_target_labels[:, sel_samples, :]
+    
+    return hbboxes, obboxes, target_labels
+
+def createInteractionPatterns(hbbs, obbs, cfg):
+    hbbs = np.copy(hbbs[0,::])
+    obbs = np.copy(obbs[0,::])
+    patterns = getDataPairWiseStream(hbbs, obbs, cfg)
     patterns = np.expand_dims(patterns, axis=0)
     return patterns
 
-def prepareTargets(bboxes, imageMeta, imageDims, cfg, class_mapping):    
+def createTargets(bboxes, imageMeta, imageDims, cfg, class_mapping):    
     #############################
     ########## Image ############
     #############################
@@ -242,53 +308,15 @@ def prepareTargets(bboxes, imageMeta, imageDims, cfg, class_mapping):
     final_hbbs   = hbb_map[val_idxs[0], val_idxs[1], :]
     final_obbs   = obb_map[val_idxs[0], val_idxs[1], :]
     
-#    return val_map, hbb_map, obb_map, final_hbbs, final_obbs
-    
-    # Crop to image boundary
-    final_hbbs[:,0] = np.maximum(0.0, final_hbbs[:,0])
-    final_hbbs[:,1] = np.maximum(0.0, final_hbbs[:,1])
-    final_hbbs[:,2] = np.minimum(output_shape[1], final_hbbs[:,2])
-    final_hbbs[:,3] = np.minimum(output_shape[0], final_hbbs[:,3])
-    
-    final_obbs[:,0] = np.maximum(0.0, final_obbs[:,0])
-    final_obbs[:,1] = np.maximum(0.0, final_obbs[:,1])
-    final_obbs[:,2] = np.minimum(output_shape[1], final_obbs[:,2])
-    final_obbs[:,3] = np.minimum(output_shape[0], final_obbs[:,3])
-    
+#    return val_map, hbb_map, obb_map, final_hbbs, final_obbs    
     
     # (_,_,xmax,ymax) -> (_,_,width,height)
     final_hbbs[:,2] -= final_hbbs[:,0]
     final_hbbs[:,3] -= final_hbbs[:,1]
     final_obbs[:,2] -= final_obbs[:,0]
     final_obbs[:,3] -= final_obbs[:,1]
-    
-    
-    ##############################
-    # Three sample sources redux #
-    ##############################
-    positive_idxs = np.where(final_vals==3)[0]
-    negative1_idxs = np.where(final_vals==2)[0]
-    negative2_idxs = np.where(final_vals==1)[0]      
-    
-    selected_pos_samples = positive_idxs
-    selected_neg1_samples = negative1_idxs
-    selected_neg2_samples = negative2_idxs
-    
-    
-    if len(negative1_idxs) > 24:
-        selected_neg1_samples = np.random.choice(negative1_idxs, cfg.hoi_neg1_share, replace=False)
-        
-    if len(negative2_idxs) > 32:
-        selected_neg2_samples = np.random.choice(negative2_idxs, cfg.hoi_neg2_share, replace=False) 
-    
-    
-    selected_samples = selected_pos_samples.tolist() + selected_neg1_samples.tolist() + selected_neg2_samples.tolist()
-    final_hbbs = final_hbbs[selected_samples,:]
-    final_obbs = final_obbs[selected_samples,:]
-    final_labels = final_labels[selected_samples,:]
-    final_vals   = final_vals[selected_samples]
-    
-    return final_hbbs, final_obbs, final_labels, final_vals
+
+    return np.expand_dims(final_hbbs, axis=0), np.expand_dims(final_obbs, axis=0), np.expand_dims(final_labels, axis=0), np.expand_dims(final_vals, axis=0)
 
 
 

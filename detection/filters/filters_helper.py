@@ -16,31 +16,9 @@ import numpy as np
 import cv2 as cv
 import math
 import copy as cp
-
-def unnormalizeRoIs(norm_rois, imageDims):
-    shape = imageDims['output_shape']
-
-    rois = np.zeros_like(norm_rois)
-    rois[:,:,0] = norm_rois[:,:,0] * (shape[1]-0)
-    rois[:,:,1] = norm_rois[:,:,1] * (shape[0]-0)
-    rois[:,:,2] = norm_rois[:,:,2] * (shape[1]-0)
-    rois[:,:,3] = norm_rois[:,:,3] * (shape[0]-0)
-
-    return rois
-
-def normalizeRoIs(rois, imageDims):
-    shape = imageDims['output_shape']
-
-    norm_rois = np.zeros_like(rois)
-    norm_rois[:,:,0] = rois[:,:,0] / (shape[0]-0)
-    norm_rois[:,:,1] = rois[:,:,1] / (shape[1]-0)
-    norm_rois[:,:,2] = rois[:,:,2] / (shape[0]-0)
-    norm_rois[:,:,3] = rois[:,:,3] / (shape[1]-0)
-
-    return norm_rois
-
-
-def deltas2Boxes(props, deltas, rois, cfg):
+def deltas2Boxes(props, deltas, rois, imageDims, cfg):   
+    output_shape = imageDims['output_shape']
+    
     nb_rois_in_batch = props.shape[1]
     bboxes = {}
     boxes = []
@@ -54,7 +32,7 @@ def deltas2Boxes(props, deltas, rois, cfg):
         if labelID not in bboxes:
             bboxes[labelID] = []
         prop = np.max(props[0, ii, :])
-        roi = rois[ii, :]
+        roi = rois[0,ii, :]
         
         label_pos = labelID - 1
         
@@ -73,6 +51,13 @@ def deltas2Boxes(props, deltas, rois, cfg):
         boxes.append([x, y, w, h, labelID, prop])
 
     boxes = np.array(boxes)
+    
+    # Crop to image boundary
+    boxes[:,0] = np.maximum(0.0, boxes[:,0])
+    boxes[:,1] = np.maximum(0.0, boxes[:,1])
+    boxes[:,2] = np.minimum(output_shape[1] - boxes[:,0] - 0.01, boxes[:,2])
+    boxes[:,3] = np.minimum(output_shape[0] - boxes[:,1] - 0.01, boxes[:,3])    
+
     return boxes
 
 def non_max_suppression_boxes(bboxes, cfg, nms_overlap_thresh=0.5):
@@ -299,41 +284,6 @@ def non_max_suppression_fast(boxes, overlap_thresh=0.5, max_boxes=300):
     boxes = boxes[pick]
     return boxes
 
-def reduce_rois(true_labels, cfg):
-    #############################
-    ######## Parameters #########
-    #############################    
-    nb_detection_rois = cfg.nb_detection_rois
-    
-    bg_samples = np.where(true_labels[:, 0] == 1)
-    fg_samples = np.where(true_labels[:, 0] == 0)
-
-    if len(bg_samples) > 0:
-        bg_samples = bg_samples[0]
-    else:
-        bg_samples = []
-
-    if len(fg_samples) > 0:
-        fg_samples = fg_samples[0]
-    else:
-        fg_samples = []
-
-    # Half positives, half negatives
-    if len(fg_samples) < nb_detection_rois // 4:
-        selected_pos_samples = fg_samples.tolist()
-    else:
-        selected_pos_samples = np.random.choice(fg_samples, nb_detection_rois // 4, replace=False).tolist()
-    try:
-        selected_neg_samples = np.random.choice(bg_samples, nb_detection_rois - len(selected_pos_samples),
-                                                replace=False).tolist()
-    except:
-        selected_neg_samples = np.random.choice(bg_samples, nb_detection_rois - len(selected_pos_samples),
-                                                replace=True).tolist()
-
-    sel_samples = selected_pos_samples + selected_neg_samples
-    return sel_samples
-
-
 
 def getCOCOMapping():
     coco_mapping = {'bottle': 44, 'backpack': 27, 'handbag': 31, 'dog': 18, 'giraffe': 25, 'sink': 81, 'bench': 15, 'truck': 8, 'teddy bear': 88, 'book': 84, 'umbrella': 28, 'chair': 62, 'scissors': 87, 'toilet': 70, 'cat': 17, 'frisbee': 34, 'toothbrush': 90, 'oven': 79, 'baseball glove': 40, 'kite': 38, 'dining table': 67, 'parking meter': 14, 'bowl': 51, 'skis': 35, 'remote': 75, 'fire hydrant': 11, 'suitcase': 33, 'bird': 16, 'person': 1, 'zebra': 24, 'hair drier': 89, 'wine glass': 46, 'donut': 60, 'airplane': 5, 'elephant': 22, 'bus': 6, 'mouse': 74, 'boat': 9, 'tv': 72, 'horse': 19, 'car': 3, 'potted plant': 64, 'baseball bat': 39, 'train': 7, 'keyboard': 76, 'spoon': 50, 'tie': 32, 'motorcycle': 4, 'clock': 85, 'orange': 55, 'skateboard': 41, 'cup': 47, 'bed': 65, 'sandwich': 54, 'sports ball': 37, 'cake': 61, 'banana': 52, 'vase': 86, 'knife': 49, 'couch': 63, 'pizza': 59, 'cell phone': 77, 'stop sign': 13, 'microwave': 78, 'apple': 53, 'laptop': 73, 'carrot': 57, 'broccoli': 56, 'fork': 48, 'sheep': 20, 'cow': 21, 'hot dog': 58, 'surfboard': 42, 'tennis racket': 43, 'snowboard': 36, 'traffic light': 10, 'bicycle': 2, 'refrigerator': 82, 'bear': 23, 'toaster': 80}
@@ -352,102 +302,6 @@ def getCOCOIDs(imagesMeta, class_mapping):
     for imageID, _ in imagesMeta.items():
         img_ids.append(int(imageID))
     return img_ids, category_ids
-    
-
-def bboxes2COCOformat(bboxes, imageMeta, class_mapping, scale=[1,1], rpn_stride=1, shape=[1,1], roundoff=False):
-    results = []
-    coco_mapping = getCOCOMapping()
-    inv_class_mapping = {idx:label for label,idx in class_mapping.items()}
-    for bbox in bboxes:
-        label = bbox[4]
-        label = inv_class_mapping[label]
-        label = coco_mapping[label]
-        prop = bbox[5]
-        coords = bbox[:4]
-        xmin = ((coords[0]) * rpn_stride / scale[0])
-        ymin = ((coords[1]) * rpn_stride / scale[1])
-        width = ((coords[2]) *  rpn_stride / scale[0])
-        height = ((coords[3]) * rpn_stride / scale[1])
-        coords = [xmin, ymin, width, height]
-        coords = [round(float(x),2) for x in coords]
-        
-        res = {'image_id': int(imageMeta['id']), 'category_id': int(label), 'bbox': coords, 'score': round(float(prop),4)}
-#        coords.append(prop)
-#        res = coords
-        results.append(res)
-#    results = np.array(results)
-    return results
-
-
-def hoiBBoxes2COCOformat(hbboxes, obboxes, hoi_preds, imageMeta, scale=[1,1], rpn_stride=1):
-    hbboxes = cp.copy(hbboxes)
-    obboxes = cp.copy(obboxes)
-    
-    # humans
-    hbboxes[:,0] = ((hbboxes[:,0]) * rpn_stride / scale[0])
-    hbboxes[:,1] = ((hbboxes[:,1]) * rpn_stride / scale[1])
-    hbboxes[:,2] = ((hbboxes[:,2]) * rpn_stride / scale[0])
-    hbboxes[:,3] = ((hbboxes[:,3]) * rpn_stride / scale[1])
-    
-    #(..,width,height) ->  (..,xmax,ymax)
-    hbboxes[:,2] = hbboxes[:,2] + hbboxes[:,0]
-    hbboxes[:,3] = hbboxes[:,3] + hbboxes[:,1]
-    
-    # objects
-    obboxes[:,0] = ((obboxes[:,0]) * rpn_stride / scale[0])
-    obboxes[:,1] = ((obboxes[:,1]) * rpn_stride / scale[1])
-    obboxes[:,2] = ((obboxes[:,2]) * rpn_stride / scale[0])
-    obboxes[:,3] = ((obboxes[:,3]) * rpn_stride / scale[1])
-    
-    #(..,width,height) ->  (..,xmax,ymax)
-    obboxes[:,2] = obboxes[:,2] + obboxes[:,0]
-    obboxes[:,3] = obboxes[:,3] + obboxes[:,1]
-    
-    results = []
-    nb_boxes = hbboxes.shape[0]
-    for bidx in range(nb_boxes):
-        hbbox = hbboxes[bidx,:]
-        obbox = obboxes[bidx,:]
-        preds = hoi_preds[bidx]
-        labels = np.where(preds>0.5)[0].tolist()
-        props = preds[labels]
-        nb_preds = len(labels)
-
-        hbbox = [round(float(x),2) for x in hbbox.tolist()]
-        obbox = [round(float(x),2) for x in obbox.tolist()]
-        
-        for pidx in range(nb_preds):
-            label = labels[pidx]    
-            prop = props[pidx]
-            res = {'image_id': (imageMeta['id']), 'category_id': int(label), 'hbbox': hbbox, 'obbox': obbox, 'score': round(float(prop),4)}
-            results.append(res)
-    return results
-
-def bboxes2HOIformat(h_bboxes, o_bboxes, hoi_labels, val_map):
-    hoi_labels = [np.where(x==1)[0].tolist() for x in hoi_labels.astype(int)]
-    h_bboxes = [[round(float(x), 2) for x in box] for box in h_bboxes.tolist()]
-    o_bboxes = [[round(float(x), 2) for x in box] for box in o_bboxes.tolist()]
-    val_map = val_map.astype(int).tolist()
-    return h_bboxes, o_bboxes, hoi_labels, val_map
-
-
-def bboxes2DETformat(bboxes, target_labels, target_deltas, cfg):
-    target_labels = [int(np.argmax(x)) for x in target_labels]
-    bboxes = [[round(float(x), 4) for x in box] for box in bboxes.tolist()]
-    new_deltas = []
-    for idx, row in enumerate(target_deltas[:,(cfg.nb_object_classes-1)*4:]):
-        coord = []
-        for x in row[(target_labels[idx]-1)*4:(target_labels[idx])*4].tolist():
-            coord.append(round(float(x), 4))
-        new_deltas.append(coord)
-    return bboxes, target_labels, new_deltas
-
-def bboxes2RPNformat(target_labels, target_deltas, val_map, cfg):
-    target_labels = cp.copy(target_labels[0])
-    target_deltas = cp.copy(target_deltas[0])
-    val_map = cp.copy(val_map[0])
-
-    return target_labels, target_deltas, val_map 
 
 
 def _computeIoUs(bbox, gt_bboxes):
@@ -583,6 +437,30 @@ def _getRelMap(rels):
     for rel in rels:
         rel_map[prsidxs[rel[0]], objidxs[rel[1]]] = rel[2]
     return rel_map
+
+
+
+def unnormalizeRoIs(norm_rois, imageDims):
+    shape = imageDims['output_shape']
+
+    rois = np.zeros_like(norm_rois)
+    rois[:,:,0] = norm_rois[:,:,0] * (shape[1]-0)
+    rois[:,:,1] = norm_rois[:,:,1] * (shape[0]-0)
+    rois[:,:,2] = norm_rois[:,:,2] * (shape[1]-0)
+    rois[:,:,3] = norm_rois[:,:,3] * (shape[0]-0)
+
+    return rois
+
+def normalizeRoIs(rois, imageDims):
+    shape = imageDims['output_shape']
+
+    norm_rois = np.zeros_like(rois)
+    norm_rois[:,:,0] = rois[:,:,0] / (shape[0]-0)
+    norm_rois[:,:,1] = rois[:,:,1] / (shape[1]-0)
+    norm_rois[:,:,2] = rois[:,:,2] / (shape[0]-0)
+    norm_rois[:,:,3] = rois[:,:,3] / (shape[1]-0)
+
+    return norm_rois
 
 
        

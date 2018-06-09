@@ -98,15 +98,19 @@ class DataGenerator():
             img, imageDims = filters_rpn.prepareInputs(imageMeta, self.images_path, self.cfg)
             io_end = time.time()
             pp_start = time.time()
-            hbb, obb, ip, target_labels = filters_hoi.loadData(imageInputs, imageDims, self.cfg)
+            Y_tmp = filters_hoi.loadData(imageInputs, imageDims, self.cfg)
             pp_end = time.time()
-            if hbb is None:
+            if Y_tmp[0] is None:
                 return None
+            hbboxes, obboxes, target_labels = filters_hoi.reduceTargets(Y_tmp, self.cfg)
+            patterns = filters_hoi.createInteractionPatterns(hbboxes, obboxes, self.cfg)
+            hbboxes, obboxes = filters_hoi.prepareInputs(hbboxes, obboxes, imageDims)
+            
             times = np.array([io_end-io_start, pp_end-pp_start])
             
         if self.do_meta:
-            return [img, hbb, obb, ip], target_labels, imageMeta, imageDims, times
-        return [img, hbb, obb, ip], target_labels
+            return [img, hbboxes, obboxes, patterns], target_labels, imageMeta, imageDims, times
+        return [img, hbboxes, obboxes, patterns], target_labels
 
     #%% Different forms of generators     
     def _generateIterativeImageCentricBatches(self):

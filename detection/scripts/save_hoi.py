@@ -27,13 +27,14 @@ import os
 import filters_detection,\
        filters_rpn,\
        filters_hoi,\
-       hoi_forward
+       stages
 import cv2 as cv
 import copy as cp
 import math
 
 from keras.models import Sequential, Model
 import h5py
+#import draw
 
 
 np.seterr(all='raise')
@@ -41,22 +42,22 @@ np.seterr(all='raise')
 #plt.close("all")
 
 
-if False:
+if True:
     # Load data
     print('Loading data...')
     data = extract_data.object_data(False)
     cfg = data.cfg
-    class_mapping = data.class_mapping
-    labels = data.hoi_labels
+    obj_mapping = data.class_mapping
+    hoi_mapping = data.hoi_labels
     
 #if True:
     # Create batch generators
     genTrain = DataGenerator(imagesMeta = data.trainGTMeta, cfg=cfg, data_type='train', do_meta=True)
     
 #if True:
-#    model_rpn, model_detection, model_hoi, model_all = methods.get_hoi_rcnn_models(cfg, mode='train')
     Models = methods.AllModels(cfg, mode='test', do_rpn=True, do_det=True, do_hoi=True)
-    model_rpn, model_detection, model_hoi = Models.get_models()
+#if True:
+    Stages = stages.AllStages(cfg, Models, obj_mapping, hoi_mapping, mode='test')
     
 total_times = np.array([0.0,0.0])
 genIterator = genTrain.begin()
@@ -65,22 +66,41 @@ coco_res = []
 for i in range(genTrain.nb_batches):
 
     X, y, imageMeta, imageDims, times = next(genIterator)
+    img = filters_rpn.unprepareInputs(X, imageDims, cfg)
+#    draw.drawGTBoxes(img, imageMeta, imageDims)
+    
     utils.update_progress_new(i+1, genTrain.nb_batches, imageMeta['id'])
     
-    h_bboxes, o_bboxes, hoi_labels = hoi_forward.forward_pass([X, y, imageMeta, imageDims], [model_rpn, model_detection, model_hoi], cfg, class_mapping)       
-
-    if h_bboxes is None:
+    #STAGE 1
+    proposals = Stages.stageone(X, y, imageMeta, imageDims)
+#    draw.drawAnchors(img, proposals, cfg)
+    
+    #STAGE 2
+    bboxes = Stages.stagetwo(proposals, imageMeta, imageDims)
+    if bboxes is None:
+        print('Stage two error')
         continue
-    cocoformat = helper.hoiBBoxes2COCOformat(h_bboxes, o_bboxes, hoi_labels, imageMeta, imageDims['scale'], cfg.rpn_stride)
+#    draw.drawAnchors(img, bboxes, cfg)
+    
+    #STAGE 3
+    hbboxes, obboxes, props = Stages.stagethree(bboxes, imageMeta, imageDims)
+    if hbboxes is None:
+        print('Stage three error')
+        continue
+#    draw.drawPositiveHoIs(img, hbboxes, obboxes, props, hoi_mapping, imageMeta, imageDims, cfg)
+    
+    #DONE
+    cocoformat = filters_hoi.convertResults(hbboxes, obboxes, props, imageMeta, imageDims['scale'], cfg.rpn_stride)
     coco_res += cocoformat
     
 
-path = cfg.part_results_path + 'HICO/hoi5c/hoi_output'
-utils.save_dict(coco_res, path)
-
-mAP, AP = metrics.computeHOImAP(coco_res, data.trainGTMeta, class_mapping, labels, cfg)
-saveMeta = {'mAP': mAP, 'AP': AP.tolist()}
-path = cfg.part_results_path + 'HICO/hoi5c/hoimap'
-utils.save_dict(saveMeta, path)
-
-print('mAP', mAP)
+if False:
+    path = cfg.part_results_path + 'HICO/hoi5c/hoi_output'
+    utils.save_dict(coco_res, path)
+    
+    mAP, AP = metrics.computeHOImAP(coco_res, data.trainGTMeta, obj_mapping, hoi_mapping, cfg)
+    saveMeta = {'mAP': mAP, 'AP': AP.tolist()}
+    path = cfg.part_results_path + 'HICO/hoi5c/hoimap'
+    utils.save_dict(saveMeta, path)
+    
+    print('mAP', mAP)

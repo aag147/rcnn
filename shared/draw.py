@@ -123,7 +123,7 @@ def drawPositiveHoIs(img, h_bbox, o_bbox, labels, label_mapping, imageMeta, imag
     ps_idxs = np.where(np.sum(labels>0.5, axis=1)>0)[0]
     nb_imgs = len(ps_idxs)
     
-    f, spl = plt.subplots(math.ceil((nb_imgs+2)/2), 2)
+    f, spl = plt.subplots(math.ceil((nb_imgs+1)/2), 2)
     spl = spl.ravel()    
     
     # GT Boxes
@@ -133,7 +133,7 @@ def drawPositiveHoIs(img, h_bbox, o_bbox, labels, label_mapping, imageMeta, imag
         spl[0].imshow(img)
         spl[0].plot(bbox[0,:], bbox[1,:])
 
-    spl_idx = 2    
+    spl_idx = 1
     print(ps_idxs)
     for i in range(nb_imgs): 
         idx = ps_idxs[i]

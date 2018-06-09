@@ -35,24 +35,38 @@ def unprepareInputs(img, imgDims, cfg):
     img = np.copy(img)
     img = img[0]
     img = helper.unpreprocessImage(img, cfg)
-    return img, imgDims
+    return img
+
 
 
 #######################
-### PROCESS TARGETS ###
+##### MANAGE DATA #####
 #######################
-def loadTargets(imageMeta, anchors_path, cfg):
+def loadData(imageMeta, anchors_path, cfg):
     #in: imageMeta
     #out: non-reduced targets
     path = anchors_path + imageMeta['imageName'].split('.')[0]
     if not os.path.exists(path + '.pkl'):
         return None
-    Y = utils.load_obj(path)
+    all_target_labels, all_target_deltas, all_val_map = utils.load_obj(path)
     
-    return list(Y)
+    all_target_labels   = np.expand_dims(all_target_labels, axis=0)
+    all_target_deltas   = np.expand_dims(all_target_deltas, axis=0)
+    all_val_map         = np.expand_dims(all_val_map, axis=0)
+    
+    return [all_target_labels, all_target_deltas, all_val_map]
 
+def convertData(Y, cfg):
+    [all_target_labels, all_target_deltas, all_val_map] = Y
+    
+    all_target_labels = np.copy(all_target_labels[0])
+    all_target_deltas = np.copy(all_target_deltas[0])
+    all_val_map = np.copy(all_val_map[0])
+    
+    rpnMeta = {'target_labels': all_target_labels, 'target_deltas': all_target_deltas, 'val_map': all_val_map}
+    return rpnMeta
 
-def reduceTargets(Y, cfg):
+def reduceData(Y, cfg):
     #in: non-reduced targets
     #out: reduced targets
     [y_rpn_overlap, y_rpn_regr, y_is_box_valid] = Y
@@ -93,6 +107,11 @@ def reduceTargets(Y, cfg):
     y_rpn_regr = np.concatenate([np.repeat(y_rpn_overlap, 4, axis=3), y_rpn_regr], axis=3)
     return [np.copy(y_rpn_cls), np.copy(y_rpn_regr)]
 
+
+
+#######################
+### PROCESS TARGETS ###
+#######################
 def createTargets(imageMeta, imageDims, cfg):
     #in: imageMeta
     #out: non-reduced targets

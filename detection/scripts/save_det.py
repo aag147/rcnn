@@ -130,9 +130,8 @@ for i in range(genTrain.nb_batches):
     
     total_times[i, :] = [f_rpn-s_rpn, f_rpn_post-f_rpn, f_det-s_det, f_det_post-f_det]    
     
-    h_bboxes_hoi, o_bboxes_hoi, hoi_labels_hoi, val_map_hoi = helper.bboxes2HOIformat(h_bboxes, o_bboxes, hoi_labels, val_map)
-    detMeta[imageID] = {'imageName': imageMeta['imageName'], 'h_bboxes':h_bboxes_hoi, 'o_bboxes':o_bboxes_hoi, 'hoi_labels':hoi_labels_hoi, 'val_map':val_map_hoi}
-
+    
+    detMeta[imageID] = filters_hoi.convertData([h_bboxes, o_bboxes, hoi_labels, val_map], cfg)
     utils.update_progress_new(i+1, genTrain.nb_batches, imageMeta['id'])
 
 path = cfg.my_save_path + 'hoiputs'

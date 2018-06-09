@@ -105,6 +105,7 @@ class basic_config:
        self.task = None
        self.pretrained_weights = True
        self.my_weights = None
+       self.only_use_weights = False
        
        #model compile
        self.optimizer = 'sgd'
