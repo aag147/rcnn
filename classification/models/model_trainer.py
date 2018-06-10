@@ -39,7 +39,7 @@ class model_trainer:
             loss = l.weigthed_binary_crossentropy(cfg.wp,1)
         else:
             loss = 'categorical_crossentropy'
-        self.model.compile(loss=loss, optimizer=opt, metrics=['binary_accuracy'])
+        self.model.compile(loss=loss, optimizer=opt, metrics=['categorical_accuracy'])
 
         
     def trainModel(self, cfg):

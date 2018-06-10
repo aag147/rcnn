@@ -13,6 +13,7 @@ import numpy as np
 
 from keras.models import load_model, Model
 from keras.optimizers import SGD, Adam
+from keras.regularizers import l2
 from keras.utils.generic_utils import get_custom_objects
 
 import detection.models.models as models,\
@@ -70,6 +71,7 @@ class AllModels:
             return
         
         cfg = self.cfg
+        
         print('Compiling models...')
         if cfg.optimizer == 'adam':
             print('   Opt.:', 'Adam')
@@ -83,15 +85,23 @@ class AllModels:
                 print('   Uniform anchor sampling')
             else:
                 print('   Non-Uniform anchor sampling')
-            self.model_rpn.compile(optimizer=opt,\
-                      loss=[losses.rpn_loss_cls(cfg.nb_anchors), losses.rpn_loss_regr(cfg.nb_anchors)])
+            model = self.model_rpn
+            my_losses = [losses.rpn_loss_cls(cfg.nb_anchors), losses.rpn_loss_regr(cfg.nb_anchors)]
+            my_metrics = None
         if self.do_det:
-            self.model_det.compile(optimizer=opt,\
-                      loss=[losses.class_loss_cls, losses.class_loss_regr(cfg.nb_object_classes-1)],\
-                      metrics={'det_out_class':'categorical_accuracy'}) 
+            model = self.model_det
+            my_losses=[losses.class_loss_cls, losses.class_loss_regr(cfg.nb_object_classes-1)]
+            my_metrics={'det_out_class':'categorical_accuracy'}
         if self.do_hoi:
-            self.model_hoi.compile(optimizer=opt,\
-                      loss=[losses.hoi_loss_cls(cfg.wp)])
+            model = self.model_hoi
+            my_losses = [losses.hoi_loss_cls(cfg.wp)] 
+            my_metrics = None
+            
+        for layer in model.layers:
+            if hasattr(layer, 'kernel_regularizer'):
+                layer.kernel_regularizer= l2(cfg.weight_decay)
+            
+        model.compile(optimizer=opt, loss=my_losses, metrics=my_metrics)
         
         
     def get_models(self):
