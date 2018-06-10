@@ -13,6 +13,7 @@ import os
 from keras import backend as K
 from keras.models import load_model
 from keras.utils.generic_utils import get_custom_objects
+from keras import regularizers
 
 import losses
 
@@ -32,7 +33,11 @@ def _final_stop(inputs, outputs, cfg):
         
         path = cfg.my_weights_path + cfg.my_weights
         assert os.path.exists(path), 'invalid path: %s' % path
-        model = load_model(path)   
+        model = load_model(path)
+        
+    for layer in model.layers:
+        if hasattr(layer, 'kernel_regularizer'):
+            layer.kernel_regularizer= regularizers.l2(cfg.weight_decay)
     return model
         
 def AlexNet_Weights_th(cfg):
@@ -86,6 +91,7 @@ def HO_RCNN_tf(cfg):
     inputs = [model.input for model in models]
     
     final_model = _final_stop(inputs, outputs, cfg)
+            
     return final_model
 
 

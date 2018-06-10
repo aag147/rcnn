@@ -113,6 +113,7 @@ class basic_config:
        self.my_weights = None
        self.only_use_weights = False
        self.use_l2_reg = True
+       self.weight_decay = 0.0005
        
        #model compile
        self.optimizer = 'sgd'
