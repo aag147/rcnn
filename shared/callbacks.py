@@ -50,9 +50,15 @@ class SaveLog2File(Callback):
        loss_reg  = logs.get('rpn_out_regress_loss') if logs.get('rpn_out_regress_loss') is not None else 0.0
        loss_cls = logs.get('det_out_class_loss') if logs.get('det_out_class_loss') is not None else 0.0
        loss_reg  = logs.get('det_out_regress_loss') if logs.get('det_out_regress_loss') is not None else 0.0
+       
+       val_loss_cls = logs.get('val_rpn_out_class_loss') if logs.get('val_rpn_out_class_loss') is not None else 0.0
+       val_loss_reg  = logs.get('val_rpn_out_regress_loss') if logs.get('val_rpn_out_regress_loss') is not None else 0.0
+       val_loss_cls = logs.get('val_det_out_class_loss') if logs.get('val_det_out_class_loss') is not None else 0.0
+       val_loss_reg  = logs.get('val_det_out_regress_loss') if logs.get('val_det_out_regress_loss') is not None else 0.0
+       
        train_acc  = logs.get('acc') if type(logs.get('acc')) is float else 0.0
-       newline = '%.03d, %.4f, %.4f, %.4f, %.4f, %.4f, %.4f\n' % \
-         (epoch, logs.get('loss'), train_acc, val_loss, val_acc, loss_cls, loss_reg)
+       newline = '%.03d, %.4f, %.4f, %.4f, %.4f, %.4f, %.4f, %.4f, %.4f\n' % \
+         (epoch, logs.get('loss'), train_acc, loss_cls, loss_reg, val_loss, val_acc, val_loss_cls, val_loss_reg)
        with open(self.cfg.my_results_path + "history.txt", 'a') as file:
            file.write(newline)
 		

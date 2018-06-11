@@ -41,7 +41,7 @@ if True:
 
     # data
     genTrain = DataGenerator(imagesMeta = data.trainGTMeta, cfg=cfg, data_type='train', do_meta=False)
-    genVal = DataGenerator(imagesMeta = data.testGTMeta, cfg=cfg, data_type='val', do_meta=False)
+    genVal = DataGenerator(imagesMeta = data.valGTMeta, cfg=cfg, data_type='val', do_meta=False)
 
     # models
     Models = methods.AllModels(cfg, mode='train', do_rpn=True)
@@ -58,8 +58,8 @@ if True:
     
     model_rpn.fit_generator(generator = genTrain.begin(), \
                 steps_per_epoch = genTrain.nb_batches, \
-                validation_data = genVal.begin(), \
-                validation_steps = genVal.nb_batches, \
+                #validation_data = genVal.begin(), \
+                #validation_steps = genVal.nb_batches, \
                 epochs = cfg.epoch_end, initial_epoch=cfg.epoch_begin, callbacks=callbacks)
 
     # Save stuff

@@ -67,7 +67,7 @@ class object_data:
         cfg.update_paths()
         
         trainGTMeta = utils.load_dict(cfg.data_path + 'train_objs')
-#        valGTMeta = utils.load_dict(cfg.data_path + 'val_objs')
+        valGTMeta = utils.load_dict(cfg.data_path + 'val_objs')
         testGTMeta = utils.load_dict(cfg.data_path + 'test_objs')
         class_mapping = utils.load_dict(cfg.data_path + 'class_mapping')
         hoi_labels = None
@@ -89,10 +89,7 @@ class object_data:
             
             trainGTMeta = self.reduceData(trainGTMeta, reduced_objs, reduced_hoi_map)
             testGTMeta = self.reduceData(testGTMeta, reduced_objs, reduced_hoi_map)
-#            valGTMeta = self.reduceData(valGTMeta, reduced_objs)
-#            trainMeta = utils.reduceTestData(trainMeta, reduced_idxs)
-#            testMeta = utils.reduceTestData(testMeta, reduced_idxs)
-#            class_mapping = utils.idxs2labels(reduced_idxs, class_mapping)
+            valGTMeta = self.reduceData(valGTMeta, reduced_objs)
             
             
         cfg.nb_object_classes = len(class_mapping)
@@ -106,15 +103,12 @@ class object_data:
         if cfg.move:
             self.move_data()
         
-        self.class_mapping = class_mapping
-        self.testGTMeta = testGTMeta
         self.trainGTMeta = trainGTMeta
+        self.testGTMeta = testGTMeta
+        self.valGTMeta = valGTMeta
         
         self.hoi_labels = hoi_labels
-#        self.trainMeta = trainMeta
-#        self.valMeta = valMeta
-#        self.testMeta = testMeta
-#        self.testGTMeta = testGTMeta
+        self.class_mapping = class_mapping
         
     def getReduxIdxs(self, class_mapping, cfg):
         objs = utils.getPascalObjects(cfg.max_classes)

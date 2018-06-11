@@ -78,8 +78,8 @@ class AllModels:
             opt = Adam(lr = cfg.init_lr)
         else:
             print('   Opt.:', 'SGD')
-            opt = SGD(lr = cfg.init_lr, momentum = 0.9, decay = 0.0005, nesterov=False)
-        print('     Learning rate:', cfg.init_lr)
+            opt = SGD(lr = cfg.init_lr, momentum = 0.9, decay = 0.0, nesterov=False)
+        print('   Learning rate:', cfg.init_lr)
         if self.do_rpn:
             if cfg.rpn_uniform_sampling:
                 print('   Uniform anchor sampling')
@@ -97,6 +97,7 @@ class AllModels:
             my_losses = [losses.hoi_loss_cls(cfg.wp)] 
             my_metrics = None
             
+        print('   L2 regularization')
         for layer in model.layers:
             if hasattr(layer, 'kernel_regularizer'):
                 layer.kernel_regularizer= l2(cfg.weight_decay)
@@ -106,8 +107,6 @@ class AllModels:
         
     def get_models(self):
         return self.model_rpn, self.model_det, self.model_hoi
-        
-
     
     def _load_shared_weights(self, model):
         cfg = self.cfg
