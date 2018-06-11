@@ -17,11 +17,8 @@ sys.path.append('../data/')
 import extract_data
 
 import numpy as np
+from shutil import copyfile
 import utils
-import time
-import cv2 as cv
-import copy as cp
-import os
 
 np.seterr(all='raise')
 
@@ -47,8 +44,8 @@ print('anchors path', anchors_path)
 from_anchor_path = cfg.part_data_path + cfg.dataset + '/anchors/train/'
 to_anchor_path = cfg.data_path + 'anchors/train/'
 
-from shutil import copyfile
-for imageID, imageMeta in imagesMeta.items():
+for idx, (imageID, imageMeta) in enumerate(imagesMeta.items()):
     imageName = imageMeta['imageName'].split('.')[0] + '.pkl'
     copyfile(from_anchor_path + imageName, to_anchor_path + imageName)
+    utils.update_progress_new(idx+1, nb_images, imageMeta['imageName'])
     
