@@ -36,7 +36,7 @@ class AllModels:
         
         assert mode=='test' or np.sum([self.do_rpn, self.do_det, self.do_hoi])==1, 'Use only one model when training'
         
-        if self.mode == 'train' and not cfg.use_shared_cnn and not cfg.only_use_weights:
+        if self.mode == 'train' and not cfg.use_shared_cnn and not cfg.only_use_weights and cfg.my_shared_weights is not None:
             self.load_models()
         else:
             self.create_models()

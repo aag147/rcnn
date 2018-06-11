@@ -85,6 +85,7 @@ class basic_config:
        self.move_path = None
        self.move = False
        self.use_shared_cnn = False
+       self.my_shared_weights = None
        
        #basics
        self.dataset = 'HICO'

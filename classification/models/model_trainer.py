@@ -34,6 +34,7 @@ class model_trainer:
             print('Optimzer: adam')
             opt = Adam(lr=0.001)
         else:
+            print('Optimzer: sgd')
             opt = SGD(lr = 0.001, momentum = 0.9, decay = 0.0, nesterov=False)
         if self.task == 'multi-label':
             loss = l.weigthed_binary_crossentropy(cfg.wp,1)
