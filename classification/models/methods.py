@@ -37,7 +37,7 @@ def _final_stop(inputs, outputs, cfg):
         
     for layer in model.layers:
         if hasattr(layer, 'kernel_regularizer'):
-            layer.kernel_regularizer= regularizers.l2(cfg.weight_decay)
+            layer.kernel_regularizer= regularizers.l2(cfg.weight_decay+100000)
     return model
         
 def AlexNet_Weights_th(cfg):

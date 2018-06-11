@@ -12,20 +12,27 @@ from keras.engine.topology import Layer
 from keras.initializers import RandomNormal
 from keras.layers import Flatten, Dense, Dropout, Reshape, Permute, Activation, \
     Input, merge, TimeDistributed
+from keras.regularizers import l2
 
 import tensorflow as tf
 
 import numpy as np
 
 
-def rpn(x):
-    base_layers = x[0]
-    x = Conv2D(512, (3, 3), padding='same', activation='relu', kernel_initializer=RandomNormal(stddev=0.01), name='rpn_conv1')(
-        base_layers)
+def rpn(cfg):
+    def rpnFixed(x):
+        base_layers = x[0]
+        x = Conv2D(
+                512, (3, 3),
+                padding='same', activation='relu', 
+                kernel_initializer=RandomNormal(stddev=0.01), 
+                kernel_regularizer=l2(cfg.weight_decay), 
+                name='rpn_conv1'
+            )(base_layers)
+        return x
+    return rpnFixed
 
-    return x
-
-def fullyConnected(stream=None):
+def fullyConnected(cfg, stream=None):
     def fullyConnectedFixed(x):
         assert(len(x) == 1)
         rois = x[0]
@@ -36,7 +43,12 @@ def fullyConnected(stream=None):
         )(rois)
         
         dense_1 = TimeDistributed(
-            Dense(4096, activation='relu', kernel_initializer=RandomNormal(stddev=0.01)),
+            Dense(
+                4096,
+                activation='relu',
+                kernel_initializer = RandomNormal(stddev=0.01),
+                kernel_regularizer = l2(cfg.weight_decay)
+            ),
             name = '%s_fc1' % stream
         )(dense_1)
         
@@ -46,7 +58,12 @@ def fullyConnected(stream=None):
         )(dense_1)
         
         dense_2 = TimeDistributed(
-            Dense(4096, activation='relu', kernel_initializer=RandomNormal(stddev=0.01)),
+            Dense(
+                4096,
+                activation='relu',
+                kernel_initializer = RandomNormal(stddev=0.01),
+                kernel_regularizer = l2(cfg.weight_decay)
+            ),
             name = '%s_fc2' % stream
         )(dense_1)
         
@@ -60,11 +77,16 @@ def fullyConnected(stream=None):
     return fullyConnectedFixed
 
 
-def pairwiseStream():
+def pairwiseStream(cfg):
     def pairwiseStreamFixed(x):
         pattern = x[0]
         conv_1 = TimeDistributed(
-            Conv2D(64, (5, 5), activation='relu', kernel_initializer=RandomNormal(stddev=0.01)),
+            Conv2D(
+                64, (5, 5),
+                activation='relu',
+                kernel_initializer=RandomNormal(stddev=0.01),
+                kernel_regularizer = l2(cfg.weight_decay)
+            ),
             name = 'pairwise_conv1a'
         )(pattern)
         
@@ -74,7 +96,12 @@ def pairwiseStream():
         )(conv_1)
     
         conv_2 = TimeDistributed(
-            Conv2D(32, (5, 5), activation='relu', kernel_initializer=RandomNormal(stddev=0.01)),
+            Conv2D(
+                32, (5, 5),
+                activation='relu',
+                kernel_initializer=RandomNormal(stddev=0.01),
+                kernel_regularizer = l2(cfg.weight_decay)
+            ),
             name = 'pairwise_conv2a'
         )(conv_1)
         
@@ -89,7 +116,12 @@ def pairwiseStream():
         )(conv_2)
         
         dense1 = TimeDistributed(
-            Dense(256, activation='relu', kernel_initializer=RandomNormal(stddev=0.01)),
+            Dense(
+                256,
+                activation='relu',
+                kernel_initializer=RandomNormal(stddev=0.01),
+                kernel_regularizer = l2(cfg.weight_decay)
+            ),
             name = 'pairwise_fc1'
         )(dense1)
         

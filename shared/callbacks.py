@@ -44,19 +44,20 @@ class SaveLog2File(Callback):
       f= open(cfg.my_results_path + "history.txt","a")
       f.close()
    def on_epoch_end(self, epoch, logs=None):
-       val_loss = logs.get('val_loss') if type(logs.get('val_loss')) is float else 0.0
-       val_acc  = logs.get('val_acc') if type(logs.get('val_acc')) is float else 0.0
-       loss_cls = logs.get('rpn_out_class_loss') if logs.get('rpn_out_class_loss') is not None else 0.0
-       loss_reg  = logs.get('rpn_out_regress_loss') if logs.get('rpn_out_regress_loss') is not None else 0.0
-       loss_cls = logs.get('det_out_class_loss') if logs.get('det_out_class_loss') is not None else 0.0
-       loss_reg  = logs.get('det_out_regress_loss') if logs.get('det_out_regress_loss') is not None else 0.0
+       print(logs)
+       loss_cls = logs.get('rpn_out_class_loss') if 'rpn_out_class_loss' in logs else 0.0
+       loss_reg  = logs.get('rpn_out_regress_loss') if 'rpn_out_regress_loss' in logs else 0.0
+       loss_cls = logs.get('det_out_class_loss') if 'det_out_class_loss' in logs else loss_cls
+       loss_reg  = logs.get('det_out_regress_loss') if 'det_out_regress_loss' in logs else loss_reg
        
-       val_loss_cls = logs.get('val_rpn_out_class_loss') if logs.get('val_rpn_out_class_loss') is not None else 0.0
-       val_loss_reg  = logs.get('val_rpn_out_regress_loss') if logs.get('val_rpn_out_regress_loss') is not None else 0.0
-       val_loss_cls = logs.get('val_det_out_class_loss') if logs.get('val_det_out_class_loss') is not None else 0.0
-       val_loss_reg  = logs.get('val_det_out_regress_loss') if logs.get('val_det_out_regress_loss') is not None else 0.0
+       val_loss_cls = logs.get('val_rpn_out_class_loss') if 'val_rpn_out_class_loss' in logs else 0.0
+       val_loss_reg  = logs.get('val_rpn_out_regress_loss') if 'val_rpn_out_regress_loss' in logs else 0.0
+       val_loss_cls = logs.get('val_det_out_class_loss') if 'val_det_out_class_loss' in logs else val_loss_cls
+       val_loss_reg  = logs.get('val_det_out_regress_loss') if 'val_det_out_regress_loss' in logs else val_loss_reg
        
-       train_acc  = logs.get('acc') if type(logs.get('acc')) is float else 0.0
+       train_acc  = logs.get('acc') if 'acc' in logs else 0.0
+       val_loss = logs.get('val_loss') if 'val_loss' in logs else 0.0
+       val_acc  = logs.get('val_acc') if 'val_acc'in logs else 0.0
        newline = '%.03d, %.4f, %.4f, %.4f, %.4f, %.4f, %.4f, %.4f, %.4f\n' % \
          (epoch, logs.get('loss'), train_acc, loss_cls, loss_reg, val_loss, val_acc, val_loss_cls, val_loss_reg)
        with open(self.cfg.my_results_path + "history.txt", 'a') as file:

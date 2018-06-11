@@ -52,7 +52,6 @@ if True:
     trainer.trainModel(cfg)
     
     # Save stuff
-    print('Path:', cfg.my_results_path)
     print('Saving final model...')
     trainer.saveModel(cfg)
     print('Testing model on test...')

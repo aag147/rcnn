@@ -13,7 +13,6 @@ import numpy as np
 
 from keras.models import load_model, Model
 from keras.optimizers import SGD, Adam
-from keras.regularizers import l2
 from keras.utils.generic_utils import get_custom_objects
 
 import detection.models.models as models,\
@@ -96,11 +95,6 @@ class AllModels:
             model = self.model_hoi
             my_losses = [losses.hoi_loss_cls(cfg.wp)] 
             my_metrics = None
-            
-        print('   L2 regularization')
-        for layer in model.layers:
-            if hasattr(layer, 'kernel_regularizer'):
-                layer.kernel_regularizer= l2(cfg.weight_decay)
             
         model.compile(optimizer=opt, loss=my_losses, metrics=my_metrics)
         
@@ -301,8 +295,8 @@ class AllModels:
         ########################
         ####### Backbone #######
         ########################
-        output_features = models.VGG16(cfg.weights_path, reg=cfg.use_l2_reg)(img_input)     
-        output_features_hoi = models.VGG16(cfg.weights_path, reg=cfg.use_l2_reg)(img_hoi_input)
+        output_features = models.VGG16(cfg)(img_input)     
+        output_features_hoi = models.VGG16(cfg)(img_hoi_input)
         
         ########################
         ######### RPN ##########
@@ -312,7 +306,7 @@ class AllModels:
                 img_input
             ]
             
-            rpn_features = layers.rpn([
+            rpn_features = layers.rpn(cfg)([
                  output_features
             ])
             
@@ -320,7 +314,8 @@ class AllModels:
                 filters=nb_anchors,
                 kernel_size=(1, 1),
                 activation='sigmoid',
-                kernel_initializer=keras.initializers.RandomNormal(stddev=0.01),
+                kernel_initializer = keras.initializers.RandomNormal(stddev=0.01),
+                kernel_regularizer = keras.regularizers.l2(cfg.weight_decay),
                 name='rpn_out_class'
             )(rpn_features)
             
@@ -328,7 +323,8 @@ class AllModels:
                 filters=nb_anchors * 4,
                 kernel_size=(1, 1), 
                 activation='linear', 
-                kernel_initializer=keras.initializers.RandomNormal(stddev=0.01),
+                kernel_initializer = keras.initializers.RandomNormal(stddev=0.01),
+                kernel_regularizer = keras.regularizers.l2(cfg.weight_decay),
                 name='rpn_out_regress'
             )(rpn_features)
             
@@ -347,6 +343,7 @@ class AllModels:
             self.model_rpn = keras.models.Model(inputs=rpn_inputs, outputs=rpn_outputs)
             
             # Only train from conv3_1
+            print('   Freezing first few layers...')
             for i, layer in enumerate(self.model_rpn.layers):
                 layer.trainable = False
                 if i > 6:
@@ -377,6 +374,7 @@ class AllModels:
             ])
             
             object_features = layers.fullyConnected(
+                cfg,
                 stream = 'det'
             )([
                 object_rois
@@ -387,7 +385,8 @@ class AllModels:
                 keras.layers.Dense(
                     units=nb_object_classes,
                     activation='softmax',
-                    kernel_initializer=keras.initializers.RandomNormal(stddev=0.01)
+                    kernel_initializer = keras.initializers.RandomNormal(stddev=0.01),
+                    kernel_regularizer = keras.regularizers.l2(cfg.weight_decay),
                 ),
                 name="det_out_class"
             )(object_features)
@@ -396,7 +395,8 @@ class AllModels:
                 keras.layers.Dense(
                     units=4 * (nb_object_classes - 1),
                     activation="linear",
-                    kernel_initializer=keras.initializers.RandomNormal(stddev=0.001)
+                    kernel_initializer = keras.initializers.RandomNormal(stddev=0.001),
+                    kernel_regularizer = keras.regularizers.l2(cfg.weight_decay),
                 ),
                 name="det_out_regress"
             )(object_features)
@@ -434,6 +434,7 @@ class AllModels:
             ])
             
             hoi_human_features = layers.fullyConnected(
+                cfg,
                 stream = 'human'
             )([
                 hoi_human_rois
@@ -443,7 +444,8 @@ class AllModels:
                 keras.layers.Dense(
                     units=1 * nb_hoi_classes,
                     activation=None,
-                    kernel_initializer=keras.initializers.RandomNormal(stddev=0.01)
+                    kernel_initializer = keras.initializers.RandomNormal(stddev=0.01),
+                    kernel_regularizer = keras.regularizers.l2(cfg.weight_decay),
                 ),
                 name="scores4human"
             )(hoi_human_features)
@@ -457,6 +459,7 @@ class AllModels:
             ])
             
             hoi_object_features = layers.fullyConnected(
+                cfg,
                 stream = 'object'
             )([
                 hoi_object_rois
@@ -466,7 +469,8 @@ class AllModels:
                 keras.layers.Dense(
                     units=1 * nb_hoi_classes,
                     activation=None,
-                    kernel_initializer=keras.initializers.RandomNormal(stddev=0.01)
+                    kernel_initializer = keras.initializers.RandomNormal(stddev=0.01),
+                    kernel_regularizer = keras.regularizers.l2(cfg.weight_decay),
                 ),
                 name="scores4object"
             )(hoi_object_features)
@@ -474,6 +478,7 @@ class AllModels:
                 
             ## INTERACTION ##
             hoi_pattern_features = layers.pairwiseStream(
+                cfg = cfg
             )([
                 interaction_input
             ])
@@ -481,7 +486,8 @@ class AllModels:
                 keras.layers.Dense(
                     units=1 * nb_hoi_classes,
                     activation=None,
-                    kernel_initializer=keras.initializers.RandomNormal(stddev=0.01)
+                    kernel_initializer = keras.initializers.RandomNormal(stddev=0.01),
+                    kernel_regularizer = keras.regularizers.l2(cfg.weight_decay),
                 ),
                 name = 'scores4pattern'
             )(hoi_pattern_features)
