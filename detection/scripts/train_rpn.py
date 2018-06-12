@@ -22,13 +22,8 @@ import utils,\
        callbacks,\
        filters_helper as helper
 from rpn_generators import DataGenerator
-    
-from keras.callbacks import EarlyStopping, LearningRateScheduler, Callback
-from keras.optimizers import SGD, Adam
-import os
 
-from keras.models import load_model
-from keras.utils.generic_utils import get_custom_objects
+
 
 if True:
     # meta data

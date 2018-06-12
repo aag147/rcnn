@@ -71,6 +71,23 @@ def prepareInputs(h_bboxes, o_bboxes, imageDims):
     
     return newh_bboxes, newo_bboxes
 
+def splitInputs(bboxes):
+    h_idxs = np.where(bboxes[:,4]==1)[0]
+    o_idxs = np.where(bboxes[:,4]>0)[0]
+    hbboxes = bboxes[h_idxs,:4]
+    obboxes = bboxes[o_idxs,:4]
+    
+    nb_hbboxes = hbboxes.shape[0]
+    
+    bboxes_pairs = [[],[]]
+    for obbox in obboxes:
+        obbox = np.expand_dims(obbox, axis=0)
+        obbox_list = np.repeat(obbox, nb_hbboxes, axis=0)
+        bboxes_pairs[0].extend(hbboxes.tolist())
+        bboxes_pairs[1].extend(obbox_list.tolist())
+    
+    return np.expand_dims(bboxes_pairs[0], axis=0), np.expand_dims(bboxes_pairs[1], axis=0)
+        
 
 #######################
 ### PROCESS TARGETS ###

@@ -206,7 +206,7 @@ class basic_config:
        
        self.rpn_nms_max_boxes=300
        self.rpn_nms_overlap_thresh=0.7
-
+       self.rpn_nms_overlap_thresh_test=0.6
         
        # detection filters
        self.detection_max_overlap = 0.5

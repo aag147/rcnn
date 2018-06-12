@@ -36,7 +36,7 @@ class AllStages:
         
         #rpn post
         proposals = helper.deltas2Anchors(rpn_props, rpn_deltas, self.cfg, imageDims, do_regr=True)
-        proposals = helper.non_max_suppression_fast(proposals, overlap_thresh = self.cfg.rpn_nms_overlap_thresh)
+        proposals = helper.non_max_suppression_fast(proposals, overlap_thresh = self.cfg.rpn_nms_overlap_thresh_test)
         return proposals
     
     def stagetwo(self, X, imageMeta, imageDims, include='all'):
@@ -65,18 +65,24 @@ class AllStages:
         # det post
         rois = filters_detection.unprepareInputs(rois_norm, imageDims)
         bboxes = helper.deltas2Boxes(all_det_props, all_det_deltas, rois, imageDims, self.cfg)
+#        bboxes = helper.deltas2ObjBoxes(all_det_props, all_det_deltas, rois, imageDims, self.cfg, self.obj_mapping)
         
         if len(bboxes) == 0:
             return None
         bboxes_nms = helper.non_max_suppression_boxes(bboxes, self.cfg, self.cfg.det_nms_overlap_thresh_test)
+#        bboxes_nms = helper.non_max_suppression_fast(bboxes, self.cfg.det_nms_overlap_thresh_test)
         
         return bboxes_nms
     
     def stagethree(self, X, imageMeta, imageDims, include='all'):
         # hoi prepare
         bboxes = X
-        all_hbboxes, all_obboxes, all_target_labels, val_map = filters_hoi.createTargets(bboxes, imageMeta, imageDims, self.cfg, self.obj_mapping)
         
+        if self.mode == 'test' and include != 'pre':
+            all_hbboxes, all_obboxes = filters_hoi.splitInputs(bboxes)
+        else:
+            all_hbboxes, all_obboxes, all_target_labels, val_map = filters_hoi.createTargets(bboxes, imageMeta, imageDims, self.cfg, self.obj_mapping)
+                
         if include=='pre':
             return all_hbboxes, all_obboxes, all_target_labels, val_map
         
@@ -85,9 +91,9 @@ class AllStages:
         
         patterns = filters_hoi.createInteractionPatterns(all_hbboxes, all_obboxes, self.cfg)
         hbboxes_norm, obboxes_norm = filters_hoi.prepareInputs(all_hbboxes, all_obboxes, imageDims)
-        
+                
         # hoi predict
-        nb_hoi_rois = all_hbboxes.shape[1]
+        nb_hoi_rois = hbboxes_norm.shape[1]
         all_hoi_props = np.zeros((1,nb_hoi_rois, self.cfg.nb_hoi_classes))
         all_hoi_hbboxes = np.zeros((1,nb_hoi_rois, 5))
         all_hoi_obboxes = np.zeros((1,nb_hoi_rois, 5))

@@ -35,17 +35,19 @@ np.seterr(all='raise')
 #plt.close("all")
 
 
-if True:
+if False:
     # Load data
     data = extract_data.object_data(False)
     cfg = data.cfg
     obj_mapping = data.class_mapping
     hoi_mapping = data.hoi_labels
     
-if True:
+#if True:
     # Load models
     genTrain = DataGenerator(imagesMeta = data.trainGTMeta, cfg=cfg, data_type='train', do_meta=True)
     Models = methods.AllModels(cfg, mode='test', do_rpn=True, do_det=True, do_hoi=True)
+    
+if True:
     Stages = stages.AllStages(cfg, Models, obj_mapping, hoi_mapping, mode='test')
     
     
@@ -66,19 +68,22 @@ for i in range(1):
     #################
     ##### test ######
     #################
-    X, y, imageMeta, imageDims, times = next(genIterator)  
-    utils.update_progress_new(i+1, genTrain.nb_batches, imageMeta['id'])
+#    X, y, imageMeta, imageDims, times = next(genIterator)  
+#    utils.update_progress_new(i+1, genTrain.nb_batches, imageMeta['id'])
     
     #STAGE 1
+    print('Computing proposals...')
     proposals = Stages.stageone(X, y, imageMeta, imageDims)
     
     #STAGE 2
+    print('Computing object detections...')
     bboxes = Stages.stagetwo(proposals, imageMeta, imageDims)
     if bboxes is None:
         print('Stage two error')
         continue
     
     #STAGE 3
+    print('Computing HoI classification...')
     hbboxes, obboxes, props = Stages.stagethree(bboxes, imageMeta, imageDims)
     if hbboxes is None:
         print('Stage three error')

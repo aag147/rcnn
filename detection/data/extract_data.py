@@ -68,7 +68,7 @@ class object_data:
         
         trainGTMeta = utils.load_dict(cfg.data_path + 'train_objs')
         valGTMeta = utils.load_dict(cfg.data_path + 'val_objs')
-        testGTMeta = utils.load_dict(cfg.data_path + 'test_objs')
+#        testGTMeta = utils.load_dict(cfg.data_path + 'test_objs')
         class_mapping = utils.load_dict(cfg.data_path + 'class_mapping')
         hoi_labels = None
         reduced_hoi_map = None
@@ -88,8 +88,8 @@ class object_data:
                 hoi_labels, reduced_hoi_map = self.reduceHoILabels(hoi_labels, reduced_objs)
             
             trainGTMeta = self.reduceData(trainGTMeta, reduced_objs, reduced_hoi_map)
-            testGTMeta = self.reduceData(testGTMeta, reduced_objs, reduced_hoi_map)
-            valGTMeta = self.reduceData(valGTMeta, reduced_objs)
+#            testGTMeta = self.reduceData(testGTMeta, reduced_objs, reduced_hoi_map)
+            valGTMeta = self.reduceData(valGTMeta, reduced_objs, reduced_hoi_map)
             
             
         cfg.nb_object_classes = len(class_mapping)
@@ -104,7 +104,7 @@ class object_data:
             self.move_data()
         
         self.trainGTMeta = trainGTMeta
-        self.testGTMeta = testGTMeta
+#        self.testGTMeta = testGTMeta
         self.valGTMeta = valGTMeta
         
         self.hoi_labels = hoi_labels
@@ -138,6 +138,7 @@ class object_data:
                     for idx, rel in enumerate(imageMeta['rels']):    
                         if rel[0] in objsidxs and rel[1] in objsidxs:
                             new_rels.append([objsidxs[rel[0]], objsidxs[rel[1]], reduced_hoi_map[rel[2]]])
+
                     new_rels = np.array(new_rels)
 
                 reduced_imagesMeta[imageID] = {'imageName':imageMeta['imageName'], 'objects':new_objs, 'rels':new_rels}

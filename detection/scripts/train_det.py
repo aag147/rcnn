@@ -23,12 +23,7 @@ import utils,\
        filters_helper as helper
 from det_generators import DataGenerator
     
-from keras.callbacks import EarlyStopping, LearningRateScheduler, Callback
-from keras.optimizers import SGD, Adam
-import os
 
-from keras.models import load_model, Model
-from keras.utils.generic_utils import get_custom_objects
 
 if True:
     # meta data
@@ -36,13 +31,12 @@ if True:
     
     # config
     cfg = data.cfg
-    class_mapping = data.class_mapping
+    obj_mapping = data.class_mapping
     utils.saveConfig(cfg)
 
     # data
     genTrain = DataGenerator(imagesMeta = data.trainGTMeta, cfg=cfg, data_type='train', do_meta=False)
-    #genVal = DataGenerator(imagesMeta = data.valGTMeta, cfg=cfg, data_type='val')
-    #genTest = DataGenerator(imagesMeta = data.testGTMeta, cfg=cfg, data_type='test') 
+    genVal = DataGenerator(imagesMeta = data.valGTMeta, cfg=cfg, data_type='val', do_meta=False)
 
     # models
     Models = methods.AllModels(cfg, mode='train', do_det=True)
@@ -59,6 +53,8 @@ if True:
     
     model_det.fit_generator(generator = genTrain.begin(), \
                 steps_per_epoch = genTrain.nb_batches, \
+                validation_data = genVal.begin(), \
+                validation_steps = genVal.nb_batches, \
                 epochs = cfg.epoch_end, initial_epoch=cfg.epoch_begin, callbacks=callbacks)
 
     # Save stuff

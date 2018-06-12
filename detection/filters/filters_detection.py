@@ -75,9 +75,9 @@ def loadData(imageMeta, rois_path, imageDims, cfg, batchidx = None):
 def convertData(Y, cfg):
     [all_bboxes, all_target_labels, all_target_deltas] = Y
     
-    all_bboxes = np.copy(all_bboxes)
-    all_target_labels = np.copy(all_target_labels)
-    all_target_deltas = np.copy(all_target_deltas)
+    all_bboxes = np.copy(all_bboxes[0])
+    all_target_labels = np.copy(all_target_labels[0])
+    all_target_deltas = np.copy(all_target_deltas[0])
     
     all_target_labels = [int(np.argmax(x)) for x in all_target_labels]
     all_bboxes = [[round(float(x), 4) for x in box] for box in all_bboxes.tolist()]

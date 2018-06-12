@@ -16,6 +16,49 @@ import numpy as np
 import cv2 as cv
 import math
 import copy as cp
+def deltas2ObjBoxes(props, deltas, rois, imageDims, cfg, obj_mapping):   
+    output_shape = imageDims['output_shape']
+    
+    nb_top_bboxes = 10
+    bboxes = []
+    obj_labels = [x for key,x in obj_mapping.items() if key != 'bg']
+    
+    for labelID in obj_labels:
+        label_pos = labelID - 1
+        idxs = np.argsort(props[0,:,labelID])[::-1][:nb_top_bboxes]
+        
+        # extract label data
+        labelprops  = props[0,idxs,labelID]
+        labeldeltas = deltas[0,idxs,4*label_pos:4*(label_pos+1)]
+        labelrois   = rois[0,idxs,:]
+        
+        # standard deviation
+        sx, sy, sw, sh = cfg.det_regr_std
+        labeldeltas[:,0] /= sx
+        labeldeltas[:,1] /= sy
+        labeldeltas[:,2] /= sw
+        labeldeltas[:,3] /= sh
+        
+        # real coordinates
+        label_bboxes = apply_regr_det(labelrois, labeldeltas)
+        
+        # clip to boundary
+        label_bboxes[:,0] = np.maximum(0.0, label_bboxes[:,0])
+        label_bboxes[:,1] = np.maximum(0.0, label_bboxes[:,1])
+        label_bboxes[:,2] = np.minimum(output_shape[1] - label_bboxes[:,0] - 0.01, label_bboxes[:,2])
+        label_bboxes[:,3] = np.minimum(output_shape[0] - label_bboxes[:,1] - 0.01, label_bboxes[:,3])
+        
+        # append props
+        labelprops = np.expand_dims(labelprops, axis=1)
+        labellabels = np.expand_dims([labelID]*nb_top_bboxes, axis=1)
+        label_bboxes = np.array(label_bboxes)
+        label_bboxes = np.concatenate([label_bboxes, labellabels], axis=1)
+        label_bboxes = np.concatenate([label_bboxes, labelprops], axis=1)
+        bboxes.extend(label_bboxes)
+    
+    bboxes = np.array(bboxes)
+    return bboxes
+
 def deltas2Boxes(props, deltas, rois, imageDims, cfg):   
     output_shape = imageDims['output_shape']
     
@@ -215,14 +258,45 @@ def apply_regr_np(anchors, deltas):
         x1 = cx1 - w1 / 2.
         y1 = cy1 - h1 / 2.
 
-        x1 = np.round(x1)
-        y1 = np.round(y1)
-        w1 = np.round(w1)
-        h1 = np.round(h1)
+#        x1 = np.round(x1)
+#        y1 = np.round(y1)
+#        w1 = np.round(w1)
+#        h1 = np.round(h1)
         return np.stack([x1, y1, w1, h1])
     except Exception as e:
         print(e)
         return anchors
+    
+def apply_regr_det(rois, deltas):
+    try:
+        x = rois[:,0]
+        y = rois[:,1]
+        w = rois[:,2]
+        h = rois[:,3]
+
+        tx = deltas[:,0]
+        ty = deltas[:,1]
+        tw = deltas[:,2]
+        th = deltas[:,3]
+
+        cx = x + w / 2.
+        cy = y + h / 2.
+        cx1 = tx * w + cx
+        cy1 = ty * h + cy
+
+        w1 = np.exp(tw.astype(np.float64)) * w
+        h1 = np.exp(th.astype(np.float64)) * h
+        x1 = cx1 - w1 / 2.
+        y1 = cy1 - h1 / 2.
+
+#        x1 = np.round(x1)
+#        y1 = np.round(y1)
+#        w1 = np.round(w1)
+#        h1 = np.round(h1)
+        return np.stack([x1, y1, w1, h1]).transpose()
+    except Exception as e:
+        print(e)
+        return rois
 
 
 
@@ -277,12 +351,12 @@ def non_max_suppression_fast(boxes, overlap_thresh=0.5, max_boxes=300):
         overlap = area_int / (area_union + 1e-6)
 
         # delete all indexes from the index list that have
-        indexes = np.delete(indexes, np.concatenate(([last], np.where(overlap > overlap_thresh)[0])))
+        indexes = np.delete(indexes, np.concatenate(([last], np.where(overlap >= overlap_thresh)[0])))
 
         if len(pick) >= max_boxes:
             break
     # return only the bounding boxes that were picked using the integer data type
-    boxes = boxes[pick]
+    boxes = boxes[pick,:]
     return boxes
 
 
