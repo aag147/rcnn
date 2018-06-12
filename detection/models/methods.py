@@ -33,9 +33,11 @@ class AllModels:
         self.model_det = None
         self.model_hoi = None
         
+        self.nb_models = 0
+        
         assert mode=='test' or np.sum([self.do_rpn, self.do_det, self.do_hoi])==1, 'Use only one model when training'
         
-        if not cfg.use_shared_cnn and not cfg.only_use_weights and cfg.my_shared_weights is not None:
+        if self.mode == 'train' and not cfg.use_shared_cnn and not cfg.only_use_weights and cfg.my_shared_weights is not None:
             self.load_models()
         else:
             self.create_models()
@@ -122,7 +124,7 @@ class AllModels:
             
             if self.do_rpn:    
                 rpn_before = self.model_rpn.layers[11].get_weights()[0][0,0,0,0]
-                if self.mode == 'test':
+                if self.mode == 'test' and self.nb_models > 1:
                     print('   Loading test RPN weights...')
                     path = cfg.part_results_path + "COCO/rpn" + cfg.my_results_dir + '/weights/' + cfg.my_weights
                     assert os.path.exists(path), 'invalid path: %s' % path
@@ -132,7 +134,7 @@ class AllModels:
                     print('   Loading shared train RPN weights...')
                     self.model_rpn = self._load_shared_weights(self.model_rpn)
                     
-                elif cfg.only_use_weights:
+                else:
                     print('   Loading train RPN weights...')
                     assert os.path.exists(cfg.my_shared_weights), 'invalid path: %s' % cfg.my_shared_weights
                     self.model_rpn.load_weights(cfg.my_shared_weights) 
@@ -143,7 +145,7 @@ class AllModels:
             
             if self.do_det:
                 det_before = self.model_det.layers[4].get_weights()[0][0,0]
-                if self.mode == 'test':
+                if self.mode == 'test' and self.nb_models > 1:
                     print('   Loading test DET weights...')
                     path = cfg.part_results_path + "COCO/det" + cfg.my_results_dir + '/weights/' + cfg.my_weights
                     assert os.path.exists(path), 'invalid path: %s' % path
@@ -153,7 +155,7 @@ class AllModels:
                     print('   Loading shared train DET weights...')
                     self.model_det = self._load_shared_weights(self.model_det)
                     
-                elif cfg.only_use_weights:
+                else:
                     print('   Loading train DET weights...')
                     assert os.path.exists(cfg.my_shared_weights), 'invalid path: %s' % cfg.my_shared_weights
                     self.model_det.load_weights(cfg.my_shared_weights) 
@@ -163,7 +165,7 @@ class AllModels:
             
             if self.do_hoi:
                 hoi_before = self.model_hoi.layers[11].get_weights()[0][0,0,0,0]
-                if self.mode == 'test':
+                if self.mode == 'test' and self.nb_models > 1:
                     print('   Loading test HOI weights...')
                     path = cfg.part_results_path + 'HICO/hoi5c/weights/' + cfg.my_weights
                     assert os.path.exists(path), 'invalid path: %s' % path
@@ -173,7 +175,7 @@ class AllModels:
                     print('   Loading shared train HOI weights...')
                     self.model_hoi = self._load_shared_weights(self.model_hoi)
                     
-                elif cfg.only_use_weights:
+                else:
                     print('   Loading train HOI weights...')
                     assert os.path.exists(cfg.my_shared_weights), 'invalid path: %s' % cfg.my_shared_weights
                     self.model_hoi.load_weights(cfg.my_shared_weights) 
@@ -302,6 +304,8 @@ class AllModels:
         ######### RPN ##########
         ########################
         if self.do_rpn:
+            self.nb_models += 1
+            
             rpn_inputs = [
                 img_input
             ]
@@ -353,6 +357,8 @@ class AllModels:
         ###### Detection #######
         ########################
         if self.do_det:
+            self.nb_models += 1
+            
             if self.mode=='test':    
                 detection_inputs = [
                     features_input,
@@ -418,6 +424,8 @@ class AllModels:
         ######### HOI ##########
         ########################    
         if self.do_hoi:
+            self.nb_models += 1
+            
             hoi_inputs = [
                 img_hoi_input,
                 human_input,
