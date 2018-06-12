@@ -34,7 +34,7 @@ np.seterr(all='raise')
 if True:
     # Load data
     print('Loading data...')
-    data = extract_data.object_data()
+    data = extract_data.object_data(False)
     cfg = data.cfg
 
 

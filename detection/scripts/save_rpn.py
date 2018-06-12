@@ -19,19 +19,12 @@ import time
 import utils,\
        extract_data,\
        methods,\
+       stages,\
        losses,\
        callbacks,\
        filters_helper as helper,\
        filters_detection
 from rpn_generators import DataGenerator
-    
-from keras.callbacks import EarlyStopping, LearningRateScheduler, Callback
-from keras.optimizers import SGD, Adam
-from keras.models import load_model
-
-
-from keras.utils.generic_utils import get_custom_objects
-
 
 import os
 
@@ -41,7 +34,8 @@ if True:
     
     # config
     cfg = data.cfg
-    class_mapping = data.class_mapping
+    obj_mapping = data.class_mapping
+    hoi_mapping = data.hoi_labels
 
     # data
     genTrain = DataGenerator(imagesMeta = data.trainGTMeta, cfg=cfg, data_type='train')
@@ -52,52 +46,34 @@ if True:
         os.makedirs(cfg.my_save_path + 'detections/')
     cfg.my_save_path += 'detections/'
                 
-            
 
 if True:
-    # models
-    loss_cls = losses.rpn_loss_cls(cfg.nb_anchors)
-    loss_rgr = losses.rpn_loss_regr(cfg.nb_anchors)
-    
-    get_custom_objects().update({"rpn_loss_cls_fixed_num": loss_cls})
-    get_custom_objects().update({"rpn_loss_regr_fixed_num": loss_rgr})
-    
-    print('weights path', cfg.my_shared_weights)
-    print('results path', cfg.my_save_path)
-#    model_rpn = load_model(cfg.my_shared_weights)
-    model_rpn, model_detection, model_hoi, model_all = methods.get_hoi_rcnn_models(cfg, mode='train')
-    model_rpn.load_weights(cfg.my_shared_weights)
+    Models = methods.AllModels(cfg, mode='test', do_rpn=True, do_det=False, do_hoi=False)
+    Stages = stages.AllStages(cfg, Models, obj_mapping, hoi_mapping, mode='test')
 
-    genIterator = genTrain.begin()
-    detMeta = {}
-    alltimes = np.zeros((genTrain.nb_batches, 4))
-    for batchidx in range(genTrain.nb_batches):        
-        X, y, imageMeta, imageDims, times = next(genIterator)
-        imageID = imageMeta['id']
+genIterator = genTrain.begin()
+detMeta = {}
         
-        p_start = time.time()
-        x_class, x_deltas = model_rpn.predict_on_batch(X)
-        p_end   = time.time()
-       
-        pp_start = time.time()
-        pred_anchors = helper.deltas2Anchors(x_class, x_deltas, cfg, imageDims, do_regr=True)
-        pred_anchors = helper.non_max_suppression_fast(pred_anchors, overlap_thresh=cfg.rpn_nms_overlap_thresh)
-        pred_anchors = pred_anchors[:,0:4]
-        bboxes, target_labels, target_deltas, IouS = filters_detection.prepareTargets(pred_anchors, imageMeta, imageDims, data.class_mapping, cfg)
-        pp_end   = time.time()
+for batchidx in range(genTrain.nb_batches):
 
-        
-        if bboxes is None:
-            detMeta = None
-        else:
-            detMeta = filters_detection.convertData([bboxes, target_labels, target_deltas], cfg)
-                
-        utils.save_obj(detMeta, cfg.my_save_path + imageMeta['imageName'].split('.')[0])    
-        
-        times = list(times) + [p_end-p_start,pp_end-pp_start]
-        alltimes[batchidx,:] = times
-        utils.update_progress_new(batchidx+1, genTrain.nb_batches, imageMeta['imageName'])
+    X, y, imageMeta, imageDims, times = next(genIterator)    
+    utils.update_progress_new(batchidx+1, genTrain.nb_batches, imageMeta['id'])
     
-    print()
-    print('Path:', cfg.my_save_path)
-    print('Times', np.mean(alltimes, axis=0))
+    #STAGE 1
+    proposals = Stages.stageone(X, y, imageMeta, imageDims)
+    
+    #STAGE 2
+    proposals, target_labels, target_deltas = Stages.stagetwo(proposals, imageMeta, imageDims, include='pre')
+
+    #CONVERT
+    if proposals is None:
+        detMeta = None
+    else:
+        detMeta = filters_detection.convertData([proposals, target_labels, target_deltas], cfg)
+            
+    utils.save_obj(detMeta, cfg.my_save_path + imageMeta['imageName'].split('.')[0])    
+    utils.update_progress_new(batchidx+1, genTrain.nb_batches, imageMeta['imageName'])
+    
+print()
+print('Path:', cfg.my_save_path)
+print('Times', np.mean(alltimes, axis=0))

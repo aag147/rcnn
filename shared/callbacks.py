@@ -44,7 +44,6 @@ class SaveLog2File(Callback):
       f= open(cfg.my_results_path + "history.txt","a")
       f.close()
    def on_epoch_end(self, epoch, logs=None):
-       print(logs)
        loss_cls = logs.get('rpn_out_class_loss') if 'rpn_out_class_loss' in logs else 0.0
        loss_reg  = logs.get('rpn_out_regress_loss') if 'rpn_out_regress_loss' in logs else 0.0
        loss_cls = logs.get('det_out_class_loss') if 'det_out_class_loss' in logs else loss_cls
