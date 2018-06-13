@@ -16,13 +16,10 @@ sys.path.append('../data/')
 
 import extract_data
 
-import numpy as np
 from shutil import copyfile
+import os
 import utils
 
-np.seterr(all='raise')
-
-#plt.close("all")
 
 
 if True:
@@ -32,17 +29,23 @@ if True:
     cfg = data.cfg
 
 
+dataset = 'val'
+
+if dataset == 'val':
+    imagesMeta = data.valGTMeta
+elif dataset == 'test':
+    imagesMeta = data.testGTMeta
+else:
+    imagesMeta = data.trainGTMeta
+
 imagesMeta = data.trainGTMeta
 nb_images = len(imagesMeta)
 
-images_path = cfg.data_path + 'images/train/'
-anchors_path = cfg.data_path + 'anchors/train/'
+from_anchor_path = cfg.part_data_path + cfg.dataset + '/anchors/'+dataset+'/'
+to_anchor_path = cfg.data_path + 'anchors/'+dataset+'/'
 
-print('images path', images_path)
-print('anchors path', anchors_path)
-
-from_anchor_path = cfg.part_data_path + cfg.dataset + '/anchors/train/'
-to_anchor_path = cfg.data_path + 'anchors/train/'
+if not os.path.exists(to_anchor_path):
+    os.makedirs(to_anchor_path)
 
 for idx, (imageID, imageMeta) in enumerate(imagesMeta.items()):
     imageName = imageMeta['imageName'].split('.')[0] + '.pkl'

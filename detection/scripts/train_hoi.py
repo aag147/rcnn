@@ -24,7 +24,7 @@ from hoi_generators import DataGenerator
 from keras.callbacks import EarlyStopping, LearningRateScheduler, Callback
 
 
-if False:
+if True:
     # meta data
     data = extract_data.object_data()
     
@@ -43,7 +43,7 @@ if False:
     _, _, model_hoi = Models.get_models()
     
 
-if True:    
+if False:    
     # train
     callbacks = [callbacks.MyModelCheckpointInterval(cfg), \
                  callbacks.MyLearningRateScheduler(cfg), \

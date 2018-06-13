@@ -167,7 +167,10 @@ class AllModels:
                 hoi_before = self.model_hoi.layers[11].get_weights()[0][0,0,0,0]
                 if self.mode == 'test' and self.nb_models > 1:
                     print('   Loading test HOI weights...')
-                    path = cfg.part_results_path + 'HICO/hoi5c/weights/' + cfg.my_weights
+                    path = cfg.part_results_path + "HICO/hoi" + cfg.my_results_dir
+                    if not os.path.exists(path):
+                        path = path[:-1]
+                    path += '/weights/' + cfg.my_weights
                     assert os.path.exists(path), 'invalid path: %s' % path
                     self.model_hoi.load_weights(path, by_name=False)
                 

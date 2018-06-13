@@ -4,6 +4,7 @@ Created on Thu May 17 13:48:23 2018
 
 @author: aag14
 """
+
 import sys 
 sys.path.append('../../../')
 sys.path.append('../../')
@@ -12,36 +13,39 @@ sys.path.append('../models/')
 sys.path.append('../filters/')
 sys.path.append('../data/')
 
+
 import extract_data
 from rpn_generators import DataGenerator
 
 import methods,\
        stages
-import hoi_test
-import utils
+import det_test
 
-import os
+
 
 if True:
     # Load data
-    data = extract_data.object_data(False)
+    data = extract_data.object_data()
     cfg = data.cfg
     obj_mapping = data.class_mapping
     hoi_mapping = data.hoi_labels
     
-    if not os.path.exists(cfg.my_save_path + 'detections/'):
-        os.makedirs(cfg.my_save_path + 'detections/')
-    cfg.my_save_path += 'detections/'    
-    
     # Create batch generators
     genTrain = DataGenerator(imagesMeta = data.trainGTMeta, cfg=cfg, data_type='train', do_meta=True)
+    genVal = DataGenerator(imagesMeta = data.valGTMeta, cfg=cfg, data_type='val', do_meta=True)
+    genTest = DataGenerator(imagesMeta = data.testGTMeta, cfg=cfg, data_type='test', do_meta=True)
     
-
-if True:
     Models = methods.AllModels(cfg, mode='test', do_rpn=True, do_det=True, do_hoi=False)
     Stages = stages.AllStages(cfg, Models, obj_mapping, hoi_mapping, mode='test')
 
-    inputMeta = hoi_test.saveInputData(genTrain, Stages, cfg)
+# Test data
+evalTest = det_test.saveEvalData(genTest, Stages, cfg, obj_mapping)
+det_test.saveEvalResults(evalTest, genTest, cfg)
 
-print()
-print('Path:', cfg.my_save_path)
+# Val data
+evalVal = det_test.saveEvalData(genVal, Stages, cfg, obj_mapping)
+det_test.saveEvalResults(evalVal, genVal, cfg)
+
+# Train data
+evalTrain = det_test.saveEvalData(genTrain, Stages, cfg, obj_mapping)
+det_test.saveEvalResults(evalTrain, genTrain, cfg)

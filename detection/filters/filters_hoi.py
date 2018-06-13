@@ -95,7 +95,7 @@ def splitInputs(bboxes):
 def loadData(imageInput, imageDims, cfg):
     if imageInput is None:
         return None, None, None, None
-    all_hbboxes = np.array(imageInput['h_bboxes'])
+    all_hbboxes = np.array(imageInput['hbboxes'])
     all_obboxes = np.array(imageInput['o_bboxes'])
     all_target_labels = (imageInput['hoi_labels'])
     val_map = np.array(imageInput['val_map'])
