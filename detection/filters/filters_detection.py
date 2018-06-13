@@ -53,8 +53,8 @@ def loadData(imageMeta, rois_path, imageDims, cfg, batchidx = None):
     roisMeta = utils.load_dict(rois_path + str(int(imageMeta['imageName'].split('.')[0])))
     if roisMeta is None:
         return None, None, None
-    all_bboxes = np.array(roisMeta['proposals'])
-    all_target_labels = np.array(roisMeta['target_labels'])
+    all_bboxes = np.array(roisMeta['rois'])
+    all_target_labels = np.array(roisMeta['target_props'])
     all_target_deltas = np.array(roisMeta['target_deltas'])
     
     all_target_deltas = utils.getMatrixDeltas(cfg.nb_object_classes, all_target_deltas, all_target_labels)
@@ -122,7 +122,7 @@ def reduceData(Y, cfg, batchidx=None):
     [all_bboxes, all_target_labels, all_target_deltas] = Y
     
     
-    bboxes = np.zeros((1, cfg.nb_detection_rois, 5))
+    bboxes = np.zeros((1, cfg.nb_detection_rois, 4))
     target_labels = np.zeros((1, cfg.nb_detection_rois, cfg.nb_object_classes))
     target_deltas = np.zeros((1, cfg.nb_detection_rois, (cfg.nb_object_classes-1)*4*2))
     
