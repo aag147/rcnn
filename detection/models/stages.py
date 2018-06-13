@@ -42,10 +42,12 @@ class AllStages:
     def stagetwo(self, X, imageMeta, imageDims, include='all'):
         # det prepare
         proposals = X
-        rois, target_props, target_deltas, IouS = filters_detection.createTargets(proposals, imageMeta, imageDims, self.obj_mapping, self.cfg)
-        
-        if include=='pre':
-            return rois, target_props, target_deltas
+        if self.mode == 'test' and include != 'pre':
+            rois = proposals
+        else:
+            rois, target_props, target_deltas, IouS = filters_detection.createTargets(proposals, imageMeta, imageDims, self.obj_mapping, self.cfg)
+            if include=='pre':
+                return rois, target_props, target_deltas
         
         rois_norm = filters_detection.prepareInputs(rois, imageDims)        
         
@@ -82,9 +84,8 @@ class AllStages:
             all_hbboxes, all_obboxes = filters_hoi.splitInputs(bboxes)
         else:
             all_hbboxes, all_obboxes, all_target_labels, val_map = filters_hoi.createTargets(bboxes, imageMeta, imageDims, self.cfg, self.obj_mapping)
-                
-        if include=='pre':
-            return all_hbboxes, all_obboxes, all_target_labels, val_map
+            if include=='pre':
+                return all_hbboxes, all_obboxes, all_target_labels, val_map
         
         if all_hbboxes is None:
             return None, None, None
