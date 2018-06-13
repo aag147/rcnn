@@ -85,7 +85,7 @@ class DataGenerator():
             pp_end = time.time()
             if Y_tmp[0] is None:
                 return None
-            bboxes, target_labels, target_deltas = filters_detection.reduceTargets(Y_tmp, self.cfg)
+            bboxes, target_labels, target_deltas = filters_detection.reduceData(Y_tmp, self.cfg)
             bboxes = filters_detection.prepareInputs(bboxes, imageDims) 
             times = np.array([io_end-io_start, pp_end-pp_start])
             
