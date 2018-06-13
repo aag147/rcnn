@@ -57,6 +57,12 @@ class SaveLog2File(Callback):
        train_acc  = logs.get('acc') if 'acc' in logs else 0.0
        val_loss = logs.get('val_loss') if 'val_loss' in logs else 0.0
        val_acc  = logs.get('val_acc') if 'val_acc'in logs else 0.0
+       
+       det_out_class_categorical_accuracy
+       
+       train_acc  = logs.get('det_out_class_categorical_accuracy') if 'det_out_class_categorical_accuracy' in logs else train_acc
+       val_acc  = logs.get('val_det_out_class_categorical_accuracy') if 'val_det_out_class_categorical_accuracy' in logs else val_acc
+       
        newline = '%.03d, %.4f, %.4f, %.4f, %.4f, %.4f, %.4f, %.4f, %.4f\n' % \
          (epoch, logs.get('loss'), train_acc, loss_cls, loss_reg, val_loss, val_acc, val_loss_cls, val_loss_reg)
        with open(self.cfg.my_results_path + "history.txt", 'a') as file:
