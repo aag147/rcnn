@@ -37,7 +37,7 @@ if True:
     # data
     genTrain = DataGenerator(imagesMeta = data.trainGTMeta, cfg=cfg, data_type='train', do_meta=False)
     genVal = DataGenerator(imagesMeta = data.valGTMeta, cfg=cfg, data_type='val', do_meta=False)
-    genVal.nb_batches = 50
+
     # models
     Models = methods.AllModels(cfg, mode='train', do_det=True)
     Models.compile_models()
