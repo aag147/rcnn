@@ -39,7 +39,7 @@ if True:
 
     # data
     genTrain = DataGenerator(imagesMeta = data.trainGTMeta, cfg=cfg, data_type='train')
-#    genVal = DataGenerator(imagesMeta = data.valGTMeta, cfg=cfg, data_type='val')
+    genVal = DataGenerator(imagesMeta = data.valGTMeta, cfg=cfg, data_type='val')
     #genTest = DataGenerator(imagesMeta = data.testGTMeta, cfg=cfg, data_type='test') 
     
     if not os.path.exists(cfg.my_save_path + 'detections/'):
@@ -51,13 +51,13 @@ if True:
     Models = methods.AllModels(cfg, mode='test', do_rpn=True, do_det=False, do_hoi=False)
     Stages = stages.AllStages(cfg, Models, obj_mapping, hoi_mapping, mode='test')
 
-genIterator = genTrain.begin()
+genIterator = genVal.begin()
 detMeta = {}
         
-for batchidx in range(genTrain.nb_batches):
+for batchidx in range(genVal.nb_batches):
 
     X, y, imageMeta, imageDims, times = next(genIterator)    
-    utils.update_progress_new(batchidx+1, genTrain.nb_batches, imageMeta['id'])
+    utils.update_progress_new(batchidx+1, genVal.nb_batches, imageMeta['imageName'])
     
     #STAGE 1
     proposals = Stages.stageone(X, y, imageMeta, imageDims)
@@ -72,7 +72,6 @@ for batchidx in range(genTrain.nb_batches):
         detMeta = filters_detection.convertData([proposals, target_labels, target_deltas], cfg)
             
     utils.save_obj(detMeta, cfg.my_save_path + imageMeta['imageName'].split('.')[0])    
-    utils.update_progress_new(batchidx+1, genTrain.nb_batches, imageMeta['imageName'])
     
 print()
 print('Path:', cfg.my_save_path)

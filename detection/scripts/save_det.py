@@ -59,13 +59,13 @@ if True:
     Models = methods.AllModels(cfg, mode='test', do_rpn=True, do_det=True, do_hoi=False)
     Stages = stages.AllStages(cfg, Models, obj_mapping, hoi_mapping, mode='test')
 
-genIterator = genVal.begin()
+genIterator = genTrain.begin()
 detMeta = {}
 
-for i in range(genVal.nb_batches):
+for i in range(genTrain.nb_batches):
     X, y, imageMeta, imageDims, times = next(genIterator)
     imageID = imageMeta['imageName'].split('.')[0]
-    utils.update_progress_new(i+1, genVal.nb_batches, imageMeta['id'])
+    utils.update_progress_new(i+1, genTrain.nb_batches, imageMeta['id'])
     
     #STAGE 1
     proposals = Stages.stageone(X, y, imageMeta, imageDims)
@@ -84,7 +84,7 @@ for i in range(genVal.nb_batches):
     
     #CONVERT
     detMeta[imageID] = filters_hoi.convertData([all_hbboxes[0], all_obboxes[0], all_target_labels[0], val_map[0]], cfg)
-    utils.update_progress_new(i+1, genVal.nb_batches, imageMeta['id'])
+    utils.update_progress_new(i+1, genTrain.nb_batches, imageMeta['id'])
 
 path = cfg.my_save_path + 'hoiputs'
 utils.save_dict(detMeta, path)
