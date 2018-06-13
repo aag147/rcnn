@@ -22,7 +22,7 @@ import os
 
 if True:
     # meta data
-    data = extract_data.object_data()
+    data = extract_data.object_data(False)
     cfg = data.cfg
     obj_mapping = data.class_mapping
     hoi_mapping = data.hoi_labels

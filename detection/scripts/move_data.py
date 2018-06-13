@@ -25,20 +25,22 @@ import utils
 if True:
     # Load data
     print('Loading data...')
-    data = extract_data.object_data()
+    data = extract_data.object_data(False)
     cfg = data.cfg
 
 
 dataset = 'val'
 
 if dataset == 'val':
+    print('Validation data')
     imagesMeta = data.valGTMeta
 elif dataset == 'test':
+    print('Test data')
     imagesMeta = data.testGTMeta
 else:
+    print('Train data')
     imagesMeta = data.trainGTMeta
 
-imagesMeta = data.trainGTMeta
 nb_images = len(imagesMeta)
 
 from_anchor_path = cfg.part_data_path + cfg.dataset + '/anchors/'+dataset+'/'
