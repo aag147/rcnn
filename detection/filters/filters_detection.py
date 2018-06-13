@@ -50,7 +50,7 @@ def loadData(imageMeta, rois_path, imageDims, cfg, batchidx = None):
     #out: labels [{1}, {...}, {nb_object_classes}]
     #out: deltas [{1}, {...}, (dx,dy,dw,dh) * (nb_object_classes-1)]
     
-    roisMeta = utils.load_dict(rois_path + str(int(imageMeta['imageName'].split('.')[0])))
+    roisMeta = utils.load_obj(rois_path + imageMeta['imageName'].split('.')[0])
     if roisMeta is None:
         return None, None, None
     all_bboxes = np.array(roisMeta['rois'])
