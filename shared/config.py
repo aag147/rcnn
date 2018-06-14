@@ -195,7 +195,7 @@ class basic_config:
        #rpn filters
        self.nb_shared_layers = 17
        self.rpn_stride = 16
-       self.nb_rpn_proposals = 128
+       self.nb_rpn_proposals = 256
         
        self.anchor_sizes = [64, 128, 256, 512]
        self.anchor_ratios = [[1, 1], [1, 2], [2, 1]]

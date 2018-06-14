@@ -54,7 +54,6 @@ def saveEvalData(generator, Stages, cfg):
         
         #CONVERT
         evalData += filters_rpn.convertResults(proposals, imageMeta, imageDims['scale'], cfg.rpn_stride)
-
         
     return evalData
 
@@ -71,5 +70,5 @@ def saveEvalResults(evalData, generator, cfg, obj_mapping):
     R5, IoU = metrics.computeRPNAR(evalData, generator.imagesMeta, obj_mapping, cfg)
     saveMeta = {'R5': R5, 'IoU': IoU.tolist()}
     utils.save_dict(saveMeta, path+mode+'_mAP')
-    print('mAP', mode, R5)
+    print('R5', mode, R5)
     return IoU
