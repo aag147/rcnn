@@ -198,7 +198,9 @@ class basic_config:
        self.nb_rpn_proposals = 256
         
        self.anchor_sizes = [64, 128, 256, 512]
+       self.anchor_sizes = [4, 8, 16, 32]
        self.anchor_ratios = [[1, 1], [1, 0.5], [0.5, 1]]
+       self.anchor_ratios = [0.5, 1, 2]
        
        self.nb_anchors = len(self.anchor_sizes) * len(self.anchor_ratios)
         

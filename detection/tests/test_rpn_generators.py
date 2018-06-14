@@ -73,7 +73,7 @@ for i in range(1):
                 
         props = np.reshape(Y1,(-1,1))
     
-    all_pred_anchors = helper.deltas2Anchors(Y1, Y2, cfg, imageDims, do_regr=False)
+    all_pred_anchors = helper.deltas2Anchors(Y1, Y2, cfg, imageDims, do_regr=True)
     print('positives', np.sum(Y1>0.5))
     print(all_pred_anchors.shape)
     draw.drawPositiveAnchors((X[0]+1.0)/2.0, all_pred_anchors, cfg)
