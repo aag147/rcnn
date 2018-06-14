@@ -63,17 +63,17 @@ images_path = images_path + data_type + '/'
 j = 0
 for i in range(1):
     if True:
-#        X, y, imageMeta, imageDims, times = next(trainIterator)
-        imageMeta = data.trainGTMeta['494415']
-        X, imageDims = filters_rpn.prepareInputs(imageMeta, images_path, cfg)
-        y = filters_rpn.createTargets(imageMeta, imageDims, cfg)
+        X, y, imageMeta, imageDims, times = next(trainIterator)
+#        imageMeta = data.trainGTMeta['545710']
+#        X, imageDims = filters_rpn.prepareInputs(imageMeta, images_path, cfg)
+#        y = filters_rpn.createTargets(imageMeta, imageDims, cfg)
 
-        Y1 = y[0][:,:,:,:]        
-        Y2 = y[1][:,:,:,:]
+        Y1 = y[0][:,:,:,12:]        
+        Y2 = y[1][:,:,:,48:]
                 
         props = np.reshape(Y1,(-1,1))
     
-    all_pred_anchors = helper.deltas2Anchors(Y1, Y2, cfg, imageDims, do_regr=True)
+    all_pred_anchors = helper.deltas2Anchors(Y1, Y2, cfg, imageDims, do_regr=False)
     print('positives', np.sum(Y1>0.5))
     print(all_pred_anchors.shape)
     draw.drawPositiveAnchors((X[0]+1.0)/2.0, all_pred_anchors, cfg)

@@ -161,10 +161,10 @@ def deltas2Anchors(props, deltas, cfg, imageDims, do_regr=True):
             A[2, :, :, anc_idx] = np.maximum(1, A[2, :, :, anc_idx])
             A[3, :, :, anc_idx] = np.maximum(1, A[3, :, :, anc_idx])
 
-            A[0, :, :, anc_idx] = np.maximum(0, A[0, :, :, anc_idx])
-            A[1, :, :, anc_idx] = np.maximum(0, A[1, :, :, anc_idx])
-            A[2, :, :, anc_idx] = np.minimum(shape[1] - 0.01 - A[0, :, :, anc_idx], A[2, :, :, anc_idx])
-            A[3, :, :, anc_idx] = np.minimum(shape[0] - 0.01 - A[1, :, :, anc_idx], A[3, :, :, anc_idx])
+#            A[0, :, :, anc_idx] = np.maximum(0, A[0, :, :, anc_idx])
+#            A[1, :, :, anc_idx] = np.maximum(0, A[1, :, :, anc_idx])
+#            A[2, :, :, anc_idx] = np.minimum(shape[1] - 0.01 - A[0, :, :, anc_idx], A[2, :, :, anc_idx])
+#            A[3, :, :, anc_idx] = np.minimum(shape[0] - 0.01 - A[1, :, :, anc_idx], A[3, :, :, anc_idx])
 
             anc_idx += 1
 

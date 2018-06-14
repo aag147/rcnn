@@ -395,13 +395,13 @@ def createTargets(imageMeta, imageDims, cfg):
             for ix in range(output_width):
                 xmin_anc = float(rpn_stride) * (ix + 0.5) - w_anc / 2
                 xmax_anc = float(rpn_stride) * (ix + 0.5) + w_anc / 2
-                if xmin_anc < 0 or xmax_anc > image_width:
+                if xmin_anc < 0 or xmax_anc > image_width-1:
                     continue                
                 
                 for jy in range(output_height):
                     ymin_anc = float(rpn_stride) * (jy + 0.5) - h_anc / 2
                     ymax_anc = float(rpn_stride) * (jy + 0.5) + h_anc / 2
-                    if ymin_anc < 0 or ymax_anc > image_height:
+                    if ymin_anc < 0 or ymax_anc > image_height-1:
                         continue
                     
                     bbox_type = 'neg'
