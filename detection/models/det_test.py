@@ -68,5 +68,5 @@ def saveEvalData(generator, Stages, cfg, obj_mapping):
 def saveEvalResults(evalData, generator, cfg):
     path = cfg.part_results_path + "COCO/det" + cfg.my_results_dir + '/'
     mode = generator.data_type
-    utils.save_dict(evalData, path+mode+'res')
+    utils.save_dict(evalData, path+mode+'_res')
     

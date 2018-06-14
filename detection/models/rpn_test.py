@@ -66,10 +66,10 @@ def saveEvalResults(evalData, generator, cfg, obj_mapping):
         path = path[:-1]
     path += '/'
     
-    utils.save_dict(evalData, path+mode+'res')
+    utils.save_dict(evalData, path+mode+'_res')
     
     R5, IoU = metrics.computeRPNAR(evalData, generator.imagesMeta, obj_mapping, cfg)
     saveMeta = {'R5': R5, 'IoU': IoU.tolist()}
-    utils.save_dict(saveMeta, path+mode+'mAP')
+    utils.save_dict(saveMeta, path+mode+'_mAP')
     print('mAP', mode, R5)
     return IoU

@@ -148,7 +148,6 @@ class AllModels:
                 
             
             if self.do_det:
-                det_before = self.model_det.layers[4].get_weights()[0][0,0]
                 if self.mode == 'test' and self.nb_models > 1:
                     print('   Loading test DET weights...')
                     path = cfg.part_results_path + "COCO/det" + cfg.my_results_dir
@@ -156,18 +155,23 @@ class AllModels:
                         path = path[:-1]
                     path += '/weights/' + cfg.my_weights
                     assert os.path.exists(path), 'invalid path: %s' % path
+                    det_before = self.model_det.layers[11].get_weights()[0][0,0,0,0]
                     self.model_det.load_weights(path, by_name=True)
+                    det_after = self.model_det.layers[11].get_weights()[0][0,0,0,0]
                     
                 elif cfg.use_shared_cnn:
                     print('   Loading shared train DET weights...')
+                    det_before = self.model_det.layers[4].get_weights()[0][0,0]
                     self.model_det = self._load_shared_weights(self.model_det)
+                    det_after = self.model_det.layers[4].get_weights()[0][0,0]
                     
                 else:
                     print('   Loading train DET weights...')
                     assert os.path.exists(cfg.my_shared_weights), 'invalid path: %s' % cfg.my_shared_weights
+                    det_before = self.model_det.layers[11].get_weights()[0][0,0,0,0]
                     self.model_det.load_weights(cfg.my_shared_weights) 
-                
-                det_after = self.model_det.layers[4].get_weights()[0][0,0]
+                    det_after = self.model_det.layers[11].get_weights()[0][0,0,0,0]
+                    
                 assert det_before != det_after, 'DET weights have not been loaded'
             
             if self.do_hoi:
@@ -199,7 +203,9 @@ class AllModels:
                 assert rpn_after == rpn_final, 'RPN weights have been overwritten'
             
             if self.do_det:
-                det_final = self.model_det.layers[4].get_weights()[0][0,0]            
+                det_final = self.model_det.layers[4].get_weights()[0][0,0]
+                if type(det_final) != float:
+                    det_final = self.model_det.layers[11].get_weights()[0][0,0,0,0]
                 assert det_after == det_final, 'DET weights have been overwritten'
 
 
@@ -299,6 +305,11 @@ class AllModels:
             name="input_features"
         )        
         
+        img_det_input = keras.layers.Input(
+            shape=image_shape,
+            name='input_image'
+        )
+        
         img_hoi_input = keras.layers.Input(
             shape=image_shape,
             name='input_image'
@@ -307,8 +318,7 @@ class AllModels:
         ########################
         ####### Backbone #######
         ########################
-        output_features = models.VGG16(cfg)(img_input)     
-        output_features_hoi = models.VGG16(cfg)(img_hoi_input)
+        output_features = models.VGG16(cfg)(img_input) 
         
         ########################
         ######### RPN ##########
@@ -367,6 +377,8 @@ class AllModels:
         ###### Detection #######
         ########################
         if self.do_det:
+            output_features_det = models.VGG16(cfg)(img_det_input)
+            
             self.nb_models += 1
             
             if self.mode=='test' and cfg.use_shared_cnn:    
@@ -376,11 +388,11 @@ class AllModels:
                 ]
             else:
                 detection_inputs = [
-                    img_input,
+                    img_det_input,
                     roi_input
                 ]
                 
-            pool_features_input = features_input if self.mode=='test' and cfg.use_shared_cnn else output_features
+            pool_features_input = features_input if self.mode=='test' and cfg.use_shared_cnn else output_features_det
                 
             object_rois = layers.RoiPoolingConv(
                 pool_size=pool_size,
@@ -435,6 +447,8 @@ class AllModels:
         ########################    
         if self.do_hoi:
             self.nb_models += 1
+            
+            output_features_hoi = models.VGG16(cfg)(img_hoi_input)
             
             hoi_inputs = [
                 img_hoi_input,

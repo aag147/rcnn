@@ -83,9 +83,9 @@ def saveEvalResults(evalData, generator, cfg, obj_mapping, hoi_mapping):
         path = path[:-1]
     path += '/'
     
-    utils.save_dict(evalData, path+mode+'res')
+    utils.save_dict(evalData, path+mode+'_res')
     
     mAP, AP = metrics.computeHOImAP(evalData, generator.imagesMeta, obj_mapping, hoi_mapping, cfg)
     saveMeta = {'mAP': mAP, 'AP': AP.tolist()}
-    utils.save_dict(saveMeta, path+mode+'mAP')
+    utils.save_dict(saveMeta, path+mode+'_mAP')
     print('mAP', mode, mAP)

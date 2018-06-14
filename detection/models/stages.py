@@ -47,7 +47,7 @@ class AllStages:
         # det prepare
         proposals = X
         if self.mode == 'test' and include != 'pre':
-            rois = proposals
+            rois = np.expand_dims(proposals, axis=0)
         else:
             rois, target_props, target_deltas, IouS = filters_detection.createTargets(proposals, imageMeta, imageDims, self.obj_mapping, self.cfg)
             if include=='pre':
