@@ -54,9 +54,7 @@ def saveEvalData(generator, Stages, cfg):
         
         #CONVERT
         evalData += filters_rpn.convertResults(proposals, imageMeta, imageDims['scale'], cfg.rpn_stride)
-        
-        if i > 2:
-            break
+
         
     return evalData
 
