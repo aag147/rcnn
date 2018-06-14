@@ -126,7 +126,11 @@ class AllModels:
                 rpn_before = self.model_rpn.layers[11].get_weights()[0][0,0,0,0]
                 if self.mode == 'test' and self.nb_models > 1:
                     print('   Loading test RPN weights...')
-                    path = cfg.part_results_path + "COCO/rpn" + cfg.my_results_dir + '/weights/' + cfg.my_weights
+                    path = cfg.part_results_path + "COCO/rpn" + cfg.my_results_dir
+                    if not os.path.exists(path):
+                        path = path[:-1]
+                    path += '/weights/' + cfg.my_weights
+                    
                     assert os.path.exists(path), 'invalid path: %s' % path
                     self.model_rpn.load_weights(path, by_name=False)
                 
@@ -147,7 +151,10 @@ class AllModels:
                 det_before = self.model_det.layers[4].get_weights()[0][0,0]
                 if self.mode == 'test' and self.nb_models > 1:
                     print('   Loading test DET weights...')
-                    path = cfg.part_results_path + "COCO/det" + cfg.my_results_dir + '/weights/' + cfg.my_weights
+                    path = cfg.part_results_path + "COCO/det" + cfg.my_results_dir
+                    if not os.path.exists(path):
+                        path = path[:-1]
+                    path += '/weights/' + cfg.my_weights
                     assert os.path.exists(path), 'invalid path: %s' % path
                     self.model_det.load_weights(path, by_name=True)
                     
@@ -335,7 +342,7 @@ class AllModels:
                 name='rpn_out_regress'
             )(rpn_features)
             
-            if self.mode=='test':
+            if self.mode=='test' and cfg.use_shared_cnn:
                 rpn_outputs = [
                     x_class,
                     x_deltas,
@@ -362,7 +369,7 @@ class AllModels:
         if self.do_det:
             self.nb_models += 1
             
-            if self.mode=='test':    
+            if self.mode=='test' and cfg.use_shared_cnn:    
                 detection_inputs = [
                     features_input,
                     roi_input
@@ -373,7 +380,7 @@ class AllModels:
                     roi_input
                 ]
                 
-            pool_features_input = features_input if self.mode=='test' else output_features
+            pool_features_input = features_input if self.mode=='test' and cfg.use_shared_cnn else output_features
                 
             object_rois = layers.RoiPoolingConv(
                 pool_size=pool_size,

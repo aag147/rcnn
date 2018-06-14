@@ -23,11 +23,12 @@ class basic_config:
        self.data_path = self.part_data_path + self.dataset + "/"
    
    def get_results_paths(self):
-      if len(self.my_results_path) > 0 or not self.newDir:
+      if not self.newDir:
           print("   No directory (test)...")
           self.new_results_dir = ''
+          path = self.my_results_path
           return
-      if len(self.my_results_dir) > 0 and not self.use_shared_cnn:
+      elif len(self.my_results_dir) > 0 and not self.use_shared_cnn:
           print("   Shared directory...")
           path = self.part_results_path + self.my_results_dir + '/'
           self.new_results_dir = self.my_results_dir + '/'
@@ -45,7 +46,7 @@ class basic_config:
       self.my_results_path = path
       self.my_save_path = path
       self.my_weights_path = path + 'weights/'
-      
+            
       if self.my_weights is not None:
           self.my_shared_weights = self.my_weights_path + self.my_weights
       

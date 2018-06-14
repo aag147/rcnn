@@ -441,10 +441,6 @@ def _transformGTBBox(gt_bboxes, class_mapping, gt_rels, scale=[1,1], rpn_stride=
     gt_obboxes = []
     gt_allboxes = []
     
-    h_idxs = gt_rels[:,0]
-    o_idxs = gt_rels[:,1]
-
-    
     for b_idx, gt_bbox in enumerate(gt_bboxes):
         label = gt_bbox['label']
         label = class_mapping[label]
@@ -460,6 +456,10 @@ def _transformGTBBox(gt_bboxes, class_mapping, gt_rels, scale=[1,1], rpn_stride=
         
         if not dosplit:
             gt_allboxes.append(trans_gt_bbox)
+            continue
+        
+        h_idxs = gt_rels[:,0]
+        o_idxs = gt_rels[:,1]
         if b_idx in h_idxs: #human
             gt_hbboxes.append(trans_gt_bbox)
         elif b_idx in o_idxs: #object

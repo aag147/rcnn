@@ -70,6 +70,26 @@ def convertData(Y, cfg):
     rpnMeta = {'target_labels': all_target_labels, 'target_deltas': all_target_deltas, 'val_map': all_val_map}
     return rpnMeta
 
+
+def convertResults(bboxes, imageMeta, scale, rpn_stride):
+    bboxes = np.copy(bboxes)
+    imageID = int(imageMeta['imageName'].split('.')[0])
+    results = []
+
+    for bbox in bboxes:
+        prop = bbox[4]
+        coords = bbox[:4]
+        xmin = ((coords[0]) * rpn_stride / scale[0])
+        ymin = ((coords[1]) * rpn_stride / scale[1])
+        width = ((coords[2]) *  rpn_stride / scale[0])
+        height = ((coords[3]) * rpn_stride / scale[1])
+        coords = [xmin, ymin, width, height]
+        coords = [round(float(x),2) for x in coords]
+        
+        res = {'image_id': imageID, 'bbox': coords, 'score': round(float(prop),4)}
+        results.append(res)
+    return results
+
 def reduceData(Y, cfg):
     #in: non-reduced targets
     #out: reduced targets

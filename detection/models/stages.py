@@ -30,8 +30,12 @@ class AllStages:
         img = X
         
         #rpn predict
-        rpn_props, rpn_deltas, F = self.model_rpn.predict_on_batch(img)
-        self.shared_cnn = F
+        if self.mode == 'test' and self.cfg.use_shared_cnn:
+            rpn_props, rpn_deltas, F = self.model_rpn.predict_on_batch(img)
+            self.shared_cnn = F
+        elif self.mode == 'test':
+            rpn_props, rpn_deltas = self.model_rpn.predict_on_batch(img)
+            self.shared_cnn = img
         self.shared_img = img
         
         #rpn post

@@ -5,7 +5,9 @@ Created on Wed Jun 13 16:25:21 2018
 @author: aag14
 """
 
-import utils
+import utils,\
+       metrics
+       
 import filters_helper as helper,\
        filters_rpn,\
        filters_detection,\
@@ -37,3 +39,39 @@ def saveInputData(imagesMeta, data_type, cfg):
                         
         rpnMeta = filters_rpn.convertData([Y1, Y2, M], cfg)
         utils.save_obj(rpnMeta, save_path + imageID)
+        
+def saveEvalData(generator, Stages, cfg):
+    genIterator = generator.begin()
+    evalData = []
+    
+    for i in range(generator.nb_batches):
+        X, y, imageMeta, imageDims, times = next(genIterator)
+        imageID = imageMeta['imageName'].split('.')[0]
+        utils.update_progress_new(i+1, generator.nb_batches, imageID)
+        
+        #STAGE 1
+        proposals = Stages.stageone(X, y, imageMeta, imageDims)
+        
+        #CONVERT
+        evalData += filters_rpn.convertResults(proposals, imageMeta, imageDims['scale'], cfg.rpn_stride)
+        
+        if i > 2:
+            break
+        
+    return evalData
+
+def saveEvalResults(evalData, generator, cfg, obj_mapping):
+    path = cfg.part_results_path + cfg.my_results_dir
+    mode = generator.data_type
+    
+    if not os.path.exists(path):
+        path = path[:-1]
+    path += '/'
+    
+    utils.save_dict(evalData, path+mode+'res')
+    
+    R5, IoU = metrics.computeRPNAR(evalData, generator.imagesMeta, obj_mapping, cfg)
+    saveMeta = {'R5': R5, 'IoU': IoU.tolist()}
+    utils.save_dict(saveMeta, path+mode+'mAP')
+    print('mAP', mode, R5)
+    return IoU

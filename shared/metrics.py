@@ -54,7 +54,7 @@ def computeHOIAP(batch, GTMeta, nb_gt_samples, hoi_id):
                 max_iou = min(hum_overlap, obj_overlap)
                 best_idx = gt_idx
         
-        if max_iou > 0.5:
+        if max_iou >= 0.5:
             if gt_rels[best_idx,3] == 0:
                 tp[idx] = 1 # true positive
                 GTMeta[imageID]['gt_rels'][best_idx,3] = 1
@@ -113,6 +113,59 @@ def computeHOImAP(COCO_mapping, imagesMeta, class_mapping, hoi_mapping, cfg):
         
     mAP = np.mean(AP_map)
     return mAP, AP_map
+
+
+def computeRPNARHelper(batch, GTMeta, nb_gt_samples):
+    import filters_helper as helper
+    
+    props = np.array([x['score'] for x in batch])
+    
+    sorted_idxs = props.argsort()[::-1]
+    nb_rois = len(sorted_idxs)
+    
+    IoU = np.zeros((nb_rois))
+    
+    
+    for idx in sorted_idxs:
+        roi = batch[idx]
+        bbox = roi['bbox']
+        imageID = roi['image_id']
+    
+        GTs = GTMeta[imageID]
+        gt_bboxes = GTs['gt_bboxes']
+        
+        overlap = helper._computeIoUs(bbox, gt_bboxes)
+
+        max_iou = np.max(overlap)
+        best_idx = np.argmax(overlap)
+        
+        if max_iou >= 0.5:
+            if gt_bboxes[best_idx,4] == 0:
+                IoU[idx] = max_iou # true positive
+                GTMeta[imageID]['gt_bboxes'][best_idx,4] = 1
+    
+    R5 = np.sum(IoU>=0.5) / nb_gt_samples
+    
+    return R5, IoU
+
+def computeRPNAR(COCO_mapping, imagesMeta, class_mapping, cfg):
+    import filters_helper as helper
+    
+    nb_gt_samples = 0
+    newGTMeta = {}
+    
+    for imageID, imageMeta in imagesMeta.items():
+        gt_bboxes = imageMeta['objects']
+        gt_bboxes = helper._transformGTBBox(gt_bboxes, class_mapping, None, dosplit=False)
+        gt_bboxes[:,4] *= 0 #turn label into flag column
+        nb = gt_bboxes.shape[0]
+        newGTMeta[int(imageID)] = {'gt_bboxes': gt_bboxes}
+        
+        nb_gt_samples += nb
+        
+    R5, IoU = computeRPNARHelper(COCO_mapping, newGTMeta, nb_gt_samples)
+        
+    return R5, IoU   
             
 
 
