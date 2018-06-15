@@ -126,7 +126,10 @@ def computeRPNARHelper(batch, GTMeta, nb_gt_samples):
     IoU = np.zeros((nb_rois))
     
     
-    for idx in sorted_idxs:
+    for i, idx in enumerate(sorted_idxs):
+        
+        if i % 1000 == 0:
+            utils.update_progress_new(i, nb_rois, '')
         roi = batch[idx]
         bbox = roi['bbox']
         imageID = roi['image_id']
@@ -148,15 +151,34 @@ def computeRPNARHelper(batch, GTMeta, nb_gt_samples):
     
     return R5, IoU
 
-def computeRPNAR(COCO_mapping, imagesMeta, class_mapping, cfg):
-    import filters_helper as helper
+def transformARGTs(gt_bboxes, class_mapping):
     
+    new_gt_bboxes = []
+    
+    for b_idx, gt_bbox in enumerate(gt_bboxes):
+        label = gt_bbox['label']
+        label = class_mapping[label]
+        xmin = gt_bbox['xmin']
+        ymin = gt_bbox['ymin']
+        xmax = gt_bbox['xmax']
+        ymax = gt_bbox['ymax']
+        
+        coords = [xmin, ymin, xmax, ymax]
+        coords = [round(float(x),2) for x in coords]
+        coords += [label]
+        
+        new_gt_bboxes.append(coords)
+    new_gt_bboxes = np.array(new_gt_bboxes)
+    return new_gt_bboxes
+        
+
+def computeRPNAR(COCO_mapping, imagesMeta, class_mapping, cfg):    
     nb_gt_samples = 0
     newGTMeta = {}
     
     for imageID, imageMeta in imagesMeta.items():
         gt_bboxes = imageMeta['objects']
-        gt_bboxes = helper._transformGTBBox(gt_bboxes, class_mapping, None, dosplit=False)
+        gt_bboxes = transformARGTs(gt_bboxes, class_mapping)
         gt_bboxes[:,4] *= 0 #turn label into flag column
         nb = gt_bboxes.shape[0]
         newGTMeta[int(imageID)] = {'gt_bboxes': gt_bboxes}

@@ -19,17 +19,16 @@ from rpn_generators import DataGenerator
 
 import methods,\
        stages
-import rpn_test
+import utils
+import draw
 
-
-
-if True:
+if False:
     # Load data
     data = extract_data.object_data()
     cfg = data.cfg
     obj_mapping = data.class_mapping
     hoi_mapping = data.hoi_labels
-        
+    
     # Create batch generators
     genTrain = DataGenerator(imagesMeta = data.trainGTMeta, cfg=cfg, data_type='train', do_meta=True)
     genVal = DataGenerator(imagesMeta = data.valGTMeta, cfg=cfg, data_type='val', do_meta=True)
@@ -38,14 +37,15 @@ if True:
     Models = methods.AllModels(cfg, mode='test', do_rpn=True, do_det=False, do_hoi=False)
     Stages = stages.AllStages(cfg, Models, obj_mapping, hoi_mapping, mode='test')
 
-# Test data
-#evalTest = rpn_test.saveEvalData(genTest, Stages, cfg, obj_mapping)
-#rpn_test.saveEvalResults(evalTest, genTest, cfg)
 
-# Val data    
-evalVal = rpn_test.saveEvalData(genVal, Stages, cfg)
-GTMeta = rpn_test.saveEvalResults(evalVal, genVal, cfg, obj_mapping)
+genIterator = genVal.begin()
 
-# Train data
-evalTrain = rpn_test.saveEvalData(genTrain, Stages, cfg)
-rpn_test.saveEvalResults(evalTrain, genTrain, cfg, obj_mapping)
+for i in range(1):
+    X, y, imageMeta, imageDims, times = next(genIterator)
+    imageID = imageMeta['imageName'].split('.')[0]
+    
+    #STAGE 1
+    proposals = Stages.stageone(X, y, imageMeta, imageDims)
+    
+    draw.drawGTBoxes((X[0]+1.0)/2.0, imageMeta, imageDims)
+    draw.drawOverlapAnchors((X[0]+1.0)/2.0, proposals, imageMeta, imageDims, cfg)

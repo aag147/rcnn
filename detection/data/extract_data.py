@@ -11,6 +11,7 @@ import method_configs as mcfg
 import utils
 import os
 import numpy as np
+import math
 
 class object_data:
     def __init__(self, newDir=True, method='faster'):
@@ -172,6 +173,8 @@ class object_data:
     def getLabelStats(self, dataset='train'):
         if dataset == 'test':
             imagesMeta = self.testGTMeta
+        elif dataset =='val':
+            imagesMeta = self.valGTMeta
         else:
             imagesMeta = self.trainGTMeta
         stats = self.getBareBonesStats(self.class_mapping)
@@ -186,3 +189,31 @@ class object_data:
                 stats[rel['label']] += 1
                     
         return stats
+    
+    def getAreaStats(self, dataset='train'):
+        if dataset == 'test':
+            imagesMeta = self.testGTMeta
+        elif dataset =='val':
+            imagesMeta = self.valGTMeta
+        else:
+            imagesMeta = self.trainGTMeta
+            
+        sides = [int(2**x) for x in range(0,10)]
+        areas = [int(x**2 * 0.75) for x in sides]
+        areas.reverse()
+        print(areas)
+        areas_dict = {x:0 for x in areas}
+
+        for imageID, imageMeta in imagesMeta.items():
+            for rel in imageMeta['objects']:
+                w = rel['xmax'] - rel['xmin']
+                h = rel['ymax'] - rel['ymin']
+                area = round(w*h)
+                
+                for target in areas:
+                    if area > target:
+                        areas_dict[target] += 1
+                        break
+                    
+        return areas_dict, sides
+                

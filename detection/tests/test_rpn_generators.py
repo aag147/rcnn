@@ -44,7 +44,7 @@ if True:
     # Create batch generators
     genTrain = DataGenerator(imagesMeta = data.trainGTMeta, cfg=cfg, data_type='train')
     
-if False:
+if True:
     model_rpn, model_detection, model_hoi, model_all = methods.get_hoi_rcnn_models(cfg)
     if type(cfg.my_weights)==str and len(cfg.my_weights) > 0:
         print('Loading my weights...')
@@ -64,12 +64,12 @@ j = 0
 for i in range(1):
     if True:
         X, y, imageMeta, imageDims, times = next(trainIterator)
-#        imageMeta = data.trainGTMeta['545710']
+#        imageMeta = data.trainGTMeta['463564']
 #        X, imageDims = filters_rpn.prepareInputs(imageMeta, images_path, cfg)
 #        y = filters_rpn.createTargets(imageMeta, imageDims, cfg)
 
-        Y1 = y[0][:,:,:,12:]        
-        Y2 = y[1][:,:,:,48:]
+        Y1 = y[0][:,:,:,:]        
+        Y2 = y[1][:,:,:,:]
                 
         props = np.reshape(Y1,(-1,1))
     

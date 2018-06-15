@@ -25,7 +25,7 @@ class AllStages:
 
 
 
-    def stageone(self, X, y, imageMeta, imageDims, include='all'):        
+    def stageone(self, X, y, imageMeta, imageDims, include='all', do_regr = True):        
         #rpn prepare
         img = X
         
@@ -39,7 +39,7 @@ class AllStages:
         self.shared_img = img
         
         #rpn post
-        proposals = helper.deltas2Anchors(rpn_props, rpn_deltas, self.cfg, imageDims, do_regr=True)
+        proposals = helper.deltas2Anchors(rpn_props, rpn_deltas, self.cfg, imageDims, do_regr=do_regr)
         proposals = helper.non_max_suppression_fast(proposals, overlap_thresh = self.cfg.rpn_nms_overlap_thresh_test)
         return proposals
     

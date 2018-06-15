@@ -83,7 +83,7 @@ def convertResults(bboxes, imageMeta, scale, rpn_stride):
         ymin = ((coords[1]) * rpn_stride / scale[1])
         width = ((coords[2]) *  rpn_stride / scale[0])
         height = ((coords[3]) * rpn_stride / scale[1])
-        coords = [xmin, ymin, width, height]
+        coords = [xmin, ymin, xmin+width, ymin+height]
         coords = [round(float(x),2) for x in coords]
         
         res = {'image_id': imageID, 'bbox': coords, 'score': round(float(prop),4)}

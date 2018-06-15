@@ -16,7 +16,7 @@ import itertools
 import math
 
 
-def plot_hoi_stats(stats):
+def plot_hoi_stats(stats, sort=False):
     f, spl = plt.subplots(1)
     names = []
     idxs = []
@@ -28,14 +28,20 @@ def plot_hoi_stats(stats):
                     names.append(pred)
                     idxs.append(len(idxs))
                     counts.append(count)
-#    counts.sort()
-    spl.bar(idxs, counts[::-1])
+    if sort:
+        counts.sort()
+    spl.bar(idxs, counts[::-1], bottom=0.1)
     spl.set_xlim([0, len(counts)])
+    spl.set_yscale('log')
+    spl.axis((0,len(counts),0.1,10**4))
+    
+    xlabel = 'Classes'
+    if sort:
+        xlabel = 'Sorted classes'
     spl.set_ylabel('Count')
-    spl.set_xlabel('Classes')
+    spl.set_xlabel(xlabel)
 
-
-def plot_object_stats(stats):
+def plot_object_stats(stats, sort=False):
     f, spl = plt.subplots(1)
     names = []
     idxs = []
@@ -45,11 +51,19 @@ def plot_object_stats(stats):
             names.append(key)
             idxs.append(len(idxs))
             counts.append(count)
-    spl.bar(idxs, counts)
+    if sort:
+        counts.sort()
+    spl.bar(idxs, counts, bottom=1)
+    spl.set_yscale('log')
     spl.set_xticks([])
     spl.set_xticklabels(names)
     spl.set_ylabel('Count')
-    spl.set_xlabel('Classes')
+    spl.axis((0,len(counts),10**0,10**5.5))
+    
+    xlabel = 'Classes'
+    if sort:
+        xlabel = 'Sorted classes'
+    spl.set_xlabel(xlabel)
     print(names)
 
 def plot_confusion_matrix(cm, classes=None,
@@ -196,6 +210,7 @@ def drawAnchors(img, anchorsGT, cfg):
         
 def drawPositiveAnchors(img, anchorsGT, cfg):
     f, spl = plt.subplots(1)
+    spl.axis('off')
     spl.imshow(img)
     bboxes = []
     for anchor in anchorsGT:
@@ -205,6 +220,38 @@ def drawPositiveAnchors(img, anchorsGT, cfg):
             bbox = drawProposalBox(bb)
             spl.plot(bbox[0,:], bbox[1,:])
             bboxes.append(bb)
+    return np.array(bboxes)
+
+def drawOverlapAnchors(img, anchors, imageMeta, imageDims, cfg):
+    import filters_helper as helper
+    import utils
+    f, spl = plt.subplots(1)
+#    spl.axis('off')
+    spl.imshow(img)
+    bboxes = []
+    gta = helper.normalizeGTboxes(imageMeta['objects'], scale=imageDims['scale'], rpn_stride=cfg.rpn_stride)
+    
+    print(gta)
+    for anchor in anchors:
+        (xmin, ymin, width, height) = anchor[0:4]       
+        rt = {'xmin': xmin, 'ymin': ymin, 'xmax': xmin+width, 'ymax': ymin+height}
+        best_iou = 0.0
+        for bbidx, gt in enumerate(gta):
+            curr_iou = utils.get_iou(gt, rt)
+            if curr_iou > best_iou:
+#                print(curr_iou)
+                best_iou = curr_iou
+        if best_iou>=0.5:
+            bb = {key:x*cfg.rpn_stride for key,x in rt.items()}
+            print('rt', bb)
+            bbox = drawBoundingBox(bb)
+            spl.plot(bbox[0,:], bbox[1,:])
+            bboxes.append(bb)
+        
+#    for bbidx, gt in enumerate(gta):
+#        bb = {key:x*cfg.rpn_stride for key,x in gt.items()}
+#        bbox = drawBoundingBox(bb)
+#        spl.plot(bbox[0,:], bbox[1,:])
     return np.array(bboxes)
 
 def drawPositiveRois(img, rois):
@@ -233,6 +280,7 @@ def drawBoxes(img, bboxes, imageDims):
 def drawGTBoxes(img, imageMeta, imageDims):
     import filters_helper as helper
     f, spl = plt.subplots(1)
+    spl.axis('off')
     spl.imshow(img)
     
     bboxes = helper.normalizeGTboxes(imageMeta['objects'], scale=imageDims['scale'], roundoff=True)
