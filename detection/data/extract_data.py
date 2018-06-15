@@ -201,13 +201,26 @@ class object_data:
         sides = [int(2**x) for x in range(0,10)]
         areas = [int(x**2 * 0.75) for x in sides]
         areas.reverse()
-        print(areas)
         areas_dict = {x:0 for x in areas}
 
-        for imageID, imageMeta in imagesMeta.items():
+        import filters_rpn
+        images_path = self.cfg.data_path + 'images/'
+        images_path = images_path + dataset + '/'
+        
+        
+        for i, (imageID, imageMeta) in enumerate(imagesMeta.items()):
+            
+            _, imgDims = filters_rpn.prepareInputs(imageMeta, images_path, self.cfg)
+            utils.update_progress_new(i+1, len(imagesMeta), imageID)
+            scale = imgDims['scale']
+            imagesMeta[imageID]['imageID'] = imageID
+            imagesMeta[imageID]['shape'] = imgDims['shape']
+            
+            continue
+            
             for rel in imageMeta['objects']:
-                w = rel['xmax'] - rel['xmin']
-                h = rel['ymax'] - rel['ymin']
+                w = rel['xmax'] * scale[1] - rel['xmin'] * scale[1]
+                h = rel['ymax'] * scale[0] - rel['ymin'] * scale[0]
                 area = round(w*h)
                 
                 for target in areas:
@@ -215,5 +228,8 @@ class object_data:
                         areas_dict[target] += 1
                         break
                     
-        return areas_dict, sides
+        return imagesMeta
+        output = {sides[i]:areas_dict[areas[i]] for i in range(len(areas))}
+                    
+        return output
                 

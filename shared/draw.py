@@ -65,6 +65,33 @@ def plot_object_stats(stats, sort=False):
         xlabel = 'Sorted classes'
     spl.set_xlabel(xlabel)
     print(names)
+    
+def plot_area_stats(stats, sort=False):
+    f, spl = plt.subplots(1)
+    
+    names = []
+    idxs = []
+    counts = []
+    for key, count in stats.items():
+        names.append(key)
+        idxs.append(len(idxs))
+        counts.append(count)
+    
+    counts = np.array(counts)
+    names = np.array(names)
+    sort_idxs = np.argsort(names)
+    counts = counts[sort_idxs]
+    names = [0] + list(names[sort_idxs][0:11:2])
+    print(counts)
+    print(names)
+    spl.bar(idxs, counts, bottom=1)
+    spl.set_yscale('log')
+#    spl.set_xticks([])
+    spl.set_xticklabels(names)
+    spl.set_ylabel('Count')
+    spl.set_xlabel('Closest length')
+    spl.axis((-1,len(counts),10**0,10**5.5))
+
 
 def plot_confusion_matrix(cm, classes=None,
                           normalize=False,

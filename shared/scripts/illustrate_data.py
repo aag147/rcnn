@@ -34,8 +34,8 @@ if True:
 #trainStats, trainCounts = utils.getLabelStats(data.trainGTMeta, hoi_mapping)
 #valStats, valCounts = utils.getLabelStats(data.testGTMeta, hoi_mapping)
     
-trainStats, trainSides = data.getAreaStats(dataset='train')
-valStats, valSides = data.getAreaStats(dataset='val')
-#
-#draw.plot_hoi_stats(trainStats, sort=False)
-#draw.plot_hoi_stats(valStats, sort=False)
+#valStats = data.getAreaStats(dataset='val')
+#draw.plot_area_stats(valStats, sort=False)
+
+trainStats = data.getAreaStats(dataset='train')
+#draw.plot_area_stats(trainStats, sort=False)
