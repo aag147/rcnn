@@ -42,9 +42,7 @@ class AllStages:
     def stageone(self, X, y, imageMeta, imageDims, include='all', do_regr = True):        
         #rpn prepare
         img = X
-        
-        self.model_rpn.summary()
-        
+                
         #rpn predict
         if self.mode == 'test' and self.cfg.use_shared_cnn:
             rpn_props, rpn_deltas, F = self.model_rpn.predict_on_batch(img)
