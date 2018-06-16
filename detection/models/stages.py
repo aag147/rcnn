@@ -22,12 +22,28 @@ class AllStages:
         self.obj_mapping = obj_mapping
         self.hoi_mapping = hoi_mapping
         self.model_rpn, self.model_det, self.model_hoi = Models.get_models()
+        
+        self.images_path = cfg.data_path + 'images/'
+        self.anchors_path = cfg.data_path + 'anchors/'
 
 
+    def stagezero(self, imageMeta, data_type):
+        images_path = self.images_path + data_type + '/'
+        anchors_path = self.anchors_path + data_type + '/'
+        X, imageDims = filters_rpn.prepareInputs(imageMeta, images_path, self.cfg)
+        y = None        
+        if self.mode=='train':
+            y_tmp = filters_rpn.loadData(imageMeta, anchors_path, self.cfg)
+            if y_tmp is None:
+                y_tmp = filters_rpn.createTargets(imageMeta, imageDims, self.cfg)
+            y = filters_rpn.reduceData(y_tmp, self.cfg)
+        return X, y, imageDims
 
     def stageone(self, X, y, imageMeta, imageDims, include='all', do_regr = True):        
         #rpn prepare
         img = X
+        
+        self.model_rpn.summary()
         
         #rpn predict
         if self.mode == 'test' and self.cfg.use_shared_cnn:

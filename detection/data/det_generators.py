@@ -32,7 +32,7 @@ class DataGenerator():
       self.shuffle = g_cfg.shuffle
       self.inputs = cfg.inputs
       self.do_meta = do_meta
-      
+            
       cfg.img_out_reduction = (16, 16)
       
       self.data_path = cfg.data_path
@@ -77,14 +77,17 @@ class DataGenerator():
         for imageID in imageIDs:
             imageMeta = self.imagesMeta[imageID]
             imageMeta['id'] = imageID
+            
             io_start = time.time()
-            img, imageDims = filters_rpn.prepareInputs(imageMeta, self.images_path, self.cfg)
+            img, y, imageDims = self.Stages.stagezero(imageMeta, self.data_type)
             io_end = time.time()
+            
             pp_start = time.time()
             Y_tmp = filters_detection.loadData(imageMeta, self.rois_path, imageDims, self.cfg)
+            if Y_tmp is None:
+                raise "ups: no detections avaiable"
             pp_end = time.time()
-            if Y_tmp[0] is None:
-                return None
+            
             bboxes, target_labels, target_deltas = filters_detection.reduceData(Y_tmp, self.cfg)
             bboxes = filters_detection.prepareInputs(bboxes, imageDims) 
             times = np.array([io_end-io_start, pp_end-pp_start])

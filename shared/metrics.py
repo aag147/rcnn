@@ -115,7 +115,7 @@ def computeHOImAP(COCO_mapping, imagesMeta, class_mapping, hoi_mapping, cfg):
     return mAP, AP_map
 
 
-def computeRPNARHelper(batch, GTMeta, nb_gt_samples):
+def computeRPNARHelperOld(batch, GTMeta, nb_gt_samples):
     import filters_helper as helper
     
     props = np.array([x['score'] for x in batch])
@@ -149,7 +149,58 @@ def computeRPNARHelper(batch, GTMeta, nb_gt_samples):
     
     R5 = np.sum(IoU>=0.5) / nb_gt_samples
     
-    return R5, IoU
+    ious = [x/100 for x in range(50,100,5)]
+    recalls = np.zeros((len(ious)))
+    for idx, iou in enumerate(ious):
+        r = np.sum(IoU>=iou) / nb_gt_samples
+        recalls[idx] = r
+        
+    AR = np.mean(recalls)
+    
+    overlaps = [x - 0.5 for x in IoU if x > 0]
+    AR = 2 * np.sum(overlaps) / nb_gt_samples
+    
+    return AR, R5, IoU
+
+def computeRPNARHelper(predMeta, GTMeta):
+    import filters_helper as helper
+    
+    nb_gt_samples = len(GTMeta)
+    
+    IoU = np.zeros((nb_gt_samples))
+    
+    for idx in range(nb_gt_samples):
+        
+        if idx % 100 == 0:
+            utils.update_progress_new(idx, nb_gt_samples, '')
+        gt = GTMeta[idx]
+        bbox = gt['bbox']
+        imageID = gt['image_id']
+    
+        pred_bboxes = np.array(predMeta[imageID])
+        
+        overlap = helper._computeIoUs(bbox, pred_bboxes)
+
+        max_iou = np.max(overlap)
+        
+        if max_iou >= 0.5:
+            IoU[idx] = max_iou # true positive  
+            
+    
+    R5 = np.sum(IoU>=0.5) / nb_gt_samples
+    
+    ious = [x/100 for x in range(50,100,5)]
+    recalls = np.zeros((len(ious)))
+    for idx, iou in enumerate(ious):
+        r = np.sum(IoU>=iou) / nb_gt_samples
+        recalls[idx] = r
+        
+    AR = np.mean(recalls)
+    
+    overlaps = [x - 0.5 for x in IoU if x > 0]
+    AR = 2 * np.sum(overlaps) / nb_gt_samples
+    
+    return AR, R5, IoU
 
 def transformARGTs(gt_bboxes, class_mapping):
     
@@ -174,20 +225,31 @@ def transformARGTs(gt_bboxes, class_mapping):
 
 def computeRPNAR(COCO_mapping, imagesMeta, class_mapping, cfg):    
     nb_gt_samples = 0
-    newGTMeta = {}
+    newGTMeta = []
+    newProposalMeta = {}
     
     for imageID, imageMeta in imagesMeta.items():
         gt_bboxes = imageMeta['objects']
         gt_bboxes = transformARGTs(gt_bboxes, class_mapping)
         gt_bboxes[:,4] *= 0 #turn label into flag column
         nb = gt_bboxes.shape[0]
-        newGTMeta[int(imageID)] = {'gt_bboxes': gt_bboxes}
+        for gt_bbox in gt_bboxes:
+            newGTMeta.append({'image_id': int(imageID), 'bbox': gt_bbox})
         
         nb_gt_samples += nb
         
-    R5, IoU = computeRPNARHelper(COCO_mapping, newGTMeta, nb_gt_samples)
+    
+    for proposal in COCO_mapping:
+        imageID = proposal['image_id']
+        bbox = proposal['bbox']
+        if imageID not in newProposalMeta:
+            newProposalMeta[imageID] = []
+        newProposalMeta[imageID].append(bbox)
         
-    return R5, IoU   
+    print('Number of GTs', nb_gt_samples)
+    AR, R5, IoU = computeRPNARHelper(newProposalMeta, newGTMeta)
+        
+    return AR, R5, IoU   
             
 
 

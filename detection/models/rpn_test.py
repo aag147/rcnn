@@ -58,7 +58,7 @@ def saveEvalData(generator, Stages, cfg):
     return evalData
 
 def saveEvalResults(evalData, generator, cfg, obj_mapping):
-    path = cfg.part_results_path + cfg.my_results_dir
+    path = cfg.part_results_path + "COCO/rpn" + cfg.my_results_dir + '/'
     mode = generator.data_type
     
     if not os.path.exists(path):
@@ -67,8 +67,9 @@ def saveEvalResults(evalData, generator, cfg, obj_mapping):
     
     utils.save_dict(evalData, path+mode+'_res')
     
-    R5, IoU = metrics.computeRPNAR(evalData, generator.imagesMeta, obj_mapping, cfg)
-    saveMeta = {'R5': R5, 'IoU': IoU.tolist()}
+    AR, R5, IoU = metrics.computeRPNAR(evalData, generator.imagesMeta, obj_mapping, cfg)
+    saveMeta = {'AR': AR, 'R5': R5, 'IoU': IoU.tolist()}
     utils.save_dict(saveMeta, path+mode+'_mAP')
     print('R5', mode, R5)
+    print('AR', mode, AR)
     return IoU

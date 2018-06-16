@@ -60,8 +60,8 @@ for i in range(1):
 #        X, imageDims = filters_rpn.prepareInputs(imageMeta, images_path, cfg)
 #        y = filters_rpn.createTargets(imageMeta, imageDims, cfg)
 
-        Y1 = y[0][:,:,:,:]        
-        Y2 = y[1][:,:,:,:]
+        Y1 = y[0][:,:,:,12:]        
+        Y2 = y[1][:,:,:,48:]
                 
         props = np.reshape(Y1,(-1,1))
     

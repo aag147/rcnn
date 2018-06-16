@@ -48,6 +48,9 @@ def save_obj(obj, path, protocol = 2):
         pickle.dump(obj, f, protocol)
 
 def load_obj(path):
+    if not os.path.exists(path+'.pkl'):
+        return None
+    
     with open(path + '.pkl', 'rb') as f:
         return pickle.load(f)
 

@@ -22,9 +22,9 @@ import rpn_test
 
 
 
-if False:
+if True:
     # Load data
-    data = extract_data.object_data()
+    data = extract_data.object_data(False)
     cfg = data.cfg
     obj_mapping = data.class_mapping
     hoi_mapping = data.hoi_labels
@@ -32,7 +32,7 @@ if False:
     genVal = DataGenerator(imagesMeta = data.valGTMeta, cfg=cfg, data_type='val', do_meta=True)
 
 # Val data
-path = cfg.part_results_path + 'COCO/rpn20c/val_res'
+path = cfg.part_results_path + 'COCO/rpn20d/val_res'
 evalVal = utils.load_dict(path)
     
-GTMeta = rpn_test.saveEvalResults(evalVal, genVal, cfg, obj_mapping)
+IoUs = rpn_test.saveEvalResults(evalVal, genVal, cfg, obj_mapping)

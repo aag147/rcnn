@@ -130,6 +130,7 @@ class AllModels:
                     if not os.path.exists(path):
                         path = path[:-1]
                     path += '/weights/' + cfg.my_weights
+                    print('   Weights path:', path)
                     
                     assert os.path.exists(path), 'invalid path: %s' % path
                     self.model_rpn.load_weights(path, by_name=False)
@@ -154,6 +155,8 @@ class AllModels:
                     if not os.path.exists(path):
                         path = path[:-1]
                     path += '/weights/' + cfg.my_weights
+                    print('   Weights path:', path)
+                    
                     assert os.path.exists(path), 'invalid path: %s' % path
                     det_before = self.model_det.layers[11].get_weights()[0][0,0,0,0]
                     self.model_det.load_weights(path, by_name=True)
@@ -182,6 +185,8 @@ class AllModels:
                     if not os.path.exists(path):
                         path = path[:-1]
                     path += '/weights/' + cfg.my_weights
+                    print('   Weights path:', path)
+                    
                     assert os.path.exists(path), 'invalid path: %s' % path
                     self.model_hoi.load_weights(path, by_name=False)
                 

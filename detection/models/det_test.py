@@ -29,6 +29,10 @@ def saveInputData(generator, Stages, cfg):
         imageID = imageMeta['imageName'].split('.')[0]
         utils.update_progress_new(batchidx+1, generator.nb_batches, imageID)
         
+        path = save_path + imageID + '.pkl'
+        if os.path.exists(path):
+            continue
+        
         #STAGE 1
         proposals = Stages.stageone(X, y, imageMeta, imageDims)
         
