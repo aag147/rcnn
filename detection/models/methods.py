@@ -124,7 +124,7 @@ class AllModels:
             
             if self.do_rpn:    
                 rpn_before = self.model_rpn.layers[11].get_weights()[0][0,0,0,0]
-                if self.mode == 'test' and self.nb_models > 1:
+                if self.mode == 'test' and self.nb_models > 0:
                     print('   Loading test RPN weights...')
                     path = cfg.part_results_path + "COCO/rpn" + cfg.my_results_dir
                     if not os.path.exists(path):

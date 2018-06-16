@@ -43,14 +43,6 @@ if True:
     
     # Create batch generators
     genTrain = DataGenerator(imagesMeta = data.trainGTMeta, cfg=cfg, data_type='train')
-    
-if True:
-    model_rpn, model_detection, model_hoi, model_all = methods.get_hoi_rcnn_models(cfg)
-    if type(cfg.my_weights)==str and len(cfg.my_weights) > 0:
-        print('Loading my weights...')
-        path = cfg.my_weights_path + cfg.my_weights
-        assert os.path.exists(path), 'invalid path: %s' % path
-        model_rpn.load_weights(path) 
 
 trainIterator = genTrain.begin()
 
