@@ -25,8 +25,9 @@ def rpn(cfg):
         x = Conv2D(
                 512, (3, 3),
                 padding='same', activation='relu', 
-                kernel_initializer=RandomNormal(stddev=0.01), 
-                kernel_regularizer=l2(cfg.weight_decay), 
+                kernel_initializer = RandomNormal(stddev=0.01), 
+                kernel_regularizer = l2(cfg.weight_decay),
+                bias_regularizer   = l2(cfg.weight_decay),
                 name='rpn_conv1'
             )(base_layers)
         return x
@@ -47,7 +48,8 @@ def fullyConnected(cfg, stream=None, use_dropout=True):
                 4096,
                 activation='relu',
                 kernel_initializer = RandomNormal(stddev=0.01),
-                kernel_regularizer = l2(cfg.weight_decay)
+                kernel_regularizer = l2(cfg.weight_decay),
+                bias_regularizer   = l2(cfg.weight_decay)
             ),
             name = '%s_fc1' % stream
         )(dense_1)
@@ -62,7 +64,8 @@ def fullyConnected(cfg, stream=None, use_dropout=True):
                 4096,
                 activation='relu',
                 kernel_initializer = RandomNormal(stddev=0.01),
-                kernel_regularizer = l2(cfg.weight_decay)
+                kernel_regularizer = l2(cfg.weight_decay),
+                bias_regularizer   = l2(cfg.weight_decay)
             ),
             name = '%s_fc2' % stream
         )(dense_1)
@@ -86,7 +89,8 @@ def pairwiseStream(cfg):
                 64, (5, 5),
                 activation='relu',
                 kernel_initializer=RandomNormal(stddev=0.01),
-                kernel_regularizer = l2(cfg.weight_decay)
+                kernel_regularizer = l2(cfg.weight_decay),
+                bias_regularizer   = l2(cfg.weight_decay)
             ),
             name = 'pairwise_conv1a'
         )(pattern)
@@ -101,7 +105,8 @@ def pairwiseStream(cfg):
                 32, (5, 5),
                 activation='relu',
                 kernel_initializer=RandomNormal(stddev=0.01),
-                kernel_regularizer = l2(cfg.weight_decay)
+                kernel_regularizer = l2(cfg.weight_decay),
+                bias_regularizer   = l2(cfg.weight_decay)
             ),
             name = 'pairwise_conv2a'
         )(conv_1)
@@ -121,7 +126,8 @@ def pairwiseStream(cfg):
                 256,
                 activation='relu',
                 kernel_initializer=RandomNormal(stddev=0.01),
-                kernel_regularizer = l2(cfg.weight_decay)
+                kernel_regularizer = l2(cfg.weight_decay),
+                bias_regularizer   = l2(cfg.weight_decay)
             ),
             name = 'pairwise_fc1'
         )(dense1)

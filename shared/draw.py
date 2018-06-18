@@ -31,9 +31,10 @@ def plot_hoi_stats(stats, sort=False):
     if sort:
         counts.sort()
     spl.bar(idxs, counts[::-1], bottom=0.1)
-    spl.set_xlim([0, len(counts)])
+#    spl.set_xlim([0, len(counts)])
+    spl.set_xticks([])
     spl.set_yscale('log')
-    spl.axis((0,len(counts),0.1,10**4))
+    spl.axis((-1,len(counts),0.1,10**5.5))
     
     xlabel = 'Classes'
     if sort:
@@ -53,12 +54,12 @@ def plot_object_stats(stats, sort=False):
             counts.append(count)
     if sort:
         counts.sort()
-    spl.bar(idxs, counts, bottom=1)
+    spl.bar(idxs, counts, bottom=0.01)
     spl.set_yscale('log')
     spl.set_xticks([])
     spl.set_xticklabels(names)
     spl.set_ylabel('Count')
-    spl.axis((0,len(counts),10**0,10**5.5))
+    spl.axis((-1,len(counts),0.1,10**5.5))
     
     xlabel = 'Classes'
     if sort:
@@ -81,15 +82,17 @@ def plot_area_stats(stats, sort=False):
     names = np.array(names)
     sort_idxs = np.argsort(names)
     counts = counts[sort_idxs]
-    names = [0] + list(names[sort_idxs][0:11:2])
+    names = list(names[sort_idxs][0:11])
     print(counts)
     print(names)
     spl.bar(idxs, counts, bottom=1)
+#    spl.plot(idxs, counts)
     spl.set_yscale('log')
 #    spl.set_xticks([])
+    plt.xticks(np.arange(0, 11, 1))
     spl.set_xticklabels(names)
     spl.set_ylabel('Count')
-    spl.set_xlabel('Closest length')
+    spl.set_xlabel('Nearest anchor size')
     spl.axis((-1,len(counts),10**0,10**5.5))
 
 

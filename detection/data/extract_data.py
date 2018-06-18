@@ -200,35 +200,37 @@ class object_data:
             
         sides = [int(2**x) for x in range(0,10)]
         areas = [int(x**2 * 0.75) for x in sides]
+#        areas = [x*1000 for x in range(0,1000)]
         areas.reverse()
         areas_dict = {x:0 for x in areas}
-
-        import filters_rpn
-        images_path = self.cfg.data_path + 'images/'
-        images_path = images_path + dataset + '/'
-        
         
         for i, (imageID, imageMeta) in enumerate(imagesMeta.items()):
-            
-            _, imgDims = filters_rpn.prepareInputs(imageMeta, images_path, self.cfg)
             utils.update_progress_new(i+1, len(imagesMeta), imageID)
-            scale = imgDims['scale']
-            imagesMeta[imageID]['imageID'] = imageID
-            imagesMeta[imageID]['shape'] = imgDims['shape']
+            img_shape = imageMeta['shape']
             
-            continue
-            
-            for rel in imageMeta['objects']:
-                w = rel['xmax'] * scale[1] - rel['xmin'] * scale[1]
-                h = rel['ymax'] * scale[0] - rel['ymin'] * scale[0]
-                area = round(w*h)
+            img_size_min = np.min(img_shape[0:2])
+            img_size_max = np.max(img_shape[0:2])
+            img_scale = float(self.cfg.mindim) / float(img_size_min)
+            # Prevent the biggest axis from being more than MAX_SIZE
+            if np.round(img_scale * img_size_min) > self.cfg.maxdim:
+                img_scale = float(self.cfg.maxdim) / float(img_size_max)
                 
+            for rel in imageMeta['objects']:
+                w = rel['xmax'] * img_scale - rel['xmin'] * img_scale
+                h = rel['ymax'] * img_scale - rel['ymin'] * img_scale
+                area = round(w*h)
+#                idx = (area // 1000) * 1000
+#                areas_dict[idx] += 1
+#                continue
+
                 for target in areas:
                     if area > target:
                         areas_dict[target] += 1
                         break
                     
-        return imagesMeta
+#        return areas_dict
+        areas.reverse()
+        print(areas)
         output = {sides[i]:areas_dict[areas[i]] for i in range(len(areas))}
                     
         return output

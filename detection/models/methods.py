@@ -345,6 +345,7 @@ class AllModels:
                 activation='sigmoid',
                 kernel_initializer = keras.initializers.RandomNormal(stddev=0.01),
                 kernel_regularizer = keras.regularizers.l2(cfg.weight_decay),
+                bias_regularizer   = keras.regularizers.l2(cfg.weight_decay),
                 name='rpn_out_class'
             )(rpn_features)
             
@@ -354,6 +355,7 @@ class AllModels:
                 activation='linear', 
                 kernel_initializer = keras.initializers.RandomNormal(stddev=0.01),
                 kernel_regularizer = keras.regularizers.l2(cfg.weight_decay),
+                bias_regularizer   = keras.regularizers.l2(cfg.weight_decay),
                 name='rpn_out_regress'
             )(rpn_features)
             
@@ -421,6 +423,7 @@ class AllModels:
                     activation='softmax',
                     kernel_initializer = keras.initializers.RandomNormal(stddev=0.01),
                     kernel_regularizer = keras.regularizers.l2(cfg.weight_decay),
+                    bias_regularizer   = keras.regularizers.l2(cfg.weight_decay)
                 ),
                 name="det_out_class"
             )(object_features)
@@ -431,6 +434,7 @@ class AllModels:
                     activation="linear",
                     kernel_initializer = keras.initializers.RandomNormal(stddev=0.001),
                     kernel_regularizer = keras.regularizers.l2(cfg.weight_decay),
+                    bias_regularizer   = keras.regularizers.l2(cfg.weight_decay)
                 ),
                 name="det_out_regress"
             )(object_features)
