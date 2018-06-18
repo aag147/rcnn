@@ -16,6 +16,7 @@ from keras.engine.topology import Layer
 from keras.initializers import TruncatedNormal, RandomNormal, Ones
 import keras.applications as keras_models
 from keras import regularizers
+from keras.regularizers import l2
 
 from keras.layers import Flatten, Dense, Dropout, Reshape, Permute, Activation, \
     Input, merge, TimeDistributed
@@ -67,61 +68,61 @@ def VGG16(input_shape, weights_path=None, nb_classes=1000, include='all'):
     return model
 
 
-def AlexNet(input_shape, weights_path=None, nb_classes=1000, include = 'all'):
+def AlexNet(input_shape, weights_path=None, nb_classes=1000, cfg=None, include = 'all'):
     #https://github.com/duggalrahul/AlexNet-Experiments-Keras/blob/master/convnets-keras/convnetskeras/convnets.py
     inputs = Input(shape=input_shape)
-    conv_1 = Conv2D(96, (11, 11), strides=(4,4), activation='relu', kernel_initializer='TruncatedNormal')(inputs)
+    conv_1 = Conv2D(96, (11, 11), strides=(4,4), activation='relu', kernel_initializer=RandomNormal(stddev=0.01), kernel_regularizer= l2(cfg.weight_decay))(inputs)
     conv_2 = MaxPooling2D((3, 3), strides=(2,2))(conv_1)
     conv_2 = crosschannelnormalization()(conv_2)
     conv_2 = ZeroPadding2D((2,2))(conv_2)
     conv_2 = concatenate([
-        Conv2D(128, (5,5), activation="relu", kernel_initializer='TruncatedNormal')(
+        Conv2D(128, (5,5), activation="relu", kernel_initializer=RandomNormal(stddev=0.01), kernel_regularizer= l2(cfg.weight_decay))(
             splittensor(ratio_split=2,id_split=i)(conv_2)
         ) for i in range(2)], axis=1)
 
     conv_3 = MaxPooling2D((3, 3), strides=(2, 2))(conv_2)
     conv_3 = crosschannelnormalization()(conv_3)
     conv_3 = ZeroPadding2D((1,1))(conv_3)
-    conv_3 = Conv2D(384, (3,3), activation='relu', kernel_initializer='TruncatedNormal')(conv_3)
+    conv_3 = Conv2D(384, (3,3), activation='relu', kernel_initializer=RandomNormal(stddev=0.01), kernel_regularizer= l2(cfg.weight_decay))(conv_3)
 
     conv_4 = ZeroPadding2D((1,1))(conv_3)
     conv_4 = concatenate([
-        Conv2D(192, (3,3), activation="relu", kernel_initializer='TruncatedNormal')(
+        Conv2D(192, (3,3), activation="relu", kernel_initializer=RandomNormal(stddev=0.01), kernel_regularizer= l2(cfg.weight_decay))(
             splittensor(ratio_split=2,id_split=i)(conv_4)
         ) for i in range(2)], axis=1)
 
     conv_5 = ZeroPadding2D((1,1))(conv_4)
     conv_5 = concatenate([
-        Conv2D(128, (3,3), activation="relu", kernel_initializer='TruncatedNormal')(
+        Conv2D(128, (3,3), activation="relu", kernel_initializer=RandomNormal(stddev=0.01), kernel_regularizer= l2(cfg.weight_decay))(
             splittensor(ratio_split=2,id_split=i)(conv_5)
         ) for i in range(2)], axis=1)
 
     
     dense_1 = MaxPooling2D((3, 3), strides=(2,2))(conv_5)
     dense_1 = Flatten()(dense_1)
-    dense_1 = Dense(4096, activation='relu', kernel_initializer='TruncatedNormal')(dense_1)
+    dense_1 = Dense(4096, activation='relu', kernel_initializer=RandomNormal(stddev=0.01), kernel_regularizer= l2(cfg.weight_decay))(dense_1)
     dense_2 = Dropout(0.5)(dense_1)
-    dense_2 = Dense(4096, activation='relu', kernel_initializer='TruncatedNormal')(dense_2)
+    dense_2 = Dense(4096, activation='relu', kernel_initializer=RandomNormal(stddev=0.01), kernel_regularizer= l2(cfg.weight_decay))(dense_2)
     dense_3 = Dropout(0.5)(dense_2)
-    dense_3 = Dense(1000)(dense_3)
+    dense_3 = Dense(1000, kernel_initializer=RandomNormal(stddev=0.01), kernel_regularizer= l2(cfg.weight_decay))(dense_3)
     model = Model(inputs=inputs, outputs=dense_3)
 
     model = final_model(model, weights_path, nb_classes, include)
 
     return model
 
-def PairWiseStream(input_shape, weights_path=None, nb_classes=1000, include = 'all'):
+def PairWiseStream(input_shape, weights_path=None, nb_classes=1000, cfg=None, include = 'all'):
     inputs = Input(shape=input_shape)
     model = Sequential()
-    conv_1 = Conv2D(64, (5, 5), activation='relu')(inputs)
+    conv_1 = Conv2D(64, (5, 5), activation='relu', kernel_initializer=RandomNormal(stddev=0.01), kernel_regularizer= l2(cfg.weight_decay))(inputs)
     conv_1 = MaxPooling2D((2,2), strides=(2,2))(conv_1)
     
-    conv_2 = Conv2D(32, (5, 5), activation='relu')(conv_1)
+    conv_2 = Conv2D(32, (5, 5), activation='relu', kernel_initializer=RandomNormal(stddev=0.01), kernel_regularizer= l2(cfg.weight_decay))(conv_1)
     conv_2 = MaxPooling2D((2,2), strides=(2,2))(conv_2)
     
     fc = Flatten()(conv_2)
-    fc = Dense(256, activation='relu')(fc)
-    fc = Dense(nb_classes)(fc)
+    fc = Dense(256, activation='relu', kernel_initializer=RandomNormal(stddev=0.01), kernel_regularizer= l2(cfg.weight_decay))(fc)
+    fc = Dense(nb_classes, kernel_initializer=RandomNormal(stddev=0.01), kernel_regularizer= l2(cfg.weight_decay))(fc)
     
     model = Model(inputs=inputs, outputs=fc)
     
@@ -149,11 +150,11 @@ def input_rois():
     return input_rois
 
 def rpn(base_layers, num_anchors):
-    x = Conv2D(256, (3, 3), padding='same', activation='relu', kernel_initializer='normal', name='rpn_conv1')(
+    x = Conv2D(256, (3, 3), padding='same', activation='relu', kernel_initializer='normal', kernel_regularizer= l2(cfg.weight_decay), name='rpn_conv1')(
         base_layers)
 
-    x_class = Conv2D(num_anchors, (1, 1), activation='sigmoid', kernel_initializer='uniform', name='rpn_out_class')(x)
-    x_regr = Conv2D(num_anchors * 4, (1, 1), activation='linear', kernel_initializer='zero', name='rpn_out_regress')(x)
+    x_class = Conv2D(num_anchors, (1, 1), activation='sigmoid', kernel_initializer='uniform', kernel_regularizer= l2(cfg.weight_decay), name='rpn_out_class')(x)
+    x_regr = Conv2D(num_anchors * 4, (1, 1), activation='linear', kernel_initializer='zero', kernel_regularizer= l2(cfg.weight_decay), name='rpn_out_regress')(x)
 
     return [x_class, x_regr, base_layers]
 
@@ -167,12 +168,12 @@ def classifier(base_layers, input_rois, cfg, nb_classes=21):
     out_roi_pool = RoiPoolingConv(cfg)([base_layers, input_rois])
 
     dense_1 = Flatten()(out_roi_pool)
-    dense_1 = Dense(4096, activation='relu', kernel_initializer='TruncatedNormal')(dense_1)
+    dense_1 = Dense(4096, activation='relu', kernel_initializer=RandomNormal(stddev=0.01), kernel_regularizer= l2(cfg.weight_decay))(dense_1)
     dense_2 = Dropout(0.5)(dense_1)
-    dense_2 = Dense(4096, activation='relu', kernel_initializer='TruncatedNormal')(dense_2)
+    dense_2 = Dense(4096, activation='relu', kernel_initializer=RandomNormal(stddev=0.01), kernel_regularizer= l2(cfg.weight_decay))(dense_2)
     dense_3 = Dropout(0.5)(dense_2)
 
-    out_class = Dense(nb_classes, kernel_initializer='uniform')(dense_3)
+    out_class = Dense(nb_classes, kernel_initializer='uniform', kernel_regularizer= l2(cfg.weight_decay))(dense_3)
     # note: no regression target for bg class
 #    out_regr = Dense(4 * (nb_classes - 1), activation='linear', kernel_initializer='zero')(dense_3)
 
@@ -328,32 +329,32 @@ def splittensor(axis=1, ratio_split=1, id_split=0, **kwargs):
     return Lambda(f,output_shape=lambda input_shape:g(input_shape),**kwargs)
 
 
-def AlexNet_tf(input_shape, weights_path=None, nb_classes=1000, include = 'all'):
+def AlexNet_tf(input_shape, weights_path=None, nb_classes=1000, cfg=None, include = 'all'):
     #https://github.com/duggalrahul/AlexNet-Experiments-Keras/blob/master/convnets-keras/convnetskeras/convnets.py
     inputs = Input(shape=input_shape)
-    conv_1 = Conv2D(96, (11, 11), strides=(4,4), activation='relu', kernel_initializer='TruncatedNormal')(inputs)
+    conv_1 = Conv2D(96, (11, 11), strides=(4,4), activation='relu', kernel_initializer=RandomNormal(stddev=0.01), kernel_regularizer= l2(cfg.weight_decay))(inputs)
     conv_2 = MaxPooling2D((3, 3), strides=(2,2))(conv_1)
     conv_2 = crosschannelnormalization_tf()(conv_2)
     conv_2 = ZeroPadding2D((2,2))(conv_2)
     conv_2 = concatenate([
-        Conv2D(128, (5,5), activation="relu", kernel_initializer='TruncatedNormal')(
+        Conv2D(128, (5,5), activation="relu", kernel_initializer=RandomNormal(stddev=0.01), kernel_regularizer= l2(cfg.weight_decay))(
             splittensor_tf(ratio_split=2,id_split=i)(conv_2)
         ) for i in range(2)], axis=3)
 
     conv_3 = MaxPooling2D((3, 3), strides=(2, 2))(conv_2)
     conv_3 = crosschannelnormalization_tf()(conv_3)
     conv_3 = ZeroPadding2D((1,1))(conv_3)
-    conv_3 = Conv2D(384, (3,3), activation='relu', kernel_initializer='TruncatedNormal')(conv_3)
+    conv_3 = Conv2D(384, (3,3), activation='relu', kernel_initializer=RandomNormal(stddev=0.01), kernel_regularizer= l2(cfg.weight_decay))(conv_3)
 
     conv_4 = ZeroPadding2D((1,1))(conv_3)
     conv_4 = concatenate([
-        Conv2D(192, (3,3), activation="relu", kernel_initializer='TruncatedNormal')(
+        Conv2D(192, (3,3), activation="relu", kernel_initializer=RandomNormal(stddev=0.01), kernel_regularizer= l2(cfg.weight_decay))(
             splittensor_tf(ratio_split=2,id_split=i)(conv_4)
         ) for i in range(2)], axis=3)
 
     conv_5 = ZeroPadding2D((1,1))(conv_4)
     conv_5 = concatenate([
-        Conv2D(128, (3,3), activation="relu", kernel_initializer='TruncatedNormal')(
+        Conv2D(128, (3,3), activation="relu", kernel_initializer=RandomNormal(stddev=0.01), kernel_regularizer= l2(cfg.weight_decay))(
             splittensor_tf(ratio_split=2,id_split=i)(conv_5)
         ) for i in range(2)], axis=3)
 
@@ -363,11 +364,11 @@ def AlexNet_tf(input_shape, weights_path=None, nb_classes=1000, include = 'all')
     if include == 'fc':
         dense_1 = MaxPooling2D((3, 3), strides=(2,2))(conv_5)
         dense_1 = Flatten()(dense_1)
-        dense_1 = Dense(4096, activation='relu')(dense_1)#, kernel_initializer='TruncatedNormal', kernel_regularizer=regularizers.l2(0.01))(dense_1)
+        dense_1 = Dense(4096, activation='relu', kernel_initializer=RandomNormal(stddev=0.01), kernel_regularizer= l2(cfg.weight_decay))(dense_1)
         dense_2 = Dropout(0.5)(dense_1)
-        dense_2 = Dense(4096, activation='relu')(dense_2)#, kernel_initializer='TruncatedNormal', kernel_regularizer=regularizers.l2(0.01))(dense_2)
+        dense_2 = Dense(4096, activation='relu', kernel_initializer=RandomNormal(stddev=0.01), kernel_regularizer= l2(cfg.weight_decay))(dense_2)
         dense_3 = Dropout(0.5)(dense_2)
-        dense_3 = Dense(1000)(dense_3)#, kernel_regularizer=regularizers.l2(0.01))(dense_3)
+        dense_3 = Dense(1000, kernel_initializer=RandomNormal(stddev=0.01), kernel_regularizer= l2(cfg.weight_decay))(dense_3)
         model = Model(inputs=inputs, outputs=dense_3)
 
     model = final_model(model, weights_path, nb_classes, include)

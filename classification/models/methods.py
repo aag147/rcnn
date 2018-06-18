@@ -35,9 +35,9 @@ def _final_stop(inputs, outputs, cfg):
         assert os.path.exists(path), 'invalid path: %s' % path
         model = load_model(path)
         
-    for layer in model.layers:
-        if hasattr(layer, 'kernel_regularizer'):
-            layer.kernel_regularizer= regularizers.l2(cfg.weight_decay+100000)
+#    for layer in model.layers:
+#        if hasattr(layer, 'kernel_regularizer'):
+#            layer.kernel_regularizer= regularizers.l2(cfg.weight_decay+100000)
     return model
         
 def AlexNet_Weights_th(cfg):
@@ -76,9 +76,9 @@ def HO_RCNN(cfg):
 def HO_RCNN_tf(cfg):
     K.set_image_dim_ordering('tf')
     weights = AlexNet_Weights(cfg) if cfg.pretrained_weights == True else False
-    modelPrs = AlexNet_tf((227, 227, 3), weights, cfg.nb_classes, include='fc')
-    modelObj = AlexNet_tf((227, 227, 3), weights, cfg.nb_classes, include='fc')
-    modelPar = PairWiseStream(input_shape=(64,64,2), nb_classes = cfg.nb_classes, include='fc')             
+    modelPrs = AlexNet_tf((227, 227, 3), weights, cfg.nb_classes, cfg=cfg, include='fc')
+    modelObj = AlexNet_tf((227, 227, 3), weights, cfg.nb_classes, cfg=cfg, include='fc')
+    modelPar = PairWiseStream(input_shape=(64,64,2), nb_classes = cfg.nb_classes, cfg=cfg, include='fc')             
     
     models = [modelPrs, modelObj, modelPar]
     models = [models[i] for i in range(len(models)) if cfg.inputs[i]]
