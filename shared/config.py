@@ -32,6 +32,17 @@ class basic_config:
           print("   Shared directory...")
           path = self.part_results_path + self.my_results_dir + '/'
           self.new_results_dir = self.my_results_dir + '/'
+      elif len(self.new_results_dir) > 0:
+          print("   New directory... (name given)")
+          my_results_dir = self.new_results_dir
+          path = self.part_results_path + my_results_dir
+          
+          if os.path.exists(path):
+              raise Exception("directory already exists")
+          
+          os.mkdir(path)
+          os.mkdir(path + 'weights/')
+          
       else:
           print("   New directory...")
           for fid in range(100):
@@ -239,9 +250,9 @@ class basic_config:
    def get_args(self):
        try:
           argv = sys.argv[1:]
-          opts, args = getopt.getopt(argv,"ab:c:d:e:f:g:hi:l:m:n:o:r:s:tuw:x:")
+          opts, args = getopt.getopt(argv,"ab:c:d:e:f:g:hi:l:m:n:o:q:r:s:tuw:x:")
        except getopt.GetoptError:
-          print('.py -m <my_model> -c <my_method> -x <max_classes> -d <dataset>')
+          print('.py argument error')
           sys.exit(2)
      
 #    augment, backbone, cfg_method, dataset, epoch_split, final_epoch, generator_type, input_roi_dir, learning_rate, model, nb_batches, optimizer, results_dir, start_epoch, transfor data, uniform_sampling, weighing, ma(x)_classes
@@ -291,6 +302,8 @@ class basic_config:
           if opt == '-o':
               # optimizer
               self.optimizer = arg
+          if opt == '-q':
+              self.new_results_dir = arg
           if opt == '-r':
               # use results directory from previous model
               self.my_results_dir = arg
