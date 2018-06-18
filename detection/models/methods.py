@@ -408,7 +408,8 @@ class AllModels:
             
             object_features = layers.fullyConnected(
                 cfg,
-                stream = 'det'
+                stream = 'det',
+                use_dropout = False
             )([
                 object_rois
             ])

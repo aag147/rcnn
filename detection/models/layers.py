@@ -32,7 +32,7 @@ def rpn(cfg):
         return x
     return rpnFixed
 
-def fullyConnected(cfg, stream=None):
+def fullyConnected(cfg, stream=None, use_dropout=True):
     def fullyConnectedFixed(x):
         assert(len(x) == 1)
         rois = x[0]
@@ -51,11 +51,11 @@ def fullyConnected(cfg, stream=None):
             ),
             name = '%s_fc1' % stream
         )(dense_1)
-        
-        dense_1 = Dropout(
-            rate=0.5,
-            name = '%s_dropout1' % stream
-        )(dense_1)
+        if use_dropout:
+            dense_1 = Dropout(
+                rate=0.5,
+                name = '%s_dropout1' % stream
+            )(dense_1)
         
         dense_2 = TimeDistributed(
             Dense(
@@ -67,10 +67,11 @@ def fullyConnected(cfg, stream=None):
             name = '%s_fc2' % stream
         )(dense_1)
         
-        dense_2 = Dropout(
-            rate=0.5,
-            name = '%s_dropout2' % stream
-        )(dense_2)
+        if use_dropout:
+            dense_2 = Dropout(
+                rate=0.5,
+                name = '%s_dropout2' % stream
+            )(dense_2)
     
         return dense_2
     

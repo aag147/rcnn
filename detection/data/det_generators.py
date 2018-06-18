@@ -79,7 +79,7 @@ class DataGenerator():
             imageMeta['id'] = imageID
             
             io_start = time.time()
-            img, y, imageDims = self.Stages.stagezero(imageMeta, self.data_type)
+            img, imageDims = filters_rpn.prepareInputs(imageMeta, self.images_path, self.cfg)
             io_end = time.time()
             
             pp_start = time.time()
