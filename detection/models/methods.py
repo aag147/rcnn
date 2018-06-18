@@ -44,6 +44,8 @@ class AllModels:
             self.load_weights()
 
     def save_model(self, saveShared=False):
+        print('Saving model...')
+        
         cfg = self.cfg
         
         if self.do_rpn:
@@ -61,6 +63,7 @@ class AllModels:
                 model.save_weights(weightspath)
                 
                 if saveShared:
+                    print('   Saving shared CNN model...')
                     shared_cnn = Model(model.input, model.layers[17].output)
                     shared_cnn.save(cfg.my_weights_path + 'shared_model%d.h5' % i)
                     shared_cnn.save_weights(cfg.my_weights_path + 'shared_weights%d.h5' % i)
