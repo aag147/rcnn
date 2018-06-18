@@ -89,6 +89,7 @@ class basic_config:
        self.part_results_path = ''
        self.part_data_path  = ''
        self.weights_path = ''
+       self.new_results_dir = ''
        self.my_results_path = ''
        self.my_weights_path = ''
        self.my_results_dir = ''
@@ -188,7 +189,7 @@ class basic_config:
        self.cdim  = 3
        
        # Basic stuff
-       self.pool_size = 3
+       self.pool_size = 7
        self.init_lr = 0.00001
        self.epoch_begin = 0
        self.epoch_end = 60
