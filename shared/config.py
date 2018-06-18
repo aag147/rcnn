@@ -34,7 +34,7 @@ class basic_config:
           self.new_results_dir = self.my_results_dir + '/'
       elif len(self.new_results_dir) > 0:
           print("   New directory... (name given)")
-          my_results_dir = self.new_results_dir
+          my_results_dir = self.dataset + '/' + self.new_results_dir + '/'
           path = self.part_results_path + my_results_dir
           
           if os.path.exists(path):
