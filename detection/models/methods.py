@@ -109,14 +109,34 @@ class AllModels:
     
     def _load_shared_weights(self, model):
         cfg = self.cfg
-        assert os.path.exists(cfg.my_shared_weights), 'invalid path: %s' % cfg.my_shared_weights
-        model.load_weights(cfg.my_shared_weights, by_name=True)
+        path = cfg.my_shared_weights
+        print('   Weights path:', path)
+        
+        assert os.path.exists(path), 'invalid path: %s' % path
+        model.load_weights(path, by_name=True)
         # Only train unique layers
         for i, layer in enumerate(model.layers):
             layer.trainable = False
             if i == cfg.nb_shared_layers:
                 break    
         return model
+    
+    def _load_test_weights(self, model, path, by_name = False):
+        cfg = self.cfg
+        if path[-1] == 'f':
+            if not os.path.exists(path):
+                path = path[:-1]
+            elif model.name != 'rpn':
+                by_name = True
+        path += '/weights/' + cfg.my_weights
+        print('   Weights path:', path)
+        
+        assert os.path.exists(path), 'invalid path: %s' % path
+        weights_before = model.layers[4].get_weights()[0][0,0] if by_name else weights_before = model.layers[11].get_weights()[0][0,0,0,0]
+        self.model_rpn.load_weights(path, by_name=False)        
+        weights_after  = model.layers[4].get_weights()[0][0,0] if by_name else weights_before = model.layers[11].get_weights()[0][0,0,0,0]
+    
+        assert weights_before != weights_after, 'weights have not been loaded'
     
     def load_weights(self):
         cfg = self.cfg
@@ -230,6 +250,7 @@ class AllModels:
             
             assert os.path.exists(cfg.my_shared_weights), 'invalid path: %s' % cfg.my_shared_weights
             self.model_rpn = load_model(cfg.my_shared_weights)
+            self.model_rpn.name = 'rpn'
 
 
         if self.do_det:        
@@ -242,6 +263,7 @@ class AllModels:
             
             assert os.path.exists(cfg.my_shared_weights), 'invalid path: %s' % cfg.my_shared_weights
             self.model_det = load_model(cfg.my_shared_weights)
+            self.model_det.name = 'det'
             
         if self.do_hoi:
             print('Loading HOI model...')        
@@ -250,6 +272,7 @@ class AllModels:
             
             assert os.path.exists(cfg.my_shared_weights), 'invalid path: %s' % cfg.my_shared_weights
             self.model_hoi = load_model(cfg.my_shared_weights) 
+            self.model_hoi.name = 'hoi'
             
 
 
@@ -375,6 +398,7 @@ class AllModels:
                 ]
             
             self.model_rpn = keras.models.Model(inputs=rpn_inputs, outputs=rpn_outputs)
+            self.model_rpn.name = 'rpn'
             
             # Only train from conv3_1
             print('   Freezing first few layers...')
@@ -448,6 +472,7 @@ class AllModels:
             ]
             
             self.model_det = keras.models.Model(inputs=detection_inputs, outputs=detection_outputs)
+            self.model_det.name = 'det'
     
             # Only train from conv3_1
             for i, layer in enumerate(self.model_det.layers):
@@ -558,7 +583,7 @@ class AllModels:
                 ]
             
             self.model_hoi = keras.models.Model(inputs=hoi_inputs, outputs=hoi_outputs)
-
+            self.model_hoi.name = 'hoi'
 
         ########################
         ######### ALL ##########

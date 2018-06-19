@@ -189,7 +189,7 @@ class basic_config:
        self.cdim  = 3
        
        # Basic stuff
-       self.pool_size = 3
+       self.pool_size = 6
        self.init_lr = 0.00001
        self.epoch_begin = 0
        self.epoch_end = 60
@@ -227,7 +227,7 @@ class basic_config:
        # detection filters
        self.detection_max_overlap = 0.5
        self.detection_min_overlap = 0.0
-       self.nb_detection_rois = 64
+       self.nb_detection_rois = 32
        
        self.det_nms_max_boxes=300
        self.det_nms_overlap_thresh=0.8
