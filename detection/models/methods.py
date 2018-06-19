@@ -132,9 +132,9 @@ class AllModels:
         print('   Weights path:', path)
         
         assert os.path.exists(path), 'invalid path: %s' % path
-        weights_before = model.layers[4].get_weights()[0][0,0] if by_name else weights_before = model.layers[11].get_weights()[0][0,0,0,0]
+        weights_before = model.layers[4].get_weights()[0][0,0] if by_name else model.layers[11].get_weights()[0][0,0,0,0]
         self.model_rpn.load_weights(path, by_name=False)        
-        weights_after  = model.layers[4].get_weights()[0][0,0] if by_name else weights_before = model.layers[11].get_weights()[0][0,0,0,0]
+        weights_after  = model.layers[4].get_weights()[0][0,0] if by_name else model.layers[11].get_weights()[0][0,0,0,0]
     
         assert weights_before != weights_after, 'weights have not been loaded'
     
