@@ -262,8 +262,6 @@ def createTargets(bboxes, imageMeta, imageDims, class_mapping, cfg):
             label_pos = 4 * (class_num - 1)
             sx, sy, sw, sh = cfg.det_regr_std
             coords[label_pos:4 + label_pos] = [tx*sx, ty*sy, tw*sw, th*sh]
-#            coords[label_pos+0] * sx; coords[label_pos+1] * sy
-#            coords[label_pos+2] * sw; coords[label_pos+3] * sh
             labels[label_pos:4 + label_pos] = [1, 1, 1, 1]
             y_class_regr_coords.append(copy.deepcopy(coords))
             y_class_regr_label.append(copy.deepcopy(labels))

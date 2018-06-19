@@ -189,7 +189,7 @@ class basic_config:
        self.cdim  = 3
        
        # Basic stuff
-       self.pool_size = 6
+       self.pool_size = 5
        self.init_lr = 0.00001
        self.epoch_begin = 0
        self.epoch_end = 60

@@ -37,7 +37,7 @@ class AllModels:
         
         assert mode=='test' or np.sum([self.do_rpn, self.do_det, self.do_hoi])==1, 'Use only one model when training'
         
-        if self.mode == 'train' and not cfg.use_shared_cnn and not cfg.only_use_weights and cfg.my_shared_weights is not None:
+        if self.mode == 'train' and not cfg.use_shared_cnn and not cfg.only_use_weights and cfg.my_shared_weights is not None and do_rpn:
             self.load_models()
         else:
             self.create_models()
@@ -107,22 +107,11 @@ class AllModels:
     def get_models(self):
         return self.model_rpn, self.model_det, self.model_hoi
     
-    def _load_shared_weights(self, model):
-        cfg = self.cfg
-        path = cfg.my_shared_weights
-        print('   Weights path:', path)
-        
-        assert os.path.exists(path), 'invalid path: %s' % path
-        model.load_weights(path, by_name=True)
-        # Only train unique layers
-        for i, layer in enumerate(model.layers):
-            layer.trainable = False
-            if i == cfg.nb_shared_layers:
-                break    
-        return model
     
     def _load_test_weights(self, model, path, by_name = False):
+        print('   -loading test weights...')
         cfg = self.cfg
+        # Check path to weights
         if path[-1] == 'f':
             if not os.path.exists(path):
                 path = path[:-1]
@@ -130,14 +119,53 @@ class AllModels:
                 by_name = True
         path += '/weights/' + cfg.my_weights
         print('   Weights path:', path)
-        
         assert os.path.exists(path), 'invalid path: %s' % path
+        
+        # Load weights
         weights_before = model.layers[4].get_weights()[0][0,0] if by_name else model.layers[11].get_weights()[0][0,0,0,0]
-        self.model_rpn.load_weights(path, by_name=False)        
+        model.load_weights(path, by_name=False)        
         weights_after  = model.layers[4].get_weights()[0][0,0] if by_name else model.layers[11].get_weights()[0][0,0,0,0]
-    
         assert weights_before != weights_after, 'weights have not been loaded'
+        
+        return model, weights_before, weights_after
     
+    def _load_shared_weights(self, model):
+        print('   -loading shared weights...')
+        cfg = self.cfg
+        # Check path to weights
+        path = cfg.my_shared_weights
+        print('   Weights path:', path)
+        assert os.path.exists(path), 'invalid path: %s' % path
+        
+        # Load weights
+        weights_before = model.layers[11].get_weights()[0][0,0,0,0]
+        model.load_weights(path, by_name=True)
+        weights_after = model.layers[11].get_weights()[0][0,0,0,0]
+        assert weights_before != weights_after, 'weights have not been loaded'
+        
+        # Only train unique layers
+        for i, layer in enumerate(model.layers):
+            layer.trainable = False
+            if i == cfg.nb_shared_layers:
+                break
+        return model, weights_before, weights_after
+    
+    def _load_train_weights(self, model):
+        print('   -loading train weights...')
+        cfg = self.cfg
+        # Check path to weights
+        path = cfg.my_shared_weights
+        print('   Weights path:', path)
+        assert os.path.exists(path), 'invalid path: %s' % path
+        
+        # Load weights
+        weights_before = model.layers[11].get_weights()[0][0,0,0,0]
+        model.load_weights(path, by_name=False)
+        weights_after = model.layers[11].get_weights()[0][0,0,0,0]
+        assert weights_before != weights_after, 'weights have not been loaded'
+        
+        return model, weights_before, weights_after
+        
     def load_weights(self):
         cfg = self.cfg
         
@@ -146,86 +174,36 @@ class AllModels:
             print('Loading my weights...')
             
             if self.do_rpn:    
-                rpn_before = self.model_rpn.layers[11].get_weights()[0][0,0,0,0]
+                print('   Loading RPN weights...')
                 if self.mode == 'test' and self.nb_models > 0:
-                    print('   Loading test RPN weights...')
                     path = cfg.part_results_path + "COCO/rpn" + cfg.my_results_dir
-                    if not os.path.exists(path):
-                        path = path[:-1]
-                    path += '/weights/' + cfg.my_weights
-                    print('   Weights path:', path)
-                    
-                    assert os.path.exists(path), 'invalid path: %s' % path
-                    self.model_rpn.load_weights(path, by_name=False)
-                
+                    self.model_rpn, rpn_before, rpn_after = self._load_test_weights(self.model_rpn, path)
                 elif cfg.use_shared_cnn:
-                    print('   Loading shared train RPN weights...')
-                    self.model_rpn = self._load_shared_weights(self.model_rpn)
-                    
+                    self.model_rpn, rpn_before, rpn_after = self._load_shared_weights(self.model_rpn)
                 else:
-                    print('   Loading train RPN weights...')
-                    assert os.path.exists(cfg.my_shared_weights), 'invalid path: %s' % cfg.my_shared_weights
-                    self.model_rpn.load_weights(cfg.my_shared_weights) 
-                    
-                rpn_after = self.model_rpn.layers[11].get_weights()[0][0,0,0,0]
-                assert rpn_before != rpn_after, 'RPN weights have not been loaded'
+                    self.model_rpn, rpn_before, rpn_after = self._load_train_weights(self.model_rpn)
                 
             
             if self.do_det:
-                if self.mode == 'test' and self.nb_models > 1:
-                    print('   Loading test DET weights...')
+                print('   Loading DET weights...')
+                if self.mode == 'test' and self.nb_models > 0:
                     path = cfg.part_results_path + "COCO/det" + cfg.my_results_dir
-                    if not os.path.exists(path):
-                        path = path[:-1]
-                    path += '/weights/' + cfg.my_weights
-                    print('   Weights path:', path)
-                    
-                    assert os.path.exists(path), 'invalid path: %s' % path
-                    det_before = self.model_det.layers[11].get_weights()[0][0,0,0,0]
-                    self.model_det.load_weights(path, by_name=True)
-                    det_after = self.model_det.layers[11].get_weights()[0][0,0,0,0]
-                    
+                    self.model_det, det_before, det_after = self._load_test_weights(self.model_det, path)
                 elif cfg.use_shared_cnn:
-                    print('   Loading shared train DET weights...')
-                    det_before = self.model_det.layers[4].get_weights()[0][0,0]
-                    self.model_det = self._load_shared_weights(self.model_det)
-                    det_after = self.model_det.layers[4].get_weights()[0][0,0]
-                    
+                    self.model_det, det_before, det_after = self._load_shared_weights(self.model_det)
                 else:
-                    print('   Loading train DET weights...')
-                    assert os.path.exists(cfg.my_shared_weights), 'invalid path: %s' % cfg.my_shared_weights
-                    det_before = self.model_det.layers[11].get_weights()[0][0,0,0,0]
-                    self.model_det.load_weights(cfg.my_shared_weights) 
-                    det_after = self.model_det.layers[11].get_weights()[0][0,0,0,0]
-                    
-                assert det_before != det_after, 'DET weights have not been loaded'
+                    self.model_det, det_before, det_after = self._load_train_weights(self.model_det)
             
             if self.do_hoi:
-                hoi_before = self.model_hoi.layers[11].get_weights()[0][0,0,0,0]
-                if self.mode == 'test' and self.nb_models > 1:
-                    print('   Loading test HOI weights...')
+                print('   Loading HOI weights...')
+                if self.mode == 'test' and self.nb_models > 0:
                     path = cfg.part_results_path + "HICO/hoi" + cfg.my_results_dir
-                    if not os.path.exists(path):
-                        path = path[:-1]
-                    path += '/weights/' + cfg.my_weights
-                    print('   Weights path:', path)
-                    
-                    assert os.path.exists(path), 'invalid path: %s' % path
-                    self.model_hoi.load_weights(path, by_name=False)
-                
+                    self.model_hoi, hoi_before, hoi_after = self._load_test_weights(self.model_hoi, path)
                 elif cfg.use_shared_cnn:
-                    print('   Loading shared train HOI weights...')
-                    self.model_hoi = self._load_shared_weights(self.model_hoi)
-                    
+                    self.model_hoi, hoi_before, hoi_after = self._load_shared_weights(self.model_hoi)
                 else:
-                    print('   Loading train HOI weights...')
-                    assert os.path.exists(cfg.my_shared_weights), 'invalid path: %s' % cfg.my_shared_weights
-                    self.model_hoi.load_weights(cfg.my_shared_weights) 
-                
-                hoi_after = self.model_hoi.layers[11].get_weights()[0][0,0,0,0]
-                assert hoi_before != hoi_after, 'HOI weights have not been loaded'
-        
-    
+                    self.model_hoi, hoi_before, hoi_after = self._load_train_weights(self.model_hoi)
+                    
             if self.do_rpn:
                 rpn_final = self.model_rpn.layers[11].get_weights()[0][0,0,0,0]
                 assert rpn_after == rpn_final, 'RPN weights have been overwritten'

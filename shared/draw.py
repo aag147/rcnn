@@ -231,6 +231,7 @@ def drawAnchors(img, anchorsGT, cfg):
         if objectiveness>0.5:
             c = 'red'
         else:
+            continue
             c = 'blue'
         bb = anchor[0:4]*cfg.rpn_stride
         bbox = drawProposalBox(bb)
