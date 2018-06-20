@@ -35,17 +35,17 @@ if True:
     genVal = DataGenerator(imagesMeta = data.valGTMeta, cfg=cfg, data_type='val', do_meta=True)
 #    genTest = DataGenerator(imagesMeta = data.testGTMeta, cfg=cfg, data_type='test', do_meta=True)
     
-    Models = methods.AllModels(cfg, mode='test', do_rpn=True, do_det=False, do_hoi=False)
-    Stages = stages.AllStages(cfg, Models, obj_mapping, hoi_mapping, mode='test')
+#    Models = methods.AllModels(cfg, mode='test', do_rpn=True, do_det=False, do_hoi=False)
+#    Stages = stages.AllStages(cfg, Models, obj_mapping, hoi_mapping, mode='test')
 
 # Test data
 #evalTest = rpn_test.saveEvalData(genTest, Stages, cfg, obj_mapping)
 #rpn_test.saveEvalResults(evalTest, genTest, cfg)
 
 # Val data    
-evalVal = rpn_test.saveEvalData(genVal, Stages, cfg)
+evalVal = rpn_test.saveEvalData(genVal, None, cfg)
 GTMeta = rpn_test.saveEvalResults(evalVal, genVal, cfg, obj_mapping)
 
 # Train data
-evalTrain = rpn_test.saveEvalData(genTrain, Stages, cfg)
+evalTrain = rpn_test.saveEvalData(genTrain, None, cfg)
 rpn_test.saveEvalResults(evalTrain, genTrain, cfg, obj_mapping)
