@@ -24,7 +24,7 @@ import methods,\
 import utils
 import draw
 
-if False:
+if True:
     # Load data
     data = extract_data.object_data()
     cfg = data.cfg
