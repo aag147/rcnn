@@ -251,7 +251,7 @@ class basic_config:
    def get_args(self):
        try:
           argv = sys.argv[1:]
-          opts, args = getopt.getopt(argv,"ab:c:d:e:f:g:hi:l:m:n:o:q:r:s:tuw:x:")
+          opts, args = getopt.getopt(argv,"ab:c:d:e:f:g:hi:j:l:m:n:o:q:r:s:tuw:x:")
        except getopt.GetoptError:
           print('.py argument error')
           sys.exit(2)
@@ -290,6 +290,8 @@ class basic_config:
           if opt == '-i':
               # roi input directory for detection
               self.my_detections_dir = arg
+          if opt == '-j':
+              self.weight_decay = float(arg)
           if opt == '-l':
               # initial learning rate
               self.init_lr = float(arg)

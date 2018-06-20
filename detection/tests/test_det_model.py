@@ -43,7 +43,7 @@ if True:
 genIterator = genVal.begin()
 
 for i in range(1):
-    X, y, imageMeta, imageDims, times = next(genIterator)
+#    X, y, imageMeta, imageDims, times = next(genIterator)
 #    imageMeta = genVal.imagesMeta['176847']
 #    X, y, imageDims = Stages.stagezero(imageMeta, genVal.data_type)
     imageID = imageMeta['imageName'].split('.')[0]
