@@ -88,8 +88,9 @@ class DataGenerator():
                 raise "ups: no detections avaiable"
             pp_end = time.time()
             
-            bboxes, target_labels, target_deltas = filters_detection.reduceData(Y_tmp, self.cfg)
-            bboxes = filters_detection.prepareInputs(bboxes, imageDims) 
+            bboxes, target_labels, target_deltas = Y_tmp
+#            bboxes, target_labels, target_deltas = filters_detection.reduceData(Y_tmp, self.cfg)
+#            bboxes = filters_detection.prepareInputs(bboxes, imageDims) 
             times = np.array([io_end-io_start, pp_end-pp_start])
             
         if self.do_meta:
