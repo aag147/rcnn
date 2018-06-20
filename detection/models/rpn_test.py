@@ -45,12 +45,12 @@ def saveEvalData(generator, Stages, cfg):
     evalData = []
     
     for i in range(generator.nb_batches):
-        X, y, imageMeta, imageDims, times = next(genIterator)
+        [img,proposals], y, imageMeta, imageDims, times = next(genIterator)
         imageID = imageMeta['imageName'].split('.')[0]
         utils.update_progress_new(i+1, generator.nb_batches, imageID)
         
         #STAGE 1
-        proposals = Stages.stageone(X, y, imageMeta, imageDims)
+#        proposals = Stages.stageone(X, y, imageMeta, imageDims)
         
         #CONVERT
         evalData += filters_rpn.convertResults(proposals, imageMeta, imageDims['scale'], cfg.rpn_stride)

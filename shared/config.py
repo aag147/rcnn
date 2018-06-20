@@ -227,7 +227,7 @@ class basic_config:
        # detection filters
        self.detection_max_overlap = 0.5
        self.detection_min_overlap = 0.0
-       self.nb_detection_rois = 32
+       self.nb_detection_rois = 64
        
        self.det_nms_max_boxes=300
        self.det_nms_overlap_thresh=0.8

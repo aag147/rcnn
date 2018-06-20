@@ -36,7 +36,7 @@ if False:
     genVal = DataGenerator(imagesMeta = data.valGTMeta, cfg=cfg, data_type='val', do_meta=True)
 #    genTest = DataGenerator(imagesMeta = data.testGTMeta, cfg=cfg, data_type='test', do_meta=True)
     
-    Models = methods.AllModels(cfg, mode='test', do_rpn=True, do_det=False, do_hoi=False)
+    Models = methods.AllModels(cfg, mode='test', do_rpn=True, do_det=True, do_hoi=False)
     Stages = stages.AllStages(cfg, Models, obj_mapping, hoi_mapping, mode='test')
 
 
@@ -52,10 +52,10 @@ for i in range(1):
     print('Stage one...')
     proposals = Stages.stageone(X, y, imageMeta, imageDims, do_regr=True)
     print('Stage two...')
-    rois, target_props, target_deltas, IouS = filters_detection.createTargets(proposals, imageMeta, imageDims, obj_mapping, cfg)
-    bboxes = helper.deltas2Boxes(target_props, target_deltas[:,:,80:], rois, imageDims, cfg)
-#    bboxes = Stages.stagetwo(proposals, imageMeta, imageDims)
+#    rois, target_props, target_deltas, IouS = filters_detection.createTargets(proposals, imageMeta, imageDims, obj_mapping, cfg)
+#    bboxes = helper.deltas2Boxes(target_props, target_deltas[:,:,80:], rois, imageDims, cfg)
+    bboxes = Stages.stagetwo(proposals, imageMeta, imageDims)
     print('Draw stuff...')
     draw.drawGTBoxes((X[0]+1.0)/2.0, imageMeta, imageDims)
     draw.drawOverlapAnchors((X[0]+1.0)/2.0, proposals, imageMeta, imageDims, cfg)
-#    draw.drawPositiveRois((X[0]+1.0)/2.0, bboxes)
+    draw.drawPositiveRois((X[0]+1.0)/2.0, bboxes)
