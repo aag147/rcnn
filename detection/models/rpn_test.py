@@ -23,6 +23,7 @@ def saveInputData(imagesMeta, data_type, cfg):
     
     if not os.path.exists(save_path):
         os.makedirs(save_path)
+    print('save_path', save_path)
         
     nb_images = len(imagesMeta)
     
