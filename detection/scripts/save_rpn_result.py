@@ -47,5 +47,5 @@ evalVal = rpn_test.saveEvalData(genVal, None, cfg)
 GTMeta = rpn_test.saveEvalResults(evalVal, genVal, cfg, obj_mapping)
 
 # Train data
-evalTrain = rpn_test.saveEvalData(genTrain, None, cfg)
-rpn_test.saveEvalResults(evalTrain, genTrain, cfg, obj_mapping)
+#evalTrain = rpn_test.saveEvalData(genTrain, None, cfg)
+#rpn_test.saveEvalResults(evalTrain, genTrain, cfg, obj_mapping)
