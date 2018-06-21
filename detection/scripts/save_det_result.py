@@ -15,7 +15,7 @@ sys.path.append('../data/')
 
 
 import extract_data
-from rpn_generators import DataGenerator
+from det_generators import DataGenerator
 
 import methods,\
        stages

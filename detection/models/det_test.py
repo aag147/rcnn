@@ -52,12 +52,12 @@ def saveEvalData(generator, Stages, cfg, obj_mapping):
     evalData = []
     
     for i in range(generator.nb_batches):
-        X, y, imageMeta, imageDims, times = next(genIterator)
+        [X,proposals], y, imageMeta, imageDims, times = next(genIterator)
         imageID = imageMeta['imageName'].split('.')[0]
         utils.update_progress_new(i+1, generator.nb_batches, imageID)
         
         #STAGE 1
-        proposals = Stages.stageone(X, y, imageMeta, imageDims)
+#        proposals = Stages.stageone(X, y, imageMeta, imageDims)
         
         #STAGE 2
         bboxes = Stages.stagetwo(proposals, imageMeta, imageDims)
