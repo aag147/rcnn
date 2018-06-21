@@ -37,11 +37,12 @@ class AllModels:
         
         assert mode=='test' or np.sum([self.do_rpn, self.do_det, self.do_hoi])==1, 'Use only one model when training'
         
-        if self.mode == 'train' and not cfg.use_shared_cnn and not cfg.only_use_weights and cfg.my_shared_weights is not None and do_rpn:
+        if self.mode == 'train' and not cfg.use_shared_cnn and not cfg.only_use_weights and cfg.my_shared_weights is not None:
             self.load_models()
         else:
             self.create_models()
             self.load_weights()
+            self.compile_models()
 
     def save_model(self, saveShared=False):
         print('Saving model...')
@@ -238,6 +239,8 @@ class AllModels:
             
             get_custom_objects().update({"class_loss_cls": loss_cls})
             get_custom_objects().update({"class_loss_regr_fixed_num": loss_rgr})
+            
+            get_custom_objects().update({"RoiPoolingConv": layers.RoiPoolingConv})
             
             assert os.path.exists(cfg.my_shared_weights), 'invalid path: %s' % cfg.my_shared_weights
             self.model_det = load_model(cfg.my_shared_weights)

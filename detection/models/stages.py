@@ -89,8 +89,8 @@ class AllStages:
             batch_rois = rois_norm[:,sidx:fidx,:]
             det_props, det_deltas = self.model_det.predict_on_batch([self.shared_cnn, batch_rois])
 
-            all_det_props[:,sidx:fidx,:] = det_props[:,:fidx-sidx,:]
-            all_det_deltas[:,sidx:fidx,:] = det_deltas[:,:fidx-sidx,:]
+            all_det_props[:,sidx:fidx,:] = det_props#[:,:fidx-sidx,:]
+            all_det_deltas[:,sidx:fidx,:] = det_deltas#[:,:fidx-sidx,:]
         
         # det post
         rois = filters_detection.unprepareInputs(rois_norm, imageDims)

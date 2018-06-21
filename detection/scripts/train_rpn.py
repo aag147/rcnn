@@ -40,7 +40,6 @@ if True:
 
     # models
     Models = methods.AllModels(cfg, mode='train', do_rpn=True)
-    Models.compile_models()
     model_rpn, _, _ = Models.get_models()
 
 

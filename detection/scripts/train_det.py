@@ -40,11 +40,10 @@ if True:
 
     # models
     Models = methods.AllModels(cfg, mode='train', do_det=True)
-    Models.compile_models()
     _, model_det, _ = Models.get_models()
     
 
-if True:    
+if False:    
     # train
     callbacks = [callbacks.MyModelCheckpointInterval(cfg), \
                  callbacks.MyLearningRateScheduler(cfg), \
