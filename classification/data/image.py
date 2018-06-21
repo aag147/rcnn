@@ -134,6 +134,7 @@ def getX2Data(imageMeta, data_path, cfg):
     
     imageMeta['flip'] = False
     if cfg.flip_image and random.choice([True, False]):
+        imageMeta['flip'] = True
         imageMeta['shape'] = image.shape
         imageMeta = utils.flipMeta(imageMeta)
         image = np.fliplr(image)
