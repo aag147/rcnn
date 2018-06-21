@@ -90,7 +90,8 @@ class DataGenerator():
             pp_end = time.time()
             
             if self.mode == 'test':
-                return Y_tmp
+                bboxes, target_labels, target_deltas = Y_tmp
+                return [img, bboxes], [target_labels, target_deltas], imageMeta, imageDims, None
             
 #            bboxes, target_labels, target_deltas = Y_tmp
             bboxes, target_labels, target_deltas = filters_detection.reduceData(Y_tmp, self.cfg)
