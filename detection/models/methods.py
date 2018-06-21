@@ -416,7 +416,7 @@ class AllModels:
             object_features = layers.fullyConnected(
                 cfg,
                 stream = 'det',
-                use_dropout = cfg.weight_decay > 0.0
+                use_dropout = cfg.weight_decay == 0.0
             )([
                 object_rois
             ])
