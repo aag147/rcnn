@@ -25,7 +25,12 @@ class AllStages:
         
         self.images_path = cfg.data_path + 'images/'
         self.anchors_path = cfg.data_path + 'anchors/'
+        
+        self.rpn_nms_thresh = self.cfg.rpn_nms_overlap_thresh if self.mode == 'train' else self.cfg.rpn_nms_overlap_thresh_test
+        self.det_nms_thresh = self.cfg.det_nms_overlap_thresh if self.mode == 'train' else self.cfg.det_nms_overlap_thresh_test
 
+        print('   RPN NMS thresh:', self.rpn_nms_thresh)
+        print('   DET NMS thresh:', self.det_nms_thresh)
 
     def stagezero(self, imageMeta, data_type):
         images_path = self.images_path + data_type + '/'
@@ -44,28 +49,30 @@ class AllStages:
         img = X
                 
         #rpn predict
-        if self.mode == 'test' and self.cfg.use_shared_cnn:
+        if self.cfg.use_shared_cnn:
             rpn_props, rpn_deltas, F = self.model_rpn.predict_on_batch(img)
             self.shared_cnn = F
-        elif self.mode == 'test':
+        else:
             rpn_props, rpn_deltas = self.model_rpn.predict_on_batch(img)
             self.shared_cnn = img
         self.shared_img = img
         
         #rpn post
         proposals = helper.deltas2Anchors(rpn_props, rpn_deltas, self.cfg, imageDims, do_regr=do_regr)
-        proposals = helper.non_max_suppression_fast(proposals, overlap_thresh = self.cfg.rpn_nms_overlap_thresh_test)
+        proposals = helper.non_max_suppression_fast(proposals, overlap_thresh = self.rpn_nms_thresh)
         return proposals
     
     def stagetwo(self, X, imageMeta, imageDims, include='all', img = None):
         # det prepare
         proposals = X
-        if self.mode == 'test' and include != 'pre':
-            rois = np.expand_dims(proposals, axis=0)
-        else:
+        if self.mode == 'train':
             rois, target_props, target_deltas, IouS = filters_detection.createTargets(proposals, imageMeta, imageDims, self.obj_mapping, self.cfg)
             if include=='pre':
                 return rois, target_props, target_deltas
+        elif proposals.ndim != 3 and include != 'pre':
+            rois = np.expand_dims(proposals, axis=0)
+        else:
+            rois = proposals
         
         rois_norm = filters_detection.prepareInputs(rois, imageDims)        
         
@@ -92,21 +99,19 @@ class AllStages:
         
         if len(bboxes) == 0:
             return None
-        bboxes_nms = helper.non_max_suppression_boxes(bboxes, self.cfg, self.cfg.det_nms_overlap_thresh_test)
-#        bboxes_nms = helper.non_max_suppression_fast(bboxes, self.cfg.det_nms_overlap_thresh_test)
+        bboxes_nms = helper.non_max_suppression_boxes(bboxes, self.cfg, self.det_nms_thresh)
         
         return bboxes_nms
     
     def stagethree(self, X, imageMeta, imageDims, include='all'):
         # hoi prepare
         bboxes = X
-        
-        if self.mode == 'test' and include != 'pre':
-            all_hbboxes, all_obboxes = filters_hoi.splitInputs(bboxes)
-        else:
+        if self.mode == 'train':
             all_hbboxes, all_obboxes, all_target_labels, val_map = filters_hoi.createTargets(bboxes, imageMeta, imageDims, self.cfg, self.obj_mapping)
             if include=='pre':
                 return all_hbboxes, all_obboxes, all_target_labels, val_map
+        else:
+            all_hbboxes, all_obboxes = filters_hoi.splitInputs(bboxes)
         
         if all_hbboxes is None:
             return None, None, None

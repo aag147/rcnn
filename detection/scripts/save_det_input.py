@@ -40,7 +40,7 @@ if True:
 
 if True:
     Models = methods.AllModels(cfg, mode='test', do_rpn=True, do_det=False, do_hoi=False)
-    Stages = stages.AllStages(cfg, Models, obj_mapping, hoi_mapping, mode='test')
+    Stages = stages.AllStages(cfg, Models, obj_mapping, hoi_mapping, mode='train')
 
     det_test.saveInputData(genTrain, Stages, cfg)
     det_test.saveInputData(genVal, Stages, cfg)
