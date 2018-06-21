@@ -11,6 +11,8 @@ import math as m
 import cv2 as cv
 import utils
 import image
+import random
+import copy as cp
 
 class DataGenerator():
     
@@ -69,8 +71,11 @@ class DataGenerator():
     def _generateBatchFromIDs(self, batchID):
         batchID = [self.dataID[idx] for idx in batchID]
 #        print(batchID)
-        [dataXP, dataXB] = image.getX2Data(batchID, self.imagesMeta, self.images_path, self.cfg)
-        dataXW = image.getDataPairWiseStream(batchID, self.imagesMeta, self.cfg)
+        imageMeta = self.imagesMeta[batchID[0]]
+        imageMeta = cp.copy(imageMeta)
+        
+        [dataXP, dataXB] = image.getX2Data(imageMeta, self.images_path, self.cfg)
+        dataXW = image.getDataPairWiseStream(imageMeta, self.cfg)
         X = [dataXP, dataXB, dataXW]
         X = [X[i] for i in range(len(X)) if self.inputs[i]]
         y, _, _ = image.getYData(batchID, self.imagesMeta, self.GTMeta, self.cfg)

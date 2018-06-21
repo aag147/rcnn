@@ -125,37 +125,28 @@ def getXData(imagesMeta, imagesID, images_path, cfg, batchIdx):
 #    dataO = np.expand_dims(dataO, axis=1)
     return [dataX, dataH, dataO], IDs
 
-def getX2Data(imagesID, imagesMeta, data_path, cfg):
+def getX2Data(imageMeta, data_path, cfg):
     dataXP = []
     dataXB = []
-#    print(imagesID, imagesMeta)
-    for imageID in imagesID:
-#        sys.stdout.write('\r' + str(imageID))
-#        sys.stdout.flush()
-        imageMeta = imagesMeta[imageID]
-#        print(data_path + imageMeta['imageName'])
-        image = cv.imread(data_path + imageMeta['imageName'])
-        image = cv.cvtColor(image, cv.COLOR_BGR2RGB)
-        
-        imagesMeta[imageID]['flip'] = False
-        if cfg.flip_image and random.choice([True, False]):
-            imagesMeta[imageID]['flip'] = True
-        
-        for relID, rel in imageMeta['rels'].items():
-            relCrops = cropImageFromRel(rel['prsBB'], rel['objBB'], image)
-            relCrops = preprocessRel(relCrops['prsCrop'], relCrops['objCrop'], image, cfg)
-            
-            prsCrop = relCrops['prsCrop']
-            objCrop = relCrops['objCrop']
-            
-            if imageMeta['flip']:
-                prsCrop = np.fliplr(prsCrop).tolist()
-                objCrop = np.fliplr(objCrop).tolist()
-            
-            dataXP.append(prsCrop)
-            dataXB.append(objCrop)
-            
 
+    image = cv.imread(data_path + imageMeta['imageName'])
+    image = cv.cvtColor(image, cv.COLOR_BGR2RGB)
+    
+    imageMeta['flip'] = False
+    if cfg.flip_image and random.choice([True, False]):
+        imageMeta['shape'] = image.shape
+        imageMeta = utils.flipMeta(imageMeta)
+        image = np.fliplr(image)
+    
+    for relID, rel in imageMeta['rels'].items():
+        relCrops = cropImageFromRel(rel['prsBB'], rel['objBB'], image)
+        relCrops = preprocessRel(relCrops['prsCrop'], relCrops['objCrop'], image, cfg)
+        
+        prsCrop = relCrops['prsCrop']
+        objCrop = relCrops['objCrop']
+        
+        dataXP.append(prsCrop)
+        dataXB.append(objCrop)
             
     dataXP = np.array(dataXP)
     dataXB = np.array(dataXB)
@@ -298,15 +289,11 @@ def _getPairWiseStream(prsBB, objBB, cfg):
     
     return [prsWin, objWin]
 
-def getDataPairWiseStream(imagesID, imagesMeta, cfg):
+def getDataPairWiseStream(imageMeta, cfg):
     dataPar = []
-    for imageID in imagesID:
-        imageMeta = imagesMeta[imageID]
-        for relID, rel in imageMeta['rels'].items():
-            relWin = _getPairWiseStream(rel['prsBB'], rel['objBB'], cfg)
-            if imageMeta['flip']:
-                relWin = [np.fliplr(x) for x in relWin]
-            dataPar.append(relWin)
+    for relID, rel in imageMeta['rels'].items():
+        relWin = _getPairWiseStream(rel['prsBB'], rel['objBB'], cfg)
+        dataPar.append(relWin)
     
     dataPar = np.array(dataPar)
     dataPar = dataPar.transpose(cfg.par_order_of_dims)

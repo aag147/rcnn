@@ -244,6 +244,27 @@ def concatXData(XMain, XSub):
         newXData.append(np.append(XMain[i], XSub[i], axis=0))
     return newXData
 
+
+def flipBB(bb, shape):
+    width = bb['xmax'] - bb['xmin']    
+    newXMAX = shape[1] - bb['xmin']
+    newXMIN = newXMAX - width
+    
+    return {'xmin':newXMIN, 'xmax':newXMAX, 'ymin':bb['ymin'], 'ymax':bb['ymax']}
+
+def flipMeta(imageMeta):
+    rels = imageMeta['rels']
+    shape = imageMeta['shape']
+    for relID, rel in rels.items():
+        objBB = rel['objBB']
+        prsBB = rel['prsBB']
+        
+        rels[relID]['objBB'] = flipBB(objBB, shape)
+        rels[relID]['prsBB'] = flipBB(prsBB, shape)
+    imageMeta['rels'] = rels
+    imageMeta['flip'] = True
+    return imageMeta
+
 # %% Random background bbs
 def createBackgroundBBs(imageMeta, nb_bgs, data_path):
     if 0 == nb_bgs:
