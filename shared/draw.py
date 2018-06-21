@@ -354,7 +354,7 @@ def drawHOI(image, prsBB, objBB):
     personBB = drawProposalBox(prsBB)
     objectBB = drawProposalBox(objBB)
     spl[0].plot(personBB[0,:], personBB[1,:], c=c[0])
-    spl[0].plot(objectBB[0,:], objectBB[1,:], c=c[1])
+    spl[1].plot(objectBB[0,:], objectBB[1,:], c=c[1])
 
 def drawCropxResize(image, prsBB, objBB):
     colours = [['#FE5757', '#e44e4e'], ['#57FE57', '#4ee44e'], ['#5757FE', '#4e4ee4'], ['#AB57FE', '#994ee4']]
@@ -371,6 +371,14 @@ def drawCropxResize(image, prsBB, objBB):
     spl[0].plot(objectBB[0,:], objectBB[1,:], c=c[1])
 
 
+def drawHoICrops(prsCrop, objCrop, patterns):
+    f, spl = plt.subplots(2,2)
+    spl = spl.ravel()
+    
+    spl[0].imshow(prsCrop)
+    spl[1].imshow(objCrop)
+    spl[2].imshow(patterns[:,:,0])
+    spl[3].imshow(patterns[:,:,1])
 
 def drawImages(imagesID, imagesMeta, labels, path, imagesBadOnes = False):
     f, spl = plt.subplots(2,2)

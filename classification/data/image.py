@@ -136,11 +136,27 @@ def getX2Data(imagesID, imagesMeta, data_path, cfg):
 #        print(data_path + imageMeta['imageName'])
         image = cv.imread(data_path + imageMeta['imageName'])
         image = cv.cvtColor(image, cv.COLOR_BGR2RGB)
+        
+        imagesMeta[imageID]['flip'] = False
+        if cfg.flip_image and random.choice([True, False]):
+            imagesMeta[imageID]['flip'] = True
+        
         for relID, rel in imageMeta['rels'].items():
             relCrops = cropImageFromRel(rel['prsBB'], rel['objBB'], image)
             relCrops = preprocessRel(relCrops['prsCrop'], relCrops['objCrop'], image, cfg)
-            dataXP.append(relCrops['prsCrop'])
-            dataXB.append(relCrops['objCrop'])
+            
+            prsCrop = relCrops['prsCrop']
+            objCrop = relCrops['objCrop']
+            
+            if imageMeta['flip']:
+                prsCrop = np.fliplr(prsCrop).tolist()
+                objCrop = np.fliplr(objCrop).tolist()
+            
+            dataXP.append(prsCrop)
+            dataXB.append(objCrop)
+            
+
+            
     dataXP = np.array(dataXP)
     dataXB = np.array(dataXB)
     return [dataXP, dataXB]
@@ -288,7 +304,10 @@ def getDataPairWiseStream(imagesID, imagesMeta, cfg):
         imageMeta = imagesMeta[imageID]
         for relID, rel in imageMeta['rels'].items():
             relWin = _getPairWiseStream(rel['prsBB'], rel['objBB'], cfg)
+            if imageMeta['flip']:
+                relWin = [np.fliplr(x) for x in relWin]
             dataPar.append(relWin)
+    
     dataPar = np.array(dataPar)
     dataPar = dataPar.transpose(cfg.par_order_of_dims)
     return dataPar
