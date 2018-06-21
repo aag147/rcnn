@@ -46,7 +46,7 @@ class AllStages:
 
     def stageone(self, X, y, imageMeta, imageDims, include='all', do_regr = True):        
         #rpn prepare
-        img = X
+        [img] = X
                 
         #rpn predict
         if self.cfg.use_shared_cnn:
@@ -60,26 +60,24 @@ class AllStages:
         #rpn post
         proposals = helper.deltas2Anchors(rpn_props, rpn_deltas, self.cfg, imageDims, do_regr=do_regr)
         proposals = helper.non_max_suppression_fast(proposals, overlap_thresh = self.rpn_nms_thresh)
+        
+        proposals = np.expand_dims(proposals, axis=0)
         return proposals
     
-    def stagetwo(self, X, imageMeta, imageDims, include='all', img = None):
-        # det prepare
-        proposals = X
-        if self.mode == 'train':
-            rois, target_props, target_deltas, IouS = filters_detection.createTargets(proposals, imageMeta, imageDims, self.obj_mapping, self.cfg)
-            if include=='pre':
-                return rois, target_props, target_deltas
-        elif proposals.ndim != 3 and include != 'pre':
-            rois = np.expand_dims(proposals, axis=0)
+    def stagetwo_targets(self, proposals, imageMeta, imageDims):
+        rois, target_props, target_deltas, IouS = filters_detection.createTargets(proposals, imageMeta, imageDims, self.obj_mapping, self.cfg)
+        return rois, target_props, target_deltas
+    
+    def stagetwo(self, X, imageMeta, imageDims, include='all'):
+        if len(X)==2:
+            [self.shared_cnn, rois] = X
         else:
-            rois = proposals
+            [rois] = X
         
+        # det prepare
         rois_norm = filters_detection.prepareInputs(rois, imageDims)        
         
         # det predict
-        if img is not None:
-            self.shared_cnn = img
-        
         nb_det_rois = rois.shape[1]
         all_det_props = np.zeros((1,nb_det_rois, self.cfg.nb_object_classes))
         all_det_deltas = np.zeros((1,nb_det_rois, (self.cfg.nb_object_classes-1)*4))

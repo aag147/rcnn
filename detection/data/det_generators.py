@@ -15,7 +15,7 @@ import time
 
 class DataGenerator():
     
-    def __init__(self, imagesMeta, cfg, data_type='train', do_meta=True):
+    def __init__(self, imagesMeta, cfg, data_type='train', do_meta=True, mode='train'):
       'Initialization'
       self.data_type = data_type
       if data_type == 'train':
@@ -25,6 +25,7 @@ class DataGenerator():
       else:
           g_cfg = cfg.test_cfg
           
+      self.mode = mode
       self.gen_type = g_cfg.type
       self.batch_size = g_cfg.batch_size
       self.nb_batches = g_cfg.nb_batches
@@ -87,6 +88,9 @@ class DataGenerator():
             if Y_tmp is None:
                 raise "ups: no detections avaiable, path:%s" % self.rois_path
             pp_end = time.time()
+            
+            if self.mode == 'test':
+                return Y_tmp
             
 #            bboxes, target_labels, target_deltas = Y_tmp
             bboxes, target_labels, target_deltas = filters_detection.reduceData(Y_tmp, self.cfg)

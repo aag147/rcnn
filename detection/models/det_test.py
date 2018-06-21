@@ -25,7 +25,7 @@ def saveInputData(generator, Stages, cfg):
         
     for batchidx in range(generator.nb_batches):
     
-        X, y, imageMeta, imageDims, times = next(genIterator)   
+        img, y, imageMeta, imageDims, times = next(genIterator)   
         imageID = imageMeta['imageName'].split('.')[0]
         utils.update_progress_new(batchidx+1, generator.nb_batches, imageID)
         
@@ -34,10 +34,10 @@ def saveInputData(generator, Stages, cfg):
             continue
         
         #STAGE 1
-        proposals = Stages.stageone(X, y, imageMeta, imageDims)
+        proposals = Stages.stageone([img], y, imageMeta, imageDims)
         
         #STAGE 2
-        proposals, target_labels, target_deltas = Stages.stagetwo(proposals, imageMeta, imageDims, include='pre')
+        proposals, target_labels, target_deltas = Stages.stagetwo_targets([proposals], imageMeta, imageDims)
     
         #CONVERT
         if proposals is None:
@@ -52,15 +52,15 @@ def saveEvalData(generator, Stages, cfg, obj_mapping):
     evalData = []
     
     for i in range(generator.nb_batches):
-        [X,proposals], y, imageMeta, imageDims, times = next(genIterator)
+        [img,proposals], y, imageMeta, imageDims, times = next(genIterator)
         imageID = imageMeta['imageName'].split('.')[0]
         utils.update_progress_new(i+1, generator.nb_batches, imageID)
         
         #STAGE 1
-#        proposals = Stages.stageone(X, y, imageMeta, imageDims)
+#        proposals = Stages.stageone([img], y, imageMeta, imageDims)
         
         #STAGE 2
-        bboxes = Stages.stagetwo(proposals, imageMeta, imageDims, img=X)
+        bboxes = Stages.stagetwo([img,proposals], imageMeta, imageDims)
         if bboxes is None:
             continue
         

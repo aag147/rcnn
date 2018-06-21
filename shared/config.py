@@ -136,7 +136,7 @@ class basic_config:
        #model callbacks
        self.patience = 100
        self.modelnamekey = ''
-       self.epoch_splits = [100]
+       self.epoch_splits = [20,40,60,80]
        self.init_lr = None
        self.include_eval = True
        self.include_validation = False
@@ -275,8 +275,9 @@ class basic_config:
               self.dataset = arg
           if opt == '-e':
               # epoch learning rate split
-              assert arg.isdigit(), 'epoch learning split must be int'
-              self.epoch_splits = [int(arg)]
+              splits = arg.split(',')
+              splits = [int(x) for x in splits]
+              self.epoch_splits = splits
           if opt == '-f':
               # final epoch
               assert arg.isdigit(), 'final epoch must be int'
