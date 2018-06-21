@@ -14,7 +14,7 @@ class basic_config:
    class gen_config:
        def __init__(self):
            self.type = 'itr'
-           self.batch_size = 32
+           self.batch_size = 64
            self.nb_batches = None
            self.images_per_batch = 16
            self.shuffle = False
