@@ -57,7 +57,7 @@ class AllStages:
         proposals = helper.non_max_suppression_fast(proposals, overlap_thresh = self.cfg.rpn_nms_overlap_thresh_test)
         return proposals
     
-    def stagetwo(self, X, imageMeta, imageDims, include='all'):
+    def stagetwo(self, X, imageMeta, imageDims, include='all', img = None):
         # det prepare
         proposals = X
         if self.mode == 'test' and include != 'pre':
@@ -70,6 +70,9 @@ class AllStages:
         rois_norm = filters_detection.prepareInputs(rois, imageDims)        
         
         # det predict
+        if img is not None:
+            self.shared_cnn = img
+        
         nb_det_rois = rois.shape[1]
         all_det_props = np.zeros((1,nb_det_rois, self.cfg.nb_object_classes))
         all_det_deltas = np.zeros((1,nb_det_rois, (self.cfg.nb_object_classes-1)*4))

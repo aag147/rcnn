@@ -35,7 +35,7 @@ if True:
     genVal = DataGenerator(imagesMeta = data.valGTMeta, cfg=cfg, data_type='val', do_meta=True)
 #    genTest = DataGenerator(imagesMeta = data.testGTMeta, cfg=cfg, data_type='test', do_meta=True)
     
-    Models = methods.AllModels(cfg, mode='test', do_rpn=True, do_det=True, do_hoi=False)
+    Models = methods.AllModels(cfg, mode='test', do_rpn=False, do_det=True, do_hoi=False)
     Stages = stages.AllStages(cfg, Models, obj_mapping, hoi_mapping, mode='test')
 
 # Test data

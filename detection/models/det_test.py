@@ -60,7 +60,7 @@ def saveEvalData(generator, Stages, cfg, obj_mapping):
 #        proposals = Stages.stageone(X, y, imageMeta, imageDims)
         
         #STAGE 2
-        bboxes = Stages.stagetwo(proposals, imageMeta, imageDims)
+        bboxes = Stages.stagetwo(proposals, imageMeta, imageDims, img=X)
         if bboxes is None:
             continue
         
