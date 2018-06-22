@@ -11,7 +11,7 @@ import math as m
 import cv2 as cv
 import utils
 import image
-
+import copy as cp
 
 class DataGenerator():
     
@@ -73,8 +73,12 @@ class DataGenerator():
     
     def _generateBatchFromIDs(self, imageIdxs, batchIdx):
         imagesID = [self.dataID[idx] for idx in imageIdxs]
-        [dataXI, dataXH, dataXO], _ = image.getXData(self.imagesMeta, imagesID, self.images_path, self.cfg, batchIdx)
-        dataXW = image.getDataPairWiseStream(imagesID, self.imagesMeta, self.cfg)            
+        
+        imageMeta = self.imagesMeta[imageIdxs[0]]
+        imageMeta = cp.copy(imageMeta)
+        
+        [dataXI, dataXH, dataXO], _ = image.getXData(imageMeta, self.images_path, self.cfg, batchIdx)
+        dataXW = image.getDataPairWiseStream(imageMeta, self.cfg)            
         dataXW = np.expand_dims(dataXW, axis=0)
         y, _, _ = image.getYData(imagesID, self.imagesMeta, self.GTMeta, self.cfg)
         

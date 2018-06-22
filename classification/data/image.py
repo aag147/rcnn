@@ -78,52 +78,48 @@ def getBoxes(imageMeta, cfg):
 
 #%% X DATA
 ## Get model ready data ##
-def getXData(imagesMeta, imagesID, images_path, cfg, batchIdx):
+def getXData(imageMeta, images_path, cfg, batchIdx):
     dataX = []
     dataH = []
     dataO = []
-    IDs   = []
-    for imageID in imagesID:
-        imageMeta = imagesMeta[imageID]
-        img = cv.imread(images_path + imageMeta['imageName'])
+    img = cv.imread(images_path + imageMeta['imageName'])
 #        img = cv.cvtColor(img, cv.COLOR_BGR2RGB)
-        assert(img is not None)
-        assert(img.shape[0] > 10)
-        assert(img.shape[1] > 10)
-        assert(img.shape[2] == 3)
-        
-        imgRedux, scale = preprocessImage(img, cfg)
-        tmpH = []
-        tmpO = []
-        for relID, rel in imageMeta['rels'].items():
-            h, o = getDataFromRel(rel['prsBB'], rel['objBB'], scale, [0,0], imgRedux.shape, cfg)
-            tmpH.append([batchIdx] + h)
-            tmpO.append([batchIdx] + o)
-        tmpH = np.array(tmpH)
-        tmpO = np.array(tmpO)
-        if len(tmpH)>0 and cfg.flip_image and random.choice([True, False]):
-            imgRedux = np.fliplr(imgRedux)
-            tmp = cp.copy(tmpH[:,2])
-            tmpH[:,2] = 1.0 -  tmpH[:,4]
-            tmpH[:,4] = 1.0 -  tmp
-            tmp = cp.copy(tmpO[:,2])
-            tmpO[:,2] = 1.0 -  tmpO[:,4]
-            tmpO[:,4] = 1.0 -  tmp
-         
-        dataX.append(imgRedux)
-        dataH.append(tmpH)
-        dataO.append(tmpO)
-        IDs.append(imageID)
-        batchIdx += 1
+    assert(img is not None)
+    assert(img.shape[0] > 10)
+    assert(img.shape[1] > 10)
+    assert(img.shape[2] == 3)
+    
+    imageMeta['flip'] = False
+    if cfg.flip_image and random.choice([True, False]):
+        imageMeta['flip'] = True
+        imageMeta['shape'] = img.shape
+        imageMeta = utils.flipMeta(imageMeta)
+        img = np.fliplr(img)
+    
+    
+    imgRedux, scale = preprocessImage(img, cfg)
+    
+    tmpH = []
+    tmpO = []
+    for relID, rel in imageMeta['rels'].items():
+        h, o = getDataFromRel(rel['prsBB'], rel['objBB'], scale, [0,0], imgRedux.shape, cfg)
+        tmpH.append([batchIdx] + h)
+        tmpO.append([batchIdx] + o)
+    tmpH = np.array(tmpH)
+    tmpO = np.array(tmpO)
+     
+    dataX.append(imgRedux)
+    dataH.append(tmpH)
+    dataO.append(tmpO)
+
     dataX = np.array(dataX)
     dataH = np.array(dataH)
     dataO = np.array(dataO)
 #    print(dataX.shape, dataH.shape, dataO.shape)
-    IDs = np.array(IDs)
     
 #    dataH = np.expand_dims(dataH, axis=1)
 #    dataO = np.expand_dims(dataO, axis=1)
-    return [dataX, dataH, dataO], IDs
+    return [dataX, dataH, dataO], None
 
 def getX2Data(imageMeta, data_path, cfg):
     dataXP = []
