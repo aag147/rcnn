@@ -379,6 +379,71 @@ def drawHoICrops(prsCrop, objCrop, patterns):
     spl[1].imshow(objCrop)
     spl[2].imshow(patterns[:,:,0])
     spl[3].imshow(patterns[:,:,1])
+    
+    
+def drawObjExample(imageMeta, images_path):
+    colours = ['#FEc75c', '#123456','#456789', '#abcdef','#fedcba', '#987654','#654321', '#994ee4']
+    
+    img = cv.imread(images_path + imageMeta['imageName'])
+    assert img is not None
+    img = cv.cvtColor(img, cv.COLOR_BGR2RGB)
+    
+    objs = []
+    names = []
+    for obj in imageMeta['objects']:
+        label = obj['label']
+        objBB = drawBoundingBox(obj)
+        objs.append(objBB)
+        names.append(label)
+        
+    f, spl = plt.subplots(1,1)
+    spl.axis('off')
+    spl.imshow(img)
+    for j, obj in enumerate(objs):
+        spl.plot(obj[0,:], obj[1,:], c=colours[j])
+#        f.text(0.55,0.95,names[j], ha="center", va="bottom", size="medium",color=colours[j])
+        print(names[j], colours[j])
+
+def drawHoIExample(imageMeta, images_path, hoi_mapping):    
+    img = cv.imread(images_path + imageMeta['imageName'])
+    assert img is not None
+    img = cv.cvtColor(img, cv.COLOR_BGR2RGB)
+    
+    all_objs = imageMeta['objects']
+    
+    objs = []
+    prss  = []
+    lines = []
+    names = []
+    for rel in imageMeta['rels']:
+        label = hoi_mapping[rel[2]]
+        obj = all_objs[rel[0]]
+        prs = all_objs[rel[1]]
+        objBB = drawBoundingBox(obj)
+        prsBB = drawBoundingBox(prs)
+        
+        prsC = [prs['ymin']+(prs['ymax']-prs['ymin'])/2, prs['xmin']+(prs['xmax']-prs['xmin'])/2]
+        objC = [obj['ymin']+(obj['ymax']-obj['ymin'])/2, obj['xmin']+(obj['xmax']-obj['xmin'])/2]
+        line = np.array([prsC, objC])
+        objs.append(objBB)
+        prss.append(prsBB)
+        lines.append(line)
+        names.append(label)
+        
+    for j, _ in enumerate(imageMeta['rels']):
+        f, spl = plt.subplots(1,1)
+        obj = objs[j]
+        prs = prss[j]
+        line = lines[j]
+        spl.axis('off')
+        spl.imshow(img)
+        spl.plot(obj[0,:], obj[1,:], c='green')
+        spl.plot(prs[0,:], prs[1,:], c='blue')
+        spl.plot(line[:,1], line[:,0], c='red')
+        spl.scatter(line[:,1], line[:,0], c='red', s=5)
+        print(names[j])
+        if j == 2:
+            break
 
 def drawImages(imagesID, imagesMeta, labels, path, imagesBadOnes = False):
     f, spl = plt.subplots(2,2)

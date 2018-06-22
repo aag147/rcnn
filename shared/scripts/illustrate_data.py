@@ -20,17 +20,29 @@ import detection.data.extract_data as extract_data
 import draw
 import utils
 
-if True:
+if False:
     # Load data
 #    data = extract_data.data(False)
     data = extract_data.object_data(False)
     cfg = data.cfg
     obj_mapping = data.class_mapping
-    hoi_mapping = data.labels
+    hoi_mapping = data.hoi_labels
 
 
 trainStats = data.getLabelStats(dataset='train')
 valStats = data.getLabelStats(dataset='val')
+images_path = cfg.data_path + 'images/train/'
+
+imagesMeta = data.trainGTMeta
+imageIDs = list(imagesMeta.keys())
+imageID  = imageIDs[1300]
+imageMeta = imagesMeta[imageID]
+
+#draw.drawObjExample(imageMeta, images_path)
+
+draw.drawHoIExample(imageMeta, images_path, hoi_mapping)
+
+
 
 #trainStats, trainCounts = utils.getLabelStats(data.trainGTMeta, hoi_mapping)
 #valStats, valCounts = utils.getLabelStats(data.testGTMeta, hoi_mapping)

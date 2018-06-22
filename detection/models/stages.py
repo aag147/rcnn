@@ -64,7 +64,8 @@ class AllStages:
         proposals = np.expand_dims(proposals, axis=0)
         return proposals
     
-    def stagetwo_targets(self, proposals, imageMeta, imageDims):
+    def stagetwo_targets(self, X, imageMeta, imageDims):
+        proposals = X[0,::]
         rois, target_props, target_deltas, IouS = filters_detection.createTargets(proposals, imageMeta, imageDims, self.obj_mapping, self.cfg)
         return rois, target_props, target_deltas
     
