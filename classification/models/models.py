@@ -184,7 +184,7 @@ def classifier(base_layers, input_rois, cfg, nb_classes=21):
 ###############
 ##### FAST ####
 ###############
-def fastPairWiseStream(input_shape, weights_path=None, cfg, nb_classes=1000, include = 'all'):
+def fastPairWiseStream(input_shape, weights_path=None, cfg=None, nb_classes=1000, include = 'all'):
     inputs = Input(shape=input_shape)
     model = Sequential()
     conv_1 = TimeDistributed(Conv2D(64, (5, 5), activation='relu', kernel_initializer=RandomNormal(stddev=0.01), kernel_regularizer= l2(cfg.weight_decay), bias_regularizer = l2(cfg.weight_decay)))(inputs)
