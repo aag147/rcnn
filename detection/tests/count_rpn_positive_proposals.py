@@ -39,7 +39,8 @@ for i in range(genTrain.nb_batches):
     nb_pos = np.sum(deltas) / 4
     counts[i] = nb_pos
     
-    utils.update_progress_new(i+1, genTrain.nb_batches, imageID + ': ' + str(nb_pos))
+    if i % 1000:
+        utils.update_progress_new(i+1, genTrain.nb_batches, imageID + ': ' + str(nb_pos))
     
     
 nb_max = np.max(counts)
