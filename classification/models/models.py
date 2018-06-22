@@ -184,18 +184,18 @@ def classifier(base_layers, input_rois, cfg, nb_classes=21):
 ###############
 ##### FAST ####
 ###############
-def fastPairWiseStream(input_shape, weights_path=None, nb_classes=1000, include = 'all'):
+def fastPairWiseStream(input_shape, weights_path=None, cfg, nb_classes=1000, include = 'all'):
     inputs = Input(shape=input_shape)
     model = Sequential()
-    conv_1 = TimeDistributed(Conv2D(64, (5, 5), activation='relu', kernel_initializer=RandomNormal(stddev=0.01)))(inputs)
+    conv_1 = TimeDistributed(Conv2D(64, (5, 5), activation='relu', kernel_initializer=RandomNormal(stddev=0.01), kernel_regularizer= l2(cfg.weight_decay), bias_regularizer = l2(cfg.weight_decay)))(inputs)
     conv_1 = TimeDistributed(MaxPooling2D((2,2), strides=(2,2)))(conv_1)
     
-    conv_2 = TimeDistributed(Conv2D(32, (5, 5), activation='relu', kernel_initializer=RandomNormal(stddev=0.01)))(conv_1)
+    conv_2 = TimeDistributed(Conv2D(32, (5, 5), activation='relu', kernel_initializer=RandomNormal(stddev=0.01), kernel_regularizer= l2(cfg.weight_decay), bias_regularizer = l2(cfg.weight_decay)))(conv_1)
     conv_2 = TimeDistributed(MaxPooling2D((2,2), strides=(2,2)))(conv_2)
     
     fc = TimeDistributed(Flatten())(conv_2)
-    fc = TimeDistributed(Dense(256, activation='relu', kernel_initializer=RandomNormal(stddev=0.01)))(fc)
-    fc = TimeDistributed(Dense(nb_classes, kernel_initializer=RandomNormal(stddev=0.01)))(fc)
+    fc = TimeDistributed(Dense(256, activation='relu', kernel_initializer=RandomNormal(stddev=0.01), kernel_regularizer= l2(cfg.weight_decay), bias_regularizer = l2(cfg.weight_decay)))(fc)
+    fc = TimeDistributed(Dense(nb_classes, kernel_initializer=RandomNormal(stddev=0.01), kernel_regularizer= l2(cfg.weight_decay), bias_regularizer = l2(cfg.weight_decay)))(fc)
     
     model = Model(inputs=inputs, outputs=fc)
     
@@ -208,15 +208,15 @@ def fastClassifier(base_layers, input_rois, cfg, nb_classes=21):
     
     dense_1 = TimeDistributed(Flatten())(out_roi_pool)
     dense_1 = TimeDistributed(
-        Dense(4096, activation='relu', kernel_initializer=RandomNormal(stddev=0.01))
+        Dense(4096, activation='relu', kernel_initializer=RandomNormal(stddev=0.01), kernel_regularizer= l2(cfg.weight_decay), bias_regularizer = l2(cfg.weight_decay))
     )(dense_1)
     dense_1 = Dropout(0.5)(dense_1)
     dense_2 = TimeDistributed(
-        Dense(4096, activation='relu', kernel_initializer=RandomNormal(stddev=0.01))
+        Dense(4096, activation='relu', kernel_initializer=RandomNormal(stddev=0.01), kernel_regularizer= l2(cfg.weight_decay), bias_regularizer = l2(cfg.weight_decay))
     )(dense_1)
     dense_2 = Dropout(0.5)(dense_2)
     
-    out_class = TimeDistributed(Dense(nb_classes, kernel_initializer=RandomNormal(stddev=0.01)))(dense_2)
+    out_class = TimeDistributed(Dense(nb_classes, kernel_initializer=RandomNormal(stddev=0.01), kernel_regularizer= l2(cfg.weight_decay), bias_regularizer = l2(cfg.weight_decay)))(dense_2)
 
     return out_class
 

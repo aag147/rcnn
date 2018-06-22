@@ -104,12 +104,12 @@ def Fast_HO_RCNN(cfg):
     else:
         print('Use Alexnet backbone')
         weights = AlexNet_Weights_notop(cfg) if cfg.pretrained_weights == True else False
-        modelShr = AlexNet_tf((None, None, cfg.cdim), weights, cfg.nb_classes, include='basic')
+        modelShr = AlexNet_tf((None, None, cfg.cdim), weights, cfg.nb_classes, cfg=cfg, include='basic')
     prsRoI   = input_rois()
     objRoI   = input_rois()
     modelPrs = fastClassifier(modelShr.output, prsRoI, cfg, nb_classes=cfg.nb_classes)
     modelObj = fastClassifier(modelShr.output, objRoI, cfg, nb_classes=cfg.nb_classes)
-    modelPar = fastPairWiseStream(input_shape=(None,64,64,2), nb_classes = cfg.nb_classes, include='fc')      
+    modelPar = fastPairWiseStream(input_shape=(None,64,64,2), cfg=cfg, nb_classes = cfg.nb_classes, include='fc')      
     
     if cfg.backbone == 'vgg':
         # Only train from conv3_1
