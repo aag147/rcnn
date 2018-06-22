@@ -33,7 +33,7 @@ genIter = genTrain.begin()
 counts = np.zeros((genTrain.nb_batches))
 for i in range(genTrain.nb_batches):
     X, [Y1,Y2], imageMeta, imageDims, times = next(genIter)
-    imageID = imageMeta['imageID']
+    imageID = imageMeta['imageName'].split('.')[0]
 
     deltas = Y2[:,:,:,:48]
     nb_pos = np.sum(deltas) / 4
