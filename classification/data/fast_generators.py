@@ -74,7 +74,7 @@ class DataGenerator():
     def _generateBatchFromIDs(self, imageIdxs, batchIdx):
         imagesID = [self.dataID[idx] for idx in imageIdxs]
         
-        imageMeta = self.imagesMeta[imageIdxs[0]]
+        imageMeta = self.imagesMeta[imagesID[0]]
         imageMeta = cp.copy(imageMeta)
         
         [dataXI, dataXH, dataXO], _ = image.getXData(imageMeta, self.images_path, self.cfg, batchIdx)
