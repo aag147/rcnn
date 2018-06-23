@@ -71,22 +71,20 @@ def convertData(Y, cfg):
     return rpnMeta
 
 
-def convertResults(bboxes, imageMeta, shape):
+def convertResults(bboxes, imageMeta, scale, rpn_stride):
     bboxes = np.copy(bboxes)
     imageID = int(imageMeta['imageName'].split('.')[0])
     results = []
-    print('newnewnew', shape)
+
     for bbox in bboxes:
-#        prop = bbox[4]
-        prop = 0.0
+        prop = bbox[4]
+#        prop = 0.0
         coords = bbox[:4]
-        print(coords)
-        xmin = ((coords[0]) * shape[1])
-        ymin = ((coords[1]) * shape[0])
-        width = ((coords[2]) *  shape[1])
-        height = ((coords[3]) * shape[0])
+        xmin = ((coords[0]) * rpn_stride / scale[0])
+        ymin = ((coords[1]) * rpn_stride / scale[1])
+        width = ((coords[2]) *  rpn_stride / scale[0])
+        height = ((coords[3]) * rpn_stride / scale[1])
         coords = [xmin, ymin, xmin+width, ymin+height]
-        print(coords)
         coords = [round(float(x),2) for x in coords]
         
         res = {'image_id': imageID, 'bbox': coords, 'score': round(float(prop),4)}

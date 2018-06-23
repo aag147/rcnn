@@ -55,8 +55,7 @@ def saveEvalData(generator, Stages, cfg):
         proposals = proposals[0,:,1:]
         
         #CONVERT
-        evalData += filters_rpn.convertResults(proposals, imageMeta, imageDims['shape'])
-        break
+        evalData += filters_rpn.convertResults(proposals, imageMeta, imageDims['scale'], cfg.rpn_stride)
         
     return evalData
 

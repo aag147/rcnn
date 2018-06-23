@@ -30,14 +30,15 @@ def saveInputData(generator, Stages, cfg):
         utils.update_progress_new(batchidx+1, generator.nb_batches, imageID)
         
         path = save_path + imageID + '.pkl'
-        if os.path.exists(path):
-            continue
+#        if os.path.exists(path):
+#            continue
         
         #STAGE 1
         proposals = Stages.stageone([img], y, imageMeta, imageDims)
         
         #STAGE 2
         proposals, target_labels, target_deltas = Stages.stagetwo_targets(proposals, imageMeta, imageDims)
+        print(proposals)
     
         #CONVERT
         if proposals is None:
