@@ -16,9 +16,9 @@ import copy as cp
 
 class DataGenerator():
     
-    def __init__(self, imagesMeta, GTMeta, cfg, data_type='train'):
+    def __init__(self, imagesMeta, GTMeta, cfg, data_type='train', do_meta=False):
       'Initialization'
-      self.mean  = [103.939, 116.779, 123.68]
+      self.do_meta = do_meta
       self.data_type = data_type
       if data_type == 'train':
           g_cfg = cfg.train_cfg
@@ -74,12 +74,16 @@ class DataGenerator():
         imageMeta = self.imagesMeta[batchID[0]]
         imageMeta = cp.copy(imageMeta)
         
-        [dataXP, dataXB] = image.getX2Data(imageMeta, self.images_path, self.cfg)
+        [dataXP, dataXB], img = image.getX2Data(imageMeta, self.images_path, self.cfg)
         dataXW = image.getDataPairWiseStream(imageMeta, self.cfg)
         X = [dataXP, dataXB, dataXW]
         X = [X[i] for i in range(len(X)) if self.inputs[i]]
         y, _, _ = image.getYData(batchID, self.imagesMeta, self.GTMeta, self.cfg)
         y = y[0]
+        
+        if self.do_meta:
+            return X, y, imageMeta, img
+        
         return X, y
     
     def _generateBatchFromBGs(self, imageMeta, bbs):
@@ -138,11 +142,14 @@ class DataGenerator():
           hoiinimageidx = 0
           # Generate batches
           for i in range(self.nb_batches):
-              X = []; y = []
+              X = []; y = []; imgs = []
               imageIdxs = []
               for imageIdx in range(imageIdx-1, self.nb_images):
                   imageIdxs.append(imageIdx)
-                  imageX, imageY = self._generateBatchFromIDs([imageIdx])
+                  if self.do_meta:
+                      imageX, imageY, imageMeta, img = self._generateBatchFromIDs([imageIdx])    
+                  else:
+                      imageX, imageY = self._generateBatchFromIDs([imageIdx])
                   s_idx = 0; f_idx = len(imageY)
                   if hoiinimageidx > 0:
                       s_idx = hoiinimageidx
@@ -160,10 +167,15 @@ class DataGenerator():
                   imageXCut = utils.spliceXData(imageX, s_idx, f_idx)
                   X = utils.concatXData(X, imageXCut)
                   y.extend(imageY[s_idx:f_idx, :])
+                  imgs.append(img)
 #                  y.extend([self.dataID[imageIdx] for i in range(s_idx, f_idx)])
                   if len(y) == self.batch_size:
                       break
               imageIdx += 1
               y = np.array(y)
-              yield X, y
+              
+              if self.do_meta:
+                  yield X, y, imageMeta, imgs[0]
+              else:
+                  yield X, y
     

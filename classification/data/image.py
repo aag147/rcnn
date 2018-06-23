@@ -126,7 +126,7 @@ def getX2Data(imageMeta, data_path, cfg):
     dataXB = []
 
     image = cv.imread(data_path + imageMeta['imageName'])
-    image = cv.cvtColor(image, cv.COLOR_BGR2RGB)
+#    image = cv.cvtColor(image, cv.COLOR_BGR2RGB)
     
     imageMeta['flip'] = False
     if cfg.flip_image and random.choice([True, False]):
@@ -134,6 +134,7 @@ def getX2Data(imageMeta, data_path, cfg):
         imageMeta['shape'] = image.shape
         imageMeta = utils.flipMeta(imageMeta)
         image = np.fliplr(image)
+
     
     for relID, rel in imageMeta['rels'].items():
         relCrops = cropImageFromRel(rel['prsBB'], rel['objBB'], image)
@@ -147,7 +148,7 @@ def getX2Data(imageMeta, data_path, cfg):
             
     dataXP = np.array(dataXP)
     dataXB = np.array(dataXB)
-    return [dataXP, dataXB]
+    return [dataXP, dataXB], image
 
 #%% Fast rcnn
 ## Resize and normalize image ##

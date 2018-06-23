@@ -55,7 +55,7 @@ images_path = images_path + data_type + '/'
 j = 0
 for i in range(1):
     if True:
-#        X, y, imageMeta, imageDims, times = next(trainIterator)
+        X, y, imageMeta, imageDims, times = next(trainIterator)
 #        imageMeta = data.valGTMeta['176847']
 #        imageMeta = data.trainGTMeta['463564']
         X, imageDims = filters_rpn.prepareInputs(imageMeta, images_path, cfg)
@@ -69,7 +69,9 @@ for i in range(1):
     all_pred_anchors = helper.deltas2Anchors(Y1, Y2, cfg, imageDims, do_regr=False)
     print('positives', np.sum(Y1>0.5))
     print(all_pred_anchors.shape)
-    draw.drawPositiveAnchors((X[0]+1.0)/2.0, all_pred_anchors, cfg)
+    img = np.copy(X[0]) + cfg.PIXEL_MEANS
+    img = img.astype(np.uint8)
+    draw.drawPositiveAnchors(img, all_pred_anchors, cfg)
     
     
 #    t_start = time.time()
@@ -79,7 +81,7 @@ for i in range(1):
 #    print('positives', np.sum(pred_anchors[:,4]>0.5))
 #    print(pred_anchors.shape)
 #    draw.drawAnchors((X[0]+1.0)/2.0, pred_anchors, cfg)
-    draw.drawGTBoxes((X[0]+1.0)/2.0, imageMeta, imageDims)
+    draw.drawGTBoxes(img, imageMeta, imageDims)
     
 #print(f-s)
 

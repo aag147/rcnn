@@ -401,6 +401,9 @@ def drawObjExample(imageMeta, images_path):
         spl.plot(obj[0,:], obj[1,:], c=colours[j])
 #        f.text(0.55,0.95,names[j], ha="center", va="bottom", size="medium",color=colours[j])
         print(names[j], colours[j])
+        
+        
+
 
 def drawHoIExample(imageMeta, images_path, hoi_mapping):    
     img = cv.imread(images_path + imageMeta['imageName'])

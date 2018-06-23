@@ -125,7 +125,10 @@ def deltas2Anchors(props, deltas, cfg, imageDims, do_regr=True):
     
     assert props.shape[0] == 1
     shape = imageDims['redux_shape']
-    deltas /= cfg.rpn_regr_std
+    
+    for i in range(cfg.nb_anchors):
+        s_idx = 4*i; f_idx = s_idx+4
+        deltas[:,:,:,s_idx:f_idx] *= cfg.rpn_regr_std
     
     
     anc_idx = 0
