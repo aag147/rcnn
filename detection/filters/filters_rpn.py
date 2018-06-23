@@ -77,8 +77,8 @@ def convertResults(bboxes, imageMeta, scale, rpn_stride):
     results = []
 
     for bbox in bboxes:
-        prop = bbox[4]
-#        prop = 0.0
+#        prop = bbox[4]
+        prop = 0.0
         coords = bbox[:4]
         xmin = ((coords[0]) * rpn_stride / scale[0])
         ymin = ((coords[1]) * rpn_stride / scale[1])
