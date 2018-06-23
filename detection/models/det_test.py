@@ -38,14 +38,14 @@ def saveInputData(generator, Stages, cfg):
         
         #STAGE 2
         proposals, target_labels, target_deltas = Stages.stagetwo_targets(proposals, imageMeta, imageDims)
-        print(proposals)
     
         #CONVERT
         if proposals is None:
             detMeta = None
         else:
             detMeta = filters_detection.convertData([proposals, target_labels, target_deltas], cfg)
-                
+        print(detMeta)
+            
         utils.save_obj(detMeta, save_path + imageID)
 
 def saveEvalData(generator, Stages, cfg, obj_mapping):
