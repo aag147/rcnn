@@ -262,7 +262,6 @@ def drawOverlapAnchors(img, anchors, imageMeta, imageDims, cfg):
     bboxes = []
     gta = helper.normalizeGTboxes(imageMeta['objects'], scale=imageDims['scale'], rpn_stride=cfg.rpn_stride)
     
-    print(gta)
     for anchor in anchors:
         (xmin, ymin, width, height) = anchor[0:4]       
         rt = {'xmin': xmin, 'ymin': ymin, 'xmax': xmin+width, 'ymax': ymin+height}
@@ -274,7 +273,6 @@ def drawOverlapAnchors(img, anchors, imageMeta, imageDims, cfg):
                 best_iou = curr_iou
         if best_iou>=0.5:
             bb = {key:x*cfg.rpn_stride for key,x in rt.items()}
-            print('rt', bb)
             bbox = drawBoundingBox(bb)
             spl.plot(bbox[0,:], bbox[1,:])
             bboxes.append(bb)

@@ -230,6 +230,9 @@ def computeRPNAR(COCO_mapping, imagesMeta, class_mapping, cfg):
     
     for imageID, imageMeta in imagesMeta.items():
         gt_bboxes = imageMeta['objects']
+        if len(gt_bboxes)==0:
+            continue
+        
         gt_bboxes = transformARGTs(gt_bboxes, class_mapping)
         gt_bboxes[:,4] *= 0 #turn label into flag column
         nb = gt_bboxes.shape[0]

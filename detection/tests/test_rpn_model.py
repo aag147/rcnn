@@ -22,7 +22,7 @@ import methods,\
 import utils
 import draw
 
-if True:
+if False:
     # Load data
     data = extract_data.object_data()
     cfg = data.cfg
@@ -45,7 +45,7 @@ for i in range(1):
     imageID = imageMeta['imageName'].split('.')[0]
     
     #STAGE 1
-    proposals = Stages.stageone(X, y, imageMeta, imageDims)
+    proposals = Stages.stageone([X], y, imageMeta, imageDims)
     
-    draw.drawGTBoxes((X[0]+1.0)/2.0, imageMeta, imageDims)
-    draw.drawOverlapAnchors((X[0]+1.0)/2.0, proposals, imageMeta, imageDims, cfg)
+    gtBox = draw.drawGTBoxes((X[0]+1.0)/2.0, imageMeta, imageDims)
+    posAnc = draw.drawOverlapAnchors((X[0]+1.0)/2.0, proposals[0], imageMeta, imageDims, cfg)
