@@ -231,8 +231,7 @@ def rcnn_prep_im_for_blob(im, cfg):
   """Mean subtract and scale an image for use in a blob."""
   im = im.astype(np.float32, copy=False)
   im -= cfg.PIXEL_MEANS
-  im_redux_shape = cfg.shape
-  im = cv.resize(im, im_redux_shape[0], im_redux_shape[1],
+  im = cv.resize(im, cfg.shape,
                   interpolation=cv.INTER_LINEAR)
   return im
 
