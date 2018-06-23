@@ -23,7 +23,8 @@ def prepareInputs(imageMeta, images_path, cfg):
     assert(img.shape[0] > 10)
     assert(img.shape[1] > 10)
     assert(img.shape[2] == 3)
-    imgRedux, scale = helper.preprocessImage(img, cfg)
+    imgRedux, scale = helper.prep_im_for_blob(img, cfg.PIXEL_MEANS, cfg.mindim, cfg.maxdim)
+#    imgRedux, scale = helper.preprocessImage(img, cfg)
     output_shape = [imgRedux.shape[0] / cfg.rpn_stride, imgRedux.shape[1] / cfg.rpn_stride]
     imgDims = {'shape': img.shape, 'redux_shape':imgRedux.shape, 'output_shape':output_shape, 'scale':scale}
     imgRedux = np.expand_dims(imgRedux, axis=0)
@@ -128,7 +129,9 @@ def reduceData(Y, cfg):
     # y_is_box_valid: should box be included in loss - 0/1
     # y_rpn_regr: regression deltas - x,y,w,h
     y_rpn_cls = np.concatenate([y_is_box_valid, y_rpn_overlap], axis=3)
-    y_rpn_regr *= cfg.rpn_regr_std
+    for i in range(cfg.nb_anchors):
+        s_idx = 4*i; f_idx = s_idx+4
+        y_rpn_regr[:,:,:,s_idx:f_idx] *= cfg.rpn_regr_std
     y_rpn_regr = np.concatenate([np.repeat(y_rpn_overlap, 4, axis=3), y_rpn_regr], axis=3)
     return [np.copy(y_rpn_cls), np.copy(y_rpn_regr)]
 

@@ -9,6 +9,7 @@ import utils
 
 import os
 import sys, getopt
+import numpy as np
 
 class basic_config:
    class gen_config:
@@ -121,6 +122,7 @@ class basic_config:
        self.order_of_dims = [0,1,2]
        self.par_order_of_dims = [0,2,3,1]
        
+       
        #model
        self.task = None
        self.pretrained_weights = True
@@ -202,12 +204,15 @@ class basic_config:
        self.test_cfg.batch_size = 1
        
        self.rpn_regr_std = 4.0
+       self.rpn_regr_std = [0.1, 0.1, 0.2, 0.2]
        self.det_regr_std = [8.0, 8.0, 4.0, 4.0]
+       
+       self.PIXEL_MEANS = np.array([[[102.9801, 115.9465, 122.7717]]])
        
        #rpn filters
        self.nb_shared_layers = 17
        self.rpn_stride = 16
-       self.nb_rpn_proposals = 128
+       self.nb_rpn_proposals = 256
         
        self.anchor_sizes = [64, 128, 256, 512]
        self.anchor_sizes = [0.5, 2, 8, 32]

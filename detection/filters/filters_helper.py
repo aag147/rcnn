@@ -308,7 +308,7 @@ def apply_regr_det(rois, deltas):
 
 
 
-def non_max_suppression_fast(boxes, overlap_thresh=0.5, max_boxes=300):
+def non_max_suppression_fast(boxes, overlap_thresh=0.5, max_boxes=300, max_boxes_pre=12000):
     # I changed this method with boxes already contains probabilities, so don't need prob send in this method
     # TODO: Caution!!! now the boxes actually is [x1, y1, x2, y2, prob] format!!!! with prob built in
 
@@ -335,6 +335,7 @@ def non_max_suppression_fast(boxes, overlap_thresh=0.5, max_boxes=300):
     area = (x2 - x1) * (y2 - y1)
     # sorted by boxes last element which is prob
     indexes = np.argsort([i[-1] for i in boxes])
+    indexes = indexes[:max_boxes_pre]
 
     while len(indexes) > 0:
         last = len(indexes) - 1
@@ -586,6 +587,22 @@ def normalizeGTboxes(gtboxes, scale=[1,1], rpn_stride=1, shape=[1,1], roundoff=F
         gtnormboxes.append({'xmin':xmin, 'xmax':xmax, 'ymin':ymin, 'ymax':ymax})    
     return gtnormboxes
 
+
+def prep_im_for_blob(im, pixel_means, target_size, max_size):
+  """Mean subtract and scale an image for use in a blob."""
+  im = im.astype(np.float32, copy=False)
+  im -= pixel_means
+  im_shape = im.shape
+  im_size_min = np.min(im_shape[0:2])
+  im_size_max = np.max(im_shape[0:2])
+  im_scale = float(target_size) / float(im_size_min)
+  # Prevent the biggest axis from being more than MAX_SIZE
+  if np.round(im_scale * im_size_max) > max_size:
+    im_scale = float(max_size) / float(im_size_max)
+  im = cv.resize(im, None, None, fx=im_scale, fy=im_scale,
+                  interpolation=cv.INTER_LINEAR)
+
+  return im, [im_scale, im_scale]
 
 
 
