@@ -19,7 +19,7 @@ import os
 
 def saveInputData(imagesMeta, data_type, cfg):
     load_path = cfg.data_path +'images/' + data_type + '/'
-    save_path = cfg.my_save_path + data_type + 'new/'
+    save_path = cfg.my_save_path + data_type + 'newer/'
     
     if not os.path.exists(save_path):
         os.makedirs(save_path)

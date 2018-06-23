@@ -71,7 +71,6 @@ class DataGenerator():
     def _generateBatchFromIDs(self, imageIdxs):
         imageIDs = [self.dataID[idx] for idx in imageIdxs]
         for imageID in imageIDs:
-            print('imageID', imageID)
             imageMeta = self.imagesMeta[imageID]
             imageMeta['id'] = imageID
             
