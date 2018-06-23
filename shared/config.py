@@ -142,7 +142,7 @@ class basic_config:
        self.init_lr = None
        self.include_eval = True
        self.include_validation = False
-       self.checkpoint_interval = 10
+       self.checkpoint_interval = 5
        
        # model training
        self.epoch_begin = None
