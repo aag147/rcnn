@@ -547,6 +547,21 @@ def normalizeRoIs(rois, imageDims):
 
 
        
+def normalizeGTboxes(gtboxes, scale=[1,1], rpn_stride=1, shape=[1,1], roundoff=False):
+    gtnormboxes = []
+    for relID, bbox in enumerate(gtboxes):
+#        print(bbox)
+        # get the GT box coordinates, and resize to account for image resizing
+        xmin = ((bbox['xmin']) * scale[0] / rpn_stride) / shape[0]
+        xmax = ((bbox['xmax']-0.01) * scale[0] / rpn_stride) / shape[0]
+        ymin = ((bbox['ymin']) * scale[1] / rpn_stride) / shape[1]
+        ymax = ((bbox['ymax']-0.01) * scale[1] / rpn_stride) / shape[1]
+        if roundoff:
+            xmin=int(round(xmin)); xmax=int(round(xmax))
+            ymin=int(round(ymin)); ymax=int(round(ymax))
+        gtnormboxes.append({'xmin':xmin, 'xmax':xmax, 'ymin':ymin, 'ymax':ymax})    
+    return gtnormboxes
+       
 def preprocessImage(img, cfg):
     img = img.astype(np.float32, copy=False)
     img = cv.cvtColor(img, cv.COLOR_BGR2RGB)
@@ -570,22 +585,6 @@ def unpreprocessImage(img, cfg):
     img /= 2.0
     
     return img
-
-       
-def normalizeGTboxes(gtboxes, scale=[1,1], rpn_stride=1, shape=[1,1], roundoff=False):
-    gtnormboxes = []
-    for relID, bbox in enumerate(gtboxes):
-#        print(bbox)
-        # get the GT box coordinates, and resize to account for image resizing
-        xmin = ((bbox['xmin']) * scale[0] / rpn_stride) / shape[0]
-        xmax = ((bbox['xmax']-0.01) * scale[0] / rpn_stride) / shape[0]
-        ymin = ((bbox['ymin']) * scale[1] / rpn_stride) / shape[1]
-        ymax = ((bbox['ymax']-0.01) * scale[1] / rpn_stride) / shape[1]
-        if roundoff:
-            xmin=int(round(xmin)); xmax=int(round(xmax))
-            ymin=int(round(ymin)); ymax=int(round(ymax))
-        gtnormboxes.append({'xmin':xmin, 'xmax':xmax, 'ymin':ymin, 'ymax':ymax})    
-    return gtnormboxes
 
 
 def prep_im_for_blob(im, pixel_means, target_size, max_size):

@@ -48,15 +48,15 @@ trainIterator = genTrain.begin()
 
 total_times = np.array([0.0,0.0])
 
-data_type = 'val'
+data_type = 'train'
 images_path = cfg.data_path + 'images/'
 images_path = images_path + data_type + '/'
 
 j = 0
 for i in range(1):
     if True:
-#        X, y, imageMeta, imageDims, times = next(trainIterator)
-        imageMeta = data.valGTMeta['176847']
+        X, y, imageMeta, imageDims, times = next(trainIterator)
+#        imageMeta = data.valGTMeta['176847']
 #        imageMeta = data.trainGTMeta['463564']
         X, imageDims = filters_rpn.prepareInputs(imageMeta, images_path, cfg)
         y = filters_rpn.createTargets(imageMeta, imageDims, cfg)
