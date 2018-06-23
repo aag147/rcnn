@@ -52,9 +52,10 @@ def saveEvalData(generator, Stages, cfg):
         
         #STAGE 1
 #        proposals = Stages.stageone(X, y, imageMeta, imageDims)
+        proposals = proposals[0,:,1:]
         
         #CONVERT
-        evalData += filters_rpn.convertResults(proposals[0], imageMeta, imageDims['shape'])
+        evalData += filters_rpn.convertResults(proposals, imageMeta, imageDims['shape'])
         
     return evalData
 

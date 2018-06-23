@@ -77,8 +77,8 @@ def convertResults(bboxes, imageMeta, shape):
     results = []
 
     for bbox in bboxes:
-        prop = bbox[4]
-#        prop = 0.0
+#        prop = bbox[4]
+        prop = 0.0
         coords = bbox[:4]
         xmin = ((coords[0]) * shape[1])
         ymin = ((coords[1]) * shape[0])
