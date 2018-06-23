@@ -150,6 +150,7 @@ class DataGenerator():
                       imageX, imageY, imageMeta, img = self._generateBatchFromIDs([imageIdx])    
                   else:
                       imageX, imageY = self._generateBatchFromIDs([imageIdx])
+                      img = None
                   s_idx = 0; f_idx = len(imageY)
                   if hoiinimageidx > 0:
                       s_idx = hoiinimageidx
