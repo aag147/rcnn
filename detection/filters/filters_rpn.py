@@ -131,7 +131,7 @@ def reduceData(Y, cfg):
     y_rpn_cls = np.concatenate([y_is_box_valid, y_rpn_overlap], axis=3)
     for i in range(cfg.nb_anchors):
         s_idx = 4*i; f_idx = s_idx+4
-        y_rpn_regr[:,:,:,s_idx:f_idx] *= cfg.rpn_regr_std
+        y_rpn_regr[:,:,:,s_idx:f_idx] /= cfg.rpn_regr_std
     y_rpn_regr = np.concatenate([np.repeat(y_rpn_overlap, 4, axis=3), y_rpn_regr], axis=3)
     return [np.copy(y_rpn_cls), np.copy(y_rpn_regr)]
 
