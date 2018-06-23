@@ -30,8 +30,8 @@ def saveInputData(generator, Stages, cfg):
         utils.update_progress_new(batchidx+1, generator.nb_batches, imageID)
         
         path = save_path + imageID + '.pkl'
-#        if os.path.exists(path):
-#            continue
+        if os.path.exists(path):
+            continue
         
         #STAGE 1
         proposals = Stages.stageone([img], y, imageMeta, imageDims)
@@ -44,7 +44,6 @@ def saveInputData(generator, Stages, cfg):
             detMeta = None
         else:
             detMeta = filters_detection.convertData([proposals, target_labels, target_deltas], cfg)
-        print(detMeta)
             
         utils.save_obj(detMeta, save_path + imageID)
 
