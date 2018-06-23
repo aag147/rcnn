@@ -133,7 +133,7 @@ def getX2Data(imageMeta, data_path, cfg):
         imageMeta['flip'] = True
         imageMeta['shape'] = image.shape
         imageMeta = utils.flipMeta(imageMeta)
-        image = np.fliplr(image)
+        image = image[:, ::-1, :]
 
     
     for relID, rel in imageMeta['rels'].items():
