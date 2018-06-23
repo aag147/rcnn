@@ -121,6 +121,7 @@ class basic_config:
        self.flip_image = False
        self.order_of_dims = [0,1,2]
        self.par_order_of_dims = [0,2,3,1]
+       self.PIXEL_MEANS = np.array([[[102.9801, 115.9465, 122.7717]]])
        
        
        #model
@@ -206,8 +207,6 @@ class basic_config:
        self.rpn_regr_std = 4.0
        self.rpn_regr_std = [0.1, 0.1, 0.2, 0.2]
        self.det_regr_std = [8.0, 8.0, 4.0, 4.0]
-       
-       self.PIXEL_MEANS = np.array([[[102.9801, 115.9465, 122.7717]]])
        
        #rpn filters
        self.nb_shared_layers = 17
