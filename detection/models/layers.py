@@ -56,6 +56,7 @@ def fullyConnected(cfg, stream=None, use_dropout=True):
         if use_dropout:
             dense_1 = Dropout(
                 rate=0.5,
+                is_training=True,
                 name = '%s_dropout1' % stream
             )(dense_1)
         
@@ -73,6 +74,7 @@ def fullyConnected(cfg, stream=None, use_dropout=True):
         if use_dropout:
             dense_2 = Dropout(
                 rate=0.5,
+                is_training=True,
                 name = '%s_dropout2' % stream
             )(dense_2)
     
