@@ -52,7 +52,7 @@ def saveEvalData(generator, Stages, cfg):
         
         #STAGE 1
 #        proposals = Stages.stageone(X, y, imageMeta, imageDims)
-        proposals = proposals[0,:,1:]
+        proposals = proposals[0,:,:]
         
         #CONVERT
         evalData += filters_rpn.convertResults(proposals, imageMeta, imageDims['scale'], cfg.rpn_stride)
