@@ -30,8 +30,19 @@ genTrain = DataGenerator(imagesMeta = data.trainGTMeta, cfg=cfg, data_type='trai
 
 genIter = genTrain.begin()
 
+nb_zeros = 0
+
+for i, (imageID, imageMeta) in enumerate(data.trainGTMeta.items()):
+    objs = imageMeta['objects']
+    if len(objs) == 0:
+        nb_zeros += 1
+    if i % 1000 == 0:
+        utils.update_progress_new(i+1, genTrain.nb_batches, imageID + ': ' + imageID)
+
+
 counts = np.zeros((genTrain.nb_batches))
 for i in range(genTrain.nb_batches):
+    break
     X, [Y1,Y2], imageMeta, imageDims, times = next(genIter)
     imageID = imageMeta['imageName'].split('.')[0]
 

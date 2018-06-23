@@ -158,7 +158,7 @@ class RoiPoolingConv(Layer):
         3D tensor with shape:
         `(1, num_rois, channels, pool_size, pool_size)`
     '''
-    def __init__(self, pool_size=3, **kwargs):
+    def __init__(self, pool_size=3, nb_channels=3, **kwargs):
         super(RoiPoolingConv, self).__init__(**kwargs)
 #        assert K.image_dim_ordering() in {'tf'}, 'dim_ordering must be in {tf}'
         self.pool_size = pool_size
