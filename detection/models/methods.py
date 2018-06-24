@@ -330,7 +330,7 @@ class AllModels:
         ########################
         ####### Backbone #######
         ########################
-        output_features = models.VGG16_buildin(cfg)(img_input) 
+        output_features = models.VGG16(cfg)(img_input) 
         
         ########################
         ######### RPN ##########

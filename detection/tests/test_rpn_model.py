@@ -23,7 +23,7 @@ import utils
 import draw
 import numpy as np
 
-if False:
+if True:
     # Load data
     data = extract_data.object_data()
     cfg = data.cfg
@@ -48,7 +48,9 @@ for i in range(1):
     #STAGE 1
     proposals = Stages.stageone([X], y, imageMeta, imageDims)
     
-    img = np.copy(X[0]) + cfg.PIXEL_MEANS
+    img = np.copy(X[0])
+    img = img + cfg.PIXEL_MEANS
     img = img.astype(np.uint8)
+#    img = (img+1.0) / 2.0
     gtBox = draw.drawGTBoxes(img, imageMeta, imageDims)
     posAnc = draw.drawOverlapAnchors(img, proposals[0], imageMeta, imageDims, cfg)

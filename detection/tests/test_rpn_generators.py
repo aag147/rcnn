@@ -52,23 +52,23 @@ data_type = 'train'
 images_path = cfg.data_path + 'images/'
 images_path = images_path + data_type + '/'
 
-imageMeta = imagesMeta['200365']
-new_objs = []
-for obj in imageMeta['objects']:
-    if obj['area'] > 1:
-        new_objs.append(obj)
-#imageMeta['objects'] = new_objs
-
-for i, (imageID, imageMeta) in enumerate(data.trainGTMeta.items()):
-    objs = imageMeta['objects']
-    utils.update_progress_new(i, len(data.trainGTMeta), imageID)
-    for obj in objs:
-        if obj['xmax'] <= obj['xmin'] or obj['ymax'] <= obj['ymin']:
-            print(' ',imageID)
+#imageMeta = imagesMeta['200365']
+#new_objs = []
+#for obj in imageMeta['objects']:
+#    if obj['area'] > 1:
+#        new_objs.append(obj)
+##imageMeta['objects'] = new_objs
+#
+#for i, (imageID, imageMeta) in enumerate(data.trainGTMeta.items()):
+#    objs = imageMeta['objects']
+#    utils.update_progress_new(i, len(data.trainGTMeta), imageID)
+#    for obj in objs:
+#        if obj['xmax'] <= obj['xmin'] or obj['ymax'] <= obj['ymin']:
+#            print(' ',imageID)
 
 
 j = 0
-for i in range(0):
+for i in range(1):
     if True:
         X, y, imageMeta, imageDims, times = next(trainIterator)
 #        imageMeta = data.valGTMeta['176847']
