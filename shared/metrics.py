@@ -394,7 +394,7 @@ def computemAPLoss(Y, Y_hat):
     Y_hat = cp.copy(Y_hat)
     for x in range(nb_classes):
         
-        APs = []
+        APs = np.zeros((11))
         
         idxs = np.argsort(Y_hat[:,x])[::-1]
         
