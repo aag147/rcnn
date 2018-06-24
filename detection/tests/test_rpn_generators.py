@@ -75,6 +75,7 @@ for i in range(1):
         imageMeta = data.trainGTMeta['463564']
         X, imageDims = filters_rpn.prepareInputs(imageMeta, images_path, cfg)
         y = filters_rpn.createTargets(imageMeta, imageDims, cfg)
+        Y = filters_rpn.reduceData(y, cfg)
 
         Y1 = y[0][:,:,:,:]        
         Y2 = y[1][:,:,:,:]

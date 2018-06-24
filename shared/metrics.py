@@ -240,8 +240,8 @@ def computeRPNAR(COCO_mapping, imagesMeta, class_mapping, cfg):
         gt_bboxes = transformARGTs(gt_bboxes, class_mapping)
         gt_bboxes[:,4] *= 0 #turn label into flag column
         
-        if imageID == '330818':
-            print(gt_bboxes)
+#        if imageID == '330818':
+#            print(gt_bboxes)
         
         nb = gt_bboxes.shape[0]
         for gt_bbox in gt_bboxes:
@@ -254,8 +254,8 @@ def computeRPNAR(COCO_mapping, imagesMeta, class_mapping, cfg):
         imageID = proposal['image_id']
         bbox = proposal['bbox']
         
-        if int(imageID) == 330818:
-            print('pred', bbox)
+#        if int(imageID) == 330818:
+#            print('pred', bbox)
         
         if imageID not in newProposalMeta:
             newProposalMeta[imageID] = []

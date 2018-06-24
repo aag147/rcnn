@@ -206,7 +206,7 @@ class basic_config:
        self.test_cfg.batch_size = 1
        
        self.rpn_regr_std = 4.0
-       self.rpn_regr_std = [0.1, 0.1, 0.2, 0.2]
+       self.rpn_regr_std = [0.125, 0.125, 0.25, 0.25]
        self.det_regr_std = [8.0, 8.0, 4.0, 4.0]
        
        #rpn filters
