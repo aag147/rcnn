@@ -126,6 +126,8 @@ def getX2Data(imageMeta, data_path, cfg):
     dataXB = []
 
     image = cv.imread(data_path + imageMeta['imageName'])
+    image = image.astype(np.float32, copy=False)
+    image -= cfg.PIXEL_MEANS
 #    image = cv.cvtColor(image, cv.COLOR_BGR2RGB)
     
     imageMeta['flip'] = False
@@ -212,17 +214,17 @@ def getDataFromRel(prsBB, objBB, scales, padds, shape, cfg):
 
 #%% rcnn
 def preprocessCrop(img, cfg):
-    img = img.astype(np.float32, copy=False)
+#    img = img.astype(np.float32, copy=False)
     img = cv.resize(img, cfg.shape).astype(np.float32)
-    img = cv.cvtColor(img, cv.COLOR_BGR2RGB)
+#    img = cv.cvtColor(img, cv.COLOR_BGR2RGB)
 #    image = (image - np.mean(image)) / np.std(image)
 #    print(np.max(image))
 #    print('im', np.min(image), np.max(image), np.isfinite(image).all())
-    if False:# or cfg.use_channel_mean:
-        img -= cfg.img_channel_mean
-        img /= cfg.img_scaling_factor
-    else:
-        img = (img - np.min(img)) / np.max(img)
+#    if False:# or cfg.use_channel_mean:
+#        img -= cfg.img_channel_mean
+#        img /= cfg.img_scaling_factor
+#    else:
+#        img = (img - np.min(img)) / np.max(img)
 #        img /= 127.5
 #        img -= 1.0
     img = img.transpose(cfg.order_of_dims)
