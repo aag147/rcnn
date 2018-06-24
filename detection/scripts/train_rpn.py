@@ -43,7 +43,7 @@ if True:
     model_rpn, _, _ = Models.get_models()
 
 
-if False:    
+#if False:    
     # train
     callbacks = [callbacks.MyModelCheckpointInterval(cfg), \
                  callbacks.MyLearningRateScheduler(cfg), \

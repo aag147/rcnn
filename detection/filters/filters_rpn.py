@@ -19,6 +19,7 @@ def prepareInputs(imageMeta, images_path, cfg):
     #in: imageMeta
     #out: preprocessed image and imageDims
     img = cv.imread(images_path + imageMeta['imageName'])
+    img = cv.cvtColor(img, cv.COLOR_BGR2RGB)
     assert(img is not None), 'invalid path: %s' % images_path + imageMeta['imageName']
     assert(img.shape[0] > 10)
     assert(img.shape[1] > 10)

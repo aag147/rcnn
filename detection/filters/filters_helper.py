@@ -12,6 +12,8 @@ sys.path.append('../models/')
 sys.path.append('../cfgs/')
 sys.path.append('../layers/')
 
+from keras.applications.vgg16 import preprocess_input
+
 import numpy as np
 import cv2 as cv
 import math
@@ -593,8 +595,9 @@ def unpreprocessImage(img, cfg):
 def prep_im_for_blob(im, pixel_means, target_size, max_size):
   """Mean subtract and scale an image for use in a blob."""
   im = im.astype(np.float32, copy=False)
-  im -= pixel_means
+#  im -= pixel_means
   
+  im = preprocess_input(im)
   im_shape = im.shape
   im_size_min = np.min(im_shape[0:2])
   im_size_max = np.max(im_shape[0:2])
