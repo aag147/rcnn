@@ -4,13 +4,26 @@ Created on Tue May 22 20:08:04 2018
 
 @author: aag14
 """
-
+import keras
 from keras.models import Sequential, Model
 from keras.layers.core import Flatten, Dense, Dropout
 from keras.layers.convolutional import Conv2D, Convolution2D, MaxPooling2D, ZeroPadding2D
 from keras.regularizers import l2
 
+def VGG16_buildin(cfg):
+    print('   Using built in KERAS VGG16 model')
+    def _vgg(input_image):
+        model = keras.applications.vgg16.VGG16(include_top=False, weights='imagenet', input_tensor=input_image)
+        for i, layer in enumerate(model.layers):
+            layer.kernel_regularizer = l2(cfg.weight_decay)
+            layer.bias_regularizer   = l2(cfg.weight_decay)
+        
+        return model.layers[-2].output
+    return _vgg
+
+
 def VGG16(cfg):
+    print('   Using own VGG16 model')
     #https://gist.github.com/baraldilorenzo/07d7802847aaad0a35d3
     #https://github.com/fchollet/deep-learning-models/blob/master/vgg16.py
     def _vgg(input_image):
