@@ -49,24 +49,24 @@ if True:
 if True:   
     # Train model
     print('Training model...')
-    trainer.trainModel(cfg)
+#    trainer.trainModel(cfg)
     
     # Save stuff
     print('Saving final model...')
-    trainer.saveModel(cfg)
+#    trainer.saveModel(cfg)
     print('Testing model on test...')
     resTest = trainer.evaluateModel(genTest)    
-    print("F1 (test!):", resTest.F1, "nb_zeros", resTest.nb_zeros)
+    print("F1 (test!):", resTest.F1, "nb_zeros", resTest.nb_zeros, "mAP", resTest.mAP)
     print('Testing model on training...')
     resTrain = trainer.evaluateModel(genTrain)
-    print("F1 (train):", resTrain.F1, "nb_zeros", resTrain.nb_zeros)
+    print("F1 (train):", resTrain.F1, "nb_zeros", resTrain.nb_zeros, "mAP", resTrain.mAP)
 
     utils.save_obj_nooverwrite(resTest.Y_hat, cfg.my_results_path + 'y_hat')  
     utils.save_obj_nooverwrite(resTest.Y, cfg.my_results_path + 'y_test')
     
     f= open(cfg.my_results_path + "tests.txt","a")
     f.close()
-    newline = 'epoch:%0.3d :: test: %.4f, nb_zeros: %.03d | train: %.4f, nb_zeros: %.03d\n' % \
-        (cfg.epoch_end, resTest.F1, resTest.nb_zeros, resTrain.F1, resTrain.nb_zeros)
+    newline = 'epoch:%0.3d :: test: %.4f, nb_zeros: %.03d, %.4f | train: %.4f, nb_zeros: %.03d, %.4f\n' % \
+        (cfg.epoch_end, resTest.F1, resTest.nb_zeros, resTest.mAP, resTrain.F1, resTrain.nb_zeros, resTrain.mAP)
     with open(cfg.my_results_path + "tests.txt", 'a') as file:
         file.write(newline)

@@ -21,6 +21,9 @@ def computeHOIAP(batch, GTMeta, nb_gt_samples, hoi_id):
     sorted_idxs = props.argsort()[::-1]
     nb_hois = len(sorted_idxs)
     
+    ious = [x/100 for x in range(50,100,5)]
+    nb_ious = len()
+    
     tp = np.zeros((nb_hois))
     fp = np.zeros((nb_hois))
     
@@ -113,6 +116,7 @@ def computeHOImAP(COCO_mapping, imagesMeta, class_mapping, hoi_mapping, cfg):
         
     mAP = np.mean(AP_map)
     return mAP, AP_map
+
 
 
 def computeRPNARHelperOld(batch, GTMeta, nb_gt_samples):
@@ -289,6 +293,7 @@ class EvalResults():
       self.mP = None
       self.mR = None
       self.F1 = None
+      self.mAP = None
        
       self.nb_zeros = None
       
@@ -315,6 +320,7 @@ class EvalResults():
       utils.update_progress(self.gen.nb_batches)
       print()
       accs, self.mP, self.mR, self.F1 = computeMultiLabelLoss(Y, evalYHat)
+      self.mAP = computemAPLoss(Y, evalYHat)
       self.tp = accs[:,1]
       self.fp = accs[:,2]
       self.fn = accs[:,3]
@@ -381,6 +387,51 @@ def computeMultiLabelLoss(Y, Y_hat):
     mR = np.mean(accs[:,5])
     F1 = 0.0 if mP+mR==0 else 2 * ((mP * mR) / (mP + mR))
     return accs, mP, mR, F1
+
+
+def computemAPLoss(Y, Y_hat):
+    (nb_samples, nb_classes) = Y_hat.shape
+    Y_hat = cp.copy(Y_hat)
+    for x in range(nb_classes):
+        
+        APs = []
+        
+        idxs = np.argsort(Y_hat[:,x])[::-1]
+        
+        nb_preds = np.sum(Y_hat[:,x]>=0.5)
+        
+        tp = np.zeros(nb_preds)
+        fp = np.zeros(nb_preds)
+        
+        for i in range(nb_preds):
+            idx = idxs[i]
+            y = Y[idx,x]
+
+            if y==1:
+                tp[i] = 1
+            else:
+                fp[i] = 1
+            
+        tp = np.cumsum(tp)
+        fp = np.cumsum(fp)
+        
+        recall = tp / nb_samples
+        precision = tp / (fp+tp)
+        
+        Ps = np.zeros((11))
+        for r in range(0,11):
+            idxs = np.where(recall>= r/10.0)[0]
+            if len(idxs) == 0:
+                p = 0.0
+            else:
+                p = np.max(precision[idxs])
+            Ps[r] = p
+              
+        AP = np.mean(Ps)
+        APs[x] = AP
+    mAP = np.mean(APs)
+    return mAP
+        
 
 
 def computeConfusionMatrixLabels(Y, Y_hat):

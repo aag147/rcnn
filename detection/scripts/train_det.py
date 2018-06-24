@@ -13,7 +13,6 @@ sys.path.append('../filters/')
 sys.path.append('../data/')
 
 import numpy as np
-import keras
 
 import utils,\
        extract_data,\
