@@ -392,9 +392,8 @@ def computeMultiLabelLoss(Y, Y_hat):
 def computemAPLoss(Y, Y_hat):
     (nb_samples, nb_classes) = Y_hat.shape
     Y_hat = cp.copy(Y_hat)
+    APs = np.zeros((nb_classes))
     for x in range(nb_classes):
-        
-        APs = np.zeros((11))
         
         idxs = np.argsort(Y_hat[:,x])[::-1]
         
