@@ -23,7 +23,7 @@ import utils
 import draw
 import numpy as np
 
-if True:
+if False:
     # Load data
     data = extract_data.object_data()
     cfg = data.cfg
@@ -35,6 +35,11 @@ if True:
     genVal = DataGenerator(imagesMeta = data.valGTMeta, cfg=cfg, data_type='val', do_meta=True)
 #    genTest = DataGenerator(imagesMeta = data.testGTMeta, cfg=cfg, data_type='test', do_meta=True)
     
+    
+if True:
+    cfg.use_mean=True
+    cfg.my_results_dir = '80b'
+    cfg.update_paths()
     Models = methods.AllModels(cfg, mode='test', do_rpn=True, do_det=False, do_hoi=False)
     Stages = stages.AllStages(cfg, Models, obj_mapping, hoi_mapping, mode='test')
 
@@ -42,15 +47,24 @@ if True:
 genIterator = genVal.begin()
 
 for i in range(1):
-    X, y, imageMeta, imageDims, times = next(genIterator)
+#    X, y, imageMeta, imageDims, times = next(genIterator)
     imageID = imageMeta['imageName'].split('.')[0]
     
+    if cfg.use_mean:
+        X2 = np.copy(X)
+        X2 = (X2+1.0) * 127
+        X2 = X2 - cfg.PIXEL_MEANS
+#        X2 = X2 + cfg.PIXEL_MEANS
+#        X2 = (X2) / 127 - 1.0
+    
     #STAGE 1
-    proposals = Stages.stageone([X], y, imageMeta, imageDims)
+    proposals = Stages.stageone([X2], y, imageMeta, imageDims)
     
     img = np.copy(X[0])
-    img = img + cfg.PIXEL_MEANS
-    img = img.astype(np.uint8)
-#    img = (img+1.0) / 2.0
+    if cfg.use_mean and False:
+        img = img + cfg.PIXEL_MEANS
+        img = img.astype(np.uint8)
+    else:
+        img = (img+1.0) / 2.0
     gtBox = draw.drawGTBoxes(img, imageMeta, imageDims)
     posAnc = draw.drawOverlapAnchors(img, proposals[0], imageMeta, imageDims, cfg)

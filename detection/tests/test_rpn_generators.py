@@ -71,8 +71,8 @@ j = 0
 for i in range(1):
     if True:
         X, y, imageMeta, imageDims, times = next(trainIterator)
-#        imageMeta = data.valGTMeta['176847']
-#        imageMeta = data.trainGTMeta['463564']
+        imageMeta = data.valGTMeta['176847']
+        imageMeta = data.trainGTMeta['463564']
         X, imageDims = filters_rpn.prepareInputs(imageMeta, images_path, cfg)
         y = filters_rpn.createTargets(imageMeta, imageDims, cfg)
 
@@ -81,7 +81,7 @@ for i in range(1):
                 
         props = np.reshape(Y1,(-1,1))
     
-    all_pred_anchors = helper.deltas2Anchors(Y1, Y2, cfg, imageDims, do_regr=False)
+    all_pred_anchors = helper.deltas2Anchors(Y1, Y2, cfg, imageDims, do_regr=True, do_std=False)
     print('positives', np.sum(Y1>0.5))
     print(all_pred_anchors.shape)
     img = np.copy(X[0]) + cfg.PIXEL_MEANS

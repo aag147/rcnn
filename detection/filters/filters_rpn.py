@@ -24,8 +24,10 @@ def prepareInputs(imageMeta, images_path, cfg):
     assert(img.shape[0] > 10)
     assert(img.shape[1] > 10)
     assert(img.shape[2] == 3)
-    imgRedux, scale = helper.prep_im_for_blob(img, cfg.PIXEL_MEANS, cfg.mindim, cfg.maxdim)
-#    imgRedux, scale = helper.preprocessImage(img, cfg)
+    if cfg.use_mean:
+        imgRedux, scale = helper.prep_im_for_blob(img, cfg.PIXEL_MEANS, cfg.mindim, cfg.maxdim)
+    else:
+        imgRedux, scale = helper.preprocessImage(img, cfg)
     output_shape = [imgRedux.shape[0] / cfg.rpn_stride, imgRedux.shape[1] / cfg.rpn_stride]
     imgDims = {'shape': img.shape, 'redux_shape':imgRedux.shape, 'output_shape':output_shape, 'scale':scale}
     imgRedux = np.expand_dims(imgRedux, axis=0)

@@ -106,6 +106,7 @@ class basic_config:
        self.inputs  = None
        self.max_classes = None
        self.backbone = None
+       self.use_mean = True
        
        #generator
        self.train_cfg = self.gen_config()
@@ -130,7 +131,7 @@ class basic_config:
        self.my_weights = None
        self.only_use_weights = False
        self.use_l2_reg = True
-       self.weight_decay = 0.0005
+       self.weight_decay = 0.0001
        
        #model compile
        self.optimizer = 'sgd'
@@ -211,7 +212,7 @@ class basic_config:
        #rpn filters
        self.nb_shared_layers = 17
        self.rpn_stride = 16
-       self.nb_rpn_proposals = 256
+       self.nb_rpn_proposals = 128
         
        self.anchor_sizes = [64, 128, 256, 512]
        self.anchor_sizes = [0.5, 2, 8, 32]

@@ -121,17 +121,19 @@ def non_max_suppression_boxes(bboxes, cfg, nms_overlap_thresh=0.5):
     new_bboxes = np.array(new_bboxes)
     return new_bboxes
 
-def deltas2Anchors(props, deltas, cfg, imageDims, do_regr=True):
+def deltas2Anchors(props, deltas, cfg, imageDims, do_regr=True, do_std=True):
     # Deltas to coordinates by way of anchors
     # [dx,dy,dw,dh] -> (xmin,ymin,width,height)
     
     assert props.shape[0] == 1
     shape = imageDims['redux_shape']
     
-    for i in range(cfg.nb_anchors):
-        s_idx = 4*i; f_idx = s_idx+4
-        deltas[:,:,:,s_idx:f_idx] *= cfg.rpn_regr_std
     
+    if do_std:
+        for i in range(cfg.nb_anchors):
+            s_idx = 4*i; f_idx = s_idx+4
+            deltas[:,:,:,s_idx:f_idx] *= cfg.rpn_regr_std
+            print(s_idx, f_idx, deltas.shape)
     
     anc_idx = 0
     
@@ -569,7 +571,7 @@ def normalizeGTboxes(gtboxes, scale=[1,1], rpn_stride=1, shape=[1,1], roundoff=F
        
 def preprocessImage(img, cfg):
     img = img.astype(np.float32, copy=False)
-    img = cv.cvtColor(img, cv.COLOR_BGR2RGB)
+#    img = cv.cvtColor(img, cv.COLOR_BGR2RGB)
 
     img /= 127.5
     img -= 1.0
