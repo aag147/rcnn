@@ -580,7 +580,7 @@ def preprocessImage(img, cfg):
     img_size_max = np.max(img_shape[0:2])
     img_scale = float(cfg.mindim) / float(img_size_min)
     # Prevent the biggest axis from being more than MAX_SIZE
-    if np.round(img_scale * img_size_min) > cfg.maxdim:
+    if np.round(img_scale * img_size_max) > cfg.maxdim:
         img_scale = float(cfg.maxdim) / float(img_size_max)
     img = cv.resize(img, None, None, fx=img_scale, fy=img_scale,
                     interpolation=cv.INTER_LINEAR)
