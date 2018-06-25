@@ -18,12 +18,13 @@ import extract_data
 from rpn_generators import DataGenerator
 
 import methods,\
-       stages
+       stages,\
+       filters_rpn
 import utils
 import draw
 import numpy as np
 
-if False:
+if True:
     # Load data
     data = extract_data.object_data()
     cfg = data.cfg
@@ -37,20 +38,24 @@ if False:
     
     
 if True:
-    cfg.use_mean=True
-    cfg.my_results_dir = '80b'
-    cfg.update_paths()
+#    cfg.use_mean=True
+#    cfg.my_results_dir = '80b'
+#    cfg.update_paths()
     Models = methods.AllModels(cfg, mode='test', do_rpn=True, do_det=False, do_hoi=False)
     Stages = stages.AllStages(cfg, Models, obj_mapping, hoi_mapping, mode='test')
 
 
-genIterator = genVal.begin()
+#genIterator = genVal.begin()
 
 for i in range(1):
 #    X, y, imageMeta, imageDims, times = next(genIterator)
     imageID = imageMeta['imageName'].split('.')[0]
     
-    if cfg.use_mean:
+    X, imageDims = filters_rpn.prepareInputs(imageMeta, genVal.images_path, cfg)
+    Y_tmp = filters_rpn.createTargets(imageMeta, imageDims, cfg)
+    y = filters_rpn.reduceData(Y_tmp, cfg)
+    
+    if cfg.use_mean and False:
         X2 = np.copy(X)
         X2 = (X2+1.0) * 127
         X2 = X2 - cfg.PIXEL_MEANS
@@ -58,10 +63,10 @@ for i in range(1):
 #        X2 = (X2) / 127 - 1.0
     
     #STAGE 1
-    proposals = Stages.stageone([X2], y, imageMeta, imageDims)
+    proposals = Stages.stageone([X], y, imageMeta, imageDims)
     
     img = np.copy(X[0])
-    if cfg.use_mean and False:
+    if cfg.use_mean:
         img = img + cfg.PIXEL_MEANS
         img = img.astype(np.uint8)
     else:
