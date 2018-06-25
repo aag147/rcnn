@@ -40,7 +40,7 @@ class DataGenerator():
       self.images_path = self.data_path + 'images/'
       self.images_path = self.images_path + self.data_type + '/'
       self.anchors_path = self.data_path + 'anchors/'
-      self.anchors_path = self.anchors_path + self.data_type + 'new/'
+      self.anchors_path = self.anchors_path + self.data_type + 'newer/'
       self.cfg = cfg
 
       self.dataID = list(imagesMeta.keys())
