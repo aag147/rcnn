@@ -173,7 +173,7 @@ def computeRPNARHelper(predMeta, GTMeta):
     
     Ps = [100,300]
     
-    IoU = np.zeros((3, nb_gt_samples))
+    IoU = np.zeros((2, nb_gt_samples))
     
     for idx in range(nb_gt_samples):
         
@@ -207,7 +207,7 @@ def computeRPNARHelper(predMeta, GTMeta):
                 break
             
     
-    R = [np.sum(x>=0.5) / nb_gt_samples for x in IoU.transpose()]
+    R = [np.sum(x>=0.5) / nb_gt_samples for x in IoU]
     
 #    ious = [x/100 for x in range(50,100,5)]
 #    recalls = np.zeros((len(ious)))
@@ -217,7 +217,7 @@ def computeRPNARHelper(predMeta, GTMeta):
 #        
 #    AR = np.mean(recalls)
     
-    overlaps = [[ol - 0.5 for ol in x if ol > 0] for x in IoU.transpose()]
+    overlaps = [[ol - 0.5 for ol in x if ol > 0] for x in IoU]
     AR = 2 * [np.sum(x) / nb_gt_samples for x in overlaps]
     
     return AR, R, IoU
