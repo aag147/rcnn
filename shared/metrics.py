@@ -190,7 +190,7 @@ def computeRPNARHelper(predMeta, GTMeta):
         ol_idxs = np.argsort(overlaps)[::-1]
         max_iou = np.max(overlaps)
 
-        done_Ps = [False for _ in len(Ps)]
+        done_Ps = [False for _ in range(len(Ps))]
         for ol_idx in ol_idxs:
             overlap   = overlaps[ol_idxs]
             pred_bbox = pred_bboxes[ol_idxs,:]
