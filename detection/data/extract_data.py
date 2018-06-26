@@ -36,7 +36,7 @@ class object_data:
         to_path   = self.cfg.move_path
         if to_path is None:
             return
-        to_path += '/'+self.cfg.dataset
+        to_path += self.cfg.dataset + '/'
         
         print('Moving data...')
         if not os.path.exists(to_path):
@@ -44,8 +44,10 @@ class object_data:
             print('   Data has been moved...')
         else:
             print('   Data is already moved...')
-        self.cfg.data_path = to_path+'/'
+        self.cfg.data_path = to_path
         
+        
+        self.cfg.base_path = self.cfg.move_path
         self.cfg.my_save_path = self.cfg.move_path + '/results/' + self.cfg.new_results_dir
         self.cfg.my_detections_path = self.cfg.move_path + '/results/' + self.cfg.dataset + "/" + self.cfg.my_detections_dir + '/detections/'
         print('   data_path:', self.cfg.data_path)

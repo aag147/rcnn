@@ -15,7 +15,7 @@ import filters_helper as helper,\
 import os
 
 def saveInputData(generator, Stages, cfg):    
-    cfg.my_save_path = cfg.data_path + 'results/' + cfg.dataset + '/rpn' + cfg.my_results_dir + '/detections/'
+    cfg.my_save_path = cfg.base_path + 'results/' + cfg.dataset + '/rpn' + cfg.my_results_dir + '/detections/'
     if not os.path.exists(cfg.my_save_path):
         raise Exception('Detection directory does not exist!')
     if not os.path.exists(cfg.my_save_path + generator.data_type + '/'):
