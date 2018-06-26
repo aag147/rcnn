@@ -190,13 +190,14 @@ def computeRPNARHelper(predMeta, GTMeta):
         ol_idxs = np.argsort(overlaps)[::-1]
         max_iou = np.max(overlaps)
 
+        print(pred_bboxes.shape)
         done_Ps = [False for _ in range(len(Ps))]
         for ol_idx in ol_idxs:
-            overlap   = overlaps[ol_idxs]
-            pred_bbox = pred_bboxes[ol_idxs,:]
+            overlap   = overlaps[ol_idx]
+            pred_bbox = pred_bboxes[ol_idx,:]
+            print(pred_bbox)
             top = pred_bbox[4]
             for P_idx, P in enumerate(Ps):
-                print(top, P)
                 if done_Ps[P_idx]:
                     continue
                 if top <= P:
@@ -269,6 +270,8 @@ def computeRPNAR(COCO_mapping, imagesMeta, class_mapping, cfg):
     for proposal in COCO_mapping:
         imageID = proposal['image_id']
         bbox = proposal['bbox']
+        top = proposal['top']
+        bbox = np.concatenate((bbox,[top]))
         
 #        if int(imageID) == 330818:
 #            print('pred', bbox)
