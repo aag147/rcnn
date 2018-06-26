@@ -27,7 +27,7 @@ if True:
     obj_mapping = data.class_mapping
     hoi_mapping = data.hoi_labels
     
-    cfg.my_save_path = cfg.part_results_path + cfg.dataset + '/rpn' + cfg.my_results_dir + '/detections/'
+    cfg.my_save_path = cfg.data_path + 'results/' + cfg.dataset + '/rpn' + cfg.my_results_dir + '/detections/'
     if not os.path.exists(cfg.my_save_path):
         os.makedirs(cfg.my_save_path)
     print('   save_path:', cfg.my_save_path)

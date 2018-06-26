@@ -24,7 +24,7 @@ import utils
 import draw
 import numpy as np
 
-if True:
+if False:
     # Load data
     data = extract_data.object_data()
     cfg = data.cfg
@@ -37,7 +37,7 @@ if True:
 #    genTest = DataGenerator(imagesMeta = data.testGTMeta, cfg=cfg, data_type='test', do_meta=True)
     
     
-if True:
+#if True:
 #    cfg.use_mean=True
 #    cfg.my_results_dir = '80b'
 #    cfg.update_paths()
@@ -63,7 +63,7 @@ for i in range(1):
 #        X2 = (X2) / 127 - 1.0
     
     #STAGE 1
-    proposals = Stages.stageone([X], y, imageMeta, imageDims)
+    proposals = Stages.stageone([X], y, imageMeta, imageDims, do_regr=True)
     
     img = np.copy(X[0])
     if cfg.use_mean:

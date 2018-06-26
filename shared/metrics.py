@@ -171,7 +171,9 @@ def computeRPNARHelper(predMeta, GTMeta):
     
     nb_gt_samples = len(GTMeta)
     
-    IoU = np.zeros((nb_gt_samples))
+    Ps = [100,300]
+    
+    IoU = np.zeros((3, nb_gt_samples))
     
     for idx in range(nb_gt_samples):
         
@@ -183,15 +185,30 @@ def computeRPNARHelper(predMeta, GTMeta):
     
         pred_bboxes = np.array(predMeta[imageID])
         
-        overlap = helper._computeIoUs(bbox, pred_bboxes)
+        overlaps = helper._computeIoUs(bbox, pred_bboxes)
 
-        max_iou = np.max(overlap)
-        
-        if max_iou >= 0.5:
-            IoU[idx] = max_iou # true positive  
+        ol_idxs = np.argsort(overlaps)[::-1]
+        max_iou = np.max(overlaps)
+
+        done_Ps = [False for _ in len(Ps)]
+        for ol_idx in ol_idxs:
+            overlap   = overlaps[ol_idxs]
+            pred_bbox = pred_bboxes[ol_idxs,:]
+            top = pred_bbox[4]
+                
+            for P_idx, P in enumerate(Ps):
+                if done_Ps[P_idx]:
+                    continue
+                if top <= P:
+                    done_Ps[P_idx] = True
+                if overlap >= 0.5:
+                    IoU[P_idx,idx] = max_iou # true positive
+                    
+            if all(x for x in done_Ps):
+                break
             
     
-    R5 = np.sum(IoU>=0.5) / nb_gt_samples
+    R = [np.sum(x>=0.5) / nb_gt_samples for x in IoU.transpose()]
     
     ious = [x/100 for x in range(50,100,5)]
     recalls = np.zeros((len(ious)))
@@ -204,7 +221,7 @@ def computeRPNARHelper(predMeta, GTMeta):
     overlaps = [x - 0.5 for x in IoU if x > 0]
     AR = 2 * np.sum(overlaps) / nb_gt_samples
     
-    return AR, R5, IoU
+    return AR, R, IoU
 
 def transformARGTs(gt_bboxes, class_mapping):
     
@@ -238,7 +255,6 @@ def computeRPNAR(COCO_mapping, imagesMeta, class_mapping, cfg):
             continue
         
         gt_bboxes = transformARGTs(gt_bboxes, class_mapping)
-        gt_bboxes[:,4] *= 0 #turn label into flag column
         
 #        if imageID == '330818':
 #            print(gt_bboxes)

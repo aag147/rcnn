@@ -80,7 +80,10 @@ def convertResults(bboxes, imageMeta, scale, rpn_stride):
     imageID = int(imageMeta['imageID'])
     results = []
 
-    for bbox in bboxes:
+    idxs = np.argsort(bboxes[:,4])[::-1]
+    bboxes = bboxes[idxs,:]
+
+    for i, bbox in enumerate(bboxes):
         prop = bbox[4]
         coords = bbox[:4]
         xmin = ((coords[0]) * rpn_stride / scale[0])
@@ -90,7 +93,14 @@ def convertResults(bboxes, imageMeta, scale, rpn_stride):
         coords = [xmin, ymin, xmin+width, ymin+height]
         coords = [round(float(x),2) for x in coords]
         
-        res = {'image_id': imageID, 'bbox': coords, 'score': round(float(prop),4)}
+        if i < 100:
+            top = 100
+        elif i < 300:
+            top = 300
+        elif i < 1000:
+            top = 1000
+        
+        res = {'image_id': imageID, 'bbox': coords, 'score': round(float(prop),4), 'top':top}
         results.append(res)
     return results
 
