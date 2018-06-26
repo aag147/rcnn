@@ -67,8 +67,8 @@ def saveEvalResults(evalData, generator, cfg, obj_mapping):
         save_path = save_path[:-1]
     save_path += '/'
     
-#    utils.save_dict(evalData, save_path+mode+'_res')        
-    evalData = utils.load_dict(save_path+mode+'_res')
+    utils.save_dict(evalData, save_path+mode+'_res')        
+#    evalData = utils.load_dict(save_path+mode+'_res')
     
     AR, R5, IoU = metrics.computeRPNAR(evalData, generator.imagesMeta, obj_mapping, cfg)
     saveMeta = {'AR': AR, 'R5': R5, 'IoU': IoU.tolist()}

@@ -25,7 +25,7 @@ import det_test
 
 if True:
     # Load data
-    data = extract_data.object_data(False)
+    data = extract_data.object_data()
     cfg = data.cfg
     obj_mapping = data.class_mapping
     hoi_mapping = data.hoi_labels
@@ -38,14 +38,14 @@ if True:
     Models = methods.AllModels(cfg, mode='test', do_rpn=False, do_det=True, do_hoi=False)
     Stages = stages.AllStages(cfg, Models, obj_mapping, hoi_mapping, mode='test')
 
-# Test data
-#evalTest = det_test.saveEvalData(genTest, Stages, cfg, obj_mapping)
-#det_test.saveEvalResults(evalTest, genTest, cfg)
-
 # Val data
 evalVal = det_test.saveEvalData(genVal, Stages, cfg, obj_mapping)
 det_test.saveEvalResults(evalVal, genVal, cfg)
 
+# Test data
+#evalTest = det_test.saveEvalData(genTest, Stages, cfg, obj_mapping)
+#det_test.saveEvalResults(evalTest, genTest, cfg)
+
 # Train data
-evalTrain = det_test.saveEvalData(genTrain, Stages, cfg, obj_mapping)
-det_test.saveEvalResults(evalTrain, genTrain, cfg)
+#evalTrain = det_test.saveEvalData(genTrain, Stages, cfg, obj_mapping)
+#det_test.saveEvalResults(evalTrain, genTrain, cfg)

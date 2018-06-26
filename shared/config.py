@@ -52,6 +52,7 @@ class basic_config:
             if not os.path.exists(path):
                 os.mkdir(path)
                 os.mkdir(path + 'weights/')
+                os.mkdir(path + 'detections/')
                 break
           self.new_results_dir = my_results_dir
             
@@ -131,7 +132,7 @@ class basic_config:
        self.my_weights = None
        self.only_use_weights = False
        self.use_l2_reg = True
-       self.weight_decay = 0.0001
+       self.weight_decay = 0.0005
        
        #model compile
        self.optimizer = 'sgd'
@@ -212,7 +213,7 @@ class basic_config:
        #rpn filters
        self.nb_shared_layers = 17
        self.rpn_stride = 16
-       self.nb_rpn_proposals = 128
+       self.nb_rpn_proposals = 256
         
        self.anchor_sizes = [64, 128, 256, 512]
        self.anchor_sizes = [0.5, 2, 8, 32]
@@ -232,7 +233,8 @@ class basic_config:
        # detection filters
        self.detection_max_overlap = 0.5
        self.detection_min_overlap = 0.0
-       self.nb_detection_rois = 64
+       self.nb_detection_rois = 128
+       self.det_fg_ratio = 0.25
        
        self.det_nms_max_boxes=300
        self.det_nms_overlap_thresh=0.8

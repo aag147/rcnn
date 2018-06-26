@@ -34,11 +34,11 @@ if True:
 
 
 if True:
-    Models = methods.AllModels(cfg, mode='test', do_rpn=True, do_det=False, do_hoi=False)
+    Models = methods.AllModels(cfg, mode='test', do_rpn=False, do_det=True, do_hoi=False)
     Stages = stages.AllStages(cfg, Models, obj_mapping, hoi_mapping, mode='train')
 
-    det_test.saveInputData(genVal, Stages, cfg)
-#    det_test.saveInputData(genTrain, Stages, cfg)
+    det_test.saveOutputData(genVal, Stages, cfg)
+    det_test.saveOutputData(genTrain, Stages, cfg)
     
 print()
 print('Path:', cfg.my_save_path)

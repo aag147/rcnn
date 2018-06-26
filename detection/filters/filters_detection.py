@@ -129,7 +129,6 @@ def reduceData(Y, cfg, batchidx=None):
     
     ## Pick reduced indexes ##
     if batchidx is None:        
-        nb_detection_rois = cfg.nb_detection_rois
         bg_samples = np.where(all_target_labels[0,:, 0] == 1)
         fg_samples = np.where(all_target_labels[0,:, 0] == 0)
     
@@ -144,18 +143,19 @@ def reduceData(Y, cfg, batchidx=None):
             fg_samples = []
     
         # Half positives, half negatives
+        nb_max_fg = int(cfg.nb_detection_rois * cfg.det_fg_ratio)
         if len(fg_samples) == 0:
             selected_pos_samples = []  
-        elif len(fg_samples) < nb_detection_rois // 4:
+        elif len(fg_samples) < nb_max_fg:
 #            selected_pos_samples = fg_samples.tolist()
-            selected_pos_samples = np.random.choice(fg_samples, nb_detection_rois // 4, replace=True).tolist()
+            selected_pos_samples = np.random.choice(fg_samples, nb_max_fg, replace=True).tolist()
         else:
-            selected_pos_samples = np.random.choice(fg_samples, nb_detection_rois // 4, replace=False).tolist()
+            selected_pos_samples = np.random.choice(fg_samples, nb_max_fg, replace=False).tolist()
         try:
-            selected_neg_samples = np.random.choice(bg_samples, nb_detection_rois - len(selected_pos_samples),
+            selected_neg_samples = np.random.choice(bg_samples, cfg.nb_detection_rois - len(selected_pos_samples),
                                                     replace=False).tolist()
         except:
-            selected_neg_samples = np.random.choice(bg_samples, nb_detection_rois - len(selected_pos_samples),
+            selected_neg_samples = np.random.choice(bg_samples, cfg.nb_detection_rois - len(selected_pos_samples),
                                                     replace=True).tolist()
     
         sel_samples = selected_pos_samples + selected_neg_samples

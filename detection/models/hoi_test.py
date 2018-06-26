@@ -13,24 +13,28 @@ import filters_detection,\
 import os
 
 
-def saveInputData(generator, Stages, cfg):
-    genIterator = generator.begin()
-    inputMeta = {}
-    
+def saveInputData(generator, Stages, cfg):  
+    cfg.my_save_path = cfg.data_path + 'results/' + cfg.dataset + '/det' + cfg.my_results_dir + '/detections/'
+    if not os.path.exists(cfg.my_save_path):
+        raise Exception('Detection directory does not exist!')
     if not os.path.exists(cfg.my_save_path + generator.data_type + '/'):
         os.makedirs(cfg.my_save_path + generator.data_type + '/')
     save_path = cfg.my_save_path + generator.data_type + '/'
+    print('   save_path:', save_path)
+
+    genIterator = generator.begin()
+    inputMeta = {}
     
     for batchidx in range(generator.nb_batches):
-        X, y, imageMeta, imageDims, times = next(genIterator)
+        [img,proposals], y, imageMeta, imageDims, times = next(genIterator)
         imageID = imageMeta['imageName'].split('.')[0]
         utils.update_progress_new(batchidx+1, generator.nb_batches, imageID)
         
         #STAGE 1
-        proposals = Stages.stageone(X, y, imageMeta, imageDims)
+#        proposals = Stages.stageone(X, y, imageMeta, imageDims)
         
         #STAGE 2
-        bboxes = Stages.stagetwo(proposals, imageMeta, imageDims)
+        bboxes = Stages.stagetwo([img,proposals], imageMeta, imageDims)
         if bboxes is None:
             inputMeta[imageID] = None
             continue
