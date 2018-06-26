@@ -217,7 +217,7 @@ def computeRPNARHelper(predMeta, GTMeta):
 #        
 #    AR = np.mean(recalls)
     
-    overlaps = [[ol - 0.5 for ol in x if ol > 0] for x in IoU]
+    overlaps = [[ol - 0.5 for ol in x if ol > 0] for x in IoU.transpose()]
     AR = 2 * [np.sum(x) / nb_gt_samples for x in overlaps]
     
     return AR, R, IoU
