@@ -195,8 +195,8 @@ def computeRPNARHelper(predMeta, GTMeta):
             overlap   = overlaps[ol_idxs]
             pred_bbox = pred_bboxes[ol_idxs,:]
             top = pred_bbox[4]
-                
             for P_idx, P in enumerate(Ps):
+                print(top, P)
                 if done_Ps[P_idx]:
                     continue
                 if top <= P:

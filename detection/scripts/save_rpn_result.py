@@ -35,8 +35,8 @@ if True:
     genVal = DataGenerator(imagesMeta = data.valGTMeta, cfg=cfg, data_type='val', do_meta=True, mode='test')
 
 # Val data    
-evalVal = rpn_test.saveEvalData(genVal, None, cfg)
-GTMeta = rpn_test.saveEvalResults(evalVal, genVal, cfg, obj_mapping)
+#evalVal = rpn_test.saveEvalData(genVal, None, cfg)
+GTMeta = rpn_test.saveEvalResults(None, genVal, cfg, obj_mapping)
 
 # Train data
 #evalTrain = rpn_test.saveEvalData(genTrain, None, cfg)
