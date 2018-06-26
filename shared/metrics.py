@@ -196,7 +196,7 @@ def computeRPNARHelper(predMeta, GTMeta):
             pred_bbox = pred_bboxes[ol_idx,:]
             top = pred_bbox[4]
             for P_idx, P in enumerate(Ps):
-                if done_Ps[P_idx]:
+                if done_Ps[P_idx] or top > P:
                     continue
                 if top <= P:
                     done_Ps[P_idx] = True
@@ -218,7 +218,7 @@ def computeRPNARHelper(predMeta, GTMeta):
 #    AR = np.mean(recalls)
     
     overlaps = [[ol - 0.5 for ol in x if ol > 0] for x in IoU]
-    AR = 2 * [np.sum(x) / nb_gt_samples for x in overlaps]
+    AR = [2*np.sum(x) / nb_gt_samples for x in overlaps]
     
     return AR, R, IoU
 
