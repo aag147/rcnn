@@ -55,7 +55,7 @@ def saveEvalData(generator, Stages, cfg):
     for batchidx in range(generator.nb_batches):
     
         X, y, imageMeta, imageDims, times = next(genIterator)
-        imageID = imageMeta['imageName'].split('.')[0]
+        imageID = imageMeta['imageID']
         utils.update_progress_new(batchidx+1, generator.nb_batches, imageID)
         
         #STAGE 1

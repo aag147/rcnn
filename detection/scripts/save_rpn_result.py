@@ -33,14 +33,6 @@ if True:
     # Create batch generators
     genTrain = DataGenerator(imagesMeta = data.trainGTMeta, cfg=cfg, data_type='train', do_meta=True, mode='test')
     genVal = DataGenerator(imagesMeta = data.valGTMeta, cfg=cfg, data_type='val', do_meta=True, mode='test')
-#    genTest = DataGenerator(imagesMeta = data.testGTMeta, cfg=cfg, data_type='test', do_meta=True)
-    
-#    Models = methods.AllModels(cfg, mode='test', do_rpn=True, do_det=False, do_hoi=False)
-#    Stages = stages.AllStages(cfg, Models, obj_mapping, hoi_mapping, mode='test')
-
-# Test data
-#evalTest = rpn_test.saveEvalData(genTest, Stages, cfg, obj_mapping)
-#rpn_test.saveEvalResults(evalTest, genTest, cfg)
 
 # Val data    
 evalVal = rpn_test.saveEvalData(genVal, None, cfg)

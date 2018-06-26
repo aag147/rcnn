@@ -45,10 +45,10 @@ if True:
     Stages = stages.AllStages(cfg, Models, obj_mapping, hoi_mapping, mode='test')
 
 
-#genIterator = genVal.begin()
+genIterator = genVal.begin()
 
 for i in range(1):
-#    X, y, imageMeta, imageDims, times = next(genIterator)
+    X, y, imageMeta, imageDims, times = next(genIterator)
     imageID = imageMeta['imageName'].split('.')[0]
     
     X, imageDims = filters_rpn.prepareInputs(imageMeta, genVal.images_path, cfg)
@@ -72,4 +72,6 @@ for i in range(1):
     else:
         img = (img+1.0) / 2.0
     gtBox = draw.drawGTBoxes(img, imageMeta, imageDims)
+    draw.drawAnchors(img, proposals[0], cfg)
     posAnc = draw.drawOverlapAnchors(img, proposals[0], imageMeta, imageDims, cfg)
+    

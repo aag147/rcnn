@@ -318,11 +318,12 @@ def non_max_suppression_fast(boxes, overlap_thresh=0.5, max_boxes=300, max_boxes
     # I changed this method with boxes already contains probabilities, so don't need prob send in this method
     # TODO: Caution!!! now the boxes actually is [x1, y1, x2, y2, prob] format!!!! with prob built in
 
-    
-    if boxes.shape[0] == 0:
+    nb_boxes = boxes.shape[0]
+    if nb_boxes == 0:
         return []
 
     # grab the coordinates of the bounding boxes
+    lb = boxes[:, 4]
     x1 = boxes[:, 0]
     y1 = boxes[:, 1]
     w  = boxes[:, 2]
@@ -340,8 +341,8 @@ def non_max_suppression_fast(boxes, overlap_thresh=0.5, max_boxes=300, max_boxes
     pick = []
     area = (x2 - x1) * (y2 - y1)
     # sorted by boxes last element which is prob
-    indexes = np.argsort([i[-1] for i in boxes])
-    indexes = indexes[:max_boxes_pre]
+    indexes = np.argsort(lb)
+    indexes = indexes[nb_boxes-max_boxes_pre:]
 
     while len(indexes) > 0:
         last = len(indexes) - 1

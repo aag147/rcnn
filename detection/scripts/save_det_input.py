@@ -27,10 +27,10 @@ if True:
     obj_mapping = data.class_mapping
     hoi_mapping = data.hoi_labels
     
-    cfg.my_save_path += cfg.dataset + '/rpn' + cfg.my_results_dir + '/detections/'
+    cfg.my_save_path = cfg.part_results_path + cfg.dataset + '/rpn' + cfg.my_results_dir + '/detections/'
     if not os.path.exists(cfg.my_save_path):
         os.makedirs(cfg.my_save_path)
-    print(cfg.my_save_path)
+    print('   save_path:', cfg.my_save_path)
 
     # data
     genTrain = DataGenerator(imagesMeta = data.trainGTMeta, cfg=cfg, data_type='train')
@@ -43,7 +43,7 @@ if True:
     Stages = stages.AllStages(cfg, Models, obj_mapping, hoi_mapping, mode='train')
 
     det_test.saveInputData(genVal, Stages, cfg)
-    det_test.saveInputData(genTrain, Stages, cfg)
+#    det_test.saveInputData(genTrain, Stages, cfg)
     
 print()
 print('Path:', cfg.my_save_path)

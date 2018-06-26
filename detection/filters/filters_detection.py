@@ -33,6 +33,7 @@ def prepareInputs(rois, imageDims):
     #out: bboxes of (idx,ymin,xmin,ymax,xmax) in range [0,1]
     
     new_rois = np.copy(rois)
+    new_rois = new_rois[:,:,:4]
     new_rois = new_rois[:,:,(1,0,3,2)]
     new_rois[:,:,2] = new_rois[:,:,2] + new_rois[:,:,0]
     new_rois[:,:,3] = new_rois[:,:,3] + new_rois[:,:,1]
@@ -111,7 +112,7 @@ def convertResults(bboxes, imageMeta, class_mapping, scale, rpn_stride):
         coords = [xmin, ymin, width, height]
         coords = [round(float(x),2) for x in coords]
         
-        res = {'image_id': int(imageMeta['id']), 'category_id': int(label), 'bbox': coords, 'score': round(float(prop),4)}
+        res = {'image_id': int(imageMeta['imageID']), 'category_id': int(label), 'bbox': coords, 'score': round(float(prop),4)}
         results.append(res)
     return results
         
@@ -215,7 +216,7 @@ def createTargets(bboxes, imageMeta, imageDims, class_mapping, cfg):
     #### Ground truth objects ###
     #############################
     for ix in range(bboxes.shape[0]):
-        (xmin, ymin, width, height) = bboxes[ix, :4]
+        (xmin, ymin, width, height, prop) = bboxes[ix, :5]
 #        xmin = int(round(xmin))
 #        ymin = int(round(ymin))
 #        xmax = int(round(xmax))
@@ -235,7 +236,7 @@ def createTargets(bboxes, imageMeta, imageDims, class_mapping, cfg):
         if best_iou < detection_min_overlap:
             continue
         else:
-            x_roi.append([xmin, ymin, width, height])
+            x_roi.append([xmin, ymin, width, height, prop])
             IoUs.append(best_iou)
 
             if detection_min_overlap <= best_iou < detection_max_overlap:

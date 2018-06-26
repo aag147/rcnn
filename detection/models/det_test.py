@@ -13,7 +13,8 @@ import filters_helper as helper,\
        
        
 import os
-
+import numpy as np
+import draw
 
 def saveInputData(generator, Stages, cfg):
     genIterator = generator.begin()
@@ -53,7 +54,7 @@ def saveEvalData(generator, Stages, cfg, obj_mapping):
     
     for i in range(generator.nb_batches):
         [img,proposals], y, imageMeta, imageDims, times = next(genIterator)
-        imageID = imageMeta['imageName'].split('.')[0]
+        imageID = imageMeta['imageID']
         utils.update_progress_new(i+1, generator.nb_batches, imageID)
         
         #STAGE 1
