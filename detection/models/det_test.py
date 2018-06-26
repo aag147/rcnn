@@ -13,8 +13,6 @@ import filters_helper as helper,\
        
        
 import os
-import numpy as np
-import draw
 
 def saveInputData(generator, Stages, cfg):
     genIterator = generator.begin()
