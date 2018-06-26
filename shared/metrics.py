@@ -190,12 +190,10 @@ def computeRPNARHelper(predMeta, GTMeta):
         ol_idxs = np.argsort(overlaps)[::-1]
         max_iou = np.max(overlaps)
 
-        print(pred_bboxes.shape)
         done_Ps = [False for _ in range(len(Ps))]
         for ol_idx in ol_idxs:
             overlap   = overlaps[ol_idx]
             pred_bbox = pred_bboxes[ol_idx,:]
-            print(pred_bbox)
             top = pred_bbox[4]
             for P_idx, P in enumerate(Ps):
                 if done_Ps[P_idx]:
@@ -211,16 +209,16 @@ def computeRPNARHelper(predMeta, GTMeta):
     
     R = [np.sum(x>=0.5) / nb_gt_samples for x in IoU.transpose()]
     
-    ious = [x/100 for x in range(50,100,5)]
-    recalls = np.zeros((len(ious)))
-    for idx, iou in enumerate(ious):
-        r = np.sum(IoU>=iou) / nb_gt_samples
-        recalls[idx] = r
-        
-    AR = np.mean(recalls)
+#    ious = [x/100 for x in range(50,100,5)]
+#    recalls = np.zeros((len(ious)))
+#    for idx, iou in enumerate(ious):
+#        r = np.sum(IoU>=iou) / nb_gt_samples
+#        recalls[idx] = r
+#        
+#    AR = np.mean(recalls)
     
-    overlaps = [x - 0.5 for x in IoU if x > 0]
-    AR = 2 * np.sum(overlaps) / nb_gt_samples
+    overlaps = [[ol - 0.5 for ol in x if ol > 0] for x in IoU]
+    AR = 2 * [np.sum(x) / nb_gt_samples for x in overlaps]
     
     return AR, R, IoU
 
