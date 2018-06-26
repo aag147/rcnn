@@ -17,7 +17,7 @@ import os
 def saveInputData(generator, Stages, cfg):    
     cfg.my_save_path = cfg.base_path + 'results/' + cfg.dataset + '/rpn' + cfg.my_results_dir + '/detections/'
     if not os.path.exists(cfg.my_save_path):
-        raise Exception('Detection directory does not exist!')
+        raise Exception('Detection directory does not exist! %s' % cfg.my_save_path)
     if not os.path.exists(cfg.my_save_path + generator.data_type + '/'):
         os.makedirs(cfg.my_save_path + generator.data_type + '/')
     save_path = cfg.my_save_path + generator.data_type + '/'
