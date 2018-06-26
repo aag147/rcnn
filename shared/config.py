@@ -21,44 +21,55 @@ class basic_config:
            self.shuffle = False
     
    def get_data_path(self):
+       self.local_base_path = self.base_path
        self.data_path = self.part_data_path + self.dataset + "/"
+       self.results_path = self.part_results_path + self.dataset + "/"
    
    def get_results_paths(self):
       if not self.newDir:
           print("   No directory (test)...")
-          self.new_results_dir = ''
-          path = self.my_results_path
+          self.my_results_id = ''
           return
       elif len(self.my_results_dir) > 0 and not self.use_shared_cnn:
-          print("   Shared directory...")
-          path = self.part_results_path + self.my_results_dir + '/'
-          self.new_results_dir = self.my_results_dir + '/'
+          print("   Old directory...")
+          my_results_path = self.part_results_path + self.my_results_dir + '/'
+          my_weights_path = my_results_path + 'weights/'
+          my_output_path = my_results_path + 'output/'
+          my_actual_results_dir = self.my_results_dir
       elif len(self.new_results_dir) > 0:
           print("   New directory... (name given)")
+          my_actual_results_dir = self.new_results_dir
           my_results_dir = self.dataset + '/' + self.new_results_dir + '/'
-          path = self.part_results_path + my_results_dir
+          my_results_path = self.part_results_path + my_results_dir
           
-          if os.path.exists(path):
-              raise Exception("directory already exists")
+          if os.path.exists(my_results_path):
+              raise Exception("directory already exists %s" % my_results_path)
           
-          os.mkdir(path)
-          os.mkdir(path + 'weights/')
+          my_weights_path = my_results_path + 'weights/'
+          my_output_path = my_results_path + 'output/'
+          os.mkdir(my_results_path)
+          os.mkdir(my_weights_path)
+          os.mkdir(my_output_path)
           
       else:
           print("   New directory...")
           for fid in range(100):
-            my_results_dir = self.dataset + "/" + self.modelnamekey + '%d/' % fid
-            path = self.part_results_path + my_results_dir
-            if not os.path.exists(path):
-                os.mkdir(path)
-                os.mkdir(path + 'weights/')
-                os.mkdir(path + 'detections/')
+            my_actual_results_dir = self.modelnamekey + '%d' % fid
+            my_results_dir = self.dataset + "/" + my_actual_results_dir + '/'
+            my_results_path = self.part_results_path + my_results_dir
+            if not os.path.exists(my_results_path):
+                my_weights_path = my_results_path + 'weights/'
+                my_output_path = my_results_path + 'output/'
+                os.mkdir(my_results_path)
+                os.mkdir(my_weights_path)
+                os.mkdir(my_output_path)
                 break
-          self.new_results_dir = my_results_dir
             
-      self.my_results_path = path
-      self.my_save_path = path
-      self.my_weights_path = path + 'weights/'
+      self.my_actual_results_dir = my_actual_results_dir  
+      self.my_results_path = my_results_path
+      self.my_evaluation_path = my_results_path
+      self.my_weights_path = my_weights_path
+      self.my_output_path = my_output_path
             
       if self.my_weights is not None:
           self.my_shared_weights = self.my_weights_path + self.my_weights
@@ -67,10 +78,10 @@ class basic_config:
           self.my_shared_weights = self.part_results_path + self.my_results_dir + '/weights/' + self.my_weights
       
    def get_detections_path(self):
-       if len(self.my_detections_dir) == 0:
+       if len(self.my_input_dir) == 0:
           return
        
-       self.my_detections_path = self.part_results_path + self.dataset + "/" + self.my_detections_dir + '/detections/'
+       self.my_input_path = self.results_path + self.my_input_dir + '/detections/'
       
       
    def update_paths(self):
@@ -86,18 +97,36 @@ class basic_config:
        self.setBasicValues()
        
    def setBasicValues(self):
-       #paths
+       # PATHS
+       
+       # constant
        self.home_path = os.path.expanduser('~') + '/'
+       self.base_path = ''
+       self.weights_path = ''
+       self.move_path = ''
+       
+       # constant partial paths
        self.part_results_path = ''
        self.part_data_path  = ''
-       self.weights_path = ''
+       
+       # variable partial paths
+       self.results_path = ''
+       self.data_path = ''
+       
+       # input directories
+       self.my_results_dir = ''
        self.new_results_dir = ''
+       self.my_input_dir = ''       
+       
+       
+       # full paths       
+       self.my_input_path = ''
+       
        self.my_results_path = ''
        self.my_weights_path = ''
-       self.my_results_dir = ''
-       self.my_detections_dir = ''
-       self.my_detections_path = ''
-       self.move_path = None
+       self.my_evaluation_path = ''
+       self.my_output_path = ''
+       
        self.move = False
        self.use_shared_cnn = False
        self.my_shared_weights = None
@@ -297,7 +326,7 @@ class basic_config:
               self.use_shared_cnn = True
           if opt == '-i':
               # roi input directory for detection
-              self.my_detections_dir = arg
+              self.my_input_dir = arg
           if opt == '-j':
               self.weight_decay = float(arg)
           if opt == '-l':

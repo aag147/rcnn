@@ -15,12 +15,12 @@ import filters_helper as helper,\
 import os
 
 def saveInputData(generator, Stages, cfg):    
-    cfg.my_save_path = cfg.base_path + 'results/' + cfg.dataset + '/rpn' + cfg.my_results_dir + '/detections/'
-    if not os.path.exists(cfg.my_save_path):
-        raise Exception('Detection directory does not exist! %s' % cfg.my_save_path)
-    if not os.path.exists(cfg.my_save_path + generator.data_type + '/'):
-        os.makedirs(cfg.my_save_path + generator.data_type + '/')
-    save_path = cfg.my_save_path + generator.data_type + '/'
+    cfg.my_output_path = cfg.results_path + 'rpn' + cfg.my_results_dir + '/detections/'
+    if not os.path.exists(cfg.my_output_path):
+        raise Exception('Detection directory does not exist! %s' % cfg.my_output_path)
+    if not os.path.exists(cfg.my_output_path + generator.data_type + '/'):
+        os.makedirs(cfg.my_output_path + generator.data_type + '/')
+    save_path = cfg.my_output_path + generator.data_type + '/'
     print('   save_path:', save_path)
     
     genIterator = generator.begin()
@@ -73,7 +73,7 @@ def saveEvalData(generator, Stages, cfg, obj_mapping):
     return evalData
 
 def saveEvalResults(evalData, generator, cfg):
-    path = cfg.part_results_path +  cfg.dataset + "/det" + cfg.my_results_dir + '/'
+    path = cfg.results_path + "det" + cfg.my_results_dir + '/'
     mode = generator.data_type
     utils.save_dict(evalData, path+mode+'_res')
     

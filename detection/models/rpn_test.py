@@ -19,7 +19,7 @@ import os
 
 def saveInputData(imagesMeta, data_type, cfg):
     load_path = cfg.data_path +'images/' + data_type + '/'
-    save_path = cfg.my_save_path + data_type + 'newer/'
+    save_path = cfg.my_output_path + data_type + 'newest/'
     
     if not os.path.exists(save_path):
         os.makedirs(save_path)
@@ -60,7 +60,7 @@ def saveEvalData(generator, Stages, cfg):
     return evalData
 
 def saveEvalResults(evalData, generator, cfg, obj_mapping):
-    save_path = cfg.part_results_path + "COCO/rpn" + cfg.my_results_dir + '/'
+    save_path = cfg.results_path + "rpn" + cfg.my_results_dir + '/'
     mode = generator.data_type
     
     if not os.path.exists(save_path):

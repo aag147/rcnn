@@ -44,4 +44,4 @@ if True:
     inputMeta = hoi_test.saveInputData(genTrain, Stages, cfg)
 
 print()
-print('Path:', cfg.my_save_path)
+print('Path:', cfg.my_output_path)

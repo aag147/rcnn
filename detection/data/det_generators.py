@@ -39,7 +39,7 @@ class DataGenerator():
       self.data_path = cfg.data_path
       self.images_path = self.data_path + 'images/'
       self.images_path = self.images_path + self.data_type + '/'
-      self.rois_path = cfg.my_detections_path + self.data_type + '/'
+      self.rois_path = cfg.my_input_path + self.data_type + '/'
       self.cfg = cfg
 
       self.dataID = list(imagesMeta.keys())
