@@ -49,8 +49,8 @@ class object_data:
         self.cfg.data_path = to_path
         self.cfg.results_path = self.cfg.base_path + 'results/' + self.cfg.dataset + '/'
         
-        self.cfg.my_output_path = self.cfg.results_path + self.cfg.my_actual_results_dir + '/detections/'
-        self.cfg.my_input_path = self.cfg.results_path + self.cfg.my_input_dir + '/detections/'
+        self.cfg.my_output_path = self.cfg.results_path + self.cfg.my_actual_results_dir + '/output/'
+        self.cfg.my_input_path = self.cfg.results_path + self.cfg.my_input_dir + '/output/'
         print('   data_path:', self.cfg.data_path)
         print('   output_path:', self.cfg.my_output_path)
         print('   input_path:', self.cfg.my_input_path)

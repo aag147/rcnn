@@ -81,7 +81,7 @@ class basic_config:
        if len(self.my_input_dir) == 0:
           return
        
-       self.my_input_path = self.results_path + self.my_input_dir + '/detections/'
+       self.my_input_path = self.results_path + self.my_input_dir + '/output/'
       
       
    def update_paths(self):

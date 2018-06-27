@@ -33,7 +33,6 @@ def prepareInputs(rois, imageDims):
     #out: bboxes of (idx,ymin,xmin,ymax,xmax) in range [0,1]
     
     new_rois = np.copy(rois)
-    new_rois = new_rois[:,:,:4]
     new_rois = new_rois[:,:,(1,0,3,2)]
     new_rois[:,:,2] = new_rois[:,:,2] + new_rois[:,:,0]
     new_rois[:,:,3] = new_rois[:,:,3] + new_rois[:,:,1]
@@ -121,6 +120,7 @@ def reduceData(Y, cfg, batchidx=None):
     #out: labels [{1}, {batch_size}, {nb_object_classes}]
     #out: deltas [{1}, {batch_size}, (dx,dy,dw,dh) * (nb_object_classes-1)]
     [all_bboxes, all_target_labels, all_target_deltas] = Y
+    all_bboxes = all_bboxes[:,:,:4]
     
     
     bboxes = np.zeros((1, cfg.nb_detection_rois, 4))
