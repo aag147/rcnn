@@ -86,7 +86,7 @@ class DataGenerator():
             pp_start = time.time()
             Y_tmp = filters_detection.loadData(imageMeta, self.rois_path, imageDims, self.cfg)
             if Y_tmp is None:
-                raise Exception("ups: no detections avaiable, path:%s" % self.rois_path)
+                raise Exception("ups: no detections available, path:%s" % self.rois_path)
             pp_end = time.time()
             
             if self.mode == 'test':
