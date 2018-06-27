@@ -28,7 +28,7 @@ class basic_config:
    def get_results_paths(self):
       if not self.newDir:
           print("   No directory (test)...")
-          self.my_results_id = ''
+          self.my_actual_results_dir = ''
           return
       elif len(self.my_results_dir) > 0 and not self.use_shared_cnn:
           print("   Old directory...")
@@ -223,7 +223,7 @@ class basic_config:
        self.cdim  = 3
        
        # Basic stuff
-       self.pool_size = 7
+       self.pool_size = 3
        self.init_lr = 0.00001
        self.epoch_begin = 0
        self.epoch_end = 60
