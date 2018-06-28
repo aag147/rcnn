@@ -41,7 +41,7 @@ class object_data:
         from_path = self.cfg.data_path
         to_path   = self.cfg.base_path + self.cfg.dataset + '/'
         
-        from_input_path = self.my_input_path
+        from_input_path = self.cfg.my_input_path
         to_input_path = self.cfg.results_path + self.cfg.my_input_dir + '/output/'
         
         print('Moving data...')
