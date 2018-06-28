@@ -35,7 +35,11 @@ class object_data:
         if self.cfg.move_path is None:
             return
         
+        if not os.path.exists(self.cfg.move_path):
+            self.cfg.move_path = '/scratch2/wkl437/'
+        
         self.cfg.base_path = self.cfg.move_path
+        
         self.cfg.results_path = self.cfg.base_path + 'results/' + self.cfg.dataset + '/'
         
         from_path = self.cfg.data_path
