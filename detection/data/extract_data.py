@@ -42,7 +42,7 @@ class object_data:
         
         self.cfg.results_path = self.cfg.base_path + 'results/' + self.cfg.dataset + '/'
         
-        from_path = self.cfg.data_path
+        from_path = self.cfg.data_path + 'images/'
         to_path   = self.cfg.base_path + self.cfg.dataset + '/'
         
         from_input_path = self.cfg.my_input_path
@@ -53,7 +53,6 @@ class object_data:
             print('   -moving images...')
             utils.moveData(from_path, to_path)
             print('   -moving inputs...')
-            os.mkdir(to_input_path)
             utils.moveData(from_input_path, to_input_path)
             print('   Data has been moved...')
         else:
