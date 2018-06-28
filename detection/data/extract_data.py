@@ -43,7 +43,7 @@ class object_data:
         self.cfg.results_path = self.cfg.base_path + 'results/' + self.cfg.dataset + '/'
         
         from_path = self.cfg.data_path + 'images/'
-        to_path   = self.cfg.base_path + self.cfg.dataset + '/'
+        to_path   = self.cfg.base_path + self.cfg.dataset + '/images/'
         
         from_input_path = self.cfg.my_input_path
         to_input_path = self.cfg.results_path + self.cfg.my_input_dir + '/output/'
