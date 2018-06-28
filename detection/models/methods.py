@@ -330,12 +330,12 @@ class AllModels:
         ########################
         ####### Backbone #######
         ########################
-        output_features = models.VGG16_buildin(cfg)(img_input) 
         
         ########################
         ######### RPN ##########
         ########################
         if self.do_rpn:
+            output_features = models.VGG16_buildin(cfg)(img_input) 
             self.nb_models += 1
             
             rpn_inputs = [
