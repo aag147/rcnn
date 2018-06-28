@@ -32,25 +32,32 @@ class object_data:
         utils.removeData(to_path)
         
     def move_data(self):
-        from_path = self.cfg.data_path
-        to_path   = self.cfg.move_path
-        if to_path is None:
+        if self.cfg.move_path is None:
             return
-        to_path += self.cfg.dataset + '/'
+        
+        self.cfg.base_path = self.cfg.move_path
+        self.cfg.results_path = self.cfg.base_path + 'results/' + self.cfg.dataset + '/'
+        
+        from_path = self.cfg.data_path
+        to_path   = self.cfg.base_path + self.cfg.dataset + '/'
+        
+        from_input_path = self.my_input_path
+        to_input_path = self.cfg.results_path + self.cfg.my_input_dir + '/output/'
         
         print('Moving data...')
         if not os.path.exists(to_path):
+            print('   -moving images...')
             utils.moveData(from_path, to_path)
+            print('   -moving inputs...')
+            os.mkdir(to_input_path)
+            utils.moveData(from_input_path, to_input_path)
             print('   Data has been moved...')
         else:
             print('   Data is already moved...')
         
-        self.cfg.base_path = self.cfg.move_path
-        self.cfg.data_path = to_path
-        self.cfg.results_path = self.cfg.base_path + 'results/' + self.cfg.dataset + '/'
-        
+        self.cfg.data_path = to_path        
         self.cfg.my_output_path = self.cfg.results_path + self.cfg.my_actual_results_dir + '/output/'
-        self.cfg.my_input_path = self.cfg.results_path + self.cfg.my_input_dir + '/output/'
+        self.cfg.my_input_path = to_input_path
         print('   data_path:', self.cfg.data_path)
         print('   output_path:', self.cfg.my_output_path)
         print('   input_path:', self.cfg.my_input_path)
