@@ -66,6 +66,7 @@ class model_trainer:
         else:
             self.model.fit_generator(generator = self.genTrain.begin(), \
                     steps_per_epoch = self.genTrain.nb_batches, \
+                    verbose = 2,\
                     epochs = cfg.epoch_end, initial_epoch=cfg.epoch_begin, callbacks=callbacks)
 
 
