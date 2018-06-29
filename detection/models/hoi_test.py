@@ -11,44 +11,52 @@ import filters_detection,\
        filters_hoi
        
 import os
-
+import numpy as np
 
 def saveInputData(generator, Stages, cfg):  
-    cfg.my_save_path = cfg.data_path + 'results/' + cfg.dataset + '/det' + cfg.my_results_dir + '/detections/'
-    if not os.path.exists(cfg.my_save_path):
-        raise Exception('Detection directory does not exist!')
-    if not os.path.exists(cfg.my_save_path + generator.data_type + '/'):
-        os.makedirs(cfg.my_save_path + generator.data_type + '/')
-    save_path = cfg.my_save_path + generator.data_type + '/'
+    cfg.my_output_path = cfg.results_path + 'det' + cfg.my_results_dir + '/output/'
+    
+    if not os.path.exists(cfg.my_output_path):
+        os.makedirs(cfg.my_output_path)
+    if not os.path.exists(cfg.my_output_path):
+        raise Exception('Output directory does not exist! %s' % cfg.my_output_path)
+    if not os.path.exists(cfg.my_output_path + generator.data_type + '/'):
+        os.makedirs(cfg.my_output_path + generator.data_type + '/')
+    save_path = cfg.my_output_path + generator.data_type + '/'
     print('   save_path:', save_path)
 
     genIterator = generator.begin()
     inputMeta = {}
     
     for batchidx in range(generator.nb_batches):
-        [img,proposals], y, imageMeta, imageDims, times = next(genIterator)
+#        [img,proposals], y, imageMeta, imageDims, times = next(genIterator)
+        X, y, imageMeta, imageDims, times = next(genIterator)
+        print("image stuff", np.min(X), np.max(X), np.mean(X))
         imageID = imageMeta['imageName'].split('.')[0]
         utils.update_progress_new(batchidx+1, generator.nb_batches, imageID)
         
         #STAGE 1
-#        proposals = Stages.stageone(X, y, imageMeta, imageDims)
+        proposals = Stages.stageone([X], y, imageMeta, imageDims)
         
         #STAGE 2
-        bboxes = Stages.stagetwo([img,proposals], imageMeta, imageDims)
+        bboxes = Stages.stagetwo([proposals], imageMeta, imageDims)
         if bboxes is None:
             inputMeta[imageID] = None
             continue
         
+        print("image stuff", np.min(X), np.max(X), np.mean(X))
+        return X, bboxes, imageMeta, imageDims
+        
         #STAGE 3
-        all_hbboxes, all_obboxes, all_target_labels, val_map = Stages.stagethree(bboxes, imageMeta, imageDims, include='pre')
+        all_hbboxes, all_obboxes, all_target_labels, val_map = Stages.stagethree_targets(bboxes, imageMeta, imageDims)
         if all_hbboxes is None:
             inputMeta[imageID] = None
             continue
         
         #CONVERT
-        inputMeta[imageID] = filters_hoi.convertData([all_hbboxes[0], all_obboxes[0], all_target_labels[0], val_map[0]], cfg)
+        inputMeta[imageID] = filters_hoi.convertData([all_hbboxes, all_obboxes, all_target_labels, val_map], cfg)
         
-    utils.save_dict(inputMeta, save_path + 'hoiputs')
+    utils.save_obj(inputMeta, save_path + 'hoiputs')
     return inputMeta
 
 

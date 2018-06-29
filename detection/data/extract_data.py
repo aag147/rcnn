@@ -58,7 +58,7 @@ class object_data:
         else:
             print('   Data is already moved...')
         
-        self.cfg.data_path = self.cfg.data_path      
+        self.cfg.data_path = self.cfg.base_path + self.cfg.dataset + '/'      
         self.cfg.my_output_path = self.cfg.results_path + self.cfg.my_actual_results_dir + '/output/'
         self.cfg.my_input_path = to_input_path
         print('   data_path:', self.cfg.data_path)

@@ -116,9 +116,15 @@ def loadData(imageInput, imageDims, cfg):
 
 def convertData(Y, cfg):
     [all_hbboxes, all_obboxes, all_target_labels, all_val_map] = Y
+    
+    all_hbboxes = np.copy(all_hbboxes[0])
+    all_obboxes = np.copy(all_obboxes[0])
+    all_target_labels = np.copy(all_target_labels[0])
+    all_val_map = np.copy(all_val_map[0])
+    
     all_target_labels = [np.where(x==1)[0].tolist() for x in all_target_labels.astype(int)]
-    all_hbboxes = [[round(float(x), 2) for x in box] for box in all_hbboxes.tolist()]
-    all_obboxes = [[round(float(x), 2) for x in box] for box in all_obboxes.tolist()]
+    all_hbboxes = [[round(float(x), 4) for x in box] for box in all_hbboxes.tolist()]
+    all_obboxes = [[round(float(x), 4) for x in box] for box in all_obboxes.tolist()]
     all_val_map = all_val_map.astype(int).tolist()
     
     hoiMeta = {'hbboxes':all_hbboxes, 'o_bboxes':all_obboxes, 'hoi_labels':all_target_labels, 'val_map':all_val_map}
@@ -269,8 +275,8 @@ def createTargets(bboxes, imageMeta, imageDims, cfg, class_mapping):
     #############################
     val_map = np.zeros((hbboxes.shape[0], obboxes.shape[0]))
     label_map = np.zeros((hbboxes.shape[0], obboxes.shape[0], cfg.nb_hoi_classes))
-    hbb_map   = np.zeros((hbboxes.shape[0], obboxes.shape[0], 4))
-    obb_map   = np.zeros((hbboxes.shape[0], obboxes.shape[0], 4))
+    hbb_map   = np.zeros((hbboxes.shape[0], obboxes.shape[0], 5))
+    obb_map   = np.zeros((hbboxes.shape[0], obboxes.shape[0], 5))
     
 #    print(gt_bboxes)
 #    print(gthboxes)
@@ -280,7 +286,7 @@ def createTargets(bboxes, imageMeta, imageDims, cfg, class_mapping):
         h_ious = helper._computeIoUs(hbox, gthboxes)
             
         for oidx, obox in enumerate(obboxes):
-            objlabel = int(obox[4])
+            objlabel = int(obox[5])
             o_ious = helper._computeIoUs(obox, gtoboxes)
                         
         
@@ -293,8 +299,8 @@ def createTargets(bboxes, imageMeta, imageDims, cfg, class_mapping):
                         if val_map[hidx, oidx] < 1:
                             # negative2
                             val_map[hidx, oidx] = 1
-                            hbb_map[hidx, oidx, :] = hbox[:4]
-                            obb_map[hidx, oidx, :] = obox[:4]
+                            hbb_map[hidx, oidx, :] = hbox[:5]
+                            obb_map[hidx, oidx, :] = obox[:5]
                                                                                     
                     elif h_iou >= cfg.hoi_max_overlap and o_iou >= cfg.hoi_max_overlap:
                         
@@ -303,14 +309,14 @@ def createTargets(bboxes, imageMeta, imageDims, cfg, class_mapping):
                         if gt_label >= 0:
                             val_map[hidx, oidx] = 3
                             label_map[hidx, oidx, gt_label] = 1
-                            hbb_map[hidx, oidx, :] = hbox[:4]
-                            obb_map[hidx, oidx, :] = obox[:4]
+                            hbb_map[hidx, oidx, :] = hbox[:5]
+                            obb_map[hidx, oidx, :] = obox[:5]
                     elif h_iou >= cfg.hoi_min_overlap and o_iou >= cfg.hoi_min_overlap:
                         if val_map[hidx, oidx] < 2:
                             # negative1
                             val_map[hidx, oidx] = 2
-                            hbb_map[hidx, oidx, :] = hbox[:4]
-                            obb_map[hidx, oidx, :] = obox[:4]
+                            hbb_map[hidx, oidx, :] = hbox[:5]
+                            obb_map[hidx, oidx, :] = obox[:5]
                 
                 
     

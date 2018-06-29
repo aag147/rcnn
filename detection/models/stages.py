@@ -47,7 +47,7 @@ class AllStages:
     def stageone(self, X, y, imageMeta, imageDims, include='all', do_regr = True):        
         #rpn prepare
         [img] = X
-                
+        
         #rpn predict
         if self.cfg.use_shared_cnn:
             rpn_props, rpn_deltas, F = self.model_rpn.predict_on_batch(img)
@@ -93,14 +93,26 @@ class AllStages:
         
         # det post
         rois = filters_detection.unprepareInputs(rois_norm, imageDims)
-        bboxes = helper.deltas2Boxes(all_det_props, all_det_deltas, rois, imageDims, self.cfg)
-#        bboxes = helper.deltas2ObjBoxes(all_det_props, all_det_deltas, rois, imageDims, self.cfg, self.obj_mapping)
+        if self.mode=='train':
+            bboxes = helper.deltas2ObjBoxes(all_det_props, all_det_deltas, rois, imageDims, self.cfg, self.obj_mapping)
+        else:
+            bboxes = helper.deltas2Boxes(all_det_props, all_det_deltas, rois, imageDims, self.cfg)
         
         if len(bboxes) == 0:
             return None
+        
+        return bboxes
+        
         bboxes_nms = helper.non_max_suppression_boxes(bboxes, self.cfg, self.det_nms_thresh)
         
+        bboxes_nms = np.expand_dims(bboxes_nms, axis=0)
+        
         return bboxes_nms
+    
+    def stagethree_targets(self, X, imageMeta, imageDims):
+        bboxes = X[0,::]
+        all_hbboxes, all_obboxes, all_target_labels, val_map = filters_hoi.createTargets(bboxes, imageMeta, imageDims, self.cfg, self.obj_mapping)
+        return all_hbboxes, all_obboxes, all_target_labels, val_map
     
     def stagethree(self, X, imageMeta, imageDims, include='all'):
         # hoi prepare

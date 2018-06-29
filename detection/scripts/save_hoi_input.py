@@ -18,30 +18,33 @@ from rpn_generators import DataGenerator
 import methods,\
        stages
 import hoi_test
-import utils
-
-import os
+import numpy as np
 
 if True:
     # Load data
-    data = extract_data.object_data(False)
+    data = extract_data.object_data()
     cfg = data.cfg
     obj_mapping = data.class_mapping
-    hoi_mapping = data.hoi_labels
-    
-    if not os.path.exists(cfg.my_save_path + 'detections/'):
-        os.makedirs(cfg.my_save_path + 'detections/')
-    cfg.my_save_path += 'detections/'    
+    hoi_mapping = data.hoi_labels    
     
     # Create batch generators
     genTrain = DataGenerator(imagesMeta = data.trainGTMeta, cfg=cfg, data_type='train', do_meta=True)
+#    genTest = DataGenerator(imagesMeta = data.valGTMeta, cfg=cfg, data_type='val', do_meta=True)
     
 
-if True:
     Models = methods.AllModels(cfg, mode='test', do_rpn=True, do_det=True, do_hoi=False)
+if True:
     Stages = stages.AllStages(cfg, Models, obj_mapping, hoi_mapping, mode='train')
 
-    inputMeta = hoi_test.saveInputData(genTrain, Stages, cfg)
+
+X, bboxes, imageMeta, imageDims = hoi_test.saveInputData(genTrain, Stages, cfg)
+import draw
+img = np.copy(X[0]) + cfg.PIXEL_MEANS
+if np.min(img) < 0:
+    img -= np.min(img)
+    img /= np.max(img)
+draw.drawPositiveRois(img, bboxes)
+draw.drawOverlapAnchors(img, bboxes, imageMeta, imageDims, cfg)
 
 print()
 print('Path:', cfg.my_output_path)

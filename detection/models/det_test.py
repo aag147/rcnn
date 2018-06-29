@@ -15,9 +15,9 @@ import filters_helper as helper,\
 import os
 
 def saveInputData(generator, Stages, cfg):    
-    cfg.my_output_path = cfg.results_path + 'rpn' + cfg.my_results_dir + '/detections/'
+    cfg.my_output_path = cfg.results_path + 'rpn' + cfg.my_results_dir + '/output/'
     if not os.path.exists(cfg.my_output_path):
-        raise Exception('Detection directory does not exist! %s' % cfg.my_output_path)
+        raise Exception('Output directory does not exist! %s' % cfg.my_output_path)
     if not os.path.exists(cfg.my_output_path + generator.data_type + '/'):
         os.makedirs(cfg.my_output_path + generator.data_type + '/')
     save_path = cfg.my_output_path + generator.data_type + '/'
@@ -68,7 +68,7 @@ def saveEvalData(generator, Stages, cfg, obj_mapping):
             continue
         
         #CONVERT
-        evalData += filters_detection.convertResults(bboxes, imageMeta, obj_mapping, imageDims['scale'], cfg.rpn_stride)
+        evalData += filters_detection.convertResults(bboxes[0], imageMeta, obj_mapping, imageDims['scale'], cfg.rpn_stride)
         
     return evalData
 

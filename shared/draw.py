@@ -288,7 +288,7 @@ def drawPositiveRois(img, rois):
     spl.imshow(img)
     bboxes = []
     for roi in rois:
-        labelID = roi[5]
+        labelID = roi[4]
         if labelID>0:
             bb = roi[0:4]*16
             bbox = drawProposalBox(bb)

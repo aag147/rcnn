@@ -18,7 +18,7 @@ import numpy as np
 import cv2 as cv
 import math
 import copy as cp
-def deltas2ObjBoxes(props, deltas, rois, imageDims, cfg, obj_mapping):   
+def deltas2ObjBoxes(props, deltas, rois, imageDims, cfg, obj_mapping, do_std=True):   
     output_shape = imageDims['output_shape']
     
     nb_top_bboxes = 10
@@ -35,11 +35,12 @@ def deltas2ObjBoxes(props, deltas, rois, imageDims, cfg, obj_mapping):
         labelrois   = rois[0,idxs,:]
         
         # standard deviation
-        sx, sy, sw, sh = cfg.det_regr_std
-        labeldeltas[:,0] /= sx
-        labeldeltas[:,1] /= sy
-        labeldeltas[:,2] /= sw
-        labeldeltas[:,3] /= sh
+        if do_std:
+            sx, sy, sw, sh = cfg.det_regr_std
+            labeldeltas[:,0] /= sx
+            labeldeltas[:,1] /= sy
+            labeldeltas[:,2] /= sw
+            labeldeltas[:,3] /= sh
         
         # real coordinates
         label_bboxes = apply_regr_det(labelrois, labeldeltas)
@@ -47,21 +48,25 @@ def deltas2ObjBoxes(props, deltas, rois, imageDims, cfg, obj_mapping):
         # clip to boundary
         label_bboxes[:,0] = np.maximum(0.0, label_bboxes[:,0])
         label_bboxes[:,1] = np.maximum(0.0, label_bboxes[:,1])
+        label_bboxes[:,0] = np.minimum(output_shape[1] - 0.02, label_bboxes[:,0])
+        label_bboxes[:,1] = np.minimum(output_shape[0] - 0.02, label_bboxes[:,1])
         label_bboxes[:,2] = np.minimum(output_shape[1] - label_bboxes[:,0] - 0.01, label_bboxes[:,2])
         label_bboxes[:,3] = np.minimum(output_shape[0] - label_bboxes[:,1] - 0.01, label_bboxes[:,3])
+        
+        print(label_bboxes)
         
         # append props
         labelprops = np.expand_dims(labelprops, axis=1)
         labellabels = np.expand_dims([labelID]*nb_top_bboxes, axis=1)
         label_bboxes = np.array(label_bboxes)
-        label_bboxes = np.concatenate([label_bboxes, labellabels], axis=1)
         label_bboxes = np.concatenate([label_bboxes, labelprops], axis=1)
+        label_bboxes = np.concatenate([label_bboxes, labellabels], axis=1)
         bboxes.extend(label_bboxes)
     
     bboxes = np.array(bboxes)
     return bboxes
 
-def deltas2Boxes(props, deltas, rois, imageDims, cfg):   
+def deltas2Boxes(props, deltas, rois, imageDims, cfg, do_std=True):   
     output_shape = imageDims['output_shape']
     
     nb_rois_in_batch = props.shape[1]
@@ -82,11 +87,12 @@ def deltas2Boxes(props, deltas, rois, imageDims, cfg):
         label_pos = labelID - 1
         
         regr = deltas[0, ii, 4 * label_pos:4 * (label_pos + 1)]
-        sx, sy, sw, sh = cfg.det_regr_std
-        regr[0] /= sx
-        regr[1] /= sy
-        regr[2] /= sw
-        regr[3] /= sh
+        if do_std:
+            sx, sy, sw, sh = cfg.det_regr_std
+            regr[0] /= sx
+            regr[1] /= sy
+            regr[2] /= sw
+            regr[3] /= sh
         x, y, w, h = apply_regr(roi, regr)
 #        print('label', ii, labelID)
 #        print('rt',roi[0], roi[1], roi[2], roi[3])
@@ -109,7 +115,7 @@ def deltas2Boxes(props, deltas, rois, imageDims, cfg):
 def non_max_suppression_boxes(bboxes, cfg, nms_overlap_thresh=0.5):
     # add some nms to reduce many boxes
     new_bboxes = []
-    labelIDs = bboxes[:,4]
+    labelIDs = bboxes[:,5]
     for i in range(cfg.nb_object_classes):
         idxs = np.where(labelIDs == i)[0]
         sub_bboxes = bboxes[idxs,:]
@@ -323,7 +329,7 @@ def non_max_suppression_fast(boxes, overlap_thresh=0.5, max_boxes=300, max_boxes
         return []
 
     # grab the coordinates of the bounding boxes
-    lb = boxes[:, 4]
+    props = boxes[:, 4]
     x1 = boxes[:, 0]
     y1 = boxes[:, 1]
     w  = boxes[:, 2]
@@ -341,7 +347,7 @@ def non_max_suppression_fast(boxes, overlap_thresh=0.5, max_boxes=300, max_boxes
     pick = []
     area = (x2 - x1) * (y2 - y1)
     # sorted by boxes last element which is prob
-    indexes = np.argsort(lb)
+    indexes = np.argsort(props)
     indexes = indexes[nb_boxes-max_boxes_pre:]
 
     while len(indexes) > 0:
@@ -422,15 +428,15 @@ def _transformBBoxes(bboxes, dosplit=True):
     gt_allboxes = []
 
     
-    bboxes = bboxes[bboxes[:,5].argsort()[::-1]]
+#    bboxes = bboxes[bboxes[:,4].argsort()[::-1]]
     
     for bbox in bboxes:
-        label = bbox[4]
-        prop = bbox[5]
+        label = bbox[5]
+        prop = bbox[4]
         (xmin, ymin, width, height) = bbox[:4]
         xmax = xmin + width
         ymax = ymin + height
-        trans_bbox = [xmin, ymin, xmax, ymax, label, prop]
+        trans_bbox = [xmin, ymin, xmax, ymax, prop, label]
         
         if not dosplit:
             gt_allboxes.append(trans_bbox)
