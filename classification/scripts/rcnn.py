@@ -49,11 +49,11 @@ if True:
 if True:   
     # Train model
     print('Training model...')
-#    trainer.trainModel(cfg)
+    trainer.trainModel(cfg)
     
     # Save stuff
     print('Saving final model...')
-#    trainer.saveModel(cfg)
+    trainer.saveModel(cfg)
     print('Testing model on test...')
     resTest = trainer.evaluateModel(genTest)    
     print("F1 (test!):", resTest.F1, "nb_zeros", resTest.nb_zeros, "mAP", resTest.mAP)
