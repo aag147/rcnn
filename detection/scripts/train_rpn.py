@@ -52,6 +52,7 @@ if True:
     
     model_rpn.fit_generator(generator = genTrain.begin(), \
                 steps_per_epoch = genTrain.nb_batches, \
+                verbose = 2,\
                 validation_data = genVal.begin(), \
                 validation_steps = genVal.nb_batches, \
                 epochs = cfg.epoch_end, initial_epoch=cfg.epoch_begin, callbacks=callbacks)
