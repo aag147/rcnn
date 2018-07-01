@@ -56,7 +56,7 @@ for idx, (imageID, imageMeta) in enumerate(imagesMeta.items()):
     
     roisMeta['rois'] = [[int(x*1000) for x in box] for box in roisMeta['rois']]
     new_target_deltas = []
-    for row in roisMeta['target_deltas']:
+    for idx, row in enumerate(roisMeta['target_deltas']):
         coord = []
         for x in row:
             coord.append(int(x*1000))
@@ -64,6 +64,7 @@ for idx, (imageID, imageMeta) in enumerate(imagesMeta.items()):
     roisMeta['target_deltas'] = new_target_deltas
     inputsMeta[imageID] = roisMeta
     
-    utils.update_progress_new(idx+1, nb_images, imageID)
+    if idx+1 % 1000 == 0:
+        utils.update_progress_new(idx+1, nb_images, imageID)
     
 utils.save_obj(inputsMeta, save_path + 'proposals_'+dataset)
