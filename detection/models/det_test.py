@@ -30,7 +30,8 @@ def saveInputData(generator, Stages, cfg):
     
         img, y, imageMeta, imageDims, times = next(genIterator)   
         imageID = str(imageMeta['imageID'])
-        utils.update_progress_new(batchidx+1, generator.nb_batches, imageID)
+        if batchidx+1 % 1000 == 0:
+            utils.update_progress_new(batchidx+1, generator.nb_batches, imageID)
         
 #        path = save_path + imageID + '.pkl'
 #        if os.path.exists(path):
