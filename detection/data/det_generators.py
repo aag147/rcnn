@@ -51,7 +51,7 @@ class DataGenerator():
           self.dataID.sort()
       
       self.imagesMeta = imagesMeta
-#      self.imagesInputs = utils.load_dict(self.rois_path + 'proposals')
+      self.imagesInputs = utils.load_obj(cfg.my_input_path + 'proposals_'+data_type)
       
       self.nb_images = len(self.dataID)
       self.nb_samples = None
@@ -80,6 +80,7 @@ class DataGenerator():
 #        batchIdx = 0
         for imageID in imageIDs:
             imageMeta = self.imagesMeta[imageID]
+            imageInputs = self.imagesInputs[imageID]
             imageMeta['id'] = imageID
             
             io_start = time.time()
@@ -87,8 +88,8 @@ class DataGenerator():
             io_end = time.time()
             
             pp_start = time.time()
-            Y_tmp = filters_detection.loadData(imageMeta, self.rois_path, imageDims, self.cfg)
-#            Y_tmp = filters_detection.loadData(imageInputs, self.cfg)
+#            Y_tmp = filters_detection.loadData(imageMeta, self.rois_path, imageDims, self.cfg)
+            Y_tmp = filters_detection.loadData(imageInputs, self.cfg)
             if Y_tmp is None:
                 raise Exception("ups: no detections available, path:%s" % self.rois_path)
             pp_end = time.time()

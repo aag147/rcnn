@@ -143,6 +143,30 @@ def plotLosses(log):
     plt.xlabel('epoch')
     plt.legend(['train', 'test'], loc='upper left')
     plt.show()
+    
+    
+def plotRPNLosses(hist):
+    x = hist[:,0]
+    t = hist[:,1]
+    tc = hist[:,3]
+    tr = hist[:,4]
+    v = hist[:,5]
+    vc = hist[:,7]
+    vr = hist[:,8]
+    
+    f, spl = plt.subplots(1)
+    plt.plot(x, t, c=(0,0,1))
+    plt.plot(x, tc, c=(0.5,0,1.0))
+    plt.plot(x, tr, c=(0.5,0,0.8))
+    plt.plot(x, v, c=(0,1,0))
+    plt.plot(x, vc, c=(0.5,1.0,0.0))
+    plt.plot(x, vr, c=(0.5,0.8,0.0))
+    
+    plt.title('RPN loss')
+    plt.ylabel('Loss')
+    plt.xlabel('Iteration (in 10K)')
+    plt.legend(['train+L2', 'train cls', 'train regr', 'val+L2', 'val cls', 'val regr'], loc='upper right')
+    plt.show()    
 
 
 def drawHoIComplete(img, h_bbox, o_bbox, pattern, labels, label_mapping, cfg):
@@ -224,6 +248,7 @@ def drawCrops(imagesID, imagesMeta, imagesCrops, images):
 
 def drawAnchors(img, anchorsGT, cfg):
     f, spl = plt.subplots(1)
+    spl.axis('off')
     spl.imshow(img)
     bboxes = []
     for anchor in anchorsGT:
@@ -235,7 +260,7 @@ def drawAnchors(img, anchorsGT, cfg):
             c = 'blue'
         bb = anchor[0:4]*cfg.rpn_stride
         bbox = drawProposalBox(bb)
-        spl.plot(bbox[0,:], bbox[1,:], c=c)
+        spl.plot(bbox[0,:], bbox[1,:])
         bboxes.append(bb)
     return np.array(bboxes)
         
@@ -257,7 +282,7 @@ def drawOverlapAnchors(img, anchors, imageMeta, imageDims, cfg):
     import filters_helper as helper
     import utils
     f, spl = plt.subplots(1)
-#    spl.axis('off')
+    spl.axis('off')
     spl.imshow(img)
     bboxes = []
     gta = helper.normalizeGTboxes(imageMeta['objects'], scale=imageDims['scale'], rpn_stride=cfg.rpn_stride)
@@ -315,7 +340,7 @@ def drawOverlapRois(img, rois, imageMeta, imageDims, cfg, obj_mapping):
         else:
             continue
         bb = {key:x*cfg.rpn_stride for key,x in rt.items()}
-        bbox = drawBoundingBox(bb)
+        bbox = np.copy(drawBoundingBox(bb))
         spl.plot(bbox[0,:], bbox[1,:], c=c)
         bboxes.append(bb)
         

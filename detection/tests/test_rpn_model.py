@@ -25,8 +25,9 @@ import methods,\
 import utils
 import draw
 import numpy as np
+import cv2 as cv
 
-if True:
+if False:
     # Load data
     data = extract_data.object_data()
     cfg = data.cfg
@@ -35,7 +36,7 @@ if True:
     
     # Create batch generators
     genTrain = DataGenerator(imagesMeta = data.trainGTMeta, cfg=cfg, data_type='train', do_meta=True)
-    genVal = DataGenerator(imagesMeta = data.valGTMeta, cfg=cfg, data_type='test', do_meta=True)
+    genVal = DataGenerator(imagesMeta = data.valGTMeta, cfg=cfg, data_type='val', do_meta=True)
 #    genTest = DataGenerator(imagesMeta = data.testGTMeta, cfg=cfg, data_type='test', do_meta=True)
     
     
@@ -50,7 +51,7 @@ if True:
 genIterator = genVal.begin()
 
 for i in range(1):
-    X, y, imageMeta, imageDims, times = next(genIterator)
+#    X, y, imageMeta, imageDims, times = next(genIterator)
     imageID = imageMeta['imageName'].split('.')[0]
     
     X, imageDims = filters_rpn.prepareInputs(imageMeta, genVal.images_path, cfg)
@@ -58,16 +59,16 @@ for i in range(1):
     y = filters_rpn.reduceData(Y_tmp, cfg)
 
     #STAGE 1
-    proposals = Stages.stageone([X], y, imageMeta, imageDims, do_regr=True)
+#    proposals = Stages.stageone([X], y, imageMeta, imageDims, do_regr=True)
     
     [rois] = np.copy(proposals)
         
     # det prepare
     rois, target_props, target_deltas, IouS = filters_detection.createTargets(rois, imageMeta, imageDims, obj_mapping, cfg)
-    
     img = np.copy(X[0])
     img = img + cfg.PIXEL_MEANS
     img = img.astype(np.uint8)
+    img = cv.cvtColor(img, cv.COLOR_BGR2RGB)
     gtBox = draw.drawGTBoxes(img, imageMeta, imageDims)
     draw.drawAnchors(img, proposals[0], cfg)
     posAnc = draw.drawOverlapAnchors(img, proposals[0], imageMeta, imageDims, cfg)
