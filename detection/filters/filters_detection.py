@@ -147,8 +147,8 @@ def reduceData(Y, cfg, batchidx=None):
         if len(fg_samples) == 0:
             selected_pos_samples = []  
         elif len(fg_samples) < nb_max_fg:
-#            selected_pos_samples = fg_samples.tolist()
-            selected_pos_samples = np.random.choice(fg_samples, nb_max_fg, replace=True).tolist()
+            selected_pos_samples = fg_samples.tolist()
+#            selected_pos_samples = np.random.choice(fg_samples, nb_max_fg, replace=True).tolist()
         else:
             selected_pos_samples = np.random.choice(fg_samples, nb_max_fg, replace=False).tolist()
         try:

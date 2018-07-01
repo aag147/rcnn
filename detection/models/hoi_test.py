@@ -31,7 +31,6 @@ def saveInputData(generator, Stages, cfg):
     for batchidx in range(generator.nb_batches):
 #        [img,proposals], y, imageMeta, imageDims, times = next(genIterator)
         X, y, imageMeta, imageDims, times = next(genIterator)
-        print("image stuff", np.min(X), np.max(X), np.mean(X))
         imageID = imageMeta['imageName'].split('.')[0]
         utils.update_progress_new(batchidx+1, generator.nb_batches, imageID)
         
@@ -43,9 +42,6 @@ def saveInputData(generator, Stages, cfg):
         if bboxes is None:
             inputMeta[imageID] = None
             continue
-        
-        print("image stuff", np.min(X), np.max(X), np.mean(X))
-        return X, bboxes, imageMeta, imageDims
         
         #STAGE 3
         all_hbboxes, all_obboxes, all_target_labels, val_map = Stages.stagethree_targets(bboxes, imageMeta, imageDims)

@@ -83,36 +83,9 @@ class DataGenerator():
             g = self._generateIterativeImageCentricBatches
         return g()
     
-    
-    
-    def _generateSlowBatch(self, imageIDs):
-        for imageID in imageIDs:
-            imageMeta = self.imagesMeta[imageID]
-            imageInputs = self.imagesInputs[imageID]
-            
-            if imageInputs is None:
-                return None
-            
-            imageMeta['id'] = imageID
-            io_start = time.time()
-            img, imageDims = filters_rpn.prepareInputs(imageMeta, self.images_path, self.cfg)
-            io_end = time.time()
-            pp_start = time.time()
-            Y_tmp = filters_hoi.loadData(imageInputs, imageDims, self.cfg)
-            pp_end = time.time()
-            if Y_tmp[0] is None:
-                return None
-            hbboxes, obboxes, target_labels = filters_hoi.reduceTargets(Y_tmp, self.cfg)
-            patterns = filters_hoi.createInteractionPatterns(hbboxes, obboxes, self.cfg)
-            hcrops, ocrops = filters_hoi.convertBB2Crop(img, hbboxes, obboxes, imageDims)
-            
-            times = np.array([io_end-io_start, pp_end-pp_start])
-            
-        if self.do_meta:
-            return [hbboxes, ocrops, patterns], target_labels, imageMeta, imageDims, times
-        return [hcrops, ocrops, patterns], target_labels        
-    
-    def _generateFastBatch(self, imageIDs):
+    def _generateBatchFromIDs(self, imageIdxs):
+        imageIDs = [self.dataID[idx] for idx in imageIdxs]
+
         for imageID in imageIDs:
             imageMeta = self.imagesMeta[imageID]
             imageInputs = self.imagesInputs[imageID]
@@ -138,18 +111,6 @@ class DataGenerator():
         if self.do_meta:
             return [img, hbboxes, obboxes, patterns], target_labels, imageMeta, imageDims, times
         return [img, hbboxes, obboxes, patterns], target_labels
-        
-        
-    def _generateBatchFromIDs(self, imageIdxs):
-        imageIDs = [self.dataID[idx] for idx in imageIdxs]
-        if self.cfg.do_fast_hoi:
-            return _generateFastBatch(imageIDs)
-        else:
-            return _generateSlowBatch(imageIDs)
-        
-        
-
-
 
     #%% Different forms of generators     
     def _generateIterativeImageCentricBatches(self):

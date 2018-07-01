@@ -37,14 +37,7 @@ if True:
     Stages = stages.AllStages(cfg, Models, obj_mapping, hoi_mapping, mode='train')
 
 
-X, bboxes, imageMeta, imageDims = hoi_test.saveInputData(genTrain, Stages, cfg)
-import draw
-img = np.copy(X[0]) + cfg.PIXEL_MEANS
-if np.min(img) < 0:
-    img -= np.min(img)
-    img /= np.max(img)
-draw.drawPositiveRois(img, bboxes)
-draw.drawOverlapAnchors(img, bboxes, imageMeta, imageDims, cfg)
+inputMeta = hoi_test.saveInputData(genTrain, Stages, cfg)
 
 print()
 print('Path:', cfg.my_output_path)

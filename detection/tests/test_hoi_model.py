@@ -26,7 +26,7 @@ import utils
 import draw
 import numpy as np
 
-if True:
+if False:
     # Load data
     data = extract_data.object_data()
     cfg = data.cfg
@@ -43,33 +43,21 @@ if True:
 #    cfg.use_mean=True
 #    cfg.my_results_dir = '80b'
 #    cfg.update_paths()
-    Models = methods.AllModels(cfg, mode='test', do_rpn=True, do_det=False, do_hoi=False)
-    Stages = stages.AllStages(cfg, Models, obj_mapping, hoi_mapping, mode='test')
-
+if True:
+    cfg.do_fast_hoi = True
+    Models = methods.AllModels(cfg, mode='test', do_rpn=True, do_det=True, do_hoi=True)
+    Stages = stages.AllStages(cfg, Models, obj_mapping, hoi_mapping, mode='train')
 
 genIterator = genVal.begin()
 
 for i in range(1):
-    X, y, imageMeta, imageDims, times = next(genIterator)
+#    X, y, imageMeta, imageDims, times = next(genIterator)
     imageID = imageMeta['imageName'].split('.')[0]
-    
-    X, imageDims = filters_rpn.prepareInputs(imageMeta, genVal.images_path, cfg)
-    Y_tmp = filters_rpn.createTargets(imageMeta, imageDims, cfg)
-    y = filters_rpn.reduceData(Y_tmp, cfg)
 
-    #STAGE 1
-    proposals = Stages.stageone([X], y, imageMeta, imageDims, do_regr=True)
-    
-    [rois] = np.copy(proposals)
-        
-    # det prepare
-    rois, target_props, target_deltas, IouS = filters_detection.createTargets(rois, imageMeta, imageDims, obj_mapping, cfg)
-    
-    img = np.copy(X[0])
-    img = img + cfg.PIXEL_MEANS
-    img = img.astype(np.uint8)
-    gtBox = draw.drawGTBoxes(img, imageMeta, imageDims)
-    draw.drawAnchors(img, proposals[0], cfg)
-    posAnc = draw.drawOverlapAnchors(img, proposals[0], imageMeta, imageDims, cfg)
-
-    
+    print('Stage one...')
+#    proposals = Stages.stageone([X], y, imageMeta, imageDims)
+    print('Stage two...')
+#    bboxes = Stages.stagetwo([X,proposals], imageMeta, imageDims)
+    print('Stage three...')
+    all_hoi_hbboxes, all_hoi_obboxes, all_hoi_props = Stages.stagethree([X,bboxes], imageMeta, imageDims, obj_mapping, include='all')
+#    draw.drawOverlapRois((X[0]-np.min(X))/np.max(X), bboxes, imageMeta, imageDims, cfg, obj_mapping)

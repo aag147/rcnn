@@ -228,6 +228,8 @@ class basic_config:
        self.epoch_begin = 0
        self.epoch_end = 60
        self.optimizer = 'adam'
+       self.backbone = 'alex'
+       self.do_fast_hoi = False
        
        self.winShape = (64, 64)
        
@@ -270,7 +272,7 @@ class basic_config:
        self.det_nms_overlap_thresh_test=0.5
         
        # hoi filters
-       self.hoi_max_overlap = 0.4
+       self.hoi_max_overlap = 0.5
        self.hoi_min_overlap = 0.1
        self.hoi_nms_overlap_thresh=0.5
        

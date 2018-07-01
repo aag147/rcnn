@@ -18,23 +18,24 @@ import numpy as np
 import cv2 as cv
 import math
 import copy as cp
-def deltas2ObjBoxes(props, deltas, rois, imageDims, cfg, obj_mapping, do_std=True):   
+def deltas2ObjBoxes(props, deltas, rois, imageDims, cfg, obj_mapping, do_regr=True, do_std=True):   
     output_shape = imageDims['output_shape']
     
+    nb_bboxes = rois.shape[1]
     nb_top_bboxes = 10
     bboxes = []
     obj_labels = [x for key,x in obj_mapping.items() if key != 'bg']
     
+    # standard deviation    
     for labelID in obj_labels:
         label_pos = labelID - 1
-        idxs = np.argsort(props[0,:,labelID])[::-1][:nb_top_bboxes]
+        idxs = np.argsort(props[0,:,labelID])[nb_bboxes-nb_top_bboxes:]
         
         # extract label data
         labelprops  = props[0,idxs,labelID]
         labeldeltas = deltas[0,idxs,4*label_pos:4*(label_pos+1)]
         labelrois   = rois[0,idxs,:]
         
-        # standard deviation
         if do_std:
             sx, sy, sw, sh = cfg.det_regr_std
             labeldeltas[:,0] /= sx
@@ -43,7 +44,10 @@ def deltas2ObjBoxes(props, deltas, rois, imageDims, cfg, obj_mapping, do_std=Tru
             labeldeltas[:,3] /= sh
         
         # real coordinates
-        label_bboxes = apply_regr_det(labelrois, labeldeltas)
+        if do_regr:
+            label_bboxes = apply_regr_det(labelrois, labeldeltas)
+        else:
+            label_bboxes = np.copy(labelrois[:,:4])
         
         # clip to boundary
         label_bboxes[:,0] = np.maximum(0.0, label_bboxes[:,0])
@@ -52,9 +56,7 @@ def deltas2ObjBoxes(props, deltas, rois, imageDims, cfg, obj_mapping, do_std=Tru
         label_bboxes[:,1] = np.minimum(output_shape[0] - 0.02, label_bboxes[:,1])
         label_bboxes[:,2] = np.minimum(output_shape[1] - label_bboxes[:,0] - 0.01, label_bboxes[:,2])
         label_bboxes[:,3] = np.minimum(output_shape[0] - label_bboxes[:,1] - 0.01, label_bboxes[:,3])
-        
-        print(label_bboxes)
-        
+                
         # append props
         labelprops = np.expand_dims(labelprops, axis=1)
         labellabels = np.expand_dims([labelID]*nb_top_bboxes, axis=1)
@@ -66,7 +68,7 @@ def deltas2ObjBoxes(props, deltas, rois, imageDims, cfg, obj_mapping, do_std=Tru
     bboxes = np.array(bboxes)
     return bboxes
 
-def deltas2Boxes(props, deltas, rois, imageDims, cfg, do_std=True):   
+def deltas2Boxes(props, deltas, rois, imageDims, cfg, do_regr=True, do_std=True):   
     output_shape = imageDims['output_shape']
     
     nb_rois_in_batch = props.shape[1]
@@ -93,13 +95,17 @@ def deltas2Boxes(props, deltas, rois, imageDims, cfg, do_std=True):
             regr[1] /= sy
             regr[2] /= sw
             regr[3] /= sh
-        x, y, w, h = apply_regr(roi, regr)
+            
+        if do_regr:
+            x, y, w, h = apply_regr(roi, regr)
+        else:
+            x, y, w, h = roi[:4]
 #        print('label', ii, labelID)
 #        print('rt',roi[0], roi[1], roi[2], roi[3])
 #        print('dl',regr[0], regr[1], regr[2], regr[3])
 #        print('bb',x, y, w, h)
 #        bboxes[labelID].append([x, y, (x + w), (y + h), prop])
-        boxes.append([x, y, w, h, labelID, prop])
+        boxes.append([x, y, w, h, prop, labelID])
 
     boxes = np.array(boxes)
     
@@ -572,7 +578,7 @@ def normalizeGTboxes(gtboxes, scale=[1,1], rpn_stride=1, shape=[1,1], roundoff=F
         if roundoff:
             xmin=int(round(xmin)); xmax=int(round(xmax))
             ymin=int(round(ymin)); ymax=int(round(ymax))
-        gtnormboxes.append({'xmin':xmin, 'xmax':xmax, 'ymin':ymin, 'ymax':ymax})    
+        gtnormboxes.append({'xmin':xmin, 'xmax':xmax, 'ymin':ymin, 'ymax':ymax, 'label':bbox['label']})    
     return gtnormboxes
        
 def preprocessImage(img, cfg):

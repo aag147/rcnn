@@ -93,6 +93,7 @@ class AllStages:
         
         # det post
         rois = filters_detection.unprepareInputs(rois_norm, imageDims)
+        print(rois.shape)
         if self.mode=='train':
             bboxes = helper.deltas2ObjBoxes(all_det_props, all_det_deltas, rois, imageDims, self.cfg, self.obj_mapping)
         else:
@@ -100,8 +101,6 @@ class AllStages:
         
         if len(bboxes) == 0:
             return None
-        
-        return bboxes
         
         bboxes_nms = helper.non_max_suppression_boxes(bboxes, self.cfg, self.det_nms_thresh)
         
@@ -114,35 +113,44 @@ class AllStages:
         all_hbboxes, all_obboxes, all_target_labels, val_map = filters_hoi.createTargets(bboxes, imageMeta, imageDims, self.cfg, self.obj_mapping)
         return all_hbboxes, all_obboxes, all_target_labels, val_map
     
-    def stagethree(self, X, imageMeta, imageDims, include='all'):
+    def stagethree(self, X, imageMeta, imageDims, obj_mapping, include='all'):
         # hoi prepare
-        bboxes = X
-        if self.mode == 'train':
-            all_hbboxes, all_obboxes, all_target_labels, val_map = filters_hoi.createTargets(bboxes, imageMeta, imageDims, self.cfg, self.obj_mapping)
-            if include=='pre':
-                return all_hbboxes, all_obboxes, all_target_labels, val_map
+        if len(X)==2:
+            [self.shared_img, bboxes] = X
         else:
-            all_hbboxes, all_obboxes = filters_hoi.splitInputs(bboxes)
+            [bboxes] = X
+        bboxes = np.copy(bboxes)
+        all_hbboxes, all_obboxes = filters_hoi.splitInputs(bboxes, imageMeta, obj_mapping)
         
         if all_hbboxes is None:
             return None, None, None
-        
+
         patterns = filters_hoi.createInteractionPatterns(all_hbboxes, all_obboxes, self.cfg)
+        if not self.cfg.do_fast_hoi:
+            hcrops, ocrops = filters_hoi.convertBB2Crop(self.shared_img, all_hbboxes, all_obboxes, imageDims)
         hbboxes_norm, obboxes_norm = filters_hoi.prepareInputs(all_hbboxes, all_obboxes, imageDims)
-                
+        
         # hoi predict
         nb_hoi_rois = hbboxes_norm.shape[1]
+        nb_hoi_rois = self.cfg.nb_hoi_rois
         all_hoi_props = np.zeros((1,nb_hoi_rois, self.cfg.nb_hoi_classes))
         all_hoi_hbboxes = np.zeros((1,nb_hoi_rois, 5))
         all_hoi_obboxes = np.zeros((1,nb_hoi_rois, 5))
         for batchidx in range(math.ceil(nb_hoi_rois / self.cfg.nb_hoi_rois)):    
             sidx = batchidx * self.cfg.nb_hoi_rois
             fidx = min(nb_hoi_rois, sidx + self.cfg.nb_hoi_rois)
-            batch_h = hbboxes_norm[:,sidx:fidx,:]
-            batch_o = obboxes_norm[:,sidx:fidx,:]
+            batch_h = hbboxes_norm[:,sidx:fidx,::]
+            batch_o = obboxes_norm[:,sidx:fidx,::]
             batch_p = patterns[:,sidx:fidx,:,:,:]
             
-            hoi_props, hoi_hbboxes, hoi_obboxes = self.model_hoi.predict_on_batch([self.shared_img, batch_h, batch_o, batch_p])
+            if self.cfg.do_fast_hoi:    
+                batch = [self.shared_img, batch_h, batch_o, batch_p]
+            else:
+                batch_hcrop = hcrops[sidx:fidx,::]
+                batch_ocrop = ocrops[sidx:fidx,::]
+                batch = [batch_hcrop, batch_ocrop, batch_p, batch_h, batch_o]
+            
+            hoi_props, hoi_hbboxes, hoi_obboxes = self.model_hoi.predict_on_batch(batch)
 
             all_hoi_props[:,sidx:fidx,:] = hoi_props[:,:fidx-sidx,:]
             all_hoi_hbboxes[:,sidx:fidx,:] = hoi_hbboxes[:,:fidx-sidx,:]

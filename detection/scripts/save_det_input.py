@@ -38,7 +38,7 @@ if True:
     Stages = stages.AllStages(cfg, Models, obj_mapping, hoi_mapping, mode='train')
 
     det_test.saveInputData(genVal, Stages, cfg)
-    det_test.saveInputData(genTrain, Stages, cfg)
+#    det_test.saveInputData(genTrain, Stages, cfg)
     
 print()
 print('Path:', cfg.my_output_path)

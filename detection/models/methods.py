@@ -284,6 +284,8 @@ class AllModels:
         human_shape = (None, 5)
         object_shape = (None, 5)
         interaction_shape = (None, cfg.winShape[0], cfg.winShape[1], 2)
+        human_img_shape = (227,227,3)
+        object_img_shape = (227,227,3)
         features_shape = (None, None, 512)
     
         ########################
@@ -310,6 +312,16 @@ class AllModels:
         interaction_input = keras.layers.Input(
             shape=interaction_shape,
             name="input_interaction"
+        )
+        
+        human_img_input = keras.layers.Input(
+            shape=human_img_shape,
+            name="input_human_img"
+        )
+        
+        object_img_input = keras.layers.Input(
+            shape=object_img_shape,
+            name="input_object_img"
         )
         
         features_input = keras.layers.Input(
@@ -392,7 +404,7 @@ class AllModels:
         ###### Detection #######
         ########################
         if self.do_det:
-            output_features_det = models.VGG16(cfg)(img_det_input)
+            output_features_det = models.VGG16_buildin(cfg)(img_det_input)
             
             self.nb_models += 1
             
@@ -464,10 +476,10 @@ class AllModels:
         ########################
         ######### HOI ##########
         ########################    
-        if self.do_hoi:
+        if self.do_hoi and cfg.do_fast_hoi:
             self.nb_models += 1
             
-            output_features_hoi = models.VGG16(cfg)(img_hoi_input)
+            output_features_hoi = models.VGG16_buildin(cfg)(img_hoi_input)
             
             hoi_inputs = [
                 img_hoi_input,
@@ -565,6 +577,101 @@ class AllModels:
             
             self.model_hoi = keras.models.Model(inputs=hoi_inputs, outputs=hoi_outputs)
             self.model_hoi.name = 'hoi'
+            
+            
+        if self.do_hoi and not cfg.do_fast_hoi:
+            self.nb_models += 1
+            
+            if cfg.backbone == 'vgg':
+                hoi_human_features = models.VGG16_buildin(cfg)(human_img_input)
+                hoi_object_features = models.VGG16_buildin(cfg)(object_img_input)
+            else:
+                hoi_human_features = models.AlexNet_buildin(cfg)(human_img_input)
+                hoi_object_features = models.AlexNet_buildin(cfg)(object_img_input)
+            
+            hoi_inputs = [
+                human_img_input,
+                object_img_input,
+                interaction_input,
+                human_input,
+                object_input
+            ]
+            
+            keras.models.Model(inputs=[human_img_input,object_img_input], outputs=[hoi_human_features,hoi_object_features])
+            
+            ## HUMAN ##
+            hoi_human_features = layers.slow_expansion(
+                cfg
+            )([
+                hoi_human_features
+            ])
+            
+            hoi_human_scores = keras.layers.TimeDistributed(
+                keras.layers.Dense(
+                    units=1 * nb_hoi_classes,
+                    activation=None,
+                    kernel_initializer = keras.initializers.RandomNormal(stddev=0.01),
+                    kernel_regularizer = keras.regularizers.l2(cfg.weight_decay),
+                ),
+                name="scores4human"
+            )(hoi_human_features)
+                
+            ## OBJECT ##    
+            hoi_object_features = layers.slow_expansion(
+                cfg
+            )([
+                hoi_object_features
+            ])
+            
+                
+            hoi_object_scores = keras.layers.TimeDistributed(
+                keras.layers.Dense(
+                    units=1 * nb_hoi_classes,
+                    activation=None,
+                    kernel_initializer = keras.initializers.RandomNormal(stddev=0.01),
+                    kernel_regularizer = keras.regularizers.l2(cfg.weight_decay),
+                ),
+                name="scores4object"
+            )(hoi_object_features)
+                              
+            ## INTERACTION ##
+            hoi_pattern_features = layers.pairwiseStream(
+                cfg = cfg
+            )([
+                interaction_input
+            ])
+            hoi_pattern_scores = keras.layers.TimeDistributed(
+                keras.layers.Dense(
+                    units=1 * nb_hoi_classes,
+                    activation=None,
+                    kernel_initializer = keras.initializers.RandomNormal(stddev=0.01),
+                    kernel_regularizer = keras.regularizers.l2(cfg.weight_decay),
+                ),
+                name = 'scores4pattern'
+            )(hoi_pattern_features)
+                
+            ## FINAL ##
+            hoi_score = keras.layers.Add()([hoi_human_scores, hoi_object_scores, hoi_pattern_scores])
+            
+            hoi_final_score = keras.layers.Activation(
+                "sigmoid",
+                name="hoi_out_class"
+            )(hoi_score)
+    
+            
+            if self.mode=='test':    
+                hoi_outputs = [
+                    hoi_final_score,
+                    human_input,
+                    object_input
+                ]
+            else:
+                hoi_outputs = [
+                    hoi_final_score
+                ]
+            
+            self.model_hoi = keras.models.Model(inputs=hoi_inputs, outputs=hoi_outputs)
+            self.model_hoi.name = 'hoi'            
 
         ########################
         ######### ALL ##########

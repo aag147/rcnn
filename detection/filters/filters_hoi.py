@@ -71,23 +71,83 @@ def prepareInputs(h_bboxes, o_bboxes, imageDims):
     
     return newh_bboxes, newo_bboxes
 
-def splitInputs(bboxes):
-    h_idxs = np.where(bboxes[:,4]==1)[0]
-    o_idxs = np.where(bboxes[:,4]>0)[0]
-    hbboxes = bboxes[h_idxs,:4]
-    obboxes = bboxes[o_idxs,:4]
+def splitInputs(bboxes, imageMeta, obj_mapping):
+    h_idxs = np.where(bboxes[0,:,5]==1)[0]
+    o_idxs = np.where(bboxes[0,:,5]>0)[0]
     
-    nb_hbboxes = hbboxes.shape[0]
+    hbboxes = bboxes[:,h_idxs,:4]
+    obboxes = bboxes[:,o_idxs,:]
+    obboxes = knownObjects(obboxes, imageMeta, obj_mapping)
     
-    bboxes_pairs = [[],[]]
-    for obbox in obboxes:
-        obbox = np.expand_dims(obbox, axis=0)
+    nb_hbboxes = hbboxes.shape[1]
+    nb_obboxes = obboxes.shape[1]
+    
+    bboxes_pairs = np.zeros((2, nb_hbboxes*nb_obboxes, 4))
+    for idx in range(nb_obboxes):
+        s_idx = idx*nb_hbboxes
+        f_idx = s_idx + nb_hbboxes
+        obbox = obboxes[0,idx:idx+1,:]
         obbox_list = np.repeat(obbox, nb_hbboxes, axis=0)
-        bboxes_pairs[0].extend(hbboxes.tolist())
-        bboxes_pairs[1].extend(obbox_list.tolist())
+        bboxes_pairs[0,s_idx:f_idx,:] = hbboxes[0,::]
+        bboxes_pairs[1,s_idx:f_idx,:] = obbox_list
     
-    return np.expand_dims(bboxes_pairs[0], axis=0), np.expand_dims(bboxes_pairs[1], axis=0)
+    return bboxes_pairs[0:1,::], bboxes_pairs[1:2,::]
         
+def knownObjects(bboxes, imageMeta, obj_mapping):
+    objs = imageMeta['objects']
+    lbls = []
+    for rel in imageMeta['rels']:
+        obj = objs[rel[1]]
+        label = obj_mapping[obj['label']]
+        if label not in lbls:
+            lbls.append(label)
+    known_idxs = np.in1d(bboxes[0,:,5], lbls)
+    bboxes = bboxes[:,known_idxs,:4]
+    return bboxes
+
+def convertBB2Crop(img, h_bboxes, o_bboxes, imageDims):
+    #(xmin,ymin,width,height) -> (ymin:ymax,xmin:xmax,3)
+    img_shape = img[0].shape
+    h_bboxes = np.copy(h_bboxes)
+    o_bboxes = np.copy(o_bboxes)
+    h_bboxes, o_bboxes = prepareInputs(h_bboxes, o_bboxes, imageDims)
+    h_bboxes = h_bboxes[0,:,1:]
+    o_bboxes = o_bboxes[0,:,1:]
+    
+    
+    h_bboxes[:,0] *= img_shape[0]
+    h_bboxes[:,1] *= img_shape[1]
+    h_bboxes[:,2] *= img_shape[0]
+    h_bboxes[:,3] *= img_shape[1]
+    
+    o_bboxes[:,0] *= img_shape[0]
+    o_bboxes[:,1] *= img_shape[1]
+    o_bboxes[:,2] *= img_shape[0]
+    o_bboxes[:,3] *= img_shape[1]
+    
+    h_bboxes = h_bboxes.astype(np.uint32)
+    o_bboxes = o_bboxes.astype(np.uint32)
+    
+    nb_interactions = h_bboxes.shape[0]
+    
+    hcrops = np.zeros((nb_interactions, 227, 227, 3))
+    ocrops = np.zeros((nb_interactions, 227, 227, 3))
+
+    for idx in range(nb_interactions):
+        h_bbox = h_bboxes[idx,:]
+        hcrop = np.copy(img[0, h_bbox[0]:h_bbox[2], h_bbox[1]:h_bbox[3],:])
+        hcrop = cv.resize(hcrop, (227, 227), interpolation=cv.INTER_LINEAR)
+        hcrops[idx,::] = hcrop
+        
+        o_bbox = o_bboxes[idx,:]
+        ocrop = np.copy(img[0, o_bbox[0]:o_bbox[2], o_bbox[1]:o_bbox[3],:])
+        ocrop = cv.resize(ocrop, (227, 227), interpolation=cv.INTER_LINEAR)
+        ocrops[idx,::] = ocrop
+    
+    return hcrops, ocrops
+
+
+
 
 #######################
 ### PROCESS TARGETS ###
@@ -95,15 +155,15 @@ def splitInputs(bboxes):
 def loadData(imageInput, imageDims, cfg):
     if imageInput is None:
         return None, None, None, None
-    all_hbboxes = np.array(imageInput['hbboxes'])
-    all_obboxes = np.array(imageInput['o_bboxes'])
+    all_hbboxes = np.array(imageInput['hbboxes']).astype(np.float64) / 1000.0
+    all_obboxes = np.array(imageInput['o_bboxes']).astype(np.float64) / 1000.0
     all_target_labels = (imageInput['hoi_labels'])
     val_map = np.array(imageInput['val_map'])
         
     all_target_labels = utils.getMatrixLabels(cfg.nb_hoi_classes, all_target_labels)
     
-    if len(np.where(val_map==3)[0])==0:
-        return None, None, None, None
+#    if len(np.where(val_map==3)[0])==0:
+#        return None, None, None, None
     
     all_hbboxes = np.expand_dims(all_hbboxes, axis=0)
     all_obboxes = np.expand_dims(all_obboxes, axis=0)
@@ -115,17 +175,19 @@ def loadData(imageInput, imageDims, cfg):
 
 
 def convertData(Y, cfg):
-    [all_hbboxes, all_obboxes, all_target_labels, all_val_map] = Y
+    [all_hbboxes, all_obboxes, all_target_labels, all_val_map] = Y    
+    sel_samples = filterTargets(all_val_map, 50, 75, 300)
     
-    all_hbboxes = np.copy(all_hbboxes[0])
-    all_obboxes = np.copy(all_obboxes[0])
-    all_target_labels = np.copy(all_target_labels[0])
-    all_val_map = np.copy(all_val_map[0])
+    all_hbboxes = np.copy(all_hbboxes[0,sel_samples,:])
+    all_obboxes = np.copy(all_obboxes[0,sel_samples,:])
+    all_target_labels = np.copy(all_target_labels[0,sel_samples,:])
     
-    all_target_labels = [np.where(x==1)[0].tolist() for x in all_target_labels.astype(int)]
-    all_hbboxes = [[round(float(x), 4) for x in box] for box in all_hbboxes.tolist()]
-    all_obboxes = [[round(float(x), 4) for x in box] for box in all_obboxes.tolist()]
-    all_val_map = all_val_map.astype(int).tolist()
+    all_val_map = np.copy(all_val_map[0,sel_samples])
+    
+    all_target_labels = [np.where(x==1)[0].tolist() for x in all_target_labels.astype(np.uint8)]
+    all_hbboxes = [[int(x*1000) for x in box] for box in all_hbboxes.tolist()]
+    all_obboxes = [[int(x*1000) for x in box] for box in all_obboxes.tolist()]
+    all_val_map = all_val_map.astype(np.uint8).tolist()
     
     hoiMeta = {'hbboxes':all_hbboxes, 'o_bboxes':all_obboxes, 'hoi_labels':all_target_labels, 'val_map':all_val_map}
     return hoiMeta
@@ -175,42 +237,48 @@ def convertResults(hbboxes, obboxes, predicted_labels, imageMeta, scale, rpn_str
     return results
 
 
+def filterTargets(val_map, nb_pos, nb_neg1, nb_hoi_rois):
+    val_map = np.copy(val_map[0])
+    positive_idxs = np.where(val_map==3)[0]
+    negative1_idxs = np.where(val_map==2)[0]
+    negative2_idxs = np.where(val_map==1)[0]
+    
+    selected_pos_samples = positive_idxs
+    selected_neg1_samples = negative1_idxs
+    selected_neg2_samples = negative2_idxs
+    
+    if len(positive_idxs) > nb_pos:
+        selected_pos_samples = np.random.choice(positive_idxs, nb_pos, replace=False)
+        
+    if len(negative1_idxs) > nb_neg1:
+        selected_neg1_samples = np.random.choice(negative1_idxs, nb_neg1, replace=False)
+    elif len(negative1_idxs)>0:
+        selected_neg1_samples = np.random.choice(negative1_idxs, nb_neg1, replace=True)
+        
+    if len(negative2_idxs) + len(selected_neg1_samples) + len(selected_pos_samples) > nb_hoi_rois:
+        selected_neg2_samples = np.random.choice(negative2_idxs, nb_hoi_rois - len(selected_pos_samples) - len(selected_neg1_samples), replace=False)
+    elif len(negative2_idxs) > 0:
+        selected_neg2_samples = np.random.choice(negative2_idxs, nb_hoi_rois - len(selected_pos_samples) - len(selected_neg1_samples), replace=True)
+    else:
+        selected_neg1_samples = np.random.choice(negative1_idxs, nb_hoi_rois - len(selected_pos_samples), replace=True)
+        
+    sel_samples = selected_pos_samples.tolist() + selected_neg1_samples.tolist() + selected_neg2_samples.tolist()    
+
+    return sel_samples
+
 def reduceTargets(Y, cfg, batchidx=None):
     #out: hbboxes [{1}, {batch_size}, (0,ymin,xmin,ymax,xmax)]
     #out: obboxes [{1}, {batch_size}, (0,ymin,xmin,ymax,xmax)]
     #out: labels [{1}, {batch_size}, {nb_hoi_classes}]
     [all_hbboxes, all_obboxes, all_target_labels, val_map] = Y
     
-    hbboxes = np.zeros((1, cfg.nb_hoi_rois, 4))
-    obboxes = np.zeros((1, cfg.nb_hoi_rois, 4))
+    hbboxes = np.zeros((1, cfg.nb_hoi_rois, 5))
+    obboxes = np.zeros((1, cfg.nb_hoi_rois, 5))
     target_labels  = np.zeros((1, cfg.nb_hoi_rois, cfg.nb_hoi_classes))
     
     ## Pick reduced indexes ##
     if batchidx is None:        
-        positive_idxs = np.where(val_map[0]==3)[0]
-        negative1_idxs = np.where(val_map[0]==2)[0]
-        negative2_idxs = np.where(val_map[0]==1)[0]      
-        
-        selected_pos_samples = positive_idxs
-        selected_neg1_samples = negative1_idxs
-        selected_neg2_samples = negative2_idxs
-        
-        if len(positive_idxs) > cfg.hoi_pos_share:
-            selected_pos_samples = np.random.choice(positive_idxs, cfg.hoi_pos_share, replace=False)
-            
-        if len(negative1_idxs) > cfg.hoi_neg1_share:
-            selected_neg1_samples = np.random.choice(negative1_idxs, cfg.hoi_neg1_share, replace=False)
-        elif len(negative1_idxs)>0:
-            selected_neg1_samples = np.random.choice(negative1_idxs, cfg.hoi_neg1_share, replace=True)
-            
-        if len(negative2_idxs) + len(selected_neg1_samples) + len(selected_pos_samples) > cfg.nb_hoi_rois:
-            selected_neg2_samples = np.random.choice(negative2_idxs, cfg.nb_hoi_rois - len(selected_pos_samples) - len(selected_neg1_samples), replace=False)
-        elif len(negative2_idxs) > 0:
-            selected_neg2_samples = np.random.choice(negative2_idxs, cfg.nb_hoi_rois - len(selected_pos_samples) - len(selected_neg1_samples), replace=True)
-        else:
-            selected_neg1_samples = np.random.choice(negative1_idxs, cfg.nb_hoi_rois - len(selected_pos_samples), replace=True)
-            
-        sel_samples = selected_pos_samples.tolist() + selected_neg1_samples.tolist() + selected_neg2_samples.tolist()
+        sel_samples = filterTargets(val_map, cfg.hoi_pos_share, cfg.hoi_neg1_share, cfg.nb_hoi_rois)
     else:        
         sidx = batchidx * cfg.nb_hoi_rois
         fidx = min(all_target_labels.shape[1], sidx + cfg.nb_hoi_rois)
@@ -237,7 +305,7 @@ def createTargets(bboxes, imageMeta, imageDims, cfg, class_mapping):
     ########## Image ############
     #############################
     gt_bboxes = imageMeta['objects']
-    gt_rels    = imageMeta['rels']
+    gt_rels    = np.array(imageMeta['rels'])
     
     scale = imageDims['scale']
     shape = imageDims['shape']
@@ -294,27 +362,29 @@ def createTargets(bboxes, imageMeta, imageDims, cfg, class_mapping):
             for gth_idx, h_iou in enumerate(h_ious):
                 for gto_idx, o_iou in enumerate(o_ious):
                     gt_obj   = int(gtoboxes[gto_idx, 4])
+                    gt_label = int(gt_relmap[gth_idx, gto_idx])
                     
-                    if objlabel != gt_obj:
-                        if val_map[hidx, oidx] < 1:
-                            # negative2
-                            val_map[hidx, oidx] = 1
-                            hbb_map[hidx, oidx, :] = hbox[:5]
-                            obb_map[hidx, oidx, :] = obox[:5]
-                                                                                    
-                    elif h_iou >= cfg.hoi_max_overlap and o_iou >= cfg.hoi_max_overlap:
-                        
-                        gt_label = int(gt_relmap[gth_idx, gto_idx])
-
+                    if objlabel == gt_obj and h_iou >= cfg.hoi_max_overlap and o_iou >= cfg.hoi_max_overlap:
                         if gt_label >= 0:
+                            # positive
+#                            print('pos', objlabel, gt_label, h_iou, o_iou)
                             val_map[hidx, oidx] = 3
                             label_map[hidx, oidx, gt_label] = 1
                             hbb_map[hidx, oidx, :] = hbox[:5]
                             obb_map[hidx, oidx, :] = obox[:5]
-                    elif h_iou >= cfg.hoi_min_overlap and o_iou >= cfg.hoi_min_overlap:
+                    elif objlabel == gt_obj and h_iou >= cfg.hoi_min_overlap and o_iou >= cfg.hoi_min_overlap:
                         if val_map[hidx, oidx] < 2:
+#                            print('neg1', objlabel, gt_label, h_iou, o_iou)
                             # negative1
                             val_map[hidx, oidx] = 2
+                            hbb_map[hidx, oidx, :] = hbox[:5]
+                            obb_map[hidx, oidx, :] = obox[:5]
+                    
+
+                    elif objlabel != gt_obj and o_iou < cfg.hoi_max_overlap:
+                        if val_map[hidx, oidx] < 1:
+                            # negative2
+                            val_map[hidx, oidx] = 1
                             hbb_map[hidx, oidx, :] = hbox[:5]
                             obb_map[hidx, oidx, :] = obox[:5]
                 

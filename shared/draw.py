@@ -178,7 +178,7 @@ def drawPositiveHoIs(img, h_bbox, o_bbox, labels, label_mapping, imageMeta, imag
         spl[0].plot(bbox[0,:], bbox[1,:])
 
     spl_idx = 1
-    print(ps_idxs)
+#    print(ps_idxs)
     for i in range(nb_imgs): 
         idx = ps_idxs[i]
         hbox = drawProposalBox(h_bbox[idx,:] * cfg.rpn_stride)
@@ -186,7 +186,7 @@ def drawPositiveHoIs(img, h_bbox, o_bbox, labels, label_mapping, imageMeta, imag
         spl[spl_idx].imshow(img)
         spl[spl_idx].plot(hbox[0,:], hbox[1,:])
         spl[spl_idx].plot(obox[0,:], obox[1,:])
-        print(labels.shape)
+#        print(labels.shape)
         lbs = ', '.join([label_mapping[x]['pred_ing'] for x in np.where(labels[idx,:]>0.5)[0]]) + ' ' + label_mapping[np.where(labels[idx,:]>0.5)[0][0]]['obj'] if np.sum(labels[idx,:])>0 else 'none'
         print('label:', lbs)
         spl_idx += 1
@@ -283,12 +283,54 @@ def drawOverlapAnchors(img, anchors, imageMeta, imageDims, cfg):
 #        spl.plot(bbox[0,:], bbox[1,:])
     return np.array(bboxes)
 
-def drawPositiveRois(img, rois):
+def drawOverlapRois(img, rois, imageMeta, imageDims, cfg, obj_mapping):
+    import filters_helper as helper
+    import utils
+    f, spl = plt.subplots(1)
+#    spl.axis('off')
+    spl.imshow(img)
+    bboxes = []
+    gta = helper.normalizeGTboxes(imageMeta['objects'], scale=imageDims['scale'], rpn_stride=cfg.rpn_stride)
+    inv_obj_mapping = {x:key for key,x in obj_mapping.items()}
+    for roi in rois:
+        (xmin, ymin, width, height) = roi[0:4]   
+        label = int(roi[5])
+        prop = roi[4]
+        rt = {'xmin': xmin, 'ymin': ymin, 'xmax': xmin+width, 'ymax': ymin+height}
+        best_iou = 0.0
+        for bbidx, gt in enumerate(gta):
+            gt_label = obj_mapping[gt['label']]
+            if label != gt_label:
+                continue
+            curr_iou = utils.get_iou(gt, rt)
+            if curr_iou > best_iou:
+#                print(curr_iou)
+                best_iou = curr_iou
+        if best_iou>=0.5:
+            c = 'red'
+            print('Pos. label:', inv_obj_mapping[label], prop, best_iou)
+        elif best_iou>=0:
+            c = 'blue'
+            print('Neg. label:', inv_obj_mapping[label], prop, best_iou)
+        else:
+            continue
+        bb = {key:x*cfg.rpn_stride for key,x in rt.items()}
+        bbox = drawBoundingBox(bb)
+        spl.plot(bbox[0,:], bbox[1,:], c=c)
+        bboxes.append(bb)
+        
+#    for bbidx, gt in enumerate(gta):
+#        bb = {key:x*cfg.rpn_stride for key,x in gt.items()}
+#        bbox = drawBoundingBox(bb)
+#        spl.plot(bbox[0,:], bbox[1,:])
+    return np.array(bboxes)
+
+def drawPositiveRois(img, rois, obj_mapping):
     f, spl = plt.subplots(1)
     spl.imshow(img)
     bboxes = []
     for roi in rois:
-        labelID = roi[4]
+        labelID = int(roi[5])
         if labelID>0:
             bb = roi[0:4]*16
             bbox = drawProposalBox(bb)

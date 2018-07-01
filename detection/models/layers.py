@@ -33,6 +33,35 @@ def rpn(cfg):
         return x
     return rpnFixed
 
+def slow_pooling(cfg):
+    def _slow(x):
+        base_layers = x[0]
+        x = MaxPooling2D(
+                (3, 3), 
+                strides=(2,2)
+            )(base_layers)
+        x = K.expand_dims(
+                x=x, 
+                axis=0
+            )
+        return x
+    return _slow
+
+def slow_expansion(cfg):
+    def lb_func(x):
+        base_layers = x[0]
+        y = K.reshape(
+                x=base_layers, 
+                shape=(1,-1,4096)
+            )
+        return y
+    
+    def _slow(x):
+        y = Lambda(lb_func, output_shape=(None,4096))(x)
+        return y
+    
+    return _slow
+
 def fullyConnected(cfg, stream=None, use_dropout=True):
     def fullyConnectedFixed(x):
         assert(len(x) == 1)
@@ -42,7 +71,7 @@ def fullyConnected(cfg, stream=None, use_dropout=True):
             Flatten(),
             name = '%s_flatten' % stream
         )(rois)
-        
+                
         dense_1 = TimeDistributed(
             Dense(
                 4096,

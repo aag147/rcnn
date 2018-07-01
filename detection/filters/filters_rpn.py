@@ -19,11 +19,11 @@ def prepareInputs(imageMeta, images_path, cfg):
     #in: imageMeta
     #out: preprocessed image and imageDims
     img = cv.imread(images_path + imageMeta['imageName'])
-    img = cv.cvtColor(img, cv.COLOR_BGR2RGB)
     assert(img is not None), 'invalid path: %s' % images_path + imageMeta['imageName']
     assert(img.shape[0] > 10)
     assert(img.shape[1] > 10)
     assert(img.shape[2] == 3)
+    img = cv.cvtColor(img, cv.COLOR_BGR2RGB)
     if cfg.use_mean:
         imgRedux, scale = helper.prep_im_for_blob(img, cfg.PIXEL_MEANS, cfg.mindim, cfg.maxdim)
     else:
