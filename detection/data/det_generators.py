@@ -12,6 +12,7 @@ import cv2 as cv
 import filters_detection,\
        filters_rpn
 import time
+import utils
 
 class DataGenerator():
     
@@ -50,6 +51,8 @@ class DataGenerator():
           self.dataID.sort()
       
       self.imagesMeta = imagesMeta
+#      self.imagesInputs = utils.load_dict(self.rois_path + 'proposals')
+      
       self.nb_images = len(self.dataID)
       self.nb_samples = None
       if self.nb_batches is None:
@@ -85,6 +88,7 @@ class DataGenerator():
             
             pp_start = time.time()
             Y_tmp = filters_detection.loadData(imageMeta, self.rois_path, imageDims, self.cfg)
+#            Y_tmp = filters_detection.loadData(imageInputs, self.cfg)
             if Y_tmp is None:
                 raise Exception("ups: no detections available, path:%s" % self.rois_path)
             pp_end = time.time()

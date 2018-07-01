@@ -20,12 +20,14 @@ def unprepareInputs(norm_rois, imageDims):
     
     rois = np.copy(norm_rois)
     rois = rois[:,:,1:]
-    rois = rois[:,:,(1,0,3,2)]
+    
+    rois = helper.unnormalizeRoIs(rois, imageDims)
 
     rois[:,:,2] = rois[:,:,2] - rois[:,:,0]
     rois[:,:,3] = rois[:,:,3] - rois[:,:,1]
     
-    rois = helper.unnormalizeRoIs(rois, imageDims)
+    rois = rois[:,:,(1,0,3,2)]
+    
     return rois
 
 def prepareInputs(rois, imageDims):
@@ -40,37 +42,45 @@ def prepareInputs(rois, imageDims):
     new_rois = helper.normalizeRoIs(new_rois, imageDims)
     new_rois = np.insert(new_rois, 0, 0, axis=2)
     
+    assert(np.all(new_rois[0,:,1]>=0))
+    assert(np.all(new_rois[0,:,2]>=0))
+    assert(np.all(new_rois[0,:,3]<=1.0))
+    assert(np.all(new_rois[0,:,4]<=1.0))
+    np.testing.assert_array_less(new_rois[0,:,1], new_rois[0,:,3])
+    np.testing.assert_array_less(new_rois[0,:,2], new_rois[0,:,4])
+
+    
     return new_rois
 
 #######################
 ##### MANAGE DATA #####
 #######################
+#def loadData(imageInputs, cfg):
 def loadData(imageMeta, rois_path, imageDims, cfg, batchidx = None):
     #out: rois [{1}, {...}, (1,ymin,xmin,ymax,xmax)]
     #out: labels [{1}, {...}, {nb_object_classes}]
     #out: deltas [{1}, {...}, (dx,dy,dw,dh) * (nb_object_classes-1)]
-    
-    roisMeta = utils.load_obj(rois_path + imageMeta['imageName'].split('.')[0])
+
+#    roisMeta = imageInputs    
+    roisMeta = utils.load_obj(rois_path + imageMeta['imageName'].split('.')[0])    
+
     if roisMeta is None:
         return None
-    all_bboxes = np.array(roisMeta['rois'])
+    all_bboxes = np.array(roisMeta['rois']).astype(np.float64)
+#    all_bboxes /= 1000.0
     all_target_labels = np.array(roisMeta['target_props'])
-    all_target_deltas = np.array(roisMeta['target_deltas'])
+    all_target_deltas = roisMeta['target_deltas']
     
-    all_target_deltas = utils.getMatrixDeltas(cfg.nb_object_classes, all_target_deltas, all_target_labels)
+    all_target_deltas = utils.getMatrixDeltas(cfg.nb_object_classes, all_target_deltas, all_target_labels).astype(np.float64)
+#    all_target_deltas[:,(cfg.nb_object_classes-1)*4:] /= 1000.0
     all_target_labels = utils.getMatrixLabels(cfg.nb_object_classes, all_target_labels)
 
     all_bboxes = np.expand_dims(all_bboxes, axis=0)
     all_target_labels = np.expand_dims(all_target_labels, axis=0)
-    all_target_deltas = np.expand_dims(all_target_deltas, axis=0)
+    all_target_deltas = np.expand_dims(all_target_deltas, axis=0)    
     
     return [all_bboxes, all_target_labels, all_target_deltas]
-    
-    rois_redux, target_props_redux, target_deltas_redux = reduceData(all_bboxes, all_target_labels, all_target_deltas, cfg)
 
-    rois_redux = prepareInputs(rois_redux, imageDims) 
-    
-    return rois_redux, target_props_redux, target_deltas_redux
 
 def convertData(Y, cfg):
     [all_bboxes, all_target_labels, all_target_deltas] = Y
@@ -80,12 +90,14 @@ def convertData(Y, cfg):
     all_target_deltas = np.copy(all_target_deltas[0])
     
     all_target_labels = [int(np.argmax(x)) for x in all_target_labels]
-    all_bboxes = [[round(float(x), 4) for x in box] for box in all_bboxes.tolist()]
+#    all_bboxes = [[round(float(x), 4) for x in box] for box in all_bboxes.tolist()]
+    all_bboxes = [[int(x*1000) for x in box] for box in all_bboxes.tolist()]
     new_target_deltas = []
     for idx, row in enumerate(all_target_deltas[:,(cfg.nb_object_classes-1)*4:]):
         coord = []
         for x in row[(all_target_labels[idx]-1)*4:(all_target_labels[idx])*4].tolist():
-            coord.append(round(float(x), 4))
+#            coord.append(round(float(x), 4))
+            coord.append(int(x*1000))
         new_target_deltas.append(coord)
         
         

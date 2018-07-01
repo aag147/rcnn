@@ -65,9 +65,9 @@ class DataGenerator():
             if imageInputs is None:
                 continue
 
-            val_map = np.array(imageInputs['val_map'])
-            if len(np.where(val_map==3)[0])==0:
-                continue
+#            val_map = np.array(imageInputs['val_map'])
+#            if len(np.where(val_map==3)[0])==0:
+#                continue
             nb_batches += 1
             
         return nb_batches
@@ -143,9 +143,9 @@ class DataGenerator():
     def _generateBatchFromIDs(self, imageIdxs):
         imageIDs = [self.dataID[idx] for idx in imageIdxs]
         if self.cfg.do_fast_hoi:
-            return _generateFastBatch(imageIDs)
+            return self._generateFastBatch(imageIDs)
         else:
-            return _generateSlowBatch(imageIDs)
+            return self._generateSlowBatch(imageIDs)
         
         
 

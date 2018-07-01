@@ -29,12 +29,12 @@ def saveInputData(generator, Stages, cfg):
     for batchidx in range(generator.nb_batches):
     
         img, y, imageMeta, imageDims, times = next(genIterator)   
-        imageID = imageMeta['imageName'].split('.')[0]
+        imageID = str(imageMeta['imageID'])
         utils.update_progress_new(batchidx+1, generator.nb_batches, imageID)
         
-        path = save_path + imageID + '.pkl'
-        if os.path.exists(path):
-            continue
+#        path = save_path + imageID + '.pkl'
+#        if os.path.exists(path):
+#            continue
         
         #STAGE 1
         proposals = Stages.stageone([img], y, imageMeta, imageDims)
@@ -44,11 +44,12 @@ def saveInputData(generator, Stages, cfg):
     
         #CONVERT
         if proposals is None:
-            detMeta = None
-        else:
-            detMeta = filters_detection.convertData([proposals, target_labels, target_deltas], cfg)
-            
-        utils.save_obj(detMeta, save_path + imageID)
+            detMeta[imageID] = None
+            continue
+        
+        detMeta[imageID] = filters_detection.convertData([proposals, target_labels, target_deltas], cfg)
+                        
+    utils.save_obj(detMeta, save_path + 'proposals')
 
 def saveEvalData(generator, Stages, cfg, obj_mapping):
     genIterator = generator.begin()
