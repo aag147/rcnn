@@ -66,12 +66,12 @@ def loadData(imageInputs, cfg):
     if roisMeta is None:
         return None
     all_bboxes = np.array(roisMeta['rois']).astype(np.float64)
-#    all_bboxes /= 1000.0
+    all_bboxes /= 1000.0
     all_target_labels = np.array(roisMeta['target_props'])
     all_target_deltas = roisMeta['target_deltas']
     
     all_target_deltas = utils.getMatrixDeltas(cfg.nb_object_classes, all_target_deltas, all_target_labels).astype(np.float64)
-#    all_target_deltas[:,(cfg.nb_object_classes-1)*4:] /= 1000.0
+    all_target_deltas[:,(cfg.nb_object_classes-1)*4:] /= 1000.0
     all_target_labels = utils.getMatrixLabels(cfg.nb_object_classes, all_target_labels)
 
     all_bboxes = np.expand_dims(all_bboxes, axis=0)
