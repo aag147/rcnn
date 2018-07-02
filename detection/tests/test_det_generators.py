@@ -4,7 +4,7 @@ Created on Mon May  7 15:40:50 2018
 
 @author: aag14
 """
-if False:
+if True:
     import sys 
     sys.path.append('../../../')
     sys.path.append('../../')
@@ -24,18 +24,13 @@ if False:
     from det_generators import DataGenerator
     
 
-
-if False:
     # meta data
-    data = extract_data.object_data()
+    data = extract_data.object_data(False)
     
     # config
     cfg = data.cfg
 #    cfg.weight_decay = 0.0001
     obj_mapping = data.class_mapping
-    
-if False:
-    utils.saveConfig(cfg)
 
     # data
     genTrain = DataGenerator(imagesMeta = data.trainGTMeta, cfg=cfg, data_type='train', do_meta=False)
