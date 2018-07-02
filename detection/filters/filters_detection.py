@@ -48,10 +48,10 @@ def prepareInputs(rois, imageDims, imageMeta=None):
     assert(np.all(new_rois[0,:,4]<=1.0))
     
     try:
-        np.testing.assert_array_less(new_rois[0,:,1], new_rois[0,:,3], err_msg='imageID: '+imageID)
-        np.testing.assert_array_less(new_rois[0,:,2], new_rois[0,:,4], err_msg='imageID: '+imageID)
+        np.testing.assert_array_less(new_rois[0,:,1], new_rois[0,:,3], err_msg='imageID: '+str(imageID))
+        np.testing.assert_array_less(new_rois[0,:,2], new_rois[0,:,4], err_msg='imageID: '+str(imageID))
     except AssertionError:
-        print('bad imageID', imageID)
+        print('bad imageID', str(imageID))
     
     return new_rois
 
