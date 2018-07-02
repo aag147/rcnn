@@ -297,10 +297,14 @@ def drawOverlapAnchors(img, anchors, imageMeta, imageDims, cfg):
 #                print(curr_iou)
                 best_iou = curr_iou
         if best_iou>=0.5:
-            bb = {key:x*cfg.rpn_stride for key,x in rt.items()}
-            bbox = drawBoundingBox(bb)
-            spl.plot(bbox[0,:], bbox[1,:], c='red')
-            bboxes.append(bb)
+            c = 'red'
+        else:
+            c = 'blue'
+            continue
+        bb = {key:x*cfg.rpn_stride for key,x in rt.items()}
+        bbox = drawBoundingBox(bb)
+        spl.plot(bbox[0,:], bbox[1,:], c=c)
+        bboxes.append(bb)
         
 #    for bbidx, gt in enumerate(gta):
 #        bb = {key:x*cfg.rpn_stride for key,x in gt.items()}
