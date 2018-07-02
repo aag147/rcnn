@@ -4,27 +4,28 @@ Created on Mon May  7 15:40:50 2018
 
 @author: aag14
 """
-import sys 
-sys.path.append('../../../')
-sys.path.append('../../')
-sys.path.append('../../shared/')
-sys.path.append('../models/')
-sys.path.append('../filters/')
-sys.path.append('../data/')
-
-import numpy as np
-
-import utils,\
-       extract_data,\
-       methods,\
-       losses,\
-       callbacks,\
-       filters_helper as helper
-from det_generators import DataGenerator
+if False:
+    import sys 
+    sys.path.append('../../../')
+    sys.path.append('../../')
+    sys.path.append('../../shared/')
+    sys.path.append('../models/')
+    sys.path.append('../filters/')
+    sys.path.append('../data/')
+    
+    import numpy as np
+    
+    import utils,\
+           extract_data,\
+           methods,\
+           losses,\
+           callbacks,\
+           filters_helper as helper
+    from det_generators import DataGenerator
     
 
 
-if True:
+if False:
     # meta data
     data = extract_data.object_data()
     
@@ -32,6 +33,8 @@ if True:
     cfg = data.cfg
 #    cfg.weight_decay = 0.0001
     obj_mapping = data.class_mapping
+    
+if False:
     utils.saveConfig(cfg)
 
     # data
