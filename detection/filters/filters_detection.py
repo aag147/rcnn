@@ -48,10 +48,12 @@ def prepareInputs(rois, imageDims, imageMeta=None):
     assert(np.all(new_rois[0,:,4]<=1.0))
     
     try:
-        np.testing.assert_array_less(new_rois[0,:,1], new_rois[0,:,3], err_msg='imageID: '+str(imageID))
-        np.testing.assert_array_less(new_rois[0,:,2], new_rois[0,:,4], err_msg='imageID: '+str(imageID))
+        for i in range(128):
+            s_idx = i*1; f_idx = s_idx+1
+            np.testing.assert_array_less(new_rois[0,s_idx:f_idx,1], new_rois[0,s_idx:f_idx,3], err_msg='imageID: '+str(imageID))
+            np.testing.assert_array_less(new_rois[0,s_idx:f_idx,2], new_rois[0,s_idx:f_idx,4], err_msg='imageID: '+str(imageID))
     except AssertionError:
-        print('bad imageID', str(imageID))
+        print('bad imageID', str(imageID), s_idx, f_idx)
     
     return new_rois
 
@@ -136,6 +138,11 @@ def reduceData(Y, cfg, batchidx=None):
     #out: deltas [{1}, {batch_size}, (dx,dy,dw,dh) * (nb_object_classes-1)]
     [all_bboxes, all_target_labels, all_target_deltas] = Y
     all_bboxes = all_bboxes[:,:,:4]
+    
+    bad_idxs = np.where((all_bboxes[0,:,2]==0) | (all_bboxes[0,:,3]==0))[0]
+    all_bboxes = np.delete(all_bboxes, bad_idxs, 1)
+    all_target_labels = np.delete(all_target_labels, bad_idxs, 1)
+    all_target_deltas = np.delete(all_target_deltas, bad_idxs, 1)
     
     
     bboxes = np.zeros((1, cfg.nb_detection_rois, 4))

@@ -26,7 +26,7 @@ if True:
     data = extract_data.object_data()
     cfg = data.cfg
 
-    dataset = 'val'
+    dataset = 'train'
     
     if dataset == 'val':
         print('Validation data')

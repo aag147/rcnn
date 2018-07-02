@@ -22,8 +22,10 @@ import utils,\
        filters_helper as helper
 from det_generators import DataGenerator
     
+import filters_rpn
+import filters_detection
 
-if True:
+if False:
     # meta data
     data = extract_data.object_data()
     
@@ -36,21 +38,46 @@ if True:
 #    genVal = DataGenerator(imagesMeta = data.valGTMeta, cfg=cfg, data_type='val', do_meta=True)
 
 
-redux = {}
 imageID = '487566'
-redux[imageID] = genTrain.imagesInputs[imageID]
+imageMeta = genTrain.imagesMeta[imageID]
+imageInputs = genTrain.imagesInputs[imageID]
+X, imageDims = filters_rpn.prepareInputs(imageMeta, genTrain.images_path, cfg)
+
+Y_tmp = filters_detection.loadData(imageInputs, cfg)
+
+
+for i in range(1):
+    bboxes1, target_labels, target_deltas = filters_detection.reduceData(Y_tmp, cfg)
+    bboxes2 = np.copy(bboxes1)
+    bboxes2 = filters_detection.prepareInputs(bboxes2, imageDims, imageMeta) 
 
 
 
-i = 0
-goal = 5000
+import draw
+import filters_detection
 
-for imageID, inputMeta in genTrain.imagesInputs.items():
-    redux[imageID] = inputMeta
-    utils.update_progress_new(i+1, goal, imageID)
+img = np.copy(X[0])
+img += cfg.PIXEL_MEANS
+img = img.astype(np.uint8)
+bboxes2 = filters_detection.unprepareInputs(bboxes2, imageDims)
 
-    if i == goal:
-        break
-    i += 1
+draw.drawOverlapAnchors(img, bboxes2[0], imageMeta, imageDims, cfg)
 
-utils.save_obj(redux, cfg.my_output_path + 'proposals_redux')
+
+if False:
+    redux = {}
+    imageID = '487566'
+    redux[imageID] = genTrain.imagesInputs[imageID]
+    
+    i = 0
+    goal = 5000
+    
+    for imageID, inputMeta in genTrain.imagesInputs.items():
+        redux[imageID] = inputMeta
+        utils.update_progress_new(i+1, goal, imageID)
+    
+        if i == goal:
+            break
+        i += 1
+    
+    #utils.save_obj(redux, cfg.my_output_path + 'proposals_redux')
