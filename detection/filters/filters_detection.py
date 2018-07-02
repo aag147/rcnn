@@ -41,19 +41,19 @@ def prepareInputs(rois, imageDims, imageMeta=None):
     new_rois = helper.normalizeRoIs(new_rois, imageDims)
     new_rois = np.insert(new_rois, 0, 0, axis=2)
     
-    imageID = imageMeta['imageID']
     assert(np.all(new_rois[0,:,1]>=0))
     assert(np.all(new_rois[0,:,2]>=0))
     assert(np.all(new_rois[0,:,3]<=1.0))
     assert(np.all(new_rois[0,:,4]<=1.0))
     
-    try:
-        for i in range(128):
-            s_idx = i*1; f_idx = s_idx+1
-            np.testing.assert_array_less(new_rois[0,s_idx:f_idx,1], new_rois[0,s_idx:f_idx,3], err_msg='imageID: '+str(imageID))
-            np.testing.assert_array_less(new_rois[0,s_idx:f_idx,2], new_rois[0,s_idx:f_idx,4], err_msg='imageID: '+str(imageID))
-    except AssertionError:
-        print('bad imageID', str(imageID), s_idx, f_idx)
+#    imageID = imageMeta['imageID']
+#    try:
+#        for i in range(128):
+#            s_idx = i*1; f_idx = s_idx+1
+#            np.testing.assert_array_less(new_rois[0,s_idx:f_idx,1], new_rois[0,s_idx:f_idx,3], err_msg='imageID: '+str(imageID))
+#            np.testing.assert_array_less(new_rois[0,s_idx:f_idx,2], new_rois[0,s_idx:f_idx,4], err_msg='imageID: '+str(imageID))
+#    except AssertionError:
+#        print('bad imageID', str(imageID), s_idx, f_idx)
     
     return new_rois
 
