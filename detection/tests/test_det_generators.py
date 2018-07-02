@@ -29,7 +29,6 @@ if True:
     
     # config
     cfg = data.cfg
-#    cfg.weight_decay = 0.0001
     obj_mapping = data.class_mapping
 
     # data

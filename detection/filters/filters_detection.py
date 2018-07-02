@@ -29,7 +29,7 @@ def unprepareInputs(norm_rois, imageDims):
     
     return rois
 
-def prepareInputs(rois, imageDims):
+def prepareInputs(rois, imageDims, imageMeta=None):
     #in: bboxes of (xmin,ymin,width,height) in range [0,output_shape]
     #out: bboxes of (idx,ymin,xmin,ymax,xmax) in range [0,1]
     
@@ -41,13 +41,17 @@ def prepareInputs(rois, imageDims):
     new_rois = helper.normalizeRoIs(new_rois, imageDims)
     new_rois = np.insert(new_rois, 0, 0, axis=2)
     
+    imageID = imageMeta['imageID']
     assert(np.all(new_rois[0,:,1]>=0))
     assert(np.all(new_rois[0,:,2]>=0))
     assert(np.all(new_rois[0,:,3]<=1.0))
     assert(np.all(new_rois[0,:,4]<=1.0))
-    np.testing.assert_array_less(new_rois[0,:,1], new_rois[0,:,3])
-    np.testing.assert_array_less(new_rois[0,:,2], new_rois[0,:,4])
-
+    
+    try:
+        np.testing.assert_array_less(new_rois[0,:,1], new_rois[0,:,3], err_msg='imageID: '+imageID)
+        np.testing.assert_array_less(new_rois[0,:,2], new_rois[0,:,4], err_msg='imageID: '+imageID)
+    except AssertionError:
+        print('bad imageID', imageID)
     
     return new_rois
 
