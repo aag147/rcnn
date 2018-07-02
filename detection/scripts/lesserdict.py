@@ -25,7 +25,7 @@ from det_generators import DataGenerator
 
 if True:
     # meta data
-    data = extract_data.object_data(False)
+    data = extract_data.object_data()
     
     # config
     cfg = data.cfg
@@ -37,8 +37,8 @@ if True:
 
 
 redux = {}
-imageID = '487566'
-redux[imageID] = genVal.imagesInputs[imageID]
+#imageID = '487566'
+#redux[imageID] = genVal.imagesInputs[imageID]
 
 
 
@@ -52,3 +52,5 @@ for imageID, inputMeta in genVal.imagesInputs.items():
     if i == goal:
         break
     i += 1
+
+utils.save_obj(redux, cfg.my_output_path + 'proposals_redux')
