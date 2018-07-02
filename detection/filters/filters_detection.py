@@ -110,10 +110,10 @@ def convertResults(bboxes, imageMeta, class_mapping, scale, rpn_stride):
     coco_mapping = helper.getCOCOMapping()
     inv_class_mapping = {idx:label for label,idx in class_mapping.items()}
     for bbox in bboxes:
-        label = bbox[4]
+        label = bbox[5]
         label = inv_class_mapping[label]
         label = coco_mapping[label]
-        prop = bbox[5]
+        prop = bbox[4]
         coords = bbox[:4]
         xmin = ((coords[0]) * rpn_stride / scale[0])
         ymin = ((coords[1]) * rpn_stride / scale[1])
