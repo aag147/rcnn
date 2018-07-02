@@ -32,20 +32,20 @@ if True:
     obj_mapping = data.class_mapping
 
     # data
-#    genTrain = DataGenerator(imagesMeta = data.trainGTMeta, cfg=cfg, data_type='train', do_meta=True)
-    genVal = DataGenerator(imagesMeta = data.valGTMeta, cfg=cfg, data_type='val', do_meta=True)
+    genTrain = DataGenerator(imagesMeta = data.trainGTMeta, cfg=cfg, data_type='train', do_meta=True)
+#    genVal = DataGenerator(imagesMeta = data.valGTMeta, cfg=cfg, data_type='val', do_meta=True)
 
 
 redux = {}
-#imageID = '487566'
-#redux[imageID] = genVal.imagesInputs[imageID]
+imageID = '487566'
+redux[imageID] = genTrain.imagesInputs[imageID]
 
 
 
 i = 0
 goal = 5000
 
-for imageID, inputMeta in genVal.imagesInputs.items():
+for imageID, inputMeta in genTrain.imagesInputs.items():
     redux[imageID] = inputMeta
     utils.update_progress_new(i+1, goal, imageID)
 
