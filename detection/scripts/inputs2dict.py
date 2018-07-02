@@ -64,7 +64,15 @@ for idx, (imageID, imageMeta) in enumerate(imagesMeta.items()):
     roisMeta['target_deltas'] = new_target_deltas
     inputsMeta[imageID] = roisMeta
     
-    if idx+1 % 1000 == 0:
-        utils.update_progress_new(idx+1, nb_images, imageID)
+    if idx == 0:
+        print('first')
+        print('old:')
+        print(utils.load_obj(rois_path + imageName))
+        print('new')
+        print(roisMeta)
     
-utils.save_obj(inputsMeta, save_path + 'proposals_'+dataset)
+    utils.save_obj(inputsMeta[imageID], save_path + dataset+'new/'+imageID)
+    
+    utils.update_progress_new(idx+1, nb_images, imageID)
+    
+#utils.save_obj(inputsMeta, save_path + 'proposals_'+dataset)

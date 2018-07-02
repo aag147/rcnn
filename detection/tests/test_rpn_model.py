@@ -27,7 +27,7 @@ import draw
 import numpy as np
 import cv2 as cv
 
-if False:
+if True:
     # Load data
     data = extract_data.object_data()
     cfg = data.cfg

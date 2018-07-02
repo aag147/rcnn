@@ -260,7 +260,7 @@ def drawAnchors(img, anchorsGT, cfg):
             c = 'blue'
         bb = anchor[0:4]*cfg.rpn_stride
         bbox = drawProposalBox(bb)
-        spl.plot(bbox[0,:], bbox[1,:])
+        spl.plot(bbox[0,:], bbox[1,:], c=c)
         bboxes.append(bb)
     return np.array(bboxes)
         
@@ -299,7 +299,7 @@ def drawOverlapAnchors(img, anchors, imageMeta, imageDims, cfg):
         if best_iou>=0.5:
             bb = {key:x*cfg.rpn_stride for key,x in rt.items()}
             bbox = drawBoundingBox(bb)
-            spl.plot(bbox[0,:], bbox[1,:])
+            spl.plot(bbox[0,:], bbox[1,:], c='red')
             bboxes.append(bb)
         
 #    for bbidx, gt in enumerate(gta):
@@ -383,7 +383,7 @@ def drawGTBoxes(img, imageMeta, imageDims):
     
     for bb in bboxes:
         bbox = drawBoundingBox(bb)
-        spl.plot(bbox[0,:], bbox[1,:])
+        spl.plot(bbox[0,:], bbox[1,:], c='red')
     return bboxes
 
 def drawBoundingBox(bb):
