@@ -24,6 +24,7 @@ import methods,\
 import utils
 import draw
 import numpy as np
+import cv2 as cv
 
 if False:
     # Load data
@@ -34,10 +35,13 @@ if False:
     
     # Create batch generators
     genTrain = DataGenerator(imagesMeta = data.trainGTMeta, cfg=cfg, data_type='train', do_meta=True)
-#    genVal = DataGenerator(imagesMeta = data.valGTMeta, cfg=cfg, data_type='val', do_meta=True)
+    genVal = DataGenerator(imagesMeta = data.valGTMeta, cfg=cfg, data_type='val', do_meta=True)
 #    genTest = DataGenerator(imagesMeta = data.testGTMeta, cfg=cfg, data_type='test', do_meta=True)
+ 
     
     Models = methods.AllModels(cfg, mode='test', do_rpn=True, do_det=True, do_hoi=False)
+    
+if True:
     Stages = stages.AllStages(cfg, Models, obj_mapping, hoi_mapping, mode='test')
 
 
@@ -51,14 +55,14 @@ for i in range(1):
     img = np.copy(X[0])
     img -= np.min(img)
     img /= np.max(img)
-    
+    img = cv.cvtColor(img, cv.COLOR_BGR2RGB)
     #STAGE 1
     print('Stage one...')
     proposals = Stages.stageone([X], y, imageMeta, imageDims, do_regr=True)
     print('Stage two...')
 #    rois, target_props, target_deltas, IouS = filters_detection.createTargets(proposals, imageMeta, imageDims, obj_mapping, cfg)
 #    bboxes = helper.deltas2Boxes(target_props, target_deltas[:,:,80:], rois, imageDims, cfg)
-    bboxes = Stages.stagetwo([proposals], imageMeta, imageDims)
+    bboxes = Stages.stagetwo([X,proposals], imageMeta, imageDims)
     print('Draw stuff...')
     draw.drawGTBoxes(img, imageMeta, imageDims)
     draw.drawOverlapAnchors(img, proposals[0], imageMeta, imageDims, cfg)

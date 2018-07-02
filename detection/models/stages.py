@@ -76,7 +76,7 @@ class AllStages:
             [rois] = X
         
         # det prepare
-        rois_norm = filters_detection.prepareInputs(rois, imageDims)        
+        rois_norm = filters_detection.prepareInputs(rois, imageDims)
         
         # det predict
         nb_det_rois = rois.shape[1]
@@ -91,9 +91,11 @@ class AllStages:
             all_det_props[:,sidx:fidx,:] = det_props#[:,:fidx-sidx,:]
             all_det_deltas[:,sidx:fidx,:] = det_deltas#[:,:fidx-sidx,:]
         
+        
+        
         # det post
         rois = filters_detection.unprepareInputs(rois_norm, imageDims)
-        print(rois.shape)
+
         if self.mode=='train':
             bboxes = helper.deltas2ObjBoxes(all_det_props, all_det_deltas, rois, imageDims, self.cfg, self.obj_mapping)
         else:

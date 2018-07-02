@@ -51,7 +51,9 @@ class DataGenerator():
           self.dataID.sort()
       
       self.imagesMeta = imagesMeta
+      print('   inputs:', cfg.my_input_path + 'proposals_'+data_type)
       self.imagesInputs = utils.load_obj(cfg.my_input_path + 'proposals_'+data_type)
+      print('   outside',len(self.imagesInputs))
       
       self.nb_images = len(self.dataID)
       self.nb_samples = None

@@ -20,13 +20,12 @@ def unprepareInputs(norm_rois, imageDims):
     
     rois = np.copy(norm_rois)
     rois = rois[:,:,1:]
-    
-    rois = helper.unnormalizeRoIs(rois, imageDims)
+    rois = rois[:,:,(1,0,3,2)]
 
     rois[:,:,2] = rois[:,:,2] - rois[:,:,0]
     rois[:,:,3] = rois[:,:,3] - rois[:,:,1]
     
-    rois = rois[:,:,(1,0,3,2)]
+    rois = helper.unnormalizeRoIs(rois, imageDims)
     
     return rois
 
