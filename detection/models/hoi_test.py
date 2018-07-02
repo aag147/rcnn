@@ -20,9 +20,7 @@ def saveInputData(generator, Stages, cfg):
         os.makedirs(cfg.my_output_path)
     if not os.path.exists(cfg.my_output_path):
         raise Exception('Output directory does not exist! %s' % cfg.my_output_path)
-    if not os.path.exists(cfg.my_output_path + generator.data_type + '/'):
-        os.makedirs(cfg.my_output_path + generator.data_type + '/')
-    save_path = cfg.my_output_path + generator.data_type + '/'
+    save_path = cfg.my_output_path
     print('   save_path:', save_path)
 
     genIterator = generator.begin()
@@ -52,7 +50,7 @@ def saveInputData(generator, Stages, cfg):
         #CONVERT
         inputMeta[imageID] = filters_hoi.convertData([all_hbboxes, all_obboxes, all_target_labels, val_map], cfg)
         
-    utils.save_obj(inputMeta, save_path + 'hoiputs')
+    utils.save_obj(inputMeta, save_path + 'hoiputs_'+generator.data_type)
     return inputMeta
 
 

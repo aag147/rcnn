@@ -178,6 +178,8 @@ def convertData(Y, cfg):
     [all_hbboxes, all_obboxes, all_target_labels, all_val_map] = Y    
     sel_samples = filterTargets(all_val_map, 50, 75, 300)
     
+    assert(len(sel_samples) == 300)
+    
     all_hbboxes = np.copy(all_hbboxes[0,sel_samples,:])
     all_obboxes = np.copy(all_obboxes[0,sel_samples,:])
     all_target_labels = np.copy(all_target_labels[0,sel_samples,:])
@@ -185,8 +187,8 @@ def convertData(Y, cfg):
     all_val_map = np.copy(all_val_map[0,sel_samples])
     
     all_target_labels = [np.where(x==1)[0].tolist() for x in all_target_labels.astype(np.uint8)]
-    all_hbboxes = [[int(x*1000) for x in box] for box in all_hbboxes.tolist()]
-    all_obboxes = [[int(x*1000) for x in box] for box in all_obboxes.tolist()]
+    all_hbboxes = [[round(x*1000) for x in box] for box in all_hbboxes.tolist()]
+    all_obboxes = [[round(x*1000) for x in box] for box in all_obboxes.tolist()]
     all_val_map = all_val_map.astype(np.uint8).tolist()
     
     hoiMeta = {'hbboxes':all_hbboxes, 'o_bboxes':all_obboxes, 'hoi_labels':all_target_labels, 'val_map':all_val_map}
@@ -252,15 +254,11 @@ def filterTargets(val_map, nb_pos, nb_neg1, nb_hoi_rois):
         
     if len(negative1_idxs) > nb_neg1:
         selected_neg1_samples = np.random.choice(negative1_idxs, nb_neg1, replace=False)
-    elif len(negative1_idxs)>0:
-        selected_neg1_samples = np.random.choice(negative1_idxs, nb_neg1, replace=True)
         
     if len(negative2_idxs) + len(selected_neg1_samples) + len(selected_pos_samples) > nb_hoi_rois:
         selected_neg2_samples = np.random.choice(negative2_idxs, nb_hoi_rois - len(selected_pos_samples) - len(selected_neg1_samples), replace=False)
-    elif len(negative2_idxs) > 0:
-        selected_neg2_samples = np.random.choice(negative2_idxs, nb_hoi_rois - len(selected_pos_samples) - len(selected_neg1_samples), replace=True)
     else:
-        selected_neg1_samples = np.random.choice(negative1_idxs, nb_hoi_rois - len(selected_pos_samples), replace=True)
+        selected_neg2_samples = np.random.choice(negative2_idxs, nb_hoi_rois - len(selected_pos_samples) - len(selected_neg1_samples), replace=True)
         
     sel_samples = selected_pos_samples.tolist() + selected_neg1_samples.tolist() + selected_neg2_samples.tolist()    
 
@@ -270,15 +268,15 @@ def reduceTargets(Y, cfg, batchidx=None):
     #out: hbboxes [{1}, {batch_size}, (0,ymin,xmin,ymax,xmax)]
     #out: obboxes [{1}, {batch_size}, (0,ymin,xmin,ymax,xmax)]
     #out: labels [{1}, {batch_size}, {nb_hoi_classes}]
-    [all_hbboxes, all_obboxes, all_target_labels, val_map] = Y
+    [all_hbboxes, all_obboxes, all_target_labels, all_val_map] = Y
     
-    hbboxes = np.zeros((1, cfg.nb_hoi_rois, 5))
-    obboxes = np.zeros((1, cfg.nb_hoi_rois, 5))
+    hbboxes = np.zeros((1, cfg.nb_hoi_rois, 6))
+    obboxes = np.zeros((1, cfg.nb_hoi_rois, 6))
     target_labels  = np.zeros((1, cfg.nb_hoi_rois, cfg.nb_hoi_classes))
     
     ## Pick reduced indexes ##
     if batchidx is None:        
-        sel_samples = filterTargets(val_map, cfg.hoi_pos_share, cfg.hoi_neg1_share, cfg.nb_hoi_rois)
+        sel_samples = filterTargets(all_val_map, cfg.hoi_pos_share, cfg.hoi_neg1_share, cfg.nb_hoi_rois)
     else:        
         sidx = batchidx * cfg.nb_hoi_rois
         fidx = min(all_target_labels.shape[1], sidx + cfg.nb_hoi_rois)
@@ -291,7 +289,7 @@ def reduceTargets(Y, cfg, batchidx=None):
     obboxes[:,:len(sel_samples),:]          = all_obboxes[:, sel_samples, :]
     target_labels[:,:len(sel_samples),:]    = all_target_labels[:, sel_samples, :]
     
-    return hbboxes, obboxes, target_labels
+    return hbboxes, obboxes, target_labels, all_val_map[:,sel_samples]
 
 def createInteractionPatterns(hbbs, obbs, cfg):
     hbbs = np.copy(hbbs[0,::])
@@ -343,8 +341,8 @@ def createTargets(bboxes, imageMeta, imageDims, cfg, class_mapping):
     #############################
     val_map = np.zeros((hbboxes.shape[0], obboxes.shape[0]))
     label_map = np.zeros((hbboxes.shape[0], obboxes.shape[0], cfg.nb_hoi_classes))
-    hbb_map   = np.zeros((hbboxes.shape[0], obboxes.shape[0], 5))
-    obb_map   = np.zeros((hbboxes.shape[0], obboxes.shape[0], 5))
+    hbb_map   = np.zeros((hbboxes.shape[0], obboxes.shape[0], 6))
+    obb_map   = np.zeros((hbboxes.shape[0], obboxes.shape[0], 6))
     
 #    print(gt_bboxes)
 #    print(gthboxes)
@@ -370,23 +368,23 @@ def createTargets(bboxes, imageMeta, imageDims, cfg, class_mapping):
 #                            print('pos', objlabel, gt_label, h_iou, o_iou)
                             val_map[hidx, oidx] = 3
                             label_map[hidx, oidx, gt_label] = 1
-                            hbb_map[hidx, oidx, :] = hbox[:5]
-                            obb_map[hidx, oidx, :] = obox[:5]
+                            hbb_map[hidx, oidx, :] = hbox[:6]
+                            obb_map[hidx, oidx, :] = obox[:6]
                     elif objlabel == gt_obj and h_iou >= cfg.hoi_min_overlap and o_iou >= cfg.hoi_min_overlap:
                         if val_map[hidx, oidx] < 2:
 #                            print('neg1', objlabel, gt_label, h_iou, o_iou)
                             # negative1
                             val_map[hidx, oidx] = 2
-                            hbb_map[hidx, oidx, :] = hbox[:5]
-                            obb_map[hidx, oidx, :] = obox[:5]
+                            hbb_map[hidx, oidx, :] = hbox[:6]
+                            obb_map[hidx, oidx, :] = obox[:6]
                     
 
                     elif objlabel != gt_obj and o_iou < cfg.hoi_max_overlap:
                         if val_map[hidx, oidx] < 1:
                             # negative2
                             val_map[hidx, oidx] = 1
-                            hbb_map[hidx, oidx, :] = hbox[:5]
-                            obb_map[hidx, oidx, :] = obox[:5]
+                            hbb_map[hidx, oidx, :] = hbox[:6]
+                            obb_map[hidx, oidx, :] = obox[:6]
                 
                 
     

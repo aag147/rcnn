@@ -94,15 +94,13 @@ def convertData(Y, cfg):
     all_target_labels = np.copy(all_target_labels[0])
     all_target_deltas = np.copy(all_target_deltas[0])
     
-    all_target_labels = [int(np.argmax(x)) for x in all_target_labels]
-#    all_bboxes = [[round(float(x), 4) for x in box] for box in all_bboxes.tolist()]
-    all_bboxes = [[int(x*1000) for x in box] for box in all_bboxes.tolist()]
+    all_target_labels = [round(np.argmax(x)) for x in all_target_labels]
+    all_bboxes = [[round(x*1000) for x in box] for box in all_bboxes.tolist()]
     new_target_deltas = []
     for idx, row in enumerate(all_target_deltas[:,(cfg.nb_object_classes-1)*4:]):
         coord = []
         for x in row[(all_target_labels[idx]-1)*4:(all_target_labels[idx])*4].tolist():
-#            coord.append(round(float(x), 4))
-            coord.append(int(x*1000))
+            coord.append(round(x*1000))
         new_target_deltas.append(coord)
         
         
@@ -143,7 +141,6 @@ def reduceData(Y, cfg, batchidx=None):
     all_bboxes = np.delete(all_bboxes, bad_idxs, 1)
     all_target_labels = np.delete(all_target_labels, bad_idxs, 1)
     all_target_deltas = np.delete(all_target_deltas, bad_idxs, 1)
-    
     
     bboxes = np.zeros((1, cfg.nb_detection_rois, 4))
     target_labels = np.zeros((1, cfg.nb_detection_rois, cfg.nb_object_classes))

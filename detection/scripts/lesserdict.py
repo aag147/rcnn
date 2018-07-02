@@ -51,8 +51,6 @@ for i in range(1):
     bboxes2 = np.copy(bboxes1)
     bboxes2 = filters_detection.prepareInputs(bboxes2, imageDims, imageMeta) 
 
-
-
 import draw
 import filters_detection
 
@@ -62,7 +60,7 @@ img = img.astype(np.uint8)
 bboxes2 = filters_detection.unprepareInputs(bboxes2, imageDims)
 
 draw.drawOverlapAnchors(img, bboxes2[0], imageMeta, imageDims, cfg)
-
+draw.drawGTBoxes(img, imageMeta, imageDims)
 
 if False:
     redux = {}

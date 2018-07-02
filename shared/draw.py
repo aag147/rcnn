@@ -340,6 +340,7 @@ def drawOverlapRois(img, rois, imageMeta, imageDims, cfg, obj_mapping):
             print('Pos. label:', inv_obj_mapping[label], prop, best_iou)
         elif best_iou>=0:
             c = 'blue'
+            continue
             print('Neg. label:', inv_obj_mapping[label], prop, best_iou)
         else:
             continue
@@ -389,6 +390,69 @@ def drawGTBoxes(img, imageMeta, imageDims):
         bbox = drawBoundingBox(bb)
         spl.plot(bbox[0,:], bbox[1,:], c='red')
     return bboxes
+
+def drawPositiveHoI(img, hbboxes, obboxes, props, imageMeta, imageDims, cfg, obj_mapping):
+    f, spl = plt.subplots(1)
+    spl.imshow(img)
+    inv_obj_mapping = {x:key for key,x in obj_mapping.items()}
+    colours = ['#FEc75c', '#123456','#456789', '#abcdef','#fedcba', '#987654','#654321', '#994ee4']
+    idxs = []
+    nb_pairs = hbboxes.shape[0]
+    c_idx=0
+    for idx in range(nb_pairs):
+        if idx < 40:
+            continue
+        hprop = (hbboxes[idx,4])
+        oprop = (obboxes[idx,4])
+        hlbl = int(hbboxes[idx,5])
+        olbl = int(obboxes[idx,5])
+        hoiprop = np.where(props[idx,:]>0.5)[0]
+        if len(hoiprop)==0:
+            c = colours[c_idx]
+            hbbox = hbboxes[idx,:4]*16
+            obbox = obboxes[idx,:4]*16
+            hbbox = drawProposalBox(hbbox)
+            obbox = drawProposalBox(obbox)
+            spl.plot(hbbox[0,:], hbbox[1,:], c=c)
+            spl.plot(obbox[0,:], obbox[1,:], c=c)
+            idxs.append(idx)
+            print('Pos. label:', inv_obj_mapping[hlbl], inv_obj_mapping[olbl], hprop, oprop, hoiprop)
+            
+            c_idx = (c_idx+1) % len(colours)
+            break
+    return np.array(idxs)
+
+
+def drawPositiveCropHoI(hbboxes, obboxes, hcrops, ocrops, patterns, props, imageMeta, imageDims, cfg, obj_mapping):
+    inv_obj_mapping = {x:key for key,x in obj_mapping.items()}
+    idxs = np.where(props[:,:]>0.5)[0]
+    nb_pairs = len(idxs)
+    
+    f, spl = plt.subplots(4,8)
+    spl = spl.ravel()
+    
+    hcrops += cfg.PIXEL_MEANS
+    hcrops = hcrops.astype(np.uint8)
+    ocrops += cfg.PIXEL_MEANS
+    ocrops = ocrops.astype(np.uint8)
+    
+    for i, idx in enumerate(idxs):
+        j = i*4
+        hprop = (hbboxes[idx,4])
+        oprop = (obboxes[idx,4])
+        hlbl = int(hbboxes[idx,5])
+        olbl = int(obboxes[idx,5])
+        hoiprop = np.where(props[idx,:]>0.5)[0]
+        print(hcrops.shape, idx)
+        spl[j].imshow(hcrops[idx,::])
+        spl[j+1].imshow(ocrops[idx,::])
+        spl[j+2].imshow(patterns[idx,:,:,0])
+        spl[j+3].imshow(patterns[idx,:,:,1])
+        print('Pos. label:', inv_obj_mapping[hlbl], inv_obj_mapping[olbl], hprop, oprop, hoiprop)
+        if i == 7:
+            break
+            
+    return np.array(idxs)   
 
 def drawBoundingBox(bb):
     xmin = bb['xmin']; xmax = bb['xmax']

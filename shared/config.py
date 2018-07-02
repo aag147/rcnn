@@ -268,7 +268,7 @@ class basic_config:
        self.det_fg_ratio = 0.25
        
        self.det_nms_max_boxes=300
-       self.det_nms_overlap_thresh=0.8
+       self.det_nms_overlap_thresh=0.9
        self.det_nms_overlap_thresh_test=0.5
         
        # hoi filters
@@ -276,11 +276,11 @@ class basic_config:
        self.hoi_min_overlap = 0.1
        self.hoi_nms_overlap_thresh=0.5
        
-       self.hoi_pos_share  = 4
-       self.hoi_neg1_share = 12
-       self.hoi_neg2_share = 16
+       self.nb_hoi_rois = 64
        
-       self.nb_hoi_rois = 32
+       self.hoi_pos_share  = int(self.nb_hoi_rois / 8 * 1)
+       self.hoi_neg1_share = int(self.nb_hoi_rois / 8 * 3)
+       self.hoi_neg2_share = int(self.nb_hoi_rois / 8 * 4)
         
        # model
 #       self.nb_object_classes = 81

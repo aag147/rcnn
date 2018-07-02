@@ -26,7 +26,7 @@ import draw
 import numpy as np
 import cv2 as cv
 
-if False:
+if True:
     # Load data
     data = extract_data.object_data()
     cfg = data.cfg
@@ -63,6 +63,7 @@ for i in range(1):
 #    rois, target_props, target_deltas, IouS = filters_detection.createTargets(proposals, imageMeta, imageDims, obj_mapping, cfg)
 #    bboxes = helper.deltas2Boxes(target_props, target_deltas[:,:,80:], rois, imageDims, cfg)
     bboxes = Stages.stagetwo([X,proposals], imageMeta, imageDims)
+    
     print('Draw stuff...')
     draw.drawGTBoxes(img, imageMeta, imageDims)
     draw.drawOverlapAnchors(img, proposals[0], imageMeta, imageDims, cfg)
