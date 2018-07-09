@@ -13,6 +13,7 @@ import filters_hoi,\
        filters_rpn
 import time
 import utils
+import os
 
 class DataGenerator():
     
@@ -50,7 +51,11 @@ class DataGenerator():
           self.dataID.sort()
       
       self.imagesMeta = imagesMeta
-      self.imagesInputs = utils.load_obj(self.rois_path + 'hoiputs_'+data_type)
+      if os.path.exists(self.rois_path + 'hoiputs_'+data_type + '.pkl'):
+          self.imagesInputs = utils.load_obj(self.rois_path + 'hoiputs_'+data_type)
+          self.doIndyInputs = False
+      else:
+          self.doIndyInputs = True
       
       
       self.nb_images = len(self.dataID)
@@ -84,11 +89,18 @@ class DataGenerator():
         return g()
     
     
+    def _getImageInputs(self, imageID):
+        if self.doIndyInputs:
+            imageInputs = utils.load_obj(self.rois_path + self.data_type + '/' + imageID)
+        else:
+            imageInputs = self.imagesInputs[imageID]
+        return imageInputs
+    
     
     def _generateSlowBatch(self, imageIDs):
         for imageID in imageIDs:
-            imageMeta = self.imagesMeta[imageID]
-            imageInputs = self.imagesInputs[imageID]
+            imageMeta = self.imagesMeta[imageID]            
+            imageInputs = self._getImageInputs(imageID)
             
             if imageInputs is None:
                 return None
@@ -115,7 +127,7 @@ class DataGenerator():
     def _generateFastBatch(self, imageIDs):
         for imageID in imageIDs:
             imageMeta = self.imagesMeta[imageID]
-            imageInputs = self.imagesInputs[imageID]
+            imageInputs = self._getImageInputs(imageID)
             
             if imageInputs is None:
                 return None

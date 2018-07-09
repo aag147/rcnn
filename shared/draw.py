@@ -310,7 +310,7 @@ def drawOverlapAnchors(img, anchors, imageMeta, imageDims, cfg):
 #        bb = {key:x*cfg.rpn_stride for key,x in gt.items()}
 #        bbox = drawBoundingBox(bb)
 #        spl.plot(bbox[0,:], bbox[1,:])
-    return np.array(bboxes)
+    return (bboxes)
 
 def drawOverlapRois(img, rois, imageMeta, imageDims, cfg, obj_mapping):
     import filters_helper as helper
@@ -353,7 +353,7 @@ def drawOverlapRois(img, rois, imageMeta, imageDims, cfg, obj_mapping):
 #        bb = {key:x*cfg.rpn_stride for key,x in gt.items()}
 #        bbox = drawBoundingBox(bb)
 #        spl.plot(bbox[0,:], bbox[1,:])
-    return np.array(bboxes)
+    return (bboxes)
 
 def drawPositiveRois(img, rois, obj_mapping):
     f, spl = plt.subplots(1)

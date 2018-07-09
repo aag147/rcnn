@@ -300,7 +300,7 @@ class LogHistory():
       self.val_acc.append(logs.get('val_acc'))
 
 class EvalResults():
-    def __init__(self, model, gen):
+    def __init__(self, model, gen, yhat=None, y=None):
       self.tp = []
       self.fp = []
       self.fn = []
@@ -317,6 +317,8 @@ class EvalResults():
       self.model=model
       self.gen=gen
       self.Y_hat = None
+      self.yhat = yhat
+      self.y=y
       
       self._evaluate()
 
@@ -325,15 +327,22 @@ class EvalResults():
       Y = np.zeros([self.gen.nb_samples, self.gen.nb_classes])
       iterGen = self.gen.begin()
       s_idx = 0
-      for i in range(self.gen.nb_batches):
-          utils.update_progress(i / self.gen.nb_batches)
-          batch, y = next(iterGen)
-          y_hat = self.model.predict_on_batch(x=batch)
-          f_idx = s_idx + y.shape[-2]
-#          print(y_hat.shape)
-          evalYHat[s_idx:f_idx, :] = y_hat
-          Y[s_idx:f_idx, :] = y
-          s_idx = f_idx
+      
+      if self.model is not None:
+          for i in range(self.gen.nb_batches):
+              utils.update_progress(i / self.gen.nb_batches)
+              batch, y = next(iterGen)
+              f_idx = s_idx + y.shape[-2]
+              
+              y_hat = self.model.predict_on_batch(x=batch)
+              evalYHat[s_idx:f_idx, :] = y_hat
+              Y[s_idx:f_idx, :] = y
+              s_idx = f_idx
+
+      else:
+          evalYHat = self.yhat
+          Y = self.y
+
       utils.update_progress(self.gen.nb_batches)
       print()
       accs, self.mP, self.mR, self.F1 = computeMultiLabelLoss(Y, evalYHat)
@@ -414,6 +423,8 @@ def computemAPLoss(Y, Y_hat):
         
         idxs = np.argsort(Y_hat[:,x])[::-1]
         
+        nb_class_samples = len(np.where(Y[:,x]==1)[0])
+        
         nb_preds = np.sum(Y_hat[:,x]>=0.5)
         
         tp = np.zeros(nb_preds)
@@ -431,11 +442,11 @@ def computemAPLoss(Y, Y_hat):
         tp = np.cumsum(tp)
         fp = np.cumsum(fp)
         
-        recall = tp / nb_samples
+        recall = tp / nb_class_samples
         precision = tp / (fp+tp)
         
         Ps = np.zeros((11))
-        for r in range(0,11):
+        for r in range(0,10):
             idxs = np.where(recall>= r/10.0)[0]
             if len(idxs) == 0:
                 p = 0.0

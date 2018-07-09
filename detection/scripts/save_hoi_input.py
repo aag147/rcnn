@@ -32,7 +32,7 @@ if True:
     
 #     Create batch generators
     genTrain = DataGenerator(imagesMeta = data.trainGTMeta, cfg=cfg, data_type='train', do_meta=True)
-#    genTest = DataGenerator(imagesMeta = data.valGTMeta, cfg=cfg, data_type='test', do_meta=True)
+    genTest = DataGenerator(imagesMeta = data.valGTMeta, cfg=cfg, data_type='test', do_meta=True)
     
 
     Models = methods.AllModels(cfg, mode='test', do_rpn=True, do_det=True, do_hoi=False)
@@ -41,7 +41,7 @@ if True:
     sys.stdout.flush()
 
 if True:
-    inputMeta = hoi_test.saveInputData(genTrain, Stages, cfg)
+    inputMeta = hoi_test.saveInputData(genTest, Stages, cfg)
 
 if False:
     inputMeta = utils.load_obj(cfg.my_output_path + 'hoiputs_'+genTrain.data_type)
