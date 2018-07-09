@@ -45,9 +45,9 @@ if True:
     Stages = stages.AllStages(cfg, Models, obj_mapping, hoi_mapping, mode='test')
 
 
-genIterator = genTrain.begin()
+genIterator = genVal.begin()
 
-for i in range(1):
+for i in range(5):
     X, y, imageMeta, imageDims, times = next(genIterator)
 #    imageMeta = genVal.imagesMeta['176847']
 #    X, y, imageDims = Stages.stagezero(imageMeta, genVal.data_type)

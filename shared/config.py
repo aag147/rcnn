@@ -269,7 +269,7 @@ class basic_config:
        
        self.det_nms_max_boxes=300
        self.det_nms_overlap_thresh=0.9
-       self.det_nms_overlap_thresh_test=0.5
+       self.det_nms_overlap_thresh_test=0.7
         
        # hoi filters
        self.hoi_max_overlap = 0.5
