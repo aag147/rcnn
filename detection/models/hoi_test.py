@@ -30,7 +30,7 @@ def saveInputData(generator, Stages, cfg):
 #        [img,proposals], y, imageMeta, imageDims, times = next(genIterator)
         X, y, imageMeta, imageDims, times = next(genIterator)
         imageID = imageMeta['imageName'].split('.')[0]
-        if batchidx+1 % 500 == 0 or batchidx==50:
+        if batchidx+1 % 1000 == 0 or batchidx==50:
             utils.update_progress_new(batchidx+1, generator.nb_batches, imageID)
         
         #STAGE 1
