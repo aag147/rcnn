@@ -34,6 +34,11 @@ def saveInputData(generator, Stages, cfg):
         if batchidx+1 % 500 == 0 or batchidx==100 or batchidx==250:
             utils.update_progress_new(batchidx+1, generator.nb_batches, imageID)
         
+        
+        path = save_path + imageID + '.pkl'
+        if os.path.exists(path):
+            continue
+        
         #STAGE 1
         proposals = Stages.stageone([X], y, imageMeta, imageDims)
         
