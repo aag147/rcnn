@@ -12,9 +12,10 @@ import filters_detection,\
        
 import os
 import numpy as np
+import sys
 
 def saveInputData(generator, Stages, cfg):  
-    cfg.my_output_path = cfg.results_path + 'det' + cfg.my_results_dir + '/output/'
+    cfg.my_output_path = cfg.results_path + 'det' + cfg.my_results_dir + '/output/' + generator.data_type + '/'
     
     if not os.path.exists(cfg.my_output_path):
         os.makedirs(cfg.my_output_path)
@@ -30,7 +31,7 @@ def saveInputData(generator, Stages, cfg):
 #        [img,proposals], y, imageMeta, imageDims, times = next(genIterator)
         X, y, imageMeta, imageDims, times = next(genIterator)
         imageID = imageMeta['imageName'].split('.')[0]
-        if batchidx+1 % 5 == 0 or batchidx==100 or batchidx==250:
+        if batchidx+1 % 500 == 0 or batchidx==100 or batchidx==250:
             utils.update_progress_new(batchidx+1, generator.nb_batches, imageID)
         
         #STAGE 1
@@ -51,7 +52,7 @@ def saveInputData(generator, Stages, cfg):
         #CONVERT
         inputMeta[imageID] = filters_hoi.convertData([all_hbboxes, all_obboxes, all_target_labels, val_map], cfg)
         
-    utils.save_obj(inputMeta, save_path + 'hoiputs_'+generator.data_type)
+        utils.save_obj(inputMeta, save_path + imageID)
     return inputMeta
 
 
