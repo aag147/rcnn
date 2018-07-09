@@ -176,9 +176,9 @@ def loadData(imageInput, imageDims, cfg):
 
 def convertData(Y, cfg):
     [all_hbboxes, all_obboxes, all_target_labels, all_val_map] = Y    
-    sel_samples = filterTargets(all_val_map, 50, 75, 300)
+    sel_samples = filterTargets(all_val_map, None, 75, None, nb_neg2=150)
     
-    assert(len(sel_samples) == 300)
+#    assert(len(sel_samples) == 300)
     
     all_hbboxes = np.copy(all_hbboxes[0,sel_samples,:])
     all_obboxes = np.copy(all_obboxes[0,sel_samples,:])
@@ -239,7 +239,7 @@ def convertResults(hbboxes, obboxes, predicted_labels, imageMeta, scale, rpn_str
     return results
 
 
-def filterTargets(val_map, nb_pos, nb_neg1, nb_hoi_rois):
+def filterTargets(val_map, nb_pos, nb_neg1, nb_hoi_rois, nb_neg2=0):
     val_map = np.copy(val_map[0])
     positive_idxs = np.where(val_map==3)[0]
     negative1_idxs = np.where(val_map==2)[0]
@@ -249,13 +249,16 @@ def filterTargets(val_map, nb_pos, nb_neg1, nb_hoi_rois):
     selected_neg1_samples = negative1_idxs
     selected_neg2_samples = negative2_idxs
     
-    if len(positive_idxs) > nb_pos:
+    if nb_pos is not None and len(positive_idxs) > nb_pos:
         selected_pos_samples = np.random.choice(positive_idxs, nb_pos, replace=False)
         
     if len(negative1_idxs) > nb_neg1:
         selected_neg1_samples = np.random.choice(negative1_idxs, nb_neg1, replace=False)
         
-    if len(negative2_idxs) + len(selected_neg1_samples) + len(selected_pos_samples) > nb_hoi_rois:
+    if nb_neg2 > 0:
+        if len(negative2_idxs) > nb_neg2:
+            selected_neg2_samples = np.random.choice(negative2_idxs, nb_neg2, replace=False)
+    elif len(negative2_idxs) + len(selected_neg1_samples) + len(selected_pos_samples) > nb_hoi_rois:
         selected_neg2_samples = np.random.choice(negative2_idxs, nb_hoi_rois - len(selected_pos_samples) - len(selected_neg1_samples), replace=False)
     else:
         selected_neg2_samples = np.random.choice(negative2_idxs, nb_hoi_rois - len(selected_pos_samples) - len(selected_neg1_samples), replace=True)
