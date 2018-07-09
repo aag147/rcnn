@@ -34,23 +34,22 @@ if True:
 
     # data
     genTrain = DataGenerator(imagesMeta = data.trainGTMeta, cfg=cfg, data_type='train', do_meta=False)
-    #genVal = DataGenerator(imagesMeta = data.valGTMeta, cfg=cfg, data_type='val')
+    genTest = DataGenerator(imagesMeta = data.valGTMeta, cfg=cfg, data_type='test', do_meta=False)
 
     # models
     Models = methods.AllModels(cfg, mode='train', do_hoi=True)
-    Models.compile_models()
     _, _, model_hoi = Models.get_models()
     
 
-if False:    
+if True:    
     # train
     callbacks = [callbacks.MyModelCheckpointInterval(cfg), \
                  callbacks.MyLearningRateScheduler(cfg), \
                  callbacks.SaveLog2File(cfg), \
                  callbacks.PrintCallBack()]
     
-    model_hoi.fit_generator(generator = genTrain.begin(), \
-                steps_per_epoch = genTrain.nb_batches, \
+    model_hoi.fit_generator(generator = genTest.begin(), \
+                steps_per_epoch = genTest.nb_batches, \
                 epochs = cfg.epoch_end, initial_epoch=cfg.epoch_begin, callbacks=callbacks)
 
     # Save stuff

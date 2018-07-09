@@ -39,7 +39,7 @@ class DataGenerator():
       self.data_path = cfg.data_path
       self.images_path = self.data_path + 'images/'
       self.images_path = self.images_path + self.data_type + '/'
-      self.rois_path = cfg.my_detections_path
+      self.rois_path = cfg.my_input_path
       self.cfg = cfg
 
       self.dataID = list(imagesMeta.keys())
@@ -50,7 +50,7 @@ class DataGenerator():
           self.dataID.sort()
       
       self.imagesMeta = imagesMeta
-      self.imagesInputs = utils.load_dict(self.rois_path + 'hoiputs')
+      self.imagesInputs = utils.load_obj(self.rois_path + 'hoiputs_'+data_type)
       
       
       self.nb_images = len(self.dataID)

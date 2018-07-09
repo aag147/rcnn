@@ -31,25 +31,25 @@ if True:
     hoi_mapping = data.hoi_labels    
     
 #     Create batch generators
-#    genTrain = DataGenerator(imagesMeta = data.trainGTMeta, cfg=cfg, data_type='train', do_meta=True)
-    genTest = DataGenerator(imagesMeta = data.valGTMeta, cfg=cfg, data_type='test', do_meta=True)
+    genTrain = DataGenerator(imagesMeta = data.trainGTMeta, cfg=cfg, data_type='train', do_meta=True)
+#    genTest = DataGenerator(imagesMeta = data.valGTMeta, cfg=cfg, data_type='test', do_meta=True)
     
 
     Models = methods.AllModels(cfg, mode='test', do_rpn=True, do_det=True, do_hoi=False)
     Stages = stages.AllStages(cfg, Models, obj_mapping, hoi_mapping, mode='train')
 
 if True:
-    inputMeta = hoi_test.saveInputData(genTest, Stages, cfg)
+    inputMeta = hoi_test.saveInputData(genTrain, Stages, cfg)
 
 if False:
-    inputMeta = utils.load_obj(cfg.my_output_path + 'hoiputs_'+genTest.data_type)
+    inputMeta = utils.load_obj(cfg.my_output_path + 'hoiputs_'+genTrain.data_type)
     keys = list(inputMeta.keys())
     
     for imageID in keys:
-        imageMeta = data.valGTMeta[imageID]
+        imageMeta = genTrain.imagesMeta[imageID]
         imageInputs = inputMeta[imageID]
     
-        X, imageDims = filters_rpn.prepareInputs(imageMeta, genTest.images_path, cfg)
+        X, imageDims = filters_rpn.prepareInputs(imageMeta, genTrain.images_path, cfg)
         Y_tmp = filters_hoi.loadData(imageInputs, imageDims, cfg)
     
         hbboxes, obboxes, target_labels, val_map = filters_hoi.reduceTargets(Y_tmp, cfg)

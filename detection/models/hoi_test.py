@@ -30,7 +30,8 @@ def saveInputData(generator, Stages, cfg):
 #        [img,proposals], y, imageMeta, imageDims, times = next(genIterator)
         X, y, imageMeta, imageDims, times = next(genIterator)
         imageID = imageMeta['imageName'].split('.')[0]
-        utils.update_progress_new(batchidx+1, generator.nb_batches, imageID)
+        if batchidx+1 % 500 == 0 or batchidx==50:
+            utils.update_progress_new(batchidx+1, generator.nb_batches, imageID)
         
         #STAGE 1
         proposals = Stages.stageone([X], y, imageMeta, imageDims)
@@ -62,7 +63,8 @@ def saveEvalData(generator, Stages, cfg):
     
         X, y, imageMeta, imageDims, times = next(genIterator)
         imageID = imageMeta['imageID']
-        utils.update_progress_new(batchidx+1, generator.nb_batches, imageID)
+        if batchidx+1 % 100 == 0:
+            utils.update_progress_new(batchidx+1, generator.nb_batches, imageID)
         
         #STAGE 1
         proposals = Stages.stageone(X, y, imageMeta, imageDims)
