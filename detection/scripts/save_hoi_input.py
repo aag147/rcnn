@@ -38,6 +38,8 @@ if True:
     Models = methods.AllModels(cfg, mode='test', do_rpn=True, do_det=True, do_hoi=False)
     Stages = stages.AllStages(cfg, Models, obj_mapping, hoi_mapping, mode='train')
 
+    sys.stdout.flush()
+
 if True:
     inputMeta = hoi_test.saveInputData(genTrain, Stages, cfg)
 
