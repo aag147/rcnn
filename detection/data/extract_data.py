@@ -43,26 +43,31 @@ class object_data:
         
         self.cfg.results_path = self.cfg.base_path + 'results/' + self.cfg.dataset + '/'
         
-        from_path = self.cfg.data_path + 'images/'
-        to_path   = self.cfg.base_path + self.cfg.dataset + '/images/'
+        from_images_path = self.cfg.data_path + 'images/'
+        to_images_path   = self.cfg.base_path + self.cfg.dataset + '/images/'
+        
+        from_anchors_path = self.cfg.data_path + 'anchors/'
+        to_anchors_path   = self.cfg.base_path + self.cfg.dataset + '/anchors/'
         
         from_input_path = self.cfg.my_input_path
         to_input_path = self.cfg.results_path + self.cfg.my_input_dir + '/output/'
         
         print('Moving data...')
         sys.stdout.flush()
-        if not os.path.exists(to_path):
+        if not os.path.exists(to_images_path):
             print('   -moving images...')
             sys.stdout.flush()
-            utils.moveData(from_path, to_path)
+            utils.moveData(from_images_path, to_images_path)
+        if not os.path.exists(to_anchors_path):
+            print('   -moving anchors...')
+            sys.stdout.flush()
+            utils.moveData(from_anchors_path, to_anchors_path)
+        if self.cfg.my_input_dir is not None and not os.path.exists(to_input_path):
             print('   -moving inputs...')
             sys.stdout.flush()
             utils.moveData(from_input_path, to_input_path)
-            print('   Data has been moved...')
-            sys.stdout.flush()
-        else:
-            print('   Data is already moved...')
-            sys.stdout.flush()
+        print('   Data is moved...')
+        sys.stdout.flush()
         
         self.cfg.data_path = self.cfg.base_path + self.cfg.dataset + '/'      
         self.cfg.my_output_path = self.cfg.results_path + self.cfg.my_actual_results_dir + '/output/'
