@@ -164,7 +164,7 @@ class AllModels:
         model.load_weights(path, by_name=False)
         weights_after = model.layers[11].get_weights()[0][0,0,0,0]
         assert weights_before != weights_after, 'weights have not been loaded'
-        
+        assert not model.layers[17].get_config()['trainable']
         return model, weights_before, weights_after
         
     def load_weights(self):

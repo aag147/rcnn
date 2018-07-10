@@ -61,7 +61,7 @@ class DataGenerator():
       self.nb_images = len(self.dataID)
       self.nb_samples = None
       if self.nb_batches is None:
-          self.nb_batches = self.countValidImages()
+          self.nb_batches = self.nb_images
       
       
     def countValidImages(self):
