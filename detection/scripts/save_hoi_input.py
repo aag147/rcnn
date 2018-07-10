@@ -39,8 +39,10 @@ if True:
     sys.stdout.flush()
 
 #if True:
-#    Stages = stages.AllStages(cfg, Models, obj_mapping, hoi_mapping, mode='train')
-#    imageInputs, imageID, bboxes = hoi_test.saveInputData(genTest, Stages, cfg)
+    cfg.det_nms_overlap_thresh = 0.5
+    Stages = stages.AllStages(cfg, Models, obj_mapping, hoi_mapping, mode='train')
+    imageInputs, imageID, bboxes = hoi_test.saveInputData(genTest, Stages, cfg)
+    cfg.det_nms_overlap_thresh = 0.9
     Stages = stages.AllStages(cfg, Models, obj_mapping, hoi_mapping, mode='train')
     imageInputs, imageID, bboxes = hoi_test.saveInputData(genTrain, Stages, cfg)
 
