@@ -12,6 +12,7 @@ import utils
 import os
 import numpy as np
 import math
+import sys
 
 class object_data:
     def __init__(self, newDir=True, method='faster'):
@@ -49,14 +50,19 @@ class object_data:
         to_input_path = self.cfg.results_path + self.cfg.my_input_dir + '/output/'
         
         print('Moving data...')
+        sys.stdout.flush()
         if not os.path.exists(to_path):
             print('   -moving images...')
+            sys.stdout.flush()
             utils.moveData(from_path, to_path)
             print('   -moving inputs...')
+            sys.stdout.flush()
             utils.moveData(from_input_path, to_input_path)
             print('   Data has been moved...')
+            sys.stdout.flush()
         else:
             print('   Data is already moved...')
+            sys.stdout.flush()
         
         self.cfg.data_path = self.cfg.base_path + self.cfg.dataset + '/'      
         self.cfg.my_output_path = self.cfg.results_path + self.cfg.my_actual_results_dir + '/output/'
