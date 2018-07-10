@@ -34,7 +34,7 @@ if True:
 
     # data
     genTrain = DataGenerator(imagesMeta = data.trainGTMeta, cfg=cfg, data_type='train', do_meta=False)
-    genTest = DataGenerator(imagesMeta = data.valGTMeta, cfg=cfg, data_type='test', do_meta=False)
+    genTest = DataGenerator(imagesMeta = data.valGTMeta, cfg=cfg, data_type='test', do_meta=False, mode='val')
 
     # models
     Models = methods.AllModels(cfg, mode='train', do_hoi=True)

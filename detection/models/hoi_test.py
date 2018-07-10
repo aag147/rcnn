@@ -49,14 +49,12 @@ def saveInputData(generator, Stages, cfg):
             continue
         
         #STAGE 3
-        print('stage3')
         all_hbboxes, all_obboxes, all_target_labels, val_map = Stages.stagethree_targets(bboxes, imageMeta, imageDims)
         if all_hbboxes is None:
             utils.save_obj(None, save_path + imageID)
             continue
         
         #CONVERT
-        print('convert')
         inputMeta = filters_hoi.convertData([all_hbboxes, all_obboxes, all_target_labels, val_map], cfg, mode=generator.data_type)
         
         utils.save_obj(inputMeta, save_path + imageID)

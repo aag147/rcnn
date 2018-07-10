@@ -116,9 +116,17 @@ class DataGenerator():
             if Y_tmp is None:
                 return None
             
-            if self.mode == 'test':
+            if self.mode == 'val':
                 all_hbboxes, all_obboxes, all_target_labels, all_val_map = Y_tmp
-                return [img, all_hbboxes, all_obboxes], [all_target_labels], imageMeta, imageDims, None
+                if all_val_map.shape[1] > 64:
+                    idxs = np.random.choice(list(range(64)), 64, replace=False)
+                    all_hbboxes = all_hbboxes[:,idxs,:]
+                    all_obboxes = all_obboxes[:,idxs,:]
+                    all_target_labels = all_target_labels[:,idxs,:]
+                patterns = filters_hoi.createInteractionPatterns(all_hbboxes, all_obboxes, self.cfg)
+                hcrops, ocrops = filters_hoi.convertBB2Crop(img, all_hbboxes, all_obboxes, imageDims)
+                all_hbboxes, all_obboxes = filters_hoi.prepareInputs(all_hbboxes, all_obboxes, imageDims)
+                return [hcrops, ocrops, patterns[0], all_hbboxes[0], all_obboxes[0]], all_target_labels[0]       
             
             hbboxes, obboxes, target_labels, val_map = filters_hoi.reduceTargets(Y_tmp, self.cfg)
             patterns = filters_hoi.createInteractionPatterns(hbboxes, obboxes, self.cfg)

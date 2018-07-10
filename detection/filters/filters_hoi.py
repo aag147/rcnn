@@ -176,7 +176,6 @@ def loadData(imageInput, imageDims, cfg):
 
 def convertData(Y, cfg, mode='train'):
     [all_hbboxes, all_obboxes, all_target_labels, all_val_map] = Y    
-    print('mode ', mode)
     if mode=='train':
         sel_samples = filterTargets(all_val_map, None, 75, None, nb_neg2=150)
     else:
@@ -257,10 +256,10 @@ def filterTargets(val_map, nb_pos, nb_neg1, nb_hoi_rois, nb_neg2=0):
         sel_samples = selected_pos_samples.tolist() + selected_neg1_samples.tolist() + selected_neg3_samples.tolist()    
         return sel_samples
     
-    if nb_pos is not None and len(positive_idxs) > nb_pos:
+    if nb_pos is not None and len(positive_idxs) > nb_pos and len(negative2_idxs)>0:
         selected_pos_samples = np.random.choice(positive_idxs, nb_pos, replace=False)
         
-    if len(negative1_idxs) > nb_neg1:
+    if len(negative1_idxs) > nb_neg1 and len(negative2_idxs)>0:
         selected_neg1_samples = np.random.choice(negative1_idxs, nb_neg1, replace=False)
         
     if nb_neg2 > 0:
@@ -268,7 +267,7 @@ def filterTargets(val_map, nb_pos, nb_neg1, nb_hoi_rois, nb_neg2=0):
             selected_neg2_samples = np.random.choice(negative2_idxs, nb_neg2, replace=False)
     elif len(negative2_idxs) + len(selected_neg1_samples) + len(selected_pos_samples) > nb_hoi_rois:
         selected_neg2_samples = np.random.choice(negative2_idxs, nb_hoi_rois - len(selected_pos_samples) - len(selected_neg1_samples), replace=False)
-    else:
+    elif len(negative2_idxs) > 0:
         selected_neg2_samples = np.random.choice(negative2_idxs, nb_hoi_rois - len(selected_pos_samples) - len(selected_neg1_samples), replace=True)
         
     sel_samples = selected_pos_samples.tolist() + selected_neg1_samples.tolist() + selected_neg2_samples.tolist()    
@@ -288,6 +287,7 @@ def reduceTargets(Y, cfg, batchidx=None):
     ## Pick reduced indexes ##
     if batchidx is None:        
         sel_samples = filterTargets(all_val_map, cfg.hoi_pos_share, cfg.hoi_neg1_share, cfg.nb_hoi_rois)
+
     else:        
         sidx = batchidx * cfg.nb_hoi_rois
         fidx = min(all_target_labels.shape[1], sidx + cfg.nb_hoi_rois)
@@ -410,7 +410,6 @@ def createTargets(bboxes, imageMeta, imageDims, cfg, class_mapping):
     ##############################
     ### Reshape and remove bads ##
     ##############################
-    print(np.unique(val_map, return_counts=True))
     val_idxs = np.where(val_map>=0)
 #    print(val_idxs)
 #    print(hbb_map.shape, obb_map.shape)
