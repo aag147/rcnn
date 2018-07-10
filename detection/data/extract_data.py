@@ -38,6 +38,9 @@ class object_data:
         
         if not os.path.exists(self.cfg.move_path):
             self.cfg.move_path = '/scratch2/wkl437/'
+        if not os.path.exists(self.cfg.move_path):
+            print('   No scratch drive...')
+            return
         
         self.cfg.base_path = self.cfg.move_path
         
