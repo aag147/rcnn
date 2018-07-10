@@ -42,6 +42,9 @@ class DataGenerator():
       self.anchors_path = self.data_path + 'anchors/'
       self.anchors_path = self.anchors_path + self.data_type + 'newest/'
       self.cfg = cfg
+      
+      print('   images path', self.images_path)
+      print('   anchors path', self.anchors_path)
 
       self.dataID = list(imagesMeta.keys())
       self.dataID.sort()
