@@ -43,6 +43,7 @@ if True:
     _, model_det, _ = Models.get_models()
     
 
+    sys.stdout.flush()
 #if False:    
     # train
     callbacks = [callbacks.MyModelCheckpointInterval(cfg), \

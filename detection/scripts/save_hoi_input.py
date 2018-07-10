@@ -45,26 +45,27 @@ if True:
     hoi_test.saveInputData(genTrain, Stages, cfg)
 
 if False:
-    inputMeta = utils.load_obj(cfg.my_output_path + 'hoiputs_'+genTrain.data_type)
-    keys = list(inputMeta.keys())
+    imageID = 'HICO_test2015_00001149'
+    imageInputs = utils.load_obj(cfg.my_output_path + imageID)
+#    keys = list(inputMeta.keys())
     
-    for imageID in keys:
-        imageMeta = genTrain.imagesMeta[imageID]
-        imageInputs = inputMeta[imageID]
-    
-        X, imageDims = filters_rpn.prepareInputs(imageMeta, genTrain.images_path, cfg)
-        Y_tmp = filters_hoi.loadData(imageInputs, imageDims, cfg)
-    
-        hbboxes, obboxes, target_labels, val_map = filters_hoi.reduceTargets(Y_tmp, cfg)
-        patterns = filters_hoi.createInteractionPatterns(hbboxes, obboxes, cfg)
-        hcrops, ocrops = filters_hoi.convertBB2Crop(X, hbboxes, obboxes, imageDims)
-    
-        import draw
-        img = np.copy(X[0])
-        img += cfg.PIXEL_MEANS
-        img = img.astype(np.uint8)
-        draw.drawGTBoxes(img, imageMeta, imageDims)
-        draw.drawPositiveCropHoI(hbboxes[0], obboxes[0], hcrops, ocrops, patterns[0], target_labels[0], imageMeta, imageDims, cfg, obj_mapping)
+#    for imageID in keys:
+    imageMeta = genTest.imagesMeta[imageID]
+#        imageInputs = inputMeta[imageID]
+
+    X, imageDims = filters_rpn.prepareInputs(imageMeta, genTest.images_path, cfg)
+    Y_tmp = filters_hoi.loadData(imageInputs, imageDims, cfg)
+
+    hbboxes, obboxes, target_labels, val_map = filters_hoi.reduceTargets(Y_tmp, cfg)
+    patterns = filters_hoi.createInteractionPatterns(hbboxes, obboxes, cfg)
+    hcrops, ocrops = filters_hoi.convertBB2Crop(X, hbboxes, obboxes, imageDims)
+
+    import draw
+    img = np.copy(X[0])
+    img += cfg.PIXEL_MEANS
+    img = img.astype(np.uint8)
+    draw.drawGTBoxes(img, imageMeta, imageDims)
+    draw.drawPositiveCropHoI(hbboxes[0], obboxes[0], hcrops, ocrops, patterns[0], target_labels[0], imageMeta, imageDims, cfg, obj_mapping)
 
 print()
 print('Path:', cfg.my_output_path)

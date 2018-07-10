@@ -40,7 +40,7 @@ if True:
     Models = methods.AllModels(cfg, mode='train', do_hoi=True)
     _, _, model_hoi = Models.get_models()
     
-
+    sys.stdout.flush()
 if True:    
     # train
     callbacks = [callbacks.MyModelCheckpointInterval(cfg), \

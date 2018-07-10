@@ -42,6 +42,7 @@ if True:
     Models = methods.AllModels(cfg, mode='train', do_rpn=True)
     model_rpn, _, _ = Models.get_models()
 
+    sys.stdout.flush()
 
 #if False:    
     # train
