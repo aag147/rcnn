@@ -54,15 +54,15 @@ class object_data:
         
         print('Moving data...')
         sys.stdout.flush()
-        if not os.path.exists(to_images_path):
+        if not os.path.exists(to_images_path) and not self.cfg.only_use_weights:
             print('   -moving images...')
             sys.stdout.flush()
             utils.moveData(from_images_path, to_images_path)
-        if not os.path.exists(to_anchors_path):
+        if not os.path.exists(to_anchors_path) and not self.cfg.only_use_weights:
             print('   -moving anchors...')
             sys.stdout.flush()
             utils.moveData(from_anchors_path, to_anchors_path)
-        if self.cfg.my_input_dir is not None and not os.path.exists(to_input_path):
+        if len(self.cfg.my_input_dir) > 0 and not os.path.exists(to_input_path) and not self.cfg.only_use_weights:
             print('   -moving inputs...')
             sys.stdout.flush()
             utils.moveData(from_input_path, to_input_path)
