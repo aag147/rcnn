@@ -25,7 +25,7 @@ def saveInputData(generator, Stages, cfg):
     print('   save_path:', save_path)
 
     genIterator = generator.begin()
-    inputMeta = {}
+#    inputMeta = {}
     
     for batchidx in range(generator.nb_batches):
 #        [img,proposals], y, imageMeta, imageDims, times = next(genIterator)
@@ -45,20 +45,19 @@ def saveInputData(generator, Stages, cfg):
         #STAGE 2
         bboxes = Stages.stagetwo([proposals], imageMeta, imageDims)
         if bboxes is None:
-            inputMeta[imageID] = None
+            utils.save_obj(None, save_path + imageID)
             continue
         
         #STAGE 3
         all_hbboxes, all_obboxes, all_target_labels, val_map = Stages.stagethree_targets(bboxes, imageMeta, imageDims)
         if all_hbboxes is None:
-            inputMeta[imageID] = None
+            utils.save_obj(None, save_path + imageID)
             continue
         
         #CONVERT
-        inputMeta[imageID] = filters_hoi.convertData([all_hbboxes, all_obboxes, all_target_labels, val_map], cfg)
+        inputMeta = filters_hoi.convertData([all_hbboxes, all_obboxes, all_target_labels, val_map], cfg)
         
         utils.save_obj(inputMeta, save_path + imageID)
-    return inputMeta
 
 
 def saveEvalData(generator, Stages, cfg):

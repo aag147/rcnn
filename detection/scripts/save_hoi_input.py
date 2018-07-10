@@ -41,7 +41,8 @@ if True:
     sys.stdout.flush()
 
 if True:
-    inputMeta = hoi_test.saveInputData(genTest, Stages, cfg)
+    hoi_test.saveInputData(genTest, Stages, cfg)
+    hoi_test.saveInputData(genTrain, Stages, cfg)
 
 if False:
     inputMeta = utils.load_obj(cfg.my_output_path + 'hoiputs_'+genTrain.data_type)
