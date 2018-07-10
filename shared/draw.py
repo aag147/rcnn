@@ -162,7 +162,7 @@ def plotRPNLosses(hist):
     plt.plot(x, vc, c=(0.5,1.0,0.0))
     plt.plot(x, vr, c=(0.5,0.8,0.0))
     
-    plt.title('RPN loss')
+#    plt.title('DET loss')
     plt.ylabel('Loss')
     plt.xlabel('Iteration (in 10K)')
     plt.legend(['train+L2', 'train cls', 'train regr', 'val+L2', 'val cls', 'val regr'], loc='upper right')
@@ -316,7 +316,7 @@ def drawOverlapRois(img, rois, imageMeta, imageDims, cfg, obj_mapping):
     import filters_helper as helper
     import utils
     f, spl = plt.subplots(1)
-#    spl.axis('off')
+    spl.axis('off')
     spl.imshow(img)
     bboxes = []
     gta = helper.normalizeGTboxes(imageMeta['objects'], scale=imageDims['scale'], rpn_stride=cfg.rpn_stride)
@@ -357,6 +357,7 @@ def drawOverlapRois(img, rois, imageMeta, imageDims, cfg, obj_mapping):
 
 def drawPositiveRois(img, rois, obj_mapping):
     f, spl = plt.subplots(1)
+    spl.axis('off')
     spl.imshow(img)
     bboxes = []
     for roi in rois:
@@ -364,7 +365,7 @@ def drawPositiveRois(img, rois, obj_mapping):
         if labelID>0:
             bb = roi[0:4]*16
             bbox = drawProposalBox(bb)
-            spl.plot(bbox[0,:], bbox[1,:])
+            spl.plot(bbox[0,:], bbox[1,:], c='red')
             bboxes.append(bb)
     return np.array(bboxes)
 
@@ -426,6 +427,7 @@ def drawPositiveHoI(img, hbboxes, obboxes, props, imageMeta, imageDims, cfg, obj
 def drawPositiveCropHoI(hbboxes, obboxes, hcrops, ocrops, patterns, props, imageMeta, imageDims, cfg, obj_mapping):
     inv_obj_mapping = {x:key for key,x in obj_mapping.items()}
     idxs = np.where(props[:,:]>0.5)[0]
+    idxs = list(range(props.shape[0]))
     nb_pairs = len(idxs)
     
     f, spl = plt.subplots(4,8)
@@ -438,10 +440,10 @@ def drawPositiveCropHoI(hbboxes, obboxes, hcrops, ocrops, patterns, props, image
     
     for i, idx in enumerate(idxs):
         j = i*4
-        hprop = (hbboxes[idx,4])
-        oprop = (obboxes[idx,4])
-        hlbl = int(hbboxes[idx,5])
-        olbl = int(obboxes[idx,5])
+        hprop = (hbboxes[idx,4]) if hbboxes is not None else -1
+        oprop = (obboxes[idx,4]) if obboxes is not None else -1
+        hlbl = int(hbboxes[idx,5]) if hbboxes is not None else 0
+        olbl = int(obboxes[idx,5]) if obboxes is not None else 0
         hoiprop = np.where(props[idx,:]>0.5)[0]
         print(hcrops.shape, idx)
         spl[j].imshow(hcrops[idx,::])

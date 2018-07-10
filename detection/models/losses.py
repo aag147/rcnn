@@ -51,5 +51,5 @@ def class_loss_cls(y_true, y_pred):
 
 def hoi_loss_cls(wp, wn=1):
     def hoi_loss_cls_fixed_num(y_true, y_pred):
-        return K.sum((wn*(1-y_true)+wp*(y_true))*K.binary_crossentropy(y_true, y_pred), axis=-1)
+        return K.mean((wn*(1-y_true)+wp*(y_true))*K.binary_crossentropy(y_true, y_pred), axis=-1)
     return hoi_loss_cls_fixed_num

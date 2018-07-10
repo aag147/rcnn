@@ -34,19 +34,19 @@ if True:
     genTrain = DataGenerator(imagesMeta = data.trainGTMeta, cfg=cfg, data_type='train', do_meta=True)
     genTest = DataGenerator(imagesMeta = data.valGTMeta, cfg=cfg, data_type='test', do_meta=True)
     
-
     Models = methods.AllModels(cfg, mode='test', do_rpn=True, do_det=True, do_hoi=False)
-    Stages = stages.AllStages(cfg, Models, obj_mapping, hoi_mapping, mode='train')
 
     sys.stdout.flush()
 
-if True:
-    hoi_test.saveInputData(genTest, Stages, cfg)
-    hoi_test.saveInputData(genTrain, Stages, cfg)
+#if True:
+    Stages = stages.AllStages(cfg, Models, obj_mapping, hoi_mapping, mode='train')
+    imageInputs, imageID, bboxes = hoi_test.saveInputData(genTest, Stages, cfg)
+#    Stages = stages.AllStages(cfg, Models, obj_mapping, hoi_mapping, mode='train')
+#    imageInputs, imageID, bboxes = hoi_test.saveInputData(genTrain, Stages, cfg)
 
 if False:
-    imageID = 'HICO_test2015_00001149'
-    imageInputs = utils.load_obj(cfg.my_output_path + imageID)
+#    imageID = 'HICO_train2015_00025124'
+#    imageInputs = utils.load_obj(cfg.my_output_path + imageID)
 #    keys = list(inputMeta.keys())
     
 #    for imageID in keys:
@@ -56,7 +56,7 @@ if False:
     X, imageDims = filters_rpn.prepareInputs(imageMeta, genTest.images_path, cfg)
     Y_tmp = filters_hoi.loadData(imageInputs, imageDims, cfg)
 
-    hbboxes, obboxes, target_labels, val_map = filters_hoi.reduceTargets(Y_tmp, cfg)
+    hbboxes, obboxes, target_labels, val_map = Y_tmp
     patterns = filters_hoi.createInteractionPatterns(hbboxes, obboxes, cfg)
     hcrops, ocrops = filters_hoi.convertBB2Crop(X, hbboxes, obboxes, imageDims)
 

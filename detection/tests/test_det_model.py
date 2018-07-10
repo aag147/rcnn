@@ -67,5 +67,5 @@ for i in range(1):
     print('Draw stuff...')
     draw.drawGTBoxes(img, imageMeta, imageDims)
     overlapAnchors = draw.drawOverlapAnchors(img, proposals[0], imageMeta, imageDims, cfg)
-#    draw.drawPositiveRois(img, bboxes[0], obj_mapping)
+    draw.drawPositiveRois(img, bboxes[0], obj_mapping)
     overlapRois = draw.drawOverlapRois(img, bboxes[0], imageMeta, imageDims, cfg, obj_mapping)

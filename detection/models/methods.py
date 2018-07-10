@@ -325,6 +325,19 @@ class AllModels:
             shape=object_img_shape,
             name="input_object_img"
         )
+        interaction_slow_input = keras.layers.Input(
+            shape=(cfg.winShape[0], cfg.winShape[1], 2),
+            name="input_interaction"
+        )
+        human_slow_input = keras.layers.Input(
+            shape=(5,),
+            name="input_interaction"
+        )
+        object_slow_input = keras.layers.Input(
+            shape=(5,),
+            name="input_interaction"
+        )
+
         
         features_input = keras.layers.Input(
             shape=features_shape,
@@ -597,49 +610,37 @@ class AllModels:
             hoi_inputs = [
                 human_img_input,
                 object_img_input,
-                interaction_input,
-                human_input,
-                object_input
+                interaction_slow_input,
+                human_slow_input,
+                object_slow_input
             ]
             
-            keras.models.Model(inputs=[human_img_input,object_img_input], outputs=[hoi_human_features,hoi_object_features])
             
-            ## HUMAN ##
-            hoi_human_features = layers.slow_expansion(
-                cfg
-            )([
-                hoi_human_features
-            ])
-            
-            hoi_human_scores = keras.layers.TimeDistributed(
-                keras.layers.Dense(
-                    units=1 * nb_hoi_classes,
-                    activation=None,
-                    kernel_initializer = keras.initializers.RandomNormal(stddev=0.01),
-                    kernel_regularizer = keras.regularizers.l2(cfg.weight_decay),
-                ),
+            ## HUMAN ##            
+            hoi_human_scores = keras.layers.Dense(
+                units=1 * nb_hoi_classes,
+                activation=None,
+                kernel_initializer = keras.initializers.RandomNormal(stddev=0.01),
+                kernel_regularizer = keras.regularizers.l2(cfg.weight_decay),
                 name="scores4human"
             )(hoi_human_features)
                 
-            ## OBJECT ##    
-            hoi_object_features = layers.slow_expansion(
-                cfg
-            )([
-                hoi_object_features
-            ])
-            
-                
-            hoi_object_scores = keras.layers.TimeDistributed(
-                keras.layers.Dense(
-                    units=1 * nb_hoi_classes,
-                    activation=None,
-                    kernel_initializer = keras.initializers.RandomNormal(stddev=0.01),
-                    kernel_regularizer = keras.regularizers.l2(cfg.weight_decay),
-                ),
+            ## OBJECT ##                
+            hoi_object_scores = keras.layers.Dense(
+                units=1 * nb_hoi_classes,
+                activation=None,
+                kernel_initializer = keras.initializers.RandomNormal(stddev=0.01),
+                kernel_regularizer = keras.regularizers.l2(cfg.weight_decay),
                 name="scores4object"
             )(hoi_object_features)
                               
             ## INTERACTION ##
+            interaction_input = layers.intct_expansion(
+                cfg
+            )([
+                interaction_slow_input
+            ])
+            
             hoi_pattern_features = layers.pairwiseStream(
                 cfg = cfg
             )([
@@ -655,6 +656,12 @@ class AllModels:
                 name = 'scores4pattern'
             )(hoi_pattern_features)
                 
+            hoi_pattern_scores = layers.intct_reduction(
+                cfg
+            )([
+                hoi_pattern_scores
+            ])
+                
             ## FINAL ##
             hoi_score = keras.layers.Add()([hoi_human_scores, hoi_object_scores, hoi_pattern_scores])
             
@@ -667,8 +674,8 @@ class AllModels:
             if self.mode=='test':    
                 hoi_outputs = [
                     hoi_final_score,
-                    human_input,
-                    object_input
+                    human_slow_input,
+                    object_slow_input
                 ]
             else:
                 hoi_outputs = [

@@ -20,7 +20,7 @@ import utils
 import numpy as np
 
 
-if False:
+if True:
     # Load data
     print('Loading data...')
     data = extract_data.object_data()

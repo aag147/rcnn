@@ -154,7 +154,7 @@ def convertBB2Crop(img, h_bboxes, o_bboxes, imageDims):
 #######################
 def loadData(imageInput, imageDims, cfg):
     if imageInput is None:
-        return None, None, None, None
+        return None
     all_hbboxes = np.array(imageInput['hbboxes']).astype(np.float64) / 1000.0
     all_obboxes = np.array(imageInput['o_bboxes']).astype(np.float64) / 1000.0
     all_target_labels = (imageInput['hoi_labels'])
@@ -174,11 +174,13 @@ def loadData(imageInput, imageDims, cfg):
 
 
 
-def convertData(Y, cfg):
+def convertData(Y, cfg, mode='train'):
     [all_hbboxes, all_obboxes, all_target_labels, all_val_map] = Y    
-    sel_samples = filterTargets(all_val_map, None, 75, None, nb_neg2=150)
-    
-#    assert(len(sel_samples) == 300)
+    print('mode ', mode)
+    if mode=='train':
+        sel_samples = filterTargets(all_val_map, None, 75, None, nb_neg2=150)
+    else:
+        sel_samples = filterTargets(all_val_map, None, None, None, nb_neg2=None)
     
     all_hbboxes = np.copy(all_hbboxes[0,sel_samples,:])
     all_obboxes = np.copy(all_obboxes[0,sel_samples,:])
@@ -243,11 +245,17 @@ def filterTargets(val_map, nb_pos, nb_neg1, nb_hoi_rois, nb_neg2=0):
     val_map = np.copy(val_map[0])
     positive_idxs = np.where(val_map==3)[0]
     negative1_idxs = np.where(val_map==2)[0]
-    negative2_idxs = np.where(val_map==1)[0]
+    negative2_idxs = np.where(val_map==0)[0]
+    negative3_idxs = np.where(val_map==1)[0]
     
     selected_pos_samples = positive_idxs
     selected_neg1_samples = negative1_idxs
     selected_neg2_samples = negative2_idxs
+    selected_neg3_samples = negative3_idxs
+    
+    if nb_pos is None and nb_neg1 is None and nb_hoi_rois is None:
+        sel_samples = selected_pos_samples.tolist() + selected_neg1_samples.tolist() + selected_neg3_samples.tolist()    
+        return sel_samples
     
     if nb_pos is not None and len(positive_idxs) > nb_pos:
         selected_pos_samples = np.random.choice(positive_idxs, nb_pos, replace=False)
@@ -342,7 +350,7 @@ def createTargets(bboxes, imageMeta, imageDims, cfg, class_mapping):
     #############################
     ## Unite humans and objects #
     #############################
-    val_map = np.zeros((hbboxes.shape[0], obboxes.shape[0]))
+    val_map = np.ones((hbboxes.shape[0], obboxes.shape[0])) * -1
     label_map = np.zeros((hbboxes.shape[0], obboxes.shape[0], cfg.nb_hoi_classes))
     hbb_map   = np.zeros((hbboxes.shape[0], obboxes.shape[0], 6))
     obb_map   = np.zeros((hbboxes.shape[0], obboxes.shape[0], 6))
@@ -381,20 +389,29 @@ def createTargets(bboxes, imageMeta, imageDims, cfg, class_mapping):
                             hbb_map[hidx, oidx, :] = hbox[:6]
                             obb_map[hidx, oidx, :] = obox[:6]
                     
-
-                    elif objlabel != gt_obj and o_iou < cfg.hoi_max_overlap:
+                            
+                    elif objlabel == gt_obj:
                         if val_map[hidx, oidx] < 1:
                             # negative2
                             val_map[hidx, oidx] = 1
                             hbb_map[hidx, oidx, :] = hbox[:6]
+                            obb_map[hidx, oidx, :] = obox[:6]   
+                            
+                    elif objlabel != gt_obj and o_iou < cfg.hoi_max_overlap:
+                        if val_map[hidx, oidx] < 0:
+                            # negative2
+                            val_map[hidx, oidx] = 0
+                            hbb_map[hidx, oidx, :] = hbox[:6]
                             obb_map[hidx, oidx, :] = obox[:6]
+                     
                 
                 
     
     ##############################
     ### Reshape and remove bads ##
     ##############################
-    val_idxs = np.where(val_map>0)
+    print(np.unique(val_map, return_counts=True))
+    val_idxs = np.where(val_map>=0)
 #    print(val_idxs)
 #    print(hbb_map.shape, obb_map.shape)
     final_vals = cp.copy(val_map[val_idxs[0], val_idxs[1]])

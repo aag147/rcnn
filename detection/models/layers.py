@@ -62,6 +62,36 @@ def slow_expansion(cfg):
     
     return _slow
 
+def intct_expansion(cfg):
+    def lb_func(x):
+        base_layers = x[0]
+        y = K.reshape(
+                x=base_layers, 
+                shape=(1,-1,64,64,2)
+            )
+        return y
+    
+    def _slow(x):
+        y = Lambda(lb_func, output_shape=(None,64,64,2))(x)
+        return y
+    
+    return _slow
+
+def intct_reduction(cfg):
+    def lb_func(x):
+        base_layers = x[0]
+        y = K.reshape(
+                x=base_layers, 
+                shape=(-1, cfg.nb_hoi_classes)
+            )
+        return y
+    
+    def _slow(x):
+        y = Lambda(lb_func, output_shape=(cfg.nb_hoi_classes,))(x)
+        return y
+    
+    return _slow
+
 def fullyConnected(cfg, stream=None, use_dropout=True):
     def fullyConnectedFixed(x):
         assert(len(x) == 1)

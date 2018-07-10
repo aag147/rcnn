@@ -17,7 +17,7 @@ import os
 
 class DataGenerator():
     
-    def __init__(self, imagesMeta, cfg, data_type='train', do_meta=True):
+    def __init__(self, imagesMeta, cfg, data_type='train', do_meta=True, mode='train'):
       'Initialization'
       self.data_type = data_type
       if data_type == 'train':
@@ -27,6 +27,7 @@ class DataGenerator():
       else:
           g_cfg = cfg.test_cfg
           
+      self.mode = mode
       self.gen_type = g_cfg.type
       self.batch_size = g_cfg.batch_size
       self.nb_batches = g_cfg.nb_batches
@@ -112,17 +113,23 @@ class DataGenerator():
             pp_start = time.time()
             Y_tmp = filters_hoi.loadData(imageInputs, imageDims, self.cfg)
             pp_end = time.time()
-            if Y_tmp[0] is None:
+            if Y_tmp is None:
                 return None
-            hbboxes, obboxes, target_labels = filters_hoi.reduceTargets(Y_tmp, self.cfg)
+            
+            if self.mode == 'test':
+                all_hbboxes, all_obboxes, all_target_labels, all_val_map = Y_tmp
+                return [img, all_hbboxes, all_obboxes], [all_target_labels], imageMeta, imageDims, None
+            
+            hbboxes, obboxes, target_labels, val_map = filters_hoi.reduceTargets(Y_tmp, self.cfg)
             patterns = filters_hoi.createInteractionPatterns(hbboxes, obboxes, self.cfg)
             hcrops, ocrops = filters_hoi.convertBB2Crop(img, hbboxes, obboxes, imageDims)
+            hbboxes, obboxes = filters_hoi.prepareInputs(hbboxes, obboxes, imageDims)
             
             times = np.array([io_end-io_start, pp_end-pp_start])
             
         if self.do_meta:
-            return [hbboxes, ocrops, patterns], target_labels, imageMeta, imageDims, times
-        return [hcrops, ocrops, patterns], target_labels        
+            return [hcrops, ocrops, patterns[0], hbboxes[0], obboxes[0]], target_labels[0], imageMeta, imageDims, times
+        return [hcrops, ocrops, patterns[0], hbboxes[0], obboxes[0]], target_labels[0]       
     
     def _generateFastBatch(self, imageIDs):
         for imageID in imageIDs:
@@ -141,7 +148,7 @@ class DataGenerator():
             pp_end = time.time()
             if Y_tmp[0] is None:
                 return None
-            hbboxes, obboxes, target_labels = filters_hoi.reduceTargets(Y_tmp, self.cfg)
+            hbboxes, obboxes, target_labels, val_map = filters_hoi.reduceTargets(Y_tmp, self.cfg)
             patterns = filters_hoi.createInteractionPatterns(hbboxes, obboxes, self.cfg)
             hbboxes, obboxes = filters_hoi.prepareInputs(hbboxes, obboxes, imageDims)
             
