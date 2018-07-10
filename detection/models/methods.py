@@ -44,7 +44,7 @@ class AllModels:
             self.load_weights()
             self.compile_models()
 
-    def save_model(self, saveShared=False):
+    def save_model(self, saveShared=False, only_weights=False):
         print('Saving model...')
         
         cfg = self.cfg
@@ -60,7 +60,8 @@ class AllModels:
             modelpath = cfg.my_weights_path + 'model-theend%d.h5' % i
             weightspath = cfg.my_weights_path + 'weights-theend%d.h5' % i
             if not os.path.exists(modelpath):
-                model.save(modelpath)
+                if not only_weights:
+                    model.save(modelpath)
                 model.save_weights(weightspath)
                 
                 if saveShared:
@@ -149,6 +150,8 @@ class AllModels:
             layer.trainable = False
             if i == cfg.nb_shared_layers:
                 break
+            
+        assert not model.layers[17].get_config()['trainable']
         return model, weights_before, weights_after
     
     def _load_train_weights(self, model):
@@ -164,7 +167,6 @@ class AllModels:
         model.load_weights(path, by_name=False)
         weights_after = model.layers[11].get_weights()[0][0,0,0,0]
         assert weights_before != weights_after, 'weights have not been loaded'
-        assert not model.layers[17].get_config()['trainable']
         return model, weights_before, weights_after
         
     def load_weights(self):
@@ -347,6 +349,7 @@ class AllModels:
         ######### RPN ##########
         ########################
         if self.do_rpn:
+            print('   Creating RPN model...')
             output_features = models.VGG16_buildin(cfg)(img_input) 
             self.nb_models += 1
             
@@ -404,6 +407,7 @@ class AllModels:
         ###### Detection #######
         ########################
         if self.do_det:
+            print('   Creating DET model...')
             output_features_det = models.VGG16_buildin(cfg)(img_det_input)
             
             self.nb_models += 1
@@ -477,6 +481,7 @@ class AllModels:
         ######### HOI ##########
         ########################    
         if self.do_hoi and cfg.do_fast_hoi:
+            print('   Creating HOI model...')
             self.nb_models += 1
             
             output_features_hoi = models.VGG16_buildin(cfg)(img_hoi_input)
