@@ -44,7 +44,7 @@ if True:
     Stages = stages.AllStages(cfg, Models, obj_mapping, hoi_mapping, mode='train')
     imageInputs, imageID, bboxes = hoi_test.saveInputData(genTrain, Stages, cfg)
 
-if True:
+if False:
 #    imageID = 'HICO_train2015_00025124'
 #    imageInputs = utils.load_obj(cfg.my_output_path + imageID)
 #    keys = list(inputMeta.keys())
