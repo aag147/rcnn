@@ -48,8 +48,8 @@ if True:
                  callbacks.SaveLog2File(cfg), \
                  callbacks.PrintCallBack()]
     
-    model_hoi.fit_generator(generator = genTest.begin(), \
-                steps_per_epoch = genTest.nb_batches, \
+    model_hoi.fit_generator(generator = genTrain.begin(), \
+                steps_per_epoch = genTrain.nb_batches, \
                 verbose = 2,\
                 validation_data = genTest.begin(), \
                 validation_steps = genTest.nb_batches, \

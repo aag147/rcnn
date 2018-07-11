@@ -474,10 +474,10 @@ def _transformGTBBox(gt_bboxes, class_mapping, gt_rels, scale=[1,1], rpn_stride=
     for b_idx, gt_bbox in enumerate(gt_bboxes):
         label = gt_bbox['label']
         label = class_mapping[label]
-        xmin = ((gt_bbox['xmin']) * scale[0] / rpn_stride) / shape[0]
-        xmax = ((gt_bbox['xmax']-0.01) * scale[0] / rpn_stride) / shape[0]
-        ymin = ((gt_bbox['ymin']) * scale[1] / rpn_stride) / shape[1]
-        ymax = ((gt_bbox['ymax']-0.01) * scale[1] / rpn_stride) / shape[1]
+        xmin = ((gt_bbox['xmin']) * scale[0] / rpn_stride) / shape[1]
+        xmax = ((gt_bbox['xmax']-0.01) * scale[0] / rpn_stride) / shape[1]
+        ymin = ((gt_bbox['ymin']) * scale[1] / rpn_stride) / shape[0]
+        ymax = ((gt_bbox['ymax']-0.01) * scale[1] / rpn_stride) / shape[0]
         if roundoff:
             xmin=int(round(xmin)); xmax=int(round(xmax))
             ymin=int(round(ymin)); ymax=int(round(ymax))

@@ -25,18 +25,24 @@ def saveInputData(generator, Stages, cfg):
     print('   save_path:', save_path)
 
     genIterator = generator.begin()
-#    inputMeta = {}
+    inputMeta = None
+    bboxes = None
     
     for batchidx in range(generator.nb_batches):
 #        [img,proposals], y, imageMeta, imageDims, times = next(genIterator)
-        X, y, imageMeta, imageDims, times = next(genIterator)
-        imageID = imageMeta['imageName'].split('.')[0]
+#        X, y, imageMeta, imageDims, times = next(genIterator)
+#        imageID = imageMeta['imageName'].split('.')[0]
+        
+        imageID = 'HICO_train2015_00019135'
+        imageMeta = generator.imagesMeta[imageID]
+        X, y, imageDims = Stages.stagezero(imageMeta, generator.data_type)
         if batchidx % 500 == 0 or batchidx==100 or batchidx==250:
             utils.update_progress_new(batchidx, generator.nb_batches, imageID)
         
         
         path = save_path + imageID + '.pkl'
         if os.path.exists(path):
+            print(path)
             continue
         
         #STAGE 1
@@ -44,15 +50,9 @@ def saveInputData(generator, Stages, cfg):
         
         #STAGE 2
         bboxes = Stages.stagetwo([proposals], imageMeta, imageDims)
-        if bboxes is None:
-            utils.save_obj(None, save_path + imageID)
-            continue
         
         #STAGE 3
         all_hbboxes, all_obboxes, all_target_labels, val_map = Stages.stagethree_targets(bboxes, imageMeta, imageDims)
-        if all_hbboxes is None:
-            utils.save_obj(None, save_path + imageID)
-            continue
         
         #CONVERT
         inputMeta = filters_hoi.convertData([all_hbboxes, all_obboxes, all_target_labels, val_map], cfg, mode=generator.data_type)

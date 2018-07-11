@@ -103,9 +103,6 @@ class DataGenerator():
             imageMeta = self.imagesMeta[imageID]            
             imageInputs = self._getImageInputs(imageID)
             
-            if imageInputs is None:
-                return None
-            
             imageMeta['id'] = imageID
             io_start = time.time()
             img, imageDims = filters_rpn.prepareInputs(imageMeta, self.images_path, self.cfg)
@@ -114,7 +111,10 @@ class DataGenerator():
             Y_tmp = filters_hoi.loadData(imageInputs, imageDims, self.cfg)
             pp_end = time.time()
             if Y_tmp is None:
-                return None
+                if self.mode == 'train':
+                    raise Exception("ups: no detections available, path:%s" % self.rois_path)
+                else:
+                    return None
             
             if self.mode == 'val':
                 all_hbboxes, all_obboxes, all_target_labels, all_val_map = Y_tmp

@@ -39,16 +39,16 @@ if True:
     sys.stdout.flush()
 
 #if True:
-    cfg.det_nms_overlap_thresh = 0.5
-    Stages = stages.AllStages(cfg, Models, obj_mapping, hoi_mapping, mode='train')
-    imageInputs, imageID, bboxes = hoi_test.saveInputData(genTest, Stages, cfg)
+#    cfg.det_nms_overlap_thresh = 0.5
+#    Stages = stages.AllStages(cfg, Models, obj_mapping, hoi_mapping, mode='train')
+#    imageInputs, imageID, bboxes = hoi_test.saveInputData(genTest, Stages, cfg)
     cfg.det_nms_overlap_thresh = 0.9
     Stages = stages.AllStages(cfg, Models, obj_mapping, hoi_mapping, mode='train')
     imageInputs, imageID, bboxes = hoi_test.saveInputData(genTrain, Stages, cfg)
 
-if False:
+if True:
 #    imageID = 'HICO_train2015_00025124'
-#    imageInputs = utils.load_obj(cfg.my_output_path + imageID)
+    imageInputs = utils.load_obj(cfg.my_output_path + imageID)
 #    keys = list(inputMeta.keys())
     
 #    for imageID in keys:
@@ -58,8 +58,8 @@ if False:
     X, imageDims = filters_rpn.prepareInputs(imageMeta, genTrain.images_path, cfg)
     Y_tmp = filters_hoi.loadData(imageInputs, imageDims, cfg)
 
-#    hbboxes, obboxes, target_labels, val_map = Y_tmp
-    hbboxes, obboxes, target_labels, val_map = filters_hoi.reduceTargets(Y_tmp, cfg)
+    hbboxes, obboxes, target_labels, val_map = Y_tmp
+#    hbboxes, obboxes, target_labels, val_map = filters_hoi.reduceTargets(Y_tmp, cfg)
     patterns = filters_hoi.createInteractionPatterns(hbboxes, obboxes, cfg)
     hcrops, ocrops = filters_hoi.convertBB2Crop(X, hbboxes, obboxes, imageDims)
 

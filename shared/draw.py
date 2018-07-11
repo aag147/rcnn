@@ -401,14 +401,15 @@ def drawPositiveHoI(img, hbboxes, obboxes, props, imageMeta, imageDims, cfg, obj
     nb_pairs = hbboxes.shape[0]
     c_idx=0
     for idx in range(nb_pairs):
-        if idx < 40:
-            continue
+        if idx > 13:
+            break
         hprop = (hbboxes[idx,4])
         oprop = (obboxes[idx,4])
         hlbl = int(hbboxes[idx,5])
         olbl = int(obboxes[idx,5])
         hoiprop = np.where(props[idx,:]>0.5)[0]
-        if len(hoiprop)==0:
+        
+        if len(hoiprop)>0:
             c = colours[c_idx]
             hbbox = hbboxes[idx,:4]*16
             obbox = obboxes[idx,:4]*16
@@ -417,10 +418,9 @@ def drawPositiveHoI(img, hbboxes, obboxes, props, imageMeta, imageDims, cfg, obj
             spl.plot(hbbox[0,:], hbbox[1,:], c=c)
             spl.plot(obbox[0,:], obbox[1,:], c=c)
             idxs.append(idx)
-            print('Pos. label:', inv_obj_mapping[hlbl], inv_obj_mapping[olbl], hprop, oprop, hoiprop)
+#            print('Pos. label:', inv_obj_mapping[hlbl], inv_obj_mapping[olbl], hprop, oprop, hoiprop)
             
             c_idx = (c_idx+1) % len(colours)
-            break
     return np.array(idxs)
 
 
@@ -445,7 +445,6 @@ def drawPositiveCropHoI(hbboxes, obboxes, hcrops, ocrops, patterns, props, image
         hlbl = int(hbboxes[idx,5]) if hbboxes is not None else 0
         olbl = int(obboxes[idx,5]) if obboxes is not None else 0
         hoiprop = np.where(props[idx,:]>0.5)[0]
-        print(hcrops.shape, idx)
         spl[j].imshow(hcrops[idx,::])
         spl[j+1].imshow(ocrops[idx,::])
         spl[j+2].imshow(patterns[idx,:,:,0])

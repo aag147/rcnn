@@ -180,6 +180,8 @@ def convertData(Y, cfg, mode='train'):
         sel_samples = filterTargets(all_val_map, None, 75, None, nb_neg2=150)
     else:
         sel_samples = filterTargets(all_val_map, None, None, None, nb_neg2=None)
+        if len(sel_samples)==0:
+            return None
     
     all_hbboxes = np.copy(all_hbboxes[0,sel_samples,:])
     all_obboxes = np.copy(all_obboxes[0,sel_samples,:])

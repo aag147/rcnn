@@ -49,7 +49,7 @@ def class_loss_cls(y_true, y_pred):
     return lambda_cls_class * K.mean(categorical_crossentropy(y_true[0, :, :], y_pred[0, :, :]))
 
 
-def hoi_loss_cls(wp, wn=1):
+def hoi_loss_cls(wp, wn=1, batch_size=64):
     def hoi_loss_cls_fixed_num(y_true, y_pred):
-        return K.mean((wn*(1-y_true)+wp*(y_true))*K.binary_crossentropy(y_true, y_pred), axis=-1)
+        return K.sum((wn*(1-y_true)+wp*(y_true))*K.binary_crossentropy(y_true, y_pred), axis=-1) / batch_size
     return hoi_loss_cls_fixed_num
