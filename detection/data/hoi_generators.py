@@ -147,9 +147,6 @@ class DataGenerator():
             imageMeta = self.imagesMeta[imageID]
             imageInputs = self._getImageInputs(imageID)
             
-            if imageInputs is None:
-                return None
-            
             imageMeta['id'] = imageID
             io_start = time.time()
             img, imageDims = filters_rpn.prepareInputs(imageMeta, self.images_path, self.cfg)
@@ -157,8 +154,27 @@ class DataGenerator():
             pp_start = time.time()
             Y_tmp = filters_hoi.loadData(imageInputs, imageDims, self.cfg)
             pp_end = time.time()
-            if Y_tmp[0] is None:
-                return None
+            if Y_tmp is None:
+                if self.mode == 'train':
+                    raise Exception("ups: no detections available, path:%s" % self.rois_path)
+                else:
+                    return None
+                
+            print(imageID)
+            if self.mode == 'val':
+                all_hbboxes, all_obboxes, all_target_labels, all_val_map = Y_tmp
+                if all_val_map.shape[1] > 64:
+                    idxs = np.random.choice(list(range(64)), 64, replace=False)
+                    all_hbboxes = all_hbboxes[:,idxs,:]
+                    all_obboxes = all_obboxes[:,idxs,:]
+                    all_target_labels = all_target_labels[:,idxs,:]
+                patterns = filters_hoi.createInteractionPatterns(all_hbboxes, all_obboxes, self.cfg)
+                all_hbboxes, all_obboxes = filters_hoi.prepareInputs(all_hbboxes, all_obboxes, imageDims)
+                
+                if self.do_meta:
+                    return [img, all_hbboxes, all_obboxes, patterns], all_target_labels, imageMeta, imageDims, None
+                return [img, all_hbboxes, all_obboxes, patterns], all_target_labels
+                
             hbboxes, obboxes, target_labels, val_map = filters_hoi.reduceTargets(Y_tmp, self.cfg)
             patterns = filters_hoi.createInteractionPatterns(hbboxes, obboxes, self.cfg)
             hbboxes, obboxes = filters_hoi.prepareInputs(hbboxes, obboxes, imageDims)

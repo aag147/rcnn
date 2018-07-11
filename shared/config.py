@@ -290,7 +290,7 @@ class basic_config:
    def get_args(self):
        try:
           argv = sys.argv[1:]
-          opts, args = getopt.getopt(argv,"ab:c:d:e:f:g:hi:j:l:m:n:o:q:r:s:tuw:x:")
+          opts, args = getopt.getopt(argv,"ab:c:d:e:f:g:hi:j:l:m:n:o:q:r:s:tuw:x:z")
        except getopt.GetoptError:
           print('.py argument error')
           sys.exit(2)
@@ -368,6 +368,8 @@ class basic_config:
               # max classes
               assert arg.isdigit(), 'max_classes must be int'
               self.max_classes = int(arg)
+          if opt == '-z':
+              self.do_fast_hoi = True
               
    def set_class_weights(self, labels, imagesMeta):
        if self.wp >= 0: 

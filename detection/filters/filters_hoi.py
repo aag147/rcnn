@@ -291,6 +291,14 @@ def reduceTargets(Y, cfg, batchidx=None):
     obboxes = np.zeros((1, cfg.nb_hoi_rois, 6))
     target_labels  = np.zeros((1, cfg.nb_hoi_rois, cfg.nb_hoi_classes))
     
+    good_idxs = np.where((all_hbboxes[0,:,2]>0) & (all_hbboxes[0,:,3]>0) & (all_obboxes[0,:,2]>0) & (all_obboxes[0,:,3]>0))[0]
+    
+    all_hbboxes = all_hbboxes[:,good_idxs,:]
+    all_obboxes = all_obboxes[:,good_idxs,:]
+    all_target_labels = all_target_labels[:,good_idxs,:]
+    all_val_map = all_val_map[:,good_idxs]
+    
+    
     ## Pick reduced indexes ##
     if batchidx is None:        
         sel_samples = filterTargets(all_val_map, cfg.hoi_pos_share, cfg.hoi_neg1_share, cfg.nb_hoi_rois)
