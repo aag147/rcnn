@@ -127,6 +127,10 @@ def convertBB2Crop(img, h_bboxes, o_bboxes, imageDims):
     
     h_bboxes = h_bboxes.astype(np.uint32)
     o_bboxes = o_bboxes.astype(np.uint32)
+    h_bboxes[:,0] = np.minimum(img_shape[0]-2, h_bboxes[:,0])
+    h_bboxes[:,1] = np.minimum(img_shape[1]-2, h_bboxes[:,1])
+    o_bboxes[:,0] = np.minimum(img_shape[0]-2, o_bboxes[:,0])
+    o_bboxes[:,1] = np.minimum(img_shape[1]-2, o_bboxes[:,1])
     
     nb_interactions = h_bboxes.shape[0]
     

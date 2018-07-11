@@ -21,7 +21,8 @@ class AllStages:
         self.cfg = cfg
         self.obj_mapping = obj_mapping
         self.hoi_mapping = hoi_mapping
-        self.model_rpn, self.model_det, self.model_hoi = Models.get_models()
+        if Models is not None:
+            self.model_rpn, self.model_det, self.model_hoi = Models.get_models()
         
         self.images_path = cfg.data_path + 'images/'
         self.anchors_path = cfg.data_path + 'anchors/'
