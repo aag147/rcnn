@@ -160,7 +160,6 @@ class DataGenerator():
                 else:
                     return None
                 
-            print(imageID)
             if self.mode == 'val':
                 all_hbboxes, all_obboxes, all_target_labels, all_val_map = Y_tmp
                 if all_val_map.shape[1] > 64:
