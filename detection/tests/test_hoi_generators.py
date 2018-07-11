@@ -31,7 +31,7 @@ data = extract_data.object_data(False)
 
 # config
 cfg = data.cfg
-cfg.do_fast_hoi = True
+#cfg.do_fast_hoi = True
 obj_mapping = data.class_mapping
 hoi_mapping = data.hoi_labels
 
@@ -52,10 +52,10 @@ genTrain = DataGenerator(imagesMeta = data.trainGTMeta, cfg=cfg, data_type='trai
 
 genItr = genTrain.begin()
 for batchidx in range(genTrain.nb_batches):
-#    [hcrops, ocrops, patterns, hbboxes, obboxes], target_labels, imageMeta, imageDims, _ = next(genItr)
-    [img, hbboxes, obboxes, patterns], target_labels, imageMeta, imageDims, _ = next(genItr)
+    [hcrops, ocrops, patterns, hbboxes, obboxes], target_labels, imageMeta, imageDims, _ = next(genItr)
+#    [img, hbboxes, obboxes, patterns], target_labels, imageMeta, imageDims, _ = next(genItr)
     
-#    continue
+    continue
     
     X, _ = filters_rpn.prepareInputs(imageMeta, genTrain.images_path, cfg)
     imageID = imageMeta['imageName']
