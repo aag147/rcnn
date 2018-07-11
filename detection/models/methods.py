@@ -232,6 +232,7 @@ class AllModels:
             assert os.path.exists(cfg.my_shared_weights), 'invalid path: %s' % cfg.my_shared_weights
             self.model_rpn = load_model(cfg.my_shared_weights)
             self.model_rpn.name = 'rpn'
+            assert not self.model_rpn.layers[17].get_config()['trainable']
 
 
         if self.do_det:        
