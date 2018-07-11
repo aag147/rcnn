@@ -82,12 +82,12 @@ def intct_reduction(cfg):
         base_layers = x[0]
         y = K.reshape(
                 x=base_layers, 
-                shape=(-1, cfg.nb_hoi_classes)
+                shape=(-1, 600)
             )
         return y
     
     def _slow(x):
-        y = Lambda(lb_func, output_shape=(cfg.nb_hoi_classes,))(x)
+        y = Lambda(lb_func, output_shape=(600,))(x)
         return y
     
     return _slow
