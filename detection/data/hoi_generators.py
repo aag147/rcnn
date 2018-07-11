@@ -170,8 +170,11 @@ class DataGenerator():
         return [img, hbboxes, obboxes, patterns], target_labels
         
         
-    def _generateBatchFromIDs(self, imageIdxs):
+    def _generateBatchFromIDs(self, imageIdxs, list_idx):
         imageIDs = [self.dataID[idx] for idx in imageIdxs]
+        
+        utils.update_progress_new(list_idx+1, self.nb_batches, imageIDs[0])
+        
         if self.cfg.do_fast_hoi:
             return self._generateFastBatch(imageIDs)
         else:
@@ -189,7 +192,7 @@ class DataGenerator():
           r.shuffle(imageIdxs)
           for i in range(self.nb_batches):
               imageIdx = imageIdxs[i]
-              data = self._generateBatchFromIDs([imageIdx])
+              data = self._generateBatchFromIDs([imageIdx], i)
               if data is None:
                   continue
               yield data

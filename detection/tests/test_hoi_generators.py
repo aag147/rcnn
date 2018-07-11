@@ -32,16 +32,19 @@ cfg = data.cfg
 obj_mapping = data.class_mapping
 
 # data
-#genTrain = DataGenerator(imagesMeta = data.trainGTMeta, cfg=cfg, data_type='train', do_meta=True)
-genTest = DataGenerator(imagesMeta = data.valGTMeta, cfg=cfg, data_type='test', do_meta=True, mode='val')
+genTrain = DataGenerator(imagesMeta = data.trainGTMeta, cfg=cfg, data_type='train', do_meta=True)
+#genTest = DataGenerator(imagesMeta = data.valGTMeta, cfg=cfg, data_type='test', do_meta=True, mode='val')
 
 
-genItr = genTest.begin()
-for batchidx in range(genTest.nb_batches):
+genItr = genTrain.begin()
+for batchidx in range(genTrain.nb_batches):
     [hcrops, ocrops, patterns, hbboxes, obboxes], target_labels, imageMeta, imageDims, _ = next(genItr)
-    X, _ = filters_rpn.prepareInputs(imageMeta, genTest.images_path, cfg)
+    
+    continue
+    
+    X, _ = filters_rpn.prepareInputs(imageMeta, genTrain.images_path, cfg)
     imageID = imageMeta['imageName']
-    utils.update_progress_new(batchidx+1, genTest.nb_batches, imageID)
+    utils.update_progress_new(batchidx+1, genTrain.nb_batches, imageID)
     
     import draw
     draw.drawPositiveCropHoI(None, None, hcrops, ocrops, patterns, target_labels, imageMeta, imageDims, cfg, obj_mapping)
