@@ -37,9 +37,11 @@ if True:
     sys.stdout.flush()
 
 #if True:
-    nb_total = 0
-    nb_tp = 0
+    nb_total = np.zeros(600)
+    nb_tp = np.zeros(600)
     for i, (imageID, imageMeta) in enumerate(genTrain.imagesMeta.items()):
+        
+        utils.update_progress_new(i+1, genTrain.nb_batches, imageID)
         
         img = cv.imread(genTrain.images_path + imageMeta['imageName'])
         X, imageDims = filters_rpn.prepareInputs(imageMeta, genTrain.images_path, cfg)
@@ -76,9 +78,12 @@ if True:
                     continue
                 if gth_ols[rel[0]] >= 0.5 and gto_ols[rel[1]] >= 0.5 and rel[2] in label:
                     checks[gtidx] = 1
+                    nb_tp[rel[2]] += 1
 #        print(checks, label, imageID)
-        nb_total += len(checks)
-        nb_tp += np.sum(checks)
+                    
+        for rel in gt_rels:
+            nb_total[rel[2]] += 1
+
          
         continue
         import draw
@@ -102,3 +107,5 @@ if True:
         if i == 5:
             break
 
+
+    print(np.mean([nb_tp[i] / nb_total[i] if nb_tp[i]>0 else 0 for i in range(600)]))

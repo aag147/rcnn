@@ -132,6 +132,7 @@ def convertBB2Crop(img, h_bboxes, o_bboxes, imageDims):
     o_bboxes[:,0] = np.minimum(img_shape[0]-2, o_bboxes[:,0])
     o_bboxes[:,1] = np.minimum(img_shape[1]-2, o_bboxes[:,1])
     
+    
     nb_interactions = h_bboxes.shape[0]
     
     hcrops = np.zeros((nb_interactions, 227, 227, 3))
@@ -447,6 +448,8 @@ def _getSinglePairWiseStream(thisBB, thatBB, width, height, newWidth, newHeight,
         
     attWin = np.zeros([height,width])
     attWin[ymin:ymax, xmin:xmax] = 1
+
+    
     attWin = cv.resize(attWin, (newWidth, newHeight), interpolation = cv.INTER_NEAREST)
     attWin = attWin.astype(np.int)
 
@@ -464,12 +467,15 @@ def _getPairWiseStream(hbbox, obbox, cfg):
     if width > height:
         newWidth = cfg.winShape[1]
         apr = newWidth / width
-        newHeight = int(height*apr) 
+        newHeight = max(1,int(height*apr))
+        print('up',apr, newHeight, newWidth, height, width)
     else:
         newHeight = cfg.winShape[0]
         apr = newHeight / height
-        newWidth = int(width*apr)
+        newWidth = max(1,int(width*apr))
+        print('down',apr, newHeight, newWidth, height, width)
         
+    print(hbbox, obbox)
     prsWin = _getSinglePairWiseStream(hbbox, obbox, width, height, newWidth, newHeight, cfg)
     objWin = _getSinglePairWiseStream(obbox, hbbox, width, height, newWidth, newHeight, cfg)
     

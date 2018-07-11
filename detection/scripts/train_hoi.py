@@ -30,6 +30,7 @@ if True:
     
     # config
     cfg = data.cfg
+    cfg.do_fast_hoi = True
     utils.saveConfig(cfg)
 
     # data
