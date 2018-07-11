@@ -28,7 +28,7 @@ def AlexNet_buildin(cfg):
     print('   Using own AlexNet model')
     def _alex(input_image):
         weights_path = cfg.weights_path + "alexnet_weights_tf.h5"
-        model = AlexNet(include_top=True, weights_path=weights_path, input_tensor=input_image, cfg=cfg)
+        model = AlexNet(include_top = not cfg.do_fast_hoi, weights_path=weights_path, input_tensor=input_image, cfg=cfg)
         for i, layer in enumerate(model.layers):
             layer.kernel_regularizer = l2(cfg.weight_decay)
             layer.bias_regularizer   = l2(cfg.weight_decay)

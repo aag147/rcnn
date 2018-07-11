@@ -495,10 +495,14 @@ class AllModels:
         ######### HOI ##########
         ########################    
         if self.do_hoi and cfg.do_fast_hoi:
-            print('   Creating HOI model...')
+            print('   Creating fast HOI model...')
             self.nb_models += 1
+                        
+            if cfg.backbone == 'vgg':
+                output_features_hoi = models.VGG16_buildin(cfg)(img_hoi_input)
+            else:
+                output_features_hoi = models.AlexNet_buildin(cfg)(img_hoi_input)
             
-            output_features_hoi = models.VGG16_buildin(cfg)(img_hoi_input)
             
             hoi_inputs = [
                 img_hoi_input,
@@ -599,6 +603,7 @@ class AllModels:
             
             
         if self.do_hoi and not cfg.do_fast_hoi:
+            print('   Creating slow HOI model...')
             self.nb_models += 1
             
             if cfg.backbone == 'vgg':
