@@ -468,14 +468,11 @@ def _getPairWiseStream(hbbox, obbox, cfg):
         newWidth = cfg.winShape[1]
         apr = newWidth / width
         newHeight = max(1,int(height*apr))
-        print('up',apr, newHeight, newWidth, height, width)
     else:
         newHeight = cfg.winShape[0]
         apr = newHeight / height
         newWidth = max(1,int(width*apr))
-        print('down',apr, newHeight, newWidth, height, width)
         
-    print(hbbox, obbox)
     prsWin = _getSinglePairWiseStream(hbbox, obbox, width, height, newWidth, newHeight, cfg)
     objWin = _getSinglePairWiseStream(obbox, hbbox, width, height, newWidth, newHeight, cfg)
     
