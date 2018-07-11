@@ -19,7 +19,8 @@ import utils,\
        methods,\
        losses,\
        callbacks,\
-       filters_helper as helper
+       filters_helper as helper,\
+       filters_rpn
 from hoi_generators import DataGenerator
 
 
@@ -32,26 +33,25 @@ obj_mapping = data.class_mapping
 
 # data
 #genTrain = DataGenerator(imagesMeta = data.trainGTMeta, cfg=cfg, data_type='train', do_meta=True)
-genTest = DataGenerator(imagesMeta = data.valGTMeta, cfg=cfg, data_type='test', do_meta=True)
+genTest = DataGenerator(imagesMeta = data.valGTMeta, cfg=cfg, data_type='test', do_meta=True, mode='val')
 
 
 genItr = genTest.begin()
 for batchidx in range(genTest.nb_batches):
     [hcrops, ocrops, patterns, hbboxes, obboxes], target_labels, imageMeta, imageDims, _ = next(genItr)
+    X, _ = filters_rpn.prepareInputs(imageMeta, genTest.images_path, cfg)
     imageID = imageMeta['imageName']
     utils.update_progress_new(batchidx+1, genTest.nb_batches, imageID)
     
     import draw
-    draw.drawPositiveCropHoI(hbboxes[0], obboxes[0], hcrops, ocrops, patterns[0], target_labels[0], imageMeta, imageDims, cfg, obj_mapping)
+    draw.drawPositiveCropHoI(None, None, hcrops, ocrops, patterns, target_labels, imageMeta, imageDims, cfg, obj_mapping)
     
 #    import draw
-#    import filters_detection
-#    
-#    img = np.copy(X[0])
-#    img += cfg.PIXEL_MEANS
-#    img = img.astype(np.uint8)
-#    rois = filters_detection.unprepareInputs(rois, imageDims)
-#    
-#    draw.drawOverlapAnchors(img, rois[0], imageMeta, imageDims, cfg)
+    
+    img = np.copy(X[0])
+    img += cfg.PIXEL_MEANS
+    img = img.astype(np.uint8)
+    
+    draw.drawGTBoxes(img, imageMeta, imageDims)
 #    
 #    break

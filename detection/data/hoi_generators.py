@@ -126,6 +126,9 @@ class DataGenerator():
                 patterns = filters_hoi.createInteractionPatterns(all_hbboxes, all_obboxes, self.cfg)
                 hcrops, ocrops = filters_hoi.convertBB2Crop(img, all_hbboxes, all_obboxes, imageDims)
                 all_hbboxes, all_obboxes = filters_hoi.prepareInputs(all_hbboxes, all_obboxes, imageDims)
+                
+                if self.do_meta:
+                    return [hcrops, ocrops, patterns[0], all_hbboxes[0], all_obboxes[0]], all_target_labels[0], imageMeta, imageDims, None
                 return [hcrops, ocrops, patterns[0], all_hbboxes[0], all_obboxes[0]], all_target_labels[0]       
             
             hbboxes, obboxes, target_labels, val_map = filters_hoi.reduceTargets(Y_tmp, self.cfg)
