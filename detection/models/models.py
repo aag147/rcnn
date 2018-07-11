@@ -18,8 +18,8 @@ def VGG16_buildin(cfg):
     def _vgg(input_image):
         model = keras.applications.vgg16.VGG16(include_top=False, weights='imagenet', input_tensor=input_image)
         for i, layer in enumerate(model.layers):
-            layer.kernel_regularizer = l2(cfg.weight_decay)
-            layer.bias_regularizer   = l2(cfg.weight_decay)
+            layer.kernel_regularizer = l2(cfg.weight_decay_shared)
+            layer.bias_regularizer   = l2(cfg.weight_decay_shared)
         
         return model.layers[-2].output
     return _vgg
