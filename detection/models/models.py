@@ -27,8 +27,7 @@ def VGG16_buildin(cfg):
 def AlexNet_buildin(cfg):
     print('   Using own AlexNet model')
     def _alex(input_image):
-        weights_path = cfg.weights_path + "alexnet_weights_tf.h5"
-        model = AlexNet(include_top = not cfg.do_fast_hoi, weights_path=weights_path, input_tensor=input_image, cfg=cfg)
+        model = AlexNet(include_top = not cfg.do_fast_hoi, weights='imagenet', input_tensor=input_image, cfg=cfg)
         for i, layer in enumerate(model.layers):
             layer.kernel_regularizer = l2(cfg.weight_decay)
             layer.bias_regularizer   = l2(cfg.weight_decay)
@@ -36,7 +35,7 @@ def AlexNet_buildin(cfg):
         return model.layers[-2].output
     return _alex
     
-def AlexNet(include_top = False, weights_path=None, input_tensor=None, cfg=None):
+def AlexNet(include_top = False, weights=None, input_tensor=None, cfg=None):
     #https://github.com/duggalrahul/AlexNet-Experiments-Keras/blob/master/convnets-keras/convnetskeras/convnets.py
     inputs = input_tensor
     conv_1 = Conv2D(96, (11, 11), strides=(4,4), activation='relu', kernel_initializer=RandomNormal(stddev=0.01), kernel_regularizer= l2(cfg.weight_decay), bias_regularizer = l2(cfg.weight_decay))(inputs)
@@ -67,6 +66,12 @@ def AlexNet(include_top = False, weights_path=None, input_tensor=None, cfg=None)
 
     
     model = Model(inputs=inputs, outputs=conv_5)
+
+    
+    if weights is not None and not include_top:
+        weights_path = cfg.weights_path + "alexnet_weights_tf_notop.h5"
+        model.load_weights(weights_path)
+    
     
     if include_top:
         dense_1 = MaxPooling2D((3, 3), strides=(2,2))(conv_5)
@@ -77,6 +82,11 @@ def AlexNet(include_top = False, weights_path=None, input_tensor=None, cfg=None)
         dense_2 = Dropout(0.5)(dense_2)
         dense_3 = Dense(1000, kernel_initializer=RandomNormal(stddev=0.01), kernel_regularizer= l2(cfg.weight_decay), bias_regularizer = l2(cfg.weight_decay))(dense_2)
         model = Model(inputs=inputs, outputs=dense_3)
+        
+        if weights is not None:
+            weights_path = cfg.weights_path + "alexnet_weights_tf.h5"
+            model.load_weights(weights_path)
+        
     return model
 
 def crosschannelnormalization_tf(alpha=1e-4, k=2, beta=0.75, n=5, **kwargs):
