@@ -13,6 +13,7 @@ from keras.initializers import RandomNormal
 from keras.layers import Flatten, Dense, Dropout, Reshape, Permute, Activation, \
     Input, merge, TimeDistributed
 from keras.regularizers import l2
+import keras
 
 import tensorflow as tf
 
@@ -25,9 +26,9 @@ def rpn(cfg):
         x = Conv2D(
                 512, (3, 3),
                 padding='same', activation='relu', 
-                kernel_initializer = RandomNormal(stddev=0.01), 
-                kernel_regularizer = l2(cfg.weight_decay),
-                bias_regularizer   = l2(cfg.weight_decay),
+                kernel_initializer = keras.initializers.RandomNormal(stddev=0.01), 
+                kernel_regularizer = keras.regularizers.l2(cfg.weight_decay),
+                bias_regularizer   = keras.regularizers.l2(cfg.weight_decay),
                 name='rpn_conv1'
             )(base_layers)
         return x
@@ -106,9 +107,9 @@ def fullyConnected(cfg, stream=None, use_dropout=True):
             Dense(
                 4096,
                 activation='relu',
-                kernel_initializer = RandomNormal(stddev=0.01),
-                kernel_regularizer = l2(cfg.weight_decay),
-                bias_regularizer   = l2(cfg.weight_decay)
+                kernel_initializer = keras.initializers.RandomNormal(stddev=0.01),
+                kernel_regularizer = keras.regularizers.l2(cfg.weight_decay),
+                bias_regularizer   = keras.regularizers.l2(cfg.weight_decay)
             ),
             name = '%s_fc1' % stream
         )(dense_1)
@@ -122,9 +123,9 @@ def fullyConnected(cfg, stream=None, use_dropout=True):
             Dense(
                 4096,
                 activation='relu',
-                kernel_initializer = RandomNormal(stddev=0.01),
-                kernel_regularizer = l2(cfg.weight_decay),
-                bias_regularizer   = l2(cfg.weight_decay)
+                kernel_initializer = keras.initializers.RandomNormal(stddev=0.01),
+                kernel_regularizer = keras.regularizers.l2(cfg.weight_decay),
+                bias_regularizer   = keras.regularizers.l2(cfg.weight_decay)
             ),
             name = '%s_fc2' % stream
         )(dense_1)
@@ -147,9 +148,9 @@ def pairwiseStream(cfg):
             Conv2D(
                 64, (5, 5),
                 activation='relu',
-                kernel_initializer=RandomNormal(stddev=0.01),
-                kernel_regularizer = l2(cfg.weight_decay),
-                bias_regularizer   = l2(cfg.weight_decay)
+                kernel_initializer=keras.initializers.RandomNormal(mean=0.0, stddev=0.01, seed=None),
+                kernel_regularizer = keras.regularizers.l2(cfg.weight_decay),
+                bias_regularizer   = keras.regularizers.l2(cfg.weight_decay)
             ),
             name = 'pairwise_conv1a'
         )(pattern)
@@ -163,9 +164,9 @@ def pairwiseStream(cfg):
             Conv2D(
                 32, (5, 5),
                 activation='relu',
-                kernel_initializer=RandomNormal(stddev=0.01),
-                kernel_regularizer = l2(cfg.weight_decay),
-                bias_regularizer   = l2(cfg.weight_decay)
+                kernel_initializer = keras.initializers.RandomNormal(stddev=0.01),
+                kernel_regularizer = keras.regularizers.l2(cfg.weight_decay),
+                bias_regularizer   = keras.regularizers.l2(cfg.weight_decay)
             ),
             name = 'pairwise_conv2a'
         )(conv_1)
@@ -184,9 +185,9 @@ def pairwiseStream(cfg):
             Dense(
                 256,
                 activation='relu',
-                kernel_initializer=RandomNormal(stddev=0.01),
-                kernel_regularizer = l2(cfg.weight_decay),
-                bias_regularizer   = l2(cfg.weight_decay)
+                kernel_initializer = keras.initializers.RandomNormal(stddev=0.01),
+                kernel_regularizer = keras.regularizers.l2(cfg.weight_decay),
+                bias_regularizer   = keras.regularizers.l2(cfg.weight_decay)
             ),
             name = 'pairwise_fc1'
         )(dense1)
