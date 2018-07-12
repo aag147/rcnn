@@ -50,7 +50,7 @@ def saveInputData(generator, Stages, cfg):
         
         detMeta = filters_detection.convertData([proposals, target_labels, target_deltas], cfg)
                         
-    utils.save_obj(detMeta, save_path + imageID)
+        utils.save_obj(detMeta, save_path + imageID)
 
 def saveEvalData(generator, Stages, cfg, obj_mapping):
     genIterator = generator.begin()

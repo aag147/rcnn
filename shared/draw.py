@@ -98,6 +98,7 @@ def plot_area_stats(stats, sort=False):
 
 def plot_confusion_matrix(cm, classes=None,
                           normalize=False,
+                          no_bg=False,
                           title='Confusion matrix',
                           cmap=plt.cm.Blues):
     """
@@ -105,8 +106,13 @@ def plot_confusion_matrix(cm, classes=None,
     This function prints and plots the confusion matrix.
     Normalization can be applied by setting `normalize=True`.
     """
+    cm = np.copy(cm)
     if normalize:
-        cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
+        if no_bg:
+            cm = cm[1:,1:]
+            cm = cm.astype('float') / (cm.sum(axis=0)[np.newaxis,:] + 0.000000000000001)
+        else:
+            cm[:,1:] = cm[:,1:].astype('float') / (cm[:,1:].sum(axis=0)[np.newaxis,:] + 0.000000000000001)
         print("Normalized confusion matrix")
     else:
         print('Confusion matrix, without normalization')
@@ -130,7 +136,7 @@ def plot_confusion_matrix(cm, classes=None,
     plt.tight_layout()
     plt.ylabel('True label')
     plt.xlabel('Predicted label')
-    
+    return cm
 
 def plotLosses(log):
     # summarize history for loss
@@ -325,7 +331,6 @@ def drawOverlapRois(img, rois, imageMeta, imageDims, cfg, obj_mapping):
         (xmin, ymin, width, height) = roi[0:4]   
         label = int(roi[5])
         prop = roi[4]
-#        prop = 1.0
         rt = {'xmin': xmin, 'ymin': ymin, 'xmax': xmin+width, 'ymax': ymin+height}
         best_iou = 0.0
         for bbidx, gt in enumerate(gta):
