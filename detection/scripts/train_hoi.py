@@ -41,7 +41,8 @@ if True:
     _, _, model_hoi = Models.get_models()
     
     sys.stdout.flush()
-if True:    
+    
+#if False:    
     # train
     callbacks = [callbacks.MyModelCheckpointInterval(cfg), \
                  callbacks.MyLearningRateScheduler(cfg), \
@@ -51,6 +52,7 @@ if True:
     model_hoi.fit_generator(generator = genTrain.begin(), \
                 steps_per_epoch = genTrain.nb_batches, \
                 verbose = 2,\
+                max_queue_size = 200,\
                 validation_data = genTest.begin(), \
                 validation_steps = genTest.nb_batches, \
                 epochs = cfg.epoch_end, initial_epoch=cfg.epoch_begin, callbacks=callbacks)

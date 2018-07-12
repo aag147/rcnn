@@ -240,7 +240,7 @@ class RoiPoolingConv(Layer):
 
         box_ind = K.cast(rois[:,0], 'int32')
         rois    = K.cast(rois[:,1:], 'float')
-#        rois = tf.stop_gradient(rois)
+        rois = tf.stop_gradient(rois)
 #        box_ind = tf.stop_gradient(box_ind)
         final_output = tf.image.crop_and_resize(img, boxes=rois, box_ind=box_ind, crop_size=(self.pool_size, self.pool_size), method="bilinear")
 #        final_output = tf.stack(final_output) 
