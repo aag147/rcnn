@@ -325,6 +325,7 @@ def drawOverlapRois(img, rois, imageMeta, imageDims, cfg, obj_mapping):
         (xmin, ymin, width, height) = roi[0:4]   
         label = int(roi[5])
         prop = roi[4]
+#        prop = 1.0
         rt = {'xmin': xmin, 'ymin': ymin, 'xmax': xmin+width, 'ymax': ymin+height}
         best_iou = 0.0
         for bbidx, gt in enumerate(gta):

@@ -18,6 +18,7 @@ import extract_data
 
 import utils
 import numpy as np
+import filters_helper as helper
 
 
 if True:
@@ -25,9 +26,66 @@ if True:
     print('Loading data...')
     data = extract_data.object_data()
     cfg = data.cfg
+    obj_mapping = data.class_mapping
 
-path = cfg.my_results_path + 'history.txt'
-hist =  np.loadtxt(path, delimiter=', ')
-
+#path = cfg.my_results_path + 'history.txt'
+#hist =  np.loadtxt(path, delimiter=', ')
+#
 import draw
-draw.plotRPNLosses(hist)
+import filters_rpn
+#draw.plotRPNLosses(hist)
+    
+
+images_path = cfg.data_path + 'images/val/'
+    
+path = cfg.my_results_path + 'val_res'
+preds =  utils.load_dict(path)
+imagesMeta = data.valGTMeta
+
+predsMeta = {}
+for pred in preds:
+    imageID = pred['image_id']
+    if imageID not in predsMeta:
+        predsMeta[imageID] = []
+    predsMeta[imageID].append(pred)
+    
+    
+cfm = np.zeros((81,80))
+
+
+for i, (imageID, predMeta) in enumerate(predsMeta.items()):
+    imageMeta = imagesMeta[str(imageID)]
+    gt_bboxes = imageMeta['objects']
+    gtbboxes = helper._transformGTBBox(gt_bboxes, obj_mapping, None, scale=[1,1], rpn_stride=1, dosplit=False)
+    
+    X, imageDims = filters_rpn.prepareInputs(imageMeta, images_path, cfg)
+    
+    pred_bboxes = np.ones((len(predMeta),5))
+    
+    for idx, pred in enumerate(predMeta):
+        lbl  = pred['category_id']
+        bbox = pred['bbox']
+        pred_bboxes[idx,:4] = np.copy([x*imageDims['scale'][0]/16 for x in bbox])
+        
+        bbox[2] += bbox[0]
+        bbox[3] += bbox[1]
+        
+        ious = helper._computeIoUs(bbox, gtbboxes)
+        
+        best_iou = np.max(ious)
+        best_idx = np.argmax(ious)
+        best_lbl = gtbboxes[best_idx,4]
+        
+        print(best_iou, lbl, best_lbl)
+    
+    
+    img = np.copy(X[0])
+    img += cfg.PIXEL_MEANS
+    img = img.astype(np.uint8)
+    
+    print(imageID)
+    draw.drawGTBoxes(img, imageMeta, imageDims)
+    draw.drawAnchors(img, pred_bboxes, cfg)
+    draw.drawOverlapRois(img, pred_bboxes, imageMeta, imageDims, cfg, obj_mapping)
+    if i == 3:
+        break

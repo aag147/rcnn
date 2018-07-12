@@ -26,7 +26,7 @@ import draw
 import numpy as np
 import cv2 as cv
 
-if False:
+if True:
     # Load data
     data = extract_data.object_data()
     cfg = data.cfg
@@ -49,8 +49,8 @@ genIterator = genVal.begin()
 
 for i in range(1):
 #    X, y, imageMeta, imageDims, times = next(genIterator)
-#    imageMeta = genVal.imagesMeta['176847']
-#    X, y, imageDims = Stages.stagezero(imageMeta, genVal.data_type)
+    imageMeta = genVal.imagesMeta['385029']
+    X, y, imageDims = Stages.stagezero(imageMeta, genVal.data_type)
     imageID = imageMeta['imageName'].split('.')[0]
     img = np.copy(X[0])
     img -= np.min(img)
@@ -58,11 +58,11 @@ for i in range(1):
     img = cv.cvtColor(img, cv.COLOR_BGR2RGB)
     #STAGE 1
     print('Stage one...')
-#    proposals = Stages.stageone([X], y, imageMeta, imageDims, do_regr=True)
+    proposals = Stages.stageone([X], y, imageMeta, imageDims, do_regr=True)
     print('Stage two...')
 #    rois, target_props, target_deltas, IouS = filters_detection.createTargets(proposals, imageMeta, imageDims, obj_mapping, cfg)
 #    bboxes = helper.deltas2Boxes(target_props, target_deltas[:,:,80:], rois, imageDims, cfg)
-#    bboxes = Stages.stagetwo([X,proposals], imageMeta, imageDims)
+    bboxes = Stages.stagetwo([X,proposals], imageMeta, imageDims)
     
     print('Draw stuff...')
     draw.drawGTBoxes(img, imageMeta, imageDims)
