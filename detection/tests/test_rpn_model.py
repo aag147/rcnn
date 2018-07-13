@@ -51,7 +51,7 @@ if True:
 genIterator = genVal.begin()
 
 for i in range(1):
-    X, y, imageMeta, imageDims, times = next(genIterator)
+#    X, y, imageMeta, imageDims, times = next(genIterator)
     imageID = imageMeta['imageName'].split('.')[0]
     
     X, imageDims = filters_rpn.prepareInputs(imageMeta, genVal.images_path, cfg)

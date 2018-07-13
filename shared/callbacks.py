@@ -24,6 +24,10 @@ def MyModelCheckpointInterval(cfg):
     path = cfg.my_weights_path + 'model-{epoch:03d}.h5'
     return ModelCheckpoint(path, monitor='val_loss', verbose=0, save_best_only=False, save_weights_only=False, mode='auto', period=cfg.checkpoint_interval)
 
+def MyModelCheckpointWeightsInterval(cfg):
+    path = cfg.my_weights_path + 'weights-{epoch:03d}.h5'
+    return ModelCheckpoint(path, monitor='val_loss', verbose=0, save_best_only=False, save_weights_only=True, mode='auto', period=cfg.checkpoint_interval)
+
 def MyLearningRateScheduler(cfg):
    epoch_splits = cfg.epoch_splits
    init_lr = cfg.init_lr

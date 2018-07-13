@@ -335,6 +335,7 @@ def drawOverlapRois(img, rois, imageMeta, imageDims, cfg, obj_mapping):
         best_iou = 0.0
         for bbidx, gt in enumerate(gta):
             gt_label = obj_mapping[gt['label']]
+            
             if label != gt_label:
                 continue
             curr_iou = utils.get_iou(gt, rt)
@@ -435,8 +436,8 @@ def drawPositiveHoI(img, hbboxes, obboxes, props, imageMeta, imageDims, cfg, obj
 
 def drawPositiveCropHoI(hbboxes, obboxes, hcrops, ocrops, patterns, props, imageMeta, imageDims, cfg, obj_mapping):
     inv_obj_mapping = {x:key for key,x in obj_mapping.items()}
-    idxs = np.where(props[:,:]>0.5)[0]
-    idxs = list(range(props.shape[0]))
+#    idxs = np.where(props[:,:]>0.5)[0]
+    idxs = list(range(hbboxes.shape[0]))
     nb_pairs = len(idxs)
     
     f, spl = plt.subplots(4,8)
@@ -449,16 +450,16 @@ def drawPositiveCropHoI(hbboxes, obboxes, hcrops, ocrops, patterns, props, image
     
     for i, idx in enumerate(idxs):
         j = i*4
-        hprop = (hbboxes[idx,4]) if hbboxes is not None else -1
-        oprop = (obboxes[idx,4]) if obboxes is not None else -1
-        hlbl = int(hbboxes[idx,5]) if hbboxes is not None else 0
-        olbl = int(obboxes[idx,5]) if obboxes is not None else 0
-        hoiprop = np.where(props[idx,:]>0.5)[0]
+#        hprop = (hbboxes[idx,4]) if hbboxes is not None else -1
+#        oprop = (obboxes[idx,4]) if obboxes is not None else -1
+#        hlbl = int(hbboxes[idx,5]) if hbboxes is not None else 0
+#        olbl = int(obboxes[idx,5]) if obboxes is not None else 0
+#        hoiprop = np.where(props[idx,:]>0.5)[0]
         spl[j].imshow(hcrops[idx,::])
         spl[j+1].imshow(ocrops[idx,::])
         spl[j+2].imshow(patterns[idx,:,:,0])
         spl[j+3].imshow(patterns[idx,:,:,1])
-        print('Pos. label:', inv_obj_mapping[hlbl], inv_obj_mapping[olbl], hprop, oprop, hoiprop)
+#        print('Pos. label:', inv_obj_mapping[hlbl], inv_obj_mapping[olbl], hprop, oprop, hoiprop)
         if i == 7:
             break
             

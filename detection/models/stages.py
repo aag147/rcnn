@@ -134,7 +134,6 @@ class AllStages:
         patterns = filters_hoi.createInteractionPatterns(all_hbboxes, all_obboxes, self.cfg)
         if not self.cfg.do_fast_hoi:
             hcrops, ocrops = filters_hoi.convertBB2Crop(self.shared_img, all_hbboxes, all_obboxes, imageDims)
-            print(hcrops.shape)
         hbboxes_norm, obboxes_norm = filters_hoi.prepareInputs(all_hbboxes, all_obboxes, imageDims)
         
         # hoi predict

@@ -36,7 +36,7 @@ if True:
     hoi_mapping = data.hoi_labels
     
     # Create batch generators
-    genTrain = DataGenerator(imagesMeta = data.trainGTMeta, cfg=cfg, data_type='train', do_meta=True)
+    genTrain = DataGenerator(imagesMeta = data.trainGTMeta, cfg=cfg, data_type='train', do_meta=True, mode='test')
     genVal = DataGenerator(imagesMeta = data.valGTMeta, cfg=cfg, data_type='test', do_meta=True, mode='test')
 #    genTest = DataGenerator(imagesMeta = data.testGTMeta, cfg=cfg, data_type='test', do_meta=True)
     
@@ -46,10 +46,10 @@ if True:
     Models = methods.AllModels(cfg, mode='test', do_rpn=False, do_det=False, do_hoi=True)
     Stages = stages.AllStages(cfg, Models, obj_mapping, hoi_mapping, mode='test')
 
-genIterator = genVal.begin()
+genIterator = genTrain.begin()
 
 for i in range(1):
-    [X, all_hbboxes, all_obboxes], all_target_labels, imageMeta, imageDims, _ = next(genIterator)
+#    [X, all_hbboxes, all_obboxes, all_val_map], all_target_labels, imageMeta, imageDims, _ = next(genIterator)
     imageID = imageMeta['imageName'].split('.')[0]
 
 
@@ -62,6 +62,7 @@ for i in range(1):
 #    hbboxes, obboxes, target_labels, val_map = filters_hoi.reduceTargets([all_hbboxes, all_obboxes, all_target_labels, all_val_map], cfg)
 #    all_hoi_hbboxes, all_hoi_obboxes, all_hoi_props = Stages.stagethree([X,bboxes], imageMeta, imageDims, obj_mapping, include='all')
     pred_hbboxes, pred_obboxes, pred_props = Stages.stagethree([X,all_hbboxes,all_obboxes], imageMeta, imageDims, obj_mapping)
+#    batch_hcrop, batch_ocrop, batch_p, batch_h, batch_o = Stages.stagethree([X,all_hbboxes,all_obboxes], imageMeta, imageDims, obj_mapping)
     
     
     print('Draw...')
@@ -69,8 +70,10 @@ for i in range(1):
     img += cfg.PIXEL_MEANS
     img = img.astype(np.uint8)
     img = cv.cvtColor(img, cv.COLOR_BGR2RGB)
-#    draw.drawOverlapRois(img, bboxes[0], imageMeta, imageDims, cfg, obj_mapping)
+    bboxes = np.concatenate([all_hbboxes,all_obboxes],axis=1)[0]
+    draw.drawOverlapRois(img, bboxes, imageMeta, imageDims, cfg, obj_mapping)
     draw.drawGTBoxes(img, imageMeta, imageDims)
+#    draw.drawPositiveCropHoI(batch_h[:,1:], batch_o[:,1:], batch_hcrop[:,1:], batch_ocrop[:,1:], batch_p, None, imageMeta, imageDims, cfg, obj_mapping)
     idxs = draw.drawPositiveHoI(img, pred_hbboxes, pred_obboxes, pred_props, imageMeta, imageDims, cfg, obj_mapping)
 #    good_bboxes = np.copy(all_obboxes[0,idxs,:])
 #    good_bboxes[:,2] += good_bboxes[:,0]

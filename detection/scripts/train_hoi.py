@@ -46,6 +46,7 @@ if True:
     # train
     callbacks = [callbacks.MyModelCheckpointInterval(cfg), \
                  callbacks.MyLearningRateScheduler(cfg), \
+                 callbacks.MyModelCheckpointWeightsInterval,\
                  callbacks.SaveLog2File(cfg), \
                  callbacks.PrintCallBack()]
 

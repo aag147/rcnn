@@ -122,10 +122,16 @@ class AllModels:
         path += '/weights/' + cfg.my_weights
         print('   Weights path:', path)
         assert os.path.exists(path), 'invalid path: %s' % path
+        
+        if model.name == 'hoi':
+            idx = 15
+        else:
+            idx = 11
+        
         # Load weights
-        weights_before = model.layers[4].get_weights()[0][0,0] if by_name else model.layers[15].get_weights()[0][0,0,0,0]
+        weights_before = model.layers[4].get_weights()[0][0,0] if by_name else model.layers[idx].get_weights()[0][0,0,0,0]
         model.load_weights(path, by_name=False)        
-        weights_after  = model.layers[4].get_weights()[0][0,0] if by_name else model.layers[15].get_weights()[0][0,0,0,0]
+        weights_after  = model.layers[4].get_weights()[0][0,0] if by_name else model.layers[idx].get_weights()[0][0,0,0,0]
         assert weights_before != weights_after, 'weights have not been loaded'
         
         return model, weights_before, weights_after
