@@ -40,7 +40,7 @@ class DataGenerator():
       self.data_path = cfg.data_path
       self.images_path = self.data_path + 'images/'
       self.images_path = self.images_path + self.data_type + '/'
-      self.rois_path = cfg.my_input_path + self.data_type + '/'
+      self.rois_path = cfg.my_input_path
       self.cfg = cfg
 
       self.dataID = list(imagesMeta.keys())
@@ -71,6 +71,13 @@ class DataGenerator():
             g = self._generateIterativeImageCentricBatches
         return g()
     
+    def _getImageInputs(self, imageID):
+        if self.doIndyInputs:
+            imageInputs = utils.load_obj(self.rois_path + self.data_type + '/' + imageID)
+        else:
+            imageInputs = self.imagesInputs[imageID]
+        return imageInputs
+    
     def _generateBatchFromIDs(self, imageIdxs):
         imageIDs = [self.dataID[idx] for idx in imageIdxs]
 #        if imageIDs[0] < '550394':
@@ -81,7 +88,7 @@ class DataGenerator():
 #        batchIdx = 0
         for imageID in imageIDs:
             imageMeta = self.imagesMeta[imageID]
-            imageInputs = self.imagesInputs[imageID]
+            imageInputs = self._getImageInputs(imageID)
             imageMeta['id'] = imageID
             
             io_start = time.time()
