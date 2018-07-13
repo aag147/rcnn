@@ -260,7 +260,7 @@ class basic_config:
        
        self.rpn_nms_max_boxes=300
        self.rpn_nms_overlap_thresh=0.7
-       self.rpn_nms_overlap_thresh_test=0.7
+       self.rpn_nms_overlap_thresh_test=0.5
         
        # detection filters
        self.detection_max_overlap = 0.5
@@ -277,7 +277,7 @@ class basic_config:
        self.hoi_min_overlap = 0.1
        self.hoi_nms_overlap_thresh=0.5
        
-       self.nb_hoi_rois = 64
+       self.nb_hoi_rois = 32
        
        self.hoi_pos_share  = int(self.nb_hoi_rois / 8 * 1)
        self.hoi_neg1_share = int(self.nb_hoi_rois / 8 * 3)

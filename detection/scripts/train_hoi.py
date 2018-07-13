@@ -24,43 +24,41 @@ from hoi_generators import DataGenerator
 from keras.callbacks import EarlyStopping, LearningRateScheduler, Callback
 import tensorflow as tf
 
-with tf.device('/cpu:0'):
+if True:
+    # meta data
+    data = extract_data.object_data()
+    
+    # config
+    cfg = data.cfg
+    utils.saveConfig(cfg)
 
-    if True:
-        # meta data
-        data = extract_data.object_data()
-        
-        # config
-        cfg = data.cfg
-        utils.saveConfig(cfg)
+    # data
+    genTrain = DataGenerator(imagesMeta = data.trainGTMeta, cfg=cfg, data_type='train', do_meta=False)
+    genTest = DataGenerator(imagesMeta = data.valGTMeta, cfg=cfg, data_type='test', do_meta=False, mode='val')
+
+    # models
+    Models = methods.AllModels(cfg, mode='train', do_hoi=True)
+    _, _, model_hoi = Models.get_models()
     
-        # data
-        genTrain = DataGenerator(imagesMeta = data.trainGTMeta, cfg=cfg, data_type='train', do_meta=False)
-        genTest = DataGenerator(imagesMeta = data.valGTMeta, cfg=cfg, data_type='test', do_meta=False, mode='val')
+    sys.stdout.flush()
     
-        # models
-        Models = methods.AllModels(cfg, mode='train', do_hoi=True)
-        _, _, model_hoi = Models.get_models()
-        
-        sys.stdout.flush()
-        
-    #if False:    
-        # train
-        callbacks = [callbacks.MyModelCheckpointInterval(cfg), \
-                     callbacks.MyLearningRateScheduler(cfg), \
-                     callbacks.MyModelCheckpointWeightsInterval(cfg),\
-                     callbacks.SaveLog2File(cfg), \
-                     callbacks.PrintCallBack()]
-    
-        model_hoi.fit_generator(generator = genTrain.begin(), \
-                    steps_per_epoch = genTrain.nb_batches, \
-                    verbose = 2,\
-                    max_queue_size = 200,\
-                    validation_data = genTest.begin(), \
-                    validation_steps = genTest.nb_batches, \
-                    epochs = cfg.epoch_end, initial_epoch=cfg.epoch_begin, callbacks=callbacks)
-    
-        # Save stuff
-        Models.save_model()
-    
-        print('Path:', cfg.my_results_path)
+#if False:    
+    # train
+    callbacks = [callbacks.MyModelCheckpointInterval(cfg), \
+                 callbacks.MyLearningRateScheduler(cfg), \
+                 callbacks.MyModelCheckpointWeightsInterval(cfg),\
+                 callbacks.SaveLog2File(cfg), \
+                 callbacks.PrintCallBack()]
+
+    model_hoi.fit_generator(generator = genTrain.begin(), \
+                steps_per_epoch = genTrain.nb_batches, \
+                verbose = 2,\
+                max_queue_size = 100,\
+                validation_data = genTest.begin(), \
+                validation_steps = genTest.nb_batches, \
+                epochs = cfg.epoch_end, initial_epoch=cfg.epoch_begin, callbacks=callbacks)
+
+    # Save stuff
+    Models.save_model()
+
+    print('Path:', cfg.my_results_path)

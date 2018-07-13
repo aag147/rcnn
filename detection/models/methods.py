@@ -283,52 +283,61 @@ class AllModels:
         nb_hoi_classes =cfg.nb_hoi_classes
         print('   Obj. classes:', nb_object_classes)
         print('   HOI classes:', nb_hoi_classes)
-    
-        ########################
-        ##### Input shapes #####
-        ########################    
-        image_shape = (None, None, 3)
-        roi_shape = (None, 5)
-        human_shape = (None, 5)
-        object_shape = (None, 5)
-        interaction_shape = (None, cfg.winShape[0], cfg.winShape[1], 2)
-        human_img_shape = (227,227,3)
-        object_img_shape = (227,227,3)
-        features_shape = (None, None, 512)
+ 
     
         ########################
         ######## Inputs ########
         ########################
+        # RPN #
         img_input = keras.layers.Input(
-            shape=image_shape,
+            shape=(None, None, 3),
+            name='input_image'
+        )
+        
+        # DET #
+        img_det_input = keras.layers.Input(
+            shape=(None, None, 3),
             name='input_image'
         )
         roi_input = keras.layers.Input(
-            shape=roi_shape,
+            shape=(cfg.nb_detection_rois, 5),
             name='input_roi'
         )
         human_input = keras.layers.Input(
-            shape=human_shape,
+            shape=(cfg.nb_detection_rois, 5),
             name="input_human"
         )
         
         object_input = keras.layers.Input(
-            shape=object_shape,
+            shape=(cfg.nb_detection_rois, 5),
             name="input_object"
         )
         
-        interaction_input = keras.layers.Input(
-            shape=interaction_shape,
+        # HOI #
+        img_hoi_input = keras.layers.Input(
+            shape=(None, None, 3),
+            name='input_image'
+        )
+        human_fast_input = keras.layers.Input(
+            shape=(cfg.nb_hoi_rois, 5),
+            name="input_human"
+        )
+        object_fast_input = keras.layers.Input(
+            shape=(cfg.nb_hoi_rois, 5),
+            name="input_object"
+        )
+        interaction_fast_input = keras.layers.Input(
+            shape=(cfg.nb_hoi_rois, cfg.winShape[0], cfg.winShape[1], 2),
             name="input_interaction"
         )
         
         human_img_input = keras.layers.Input(
-            shape=human_img_shape,
+            shape=(227,227,3),
             name="input_human_img"
         )
         
         object_img_input = keras.layers.Input(
-            shape=object_img_shape,
+            shape=(227,227,3),
             name="input_object_img"
         )
         interaction_slow_input = keras.layers.Input(
@@ -345,24 +354,12 @@ class AllModels:
         )
 
         
+        # SHARED #
         features_input = keras.layers.Input(
-            shape=features_shape,
+            shape=(None, None, 512),
             name="input_features"
         )        
-        
-        img_det_input = keras.layers.Input(
-            shape=image_shape,
-            name='input_image'
-        )
-        
-        img_hoi_input = keras.layers.Input(
-            shape=image_shape,
-            name='input_image'
-        )
-        
-        ########################
-        ####### Backbone #######
-        ########################
+
         
         ########################
         ######### RPN ##########
@@ -446,6 +443,7 @@ class AllModels:
                 
             object_rois = layers.RoiPoolingConv(
                 pool_size=pool_size,
+                batch_size=cfg.nb_detection_rois
             )([
                 pool_features_input,
                 roi_input
@@ -511,17 +509,18 @@ class AllModels:
             
             hoi_inputs = [
                 img_hoi_input,
-                human_input,
-                object_input,
-                interaction_input
+                human_fast_input,
+                object_fast_input,
+                interaction_fast_input
             ]
             
             ## HUMAN ##
             hoi_human_rois = layers.RoiPoolingConv(
-                pool_size=pool_size
+                pool_size=pool_size,
+                batch_size=cfg.nb_hoi_rois
             )([
                 output_features_hoi,
-                human_input
+                human_fast_input
             ])
             
             hoi_human_features = layers.fullyConnected(
@@ -543,10 +542,11 @@ class AllModels:
                 
             ## OBJECT ##
             hoi_object_rois = layers.RoiPoolingConv(
-                pool_size=pool_size
+                pool_size=pool_size,
+                batch_size=cfg.nb_hoi_rois
             )([
                 output_features_hoi,
-                object_input
+                object_fast_input
             ])
             
             hoi_object_features = layers.fullyConnected(
@@ -571,7 +571,7 @@ class AllModels:
             hoi_pattern_features = layers.pairwiseStream(
                 cfg = cfg
             )([
-                interaction_input
+                interaction_fast_input
             ])
             hoi_pattern_scores = keras.layers.TimeDistributed(
                 keras.layers.Dense(
@@ -595,8 +595,8 @@ class AllModels:
             if self.mode=='test':    
                 hoi_outputs = [
                     hoi_final_score,
-                    human_input,
-                    object_input
+                    human_fast_input,
+                    object_fast_input
                 ]
             else:
                 hoi_outputs = [

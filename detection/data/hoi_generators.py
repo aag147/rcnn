@@ -127,9 +127,22 @@ class DataGenerator():
                 hcrops, ocrops = filters_hoi.convertBB2Crop(img, all_hbboxes, all_obboxes, imageDims)
                 all_hbboxes, all_obboxes = filters_hoi.prepareInputs(all_hbboxes, all_obboxes, imageDims)
                 
+                b_hcrops = np.zeros((self.cfg.nb_hoi_rois,)+hcrops[0].shape)
+                b_hcrops[:hcrops.shape[0],::] = hcrops
+                b_ocrops = np.zeros((self.cfg.nb_hoi_rois,)+ocrops[0].shape)
+                b_ocrops[:hcrops.shape[0],::] = ocrops
+                b_pattern = np.zeros((self.cfg.nb_hoi_rois,)+patterns[0][0].shape)
+                b_pattern[:patterns.shape[1],::] = patterns
+                b_hbboxes = np.zeros((self.cfg.nb_hoi_rois,)+all_hbboxes[0][0].shape)
+                b_hbboxes[:all_hbboxes.shape[1],::] = all_hbboxes
+                b_obboxes = np.zeros((self.cfg.nb_hoi_rois,)+all_obboxes[0][0].shape)
+                b_obboxes[:all_obboxes.shape[1],::] = all_obboxes
+                b_targets = np.zeros((self.cfg.nb_hoi_rois,)+all_target_labels[0][0].shape)
+                b_targets[:all_target_labels.shape[1],::] = all_target_labels
+                
                 if self.do_meta:
                     return [hcrops, ocrops, patterns[0], all_hbboxes[0], all_obboxes[0]], all_target_labels[0], imageMeta, imageDims, None
-                return [hcrops, ocrops, patterns[0], all_hbboxes[0], all_obboxes[0]], all_target_labels[0]       
+                return [b_hcrops, b_ocrops, b_pattern, b_hbboxes, b_obboxes], b_targets       
             elif self.mode == 'test':
                 all_hbboxes, all_obboxes, all_target_labels, all_val_map = Y_tmp
                 return [img, all_hbboxes, all_obboxes, all_val_map], all_target_labels, imageMeta, imageDims, None
@@ -173,9 +186,18 @@ class DataGenerator():
                 patterns = filters_hoi.createInteractionPatterns(all_hbboxes, all_obboxes, self.cfg)
                 all_hbboxes, all_obboxes = filters_hoi.prepareInputs(all_hbboxes, all_obboxes, imageDims)
                 
+                b_pattern = np.zeros((1,self.cfg.nb_hoi_rois)+patterns[0][0].shape)
+                b_pattern[0,:patterns.shape[1],::] = patterns
+                b_hbboxes = np.zeros((1,self.cfg.nb_hoi_rois)+all_hbboxes[0][0].shape)
+                b_hbboxes[0,:all_hbboxes.shape[1],::] = all_hbboxes
+                b_obboxes = np.zeros((1,self.cfg.nb_hoi_rois)+all_obboxes[0][0].shape)
+                b_obboxes[0,:all_obboxes.shape[1],::] = all_obboxes
+                b_targets = np.zeros((1,self.cfg.nb_hoi_rois)+all_target_labels[0][0].shape)
+                b_targets[0,:all_target_labels.shape[1],::] = all_target_labels
+                
                 if self.do_meta:
                     return [img, all_hbboxes, all_obboxes, patterns], all_target_labels, imageMeta, imageDims, None
-                return [img, all_hbboxes, all_obboxes, patterns], all_target_labels
+                return [img, b_hbboxes, b_obboxes, b_pattern], b_targets
                 
             hbboxes, obboxes, target_labels, val_map = filters_hoi.reduceTargets(Y_tmp, self.cfg)
             patterns = filters_hoi.createInteractionPatterns(hbboxes, obboxes, self.cfg)
