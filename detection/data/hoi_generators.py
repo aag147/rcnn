@@ -130,6 +130,9 @@ class DataGenerator():
                 if self.do_meta:
                     return [hcrops, ocrops, patterns[0], all_hbboxes[0], all_obboxes[0]], all_target_labels[0], imageMeta, imageDims, None
                 return [hcrops, ocrops, patterns[0], all_hbboxes[0], all_obboxes[0]], all_target_labels[0]       
+            elif self.mode == 'test':
+                all_hbboxes, all_obboxes, all_target_labels, all_val_map = Y_tmp
+                return [img, all_hbboxes, all_obboxes], all_target_labels, imageMeta, imageDims, None
             
             hbboxes, obboxes, target_labels, val_map = filters_hoi.reduceTargets(Y_tmp, self.cfg)
             patterns = filters_hoi.createInteractionPatterns(hbboxes, obboxes, self.cfg)

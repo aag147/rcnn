@@ -122,11 +122,10 @@ class AllModels:
         path += '/weights/' + cfg.my_weights
         print('   Weights path:', path)
         assert os.path.exists(path), 'invalid path: %s' % path
-        
         # Load weights
-        weights_before = model.layers[4].get_weights()[0][0,0] if by_name else model.layers[11].get_weights()[0][0,0,0,0]
+        weights_before = model.layers[4].get_weights()[0][0,0] if by_name else model.layers[15].get_weights()[0][0,0,0,0]
         model.load_weights(path, by_name=False)        
-        weights_after  = model.layers[4].get_weights()[0][0,0] if by_name else model.layers[11].get_weights()[0][0,0,0,0]
+        weights_after  = model.layers[4].get_weights()[0][0,0] if by_name else model.layers[15].get_weights()[0][0,0,0,0]
         assert weights_before != weights_after, 'weights have not been loaded'
         
         return model, weights_before, weights_after
@@ -332,11 +331,11 @@ class AllModels:
         )
         human_slow_input = keras.layers.Input(
             shape=(5,),
-            name="input_interaction"
+            name="input_human"
         )
         object_slow_input = keras.layers.Input(
             shape=(5,),
-            name="input_interaction"
+            name="input_object"
         )
 
         

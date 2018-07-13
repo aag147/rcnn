@@ -118,12 +118,15 @@ class AllStages:
     
     def stagethree(self, X, imageMeta, imageDims, obj_mapping, include='all'):
         # hoi prepare
-        if len(X)==2:
-            [self.shared_img, bboxes] = X
+        if len(X)==3:
+            [self.shared_img, all_hbboxes, all_obboxes] = X
         else:
-            [bboxes] = X
-        bboxes = np.copy(bboxes)
-        all_hbboxes, all_obboxes = filters_hoi.splitInputs(bboxes, imageMeta, obj_mapping)
+            if len(X)==2:
+                [self.shared_img, bboxes] = X
+            else:
+                [bboxes] = X
+            bboxes = np.copy(bboxes)
+            all_hbboxes, all_obboxes = filters_hoi.splitInputs(bboxes, imageMeta, obj_mapping)
         
         if all_hbboxes is None:
             return None, None, None
@@ -131,11 +134,12 @@ class AllStages:
         patterns = filters_hoi.createInteractionPatterns(all_hbboxes, all_obboxes, self.cfg)
         if not self.cfg.do_fast_hoi:
             hcrops, ocrops = filters_hoi.convertBB2Crop(self.shared_img, all_hbboxes, all_obboxes, imageDims)
+            print(hcrops.shape)
         hbboxes_norm, obboxes_norm = filters_hoi.prepareInputs(all_hbboxes, all_obboxes, imageDims)
         
         # hoi predict
         nb_hoi_rois = hbboxes_norm.shape[1]
-        nb_hoi_rois = self.cfg.nb_hoi_rois
+#        nb_hoi_rois = self.cfg.nb_hoi_rois
         all_hoi_props = np.zeros((1,nb_hoi_rois, self.cfg.nb_hoi_classes))
         all_hoi_hbboxes = np.zeros((1,nb_hoi_rois, 5))
         all_hoi_obboxes = np.zeros((1,nb_hoi_rois, 5))
@@ -151,9 +155,14 @@ class AllStages:
             else:
                 batch_hcrop = hcrops[sidx:fidx,::]
                 batch_ocrop = ocrops[sidx:fidx,::]
-                batch = [batch_hcrop, batch_ocrop, batch_p, batch_h, batch_o]
+                batch = [batch_hcrop, batch_ocrop, batch_p[0], batch_h[0], batch_o[0]]
             
             hoi_props, hoi_hbboxes, hoi_obboxes = self.model_hoi.predict_on_batch(batch)
+            
+            if not self.cfg.do_fast_hoi:
+                hoi_props = np.expand_dims(hoi_props, axis=0)
+                hoi_hbboxes = np.expand_dims(hoi_hbboxes, axis=0)
+                hoi_obboxes = np.expand_dims(hoi_obboxes, axis=0)
 
             all_hoi_props[:,sidx:fidx,:] = hoi_props[:,:fidx-sidx,:]
             all_hoi_hbboxes[:,sidx:fidx,:] = hoi_hbboxes[:,:fidx-sidx,:]

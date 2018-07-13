@@ -15,7 +15,7 @@ sys.path.append('../data/')
 
 
 import extract_data
-from rpn_generators import DataGenerator
+from hoi_generators import DataGenerator
 import filters_detection,\
        filters_helper as helper
 
@@ -37,37 +37,41 @@ if True:
     
     # Create batch generators
     genTrain = DataGenerator(imagesMeta = data.trainGTMeta, cfg=cfg, data_type='train', do_meta=True)
-    genVal = DataGenerator(imagesMeta = data.valGTMeta, cfg=cfg, data_type='test', do_meta=True)
+    genVal = DataGenerator(imagesMeta = data.valGTMeta, cfg=cfg, data_type='test', do_meta=True, mode='test')
 #    genTest = DataGenerator(imagesMeta = data.testGTMeta, cfg=cfg, data_type='test', do_meta=True)
     
 
-if False:
-    cfg.do_fast_hoi = True
-    Models = methods.AllModels(cfg, mode='test', do_rpn=True, do_det=True, do_hoi=False)
-    Stages = stages.AllStages(cfg, Models, obj_mapping, hoi_mapping, mode='train')
+if True:
+#    cfg.do_fast_hoi = True
+    Models = methods.AllModels(cfg, mode='test', do_rpn=False, do_det=False, do_hoi=True)
+    Stages = stages.AllStages(cfg, Models, obj_mapping, hoi_mapping, mode='test')
 
 genIterator = genVal.begin()
 
 for i in range(1):
-#    X, y, imageMeta, imageDims, times = next(genIterator)
+    [X, all_hbboxes, all_obboxes], all_target_labels, imageMeta, imageDims, _ = next(genIterator)
     imageID = imageMeta['imageName'].split('.')[0]
-    img = np.copy(X[0])
-    img += cfg.PIXEL_MEANS
-    img = img.astype(np.uint8)
-    img = cv.cvtColor(img, cv.COLOR_BGR2RGB)
+
 
     print('Stage one...')
 #    proposals = Stages.stageone([X], y, imageMeta, imageDims)
     print('Stage two...')
 #    bboxes = Stages.stagetwo([X,proposals], imageMeta, imageDims)
     print('Stage three...')
-    all_hbboxes, all_obboxes, all_target_labels, all_val_map = Stages.stagethree_targets(bboxes, imageMeta, imageDims)
-    hbboxes, obboxes, target_labels, val_map = filters_hoi.reduceTargets([all_hbboxes, all_obboxes, all_target_labels, all_val_map], cfg)
+#    all_hbboxes, all_obboxes, all_target_labels, all_val_map = Stages.stagethree_targets(bboxes, imageMeta, imageDims)
+#    hbboxes, obboxes, target_labels, val_map = filters_hoi.reduceTargets([all_hbboxes, all_obboxes, all_target_labels, all_val_map], cfg)
 #    all_hoi_hbboxes, all_hoi_obboxes, all_hoi_props = Stages.stagethree([X,bboxes], imageMeta, imageDims, obj_mapping, include='all')
+    pred_hbboxes, pred_obboxes, pred_props = Stages.stagethree([X,all_hbboxes,all_obboxes], imageMeta, imageDims, obj_mapping)
+    
     
     print('Draw...')
-    draw.drawOverlapRois(img, bboxes[0], imageMeta, imageDims, cfg, obj_mapping)
-    idxs = draw.drawPositiveHoI(img, hbboxes[0], obboxes[0], target_labels[0], imageMeta, imageDims, cfg, obj_mapping)
-    good_bboxes = np.copy(all_obboxes[0,idxs,:])
-    good_bboxes[:,2] += good_bboxes[:,0]
-    good_bboxes[:,3] += good_bboxes[:,1]
+    img = np.copy(X[0])
+    img += cfg.PIXEL_MEANS
+    img = img.astype(np.uint8)
+    img = cv.cvtColor(img, cv.COLOR_BGR2RGB)
+#    draw.drawOverlapRois(img, bboxes[0], imageMeta, imageDims, cfg, obj_mapping)
+    draw.drawGTBoxes(img, imageMeta, imageDims)
+    idxs = draw.drawPositiveHoI(img, pred_hbboxes, pred_obboxes, pred_props, imageMeta, imageDims, cfg, obj_mapping)
+#    good_bboxes = np.copy(all_obboxes[0,idxs,:])
+#    good_bboxes[:,2] += good_bboxes[:,0]
+#    good_bboxes[:,3] += good_bboxes[:,1]
