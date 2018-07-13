@@ -399,7 +399,7 @@ def createTargets(bboxes, imageMeta, imageDims, cfg, class_mapping):
                             hbb_map[hidx, oidx, :] = hbox[:6]
                             obb_map[hidx, oidx, :] = obox[:6]
 
-                    elif objlabel == gt_obj and h_iou >= cfg.hoi_min_overlap and o_iou >= cfg.hoi_min_overlap and (h_iou < cfg.hoi_max_overlap-0.2 or o_iou < cfg.hoi_max_overlap-0.2):
+                    elif objlabel == gt_obj and h_iou >= cfg.hoi_min_overlap and o_iou >= cfg.hoi_min_overlap and (h_iou < cfg.hoi_max_overlap or o_iou < cfg.hoi_max_overlap):
                         if val_map[hidx, oidx] < 2:
 #                            print('neg1', objlabel, gt_label, h_iou, o_iou)
                             # negative1
