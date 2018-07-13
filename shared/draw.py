@@ -400,9 +400,9 @@ def drawGTBoxes(img, imageMeta, imageDims):
     return bboxes
 
 def drawPositiveHoI(img, hbboxes, obboxes, patterns, props, imageMeta, imageDims, cfg, obj_mapping):
-    f, spl = plt.subplots(2,2)
-    spl = spl.ravel()
-    spl[0].imshow(img)
+#    f, spl = plt.subplots(2,2)
+#    spl = spl.ravel()
+#    spl[0].imshow(img)
     inv_obj_mapping = {x:key for key,x in obj_mapping.items()}
     colours = ['#FEc75c', '#123456','#456789', '#abcdef','#fedcba', '#987654','#654321', '#994ee4']
     idxs = []
