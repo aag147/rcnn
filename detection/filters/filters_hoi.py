@@ -375,6 +375,9 @@ def createTargets(bboxes, imageMeta, imageDims, cfg, class_mapping):
 #    print(gthboxes)
 #    print(gtoboxes)
     
+    idxs = np.where(obboxes[:,5]==56)[0]
+    print(obboxes[idxs,:])
+    
     for hidx, hbox in enumerate(hbboxes):
         h_ious = helper._computeIoUs(hbox, gthboxes)
             
@@ -397,13 +400,18 @@ def createTargets(bboxes, imageMeta, imageDims, cfg, class_mapping):
                             label_map[hidx, oidx, gt_label] = 1
                             hbb_map[hidx, oidx, :] = hbox[:6]
                             obb_map[hidx, oidx, :] = obox[:6]
-                    elif objlabel == gt_obj and h_iou >= cfg.hoi_min_overlap and o_iou >= cfg.hoi_min_overlap:
+                            if objlabel==56:
+                                print('3',np.copy(obox).astype(int))
+                    elif objlabel == gt_obj and h_iou >= cfg.hoi_min_overlap and o_iou >= cfg.hoi_min_overlap and (h_iou < cfg.hoi_max_overlap-0.2 or o_iou < cfg.hoi_max_overlap-0.2):
                         if val_map[hidx, oidx] < 2:
 #                            print('neg1', objlabel, gt_label, h_iou, o_iou)
                             # negative1
                             val_map[hidx, oidx] = 2
                             hbb_map[hidx, oidx, :] = hbox[:6]
                             obb_map[hidx, oidx, :] = obox[:6]
+                            
+                            if objlabel==56:
+                                print('2',np.copy(obox).astype(int))
                     
                             
                     elif objlabel == gt_obj:
@@ -413,7 +421,7 @@ def createTargets(bboxes, imageMeta, imageDims, cfg, class_mapping):
                             hbb_map[hidx, oidx, :] = hbox[:6]
                             obb_map[hidx, oidx, :] = obox[:6]   
                             
-                    elif objlabel != gt_obj and o_iou < cfg.hoi_max_overlap:
+                    elif objlabel != gt_obj and o_iou < cfg.hoi_min_overlap:
                         if val_map[hidx, oidx] < 0:
                             # negative2
                             val_map[hidx, oidx] = 0

@@ -40,23 +40,21 @@ genTrain = DataGenerator(imagesMeta = data.trainGTMeta, cfg=cfg, data_type='trai
 #genTest = DataGenerator(imagesMeta = data.valGTMeta, cfg=cfg, data_type='test', do_meta=True, mode='val')
 
 
-Stages = stages.AllStages(cfg, None, obj_mapping, hoi_mapping, mode='train')
-imageID = 'HICO_test2015_00003764'
-imageMeta = genTrain.imagesMeta[imageID]
-X, y, imageDims = Stages.stagezero(imageMeta, genTrain.data_type)
-imageInputs = utils.load_obj(cfg.my_input_path + 'train/' + imageID)
-Y_tmp = filters_hoi.loadData(imageInputs, imageDims, cfg)
-hbboxes, obboxes, target_labels, val_map = filters_hoi.reduceTargets(Y_tmp, cfg)
-patterns = filters_hoi.createInteractionPatterns(hbboxes, obboxes, cfg)
-hcrops, ocrops = filters_hoi.convertBB2Crop(X, hbboxes, obboxes, imageDims)
+#Stages = stages.AllStages(cfg, None, obj_mapping, hoi_mapping, mode='train')
+#imageID = 'HICO_test2015_00003764'
+#imageMeta = genTrain.imagesMeta[imageID]
+#X, y, imageDims = Stages.stagezero(imageMeta, genTrain.data_type)
+#imageInputs = utils.load_obj(cfg.my_input_path + 'train/' + imageID)
+#Y_tmp = filters_hoi.loadData(imageInputs, imageDims, cfg)
+#hbboxes, obboxes, target_labels, val_map = filters_hoi.reduceTargets(Y_tmp, cfg)
+#patterns = filters_hoi.createInteractionPatterns(hbboxes, obboxes, cfg)
+#hcrops, ocrops = filters_hoi.convertBB2Crop(X, hbboxes, obboxes, imageDims)
 
 genItr = genTrain.begin()
 for batchidx in range(genTrain.nb_batches):
-    break
     [hcrops, ocrops, patterns, hbboxes, obboxes], target_labels, imageMeta, imageDims, _ = next(genItr)
 #    [img, hbboxes, obboxes, patterns], target_labels, imageMeta, imageDims, _ = next(genItr)
     
-    continue
     
     X, _ = filters_rpn.prepareInputs(imageMeta, genTrain.images_path, cfg)
     imageID = imageMeta['imageName']
@@ -70,8 +68,10 @@ for batchidx in range(genTrain.nb_batches):
     img = np.copy(X[0])
     img += cfg.PIXEL_MEANS
     img = img.astype(np.uint8)
+    hbboxes = np.expand_dims(hbboxes,axis=0)
+    obboxes = np.expand_dims(obboxes,axis=0)
     h_bboxes, o_bboxes = filters_hoi.unprepareInputs(hbboxes, obboxes, imageDims)
     draw.drawGTBoxes(img, imageMeta, imageDims)
-    draw.drawPositiveHoI(img, h_bboxes[0], o_bboxes[0], patterns[0], target_labels[0], imageMeta, imageDims, cfg, obj_mapping)
+    draw.drawPositiveHoI(img, h_bboxes[0], o_bboxes[0], patterns, target_labels, imageMeta, imageDims, cfg, obj_mapping)
 #    
     break

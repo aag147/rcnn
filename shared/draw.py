@@ -399,34 +399,40 @@ def drawGTBoxes(img, imageMeta, imageDims):
         spl.plot(bbox[0,:], bbox[1,:], c='red')
     return bboxes
 
-def drawPositiveHoI(img, hbboxes, obboxes, props, imageMeta, imageDims, cfg, obj_mapping):
-    f, spl = plt.subplots(1,1)
-#    spl = spl.ravel()
-    spl.imshow(img)
+def drawPositiveHoI(img, hbboxes, obboxes, patterns, props, imageMeta, imageDims, cfg, obj_mapping):
+    f, spl = plt.subplots(2,2)
+    spl = spl.ravel()
+    spl[0].imshow(img)
     inv_obj_mapping = {x:key for key,x in obj_mapping.items()}
     colours = ['#FEc75c', '#123456','#456789', '#abcdef','#fedcba', '#987654','#654321', '#994ee4']
     idxs = []
     nb_pairs = hbboxes.shape[0]
     c_idx=0
     for idx in range(nb_pairs):
-        if idx > 13:
+        if idx < 100:
+            continue
+        if idx > 112:
             break
+        
+        f, spl = plt.subplots(2,2)
+        spl = spl.ravel()
+        spl[0].imshow(img)
 #        hprop = (hbboxes[idx,4])
 #        oprop = (obboxes[idx,4])
 #        hlbl = int(hbboxes[idx,5])
 #        olbl = int(obboxes[idx,5])
         hoiprop = np.where(props[idx,:]>0.5)[0]
         print(idx, hoiprop)
-        if len(hoiprop)>0:
+        if len(hoiprop)>0 or True:
             c = colours[c_idx]
             hbbox = hbboxes[idx,:4]*16
             obbox = obboxes[idx,:4]*16
             hbbox = drawProposalBox(hbbox)
             obbox = drawProposalBox(obbox)
-            spl.plot(hbbox[0,:], hbbox[1,:], c=c)
-            spl.plot(obbox[0,:], obbox[1,:], c=c)
-#            spl[2].imshow(patterns[idx,:,:,0])
-#            spl[3].imshow(patterns[idx,:,:,1])
+            spl[0].plot(hbbox[0,:], hbbox[1,:], c=c)
+            spl[0].plot(obbox[0,:], obbox[1,:], c=c)
+            spl[2].imshow(patterns[idx,:,:,0])
+            spl[3].imshow(patterns[idx,:,:,1])
             idxs.append(idx)
 #            print('Pos. label:', inv_obj_mapping[hlbl], inv_obj_mapping[olbl], hprop, oprop, hoiprop)
             

@@ -46,7 +46,7 @@ if True:
     Stages = stages.AllStages(cfg, Models, obj_mapping, hoi_mapping, mode='train')
     imageInputs, imageID, bboxes = hoi_test.saveInputData(genTrain, Stages, cfg)
 
-if True:
+if False:
 #    imageID = 'HICO_train2015_00025124'
     imageInputs = utils.load_obj(cfg.my_output_path + imageID)
 #    keys = list(inputMeta.keys())
@@ -59,6 +59,7 @@ if True:
     Y_tmp = filters_hoi.loadData(imageInputs, imageDims, cfg)
 
     hbboxes, obboxes, target_labels, val_map = Y_tmp
+    obboxescp = np.copy(obboxes)
 #    hbboxes, obboxes, target_labels, val_map = filters_hoi.reduceTargets(Y_tmp, cfg)
     patterns = filters_hoi.createInteractionPatterns(hbboxes, obboxes, cfg)
     hcrops, ocrops = filters_hoi.convertBB2Crop(X, hbboxes, obboxes, imageDims)
@@ -69,6 +70,18 @@ if True:
     img = img.astype(np.uint8)
     draw.drawGTBoxes(img, imageMeta, imageDims)
     draw.drawPositiveCropHoI(hbboxes[0], obboxes[0], hcrops, ocrops, patterns[0], target_labels[0], imageMeta, imageDims, cfg, obj_mapping)
+    draw.drawPositiveHoI(img, hbboxes[0], obboxes[0], patterns[0], target_labels[0], imageMeta, imageDims, cfg, obj_mapping)
 
 print()
 print('Path:', cfg.my_output_path)
+
+
+#[23 33 31 40  0 56]
+#[23 31 32 45  0 56]
+#[ 9 39 34 54  0 56]
+#[27 40 33 46  0 56]
+#[20 31 33 46  0 56]
+#[26 41 33 47  0 56]
+#[23 31 34 46  0 56]
+#[24 32 32 40  0 56]
+#[23 32 31 40  0 56]
