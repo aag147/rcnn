@@ -13,6 +13,7 @@ import filters_detection,\
        filters_rpn
 import time
 import utils
+import os
 
 class DataGenerator():
     
@@ -52,7 +53,11 @@ class DataGenerator():
       
       self.imagesMeta = imagesMeta
       print('   inputs:', cfg.my_input_path + 'proposals_'+data_type)
-      self.imagesInputs = utils.load_obj(cfg.my_input_path + 'proposals_'+data_type)
+      if os.path.exists(self.rois_path + 'proposals_'+data_type + '.pkl'):
+          self.imagesInputs = utils.load_obj(self.rois_path + 'proposals_'+data_type)
+          self.doIndyInputs = False
+      else:
+          self.doIndyInputs = True
       
       self.nb_images = len(self.dataID)
       self.nb_samples = None
