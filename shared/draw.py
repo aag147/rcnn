@@ -409,9 +409,9 @@ def drawPositiveHoI(img, hbboxes, obboxes, patterns, props, imageMeta, imageDims
     nb_pairs = hbboxes.shape[0]
     c_idx=0
     for idx in range(nb_pairs):
-        if idx < 100:
+        if idx > 5 and idx < 100:
             continue
-        if idx > 112:
+        if idx > 105:
             break
         
         f, spl = plt.subplots(2,2)

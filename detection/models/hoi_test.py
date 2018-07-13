@@ -29,13 +29,12 @@ def saveInputData(generator, Stages, cfg):
     bboxes = None
     
     for batchidx in range(generator.nb_batches):
-        [img,proposals], y, imageMeta, imageDims, times = next(genIterator)
-#        X, y, imageMeta, imageDims, times = next(genIterator)
-#        imageID = imageMeta['imageName'].split('.')[0]
-        
-        imageID = 'HICO_train2015_00019135'
-        imageMeta = generator.imagesMeta[imageID]
-        X, y, imageDims = Stages.stagezero(imageMeta, generator.data_type)
+        X, y, imageMeta, imageDims, times = next(genIterator)
+        imageID = imageMeta['imageName'].split('.')[0]
+#        
+#        imageID = 'HICO_train2015_00019135'
+#        imageMeta = generator.imagesMeta[imageID]
+#        X, y, imageDims = Stages.stagezero(imageMeta, generator.data_type)
         if batchidx % 500 == 0 or batchidx==100 or batchidx==250:
             utils.update_progress_new(batchidx, generator.nb_batches, imageID)
         
