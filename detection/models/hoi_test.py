@@ -29,7 +29,7 @@ def saveInputData(generator, Stages, cfg):
     bboxes = None
     
     for batchidx in range(generator.nb_batches):
-#        [img,proposals], y, imageMeta, imageDims, times = next(genIterator)
+        [img,proposals], y, imageMeta, imageDims, times = next(genIterator)
 #        X, y, imageMeta, imageDims, times = next(genIterator)
 #        imageID = imageMeta['imageName'].split('.')[0]
         
@@ -42,7 +42,7 @@ def saveInputData(generator, Stages, cfg):
         
         path = save_path + imageID + '.pkl'
         if os.path.exists(path):
-            print(path)
+#            print(path)
             continue
         
         #STAGE 1
