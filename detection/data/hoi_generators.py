@@ -148,6 +148,9 @@ class DataGenerator():
                 return [img, all_hbboxes, all_obboxes, all_val_map], all_target_labels, imageMeta, imageDims, None
             
             hbboxes, obboxes, target_labels, val_map = filters_hoi.reduceTargets(Y_tmp, self.cfg)
+            if hbboxes is None:
+                return None
+
             patterns = filters_hoi.createInteractionPatterns(hbboxes, obboxes, self.cfg)
             hcrops, ocrops = filters_hoi.convertBB2Crop(img, hbboxes, obboxes, imageDims)
             hbboxes, obboxes = filters_hoi.prepareInputs(hbboxes, obboxes, imageDims)
@@ -212,8 +215,8 @@ class DataGenerator():
         
     def _generateBatchFromIDs(self, imageIdxs, list_idx):
         imageIDs = [self.dataID[idx] for idx in imageIdxs]
-        
-        utils.update_progress_new(list_idx+1, self.nb_batches, imageIDs[0])
+#        imageIDs = ['HICO_train2015_00013505']
+#        utils.update_progress_new(list_idx+1, self.nb_batches, imageIDs[0])
         
         if self.cfg.do_fast_hoi:
             return self._generateFastBatch(imageIDs)

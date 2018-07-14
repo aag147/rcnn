@@ -247,7 +247,7 @@ def convertResults(hbboxes, obboxes, predicted_labels, imageMeta, scale, rpn_str
     return results
 
 
-def filterTargets(val_map, nb_pos, nb_neg1, nb_hoi_rois, nb_neg2=0):
+def filterTargets(val_map, nb_pos, nb_neg1, nb_hoi_rois, nb_neg2=0, only_pos=False):
     val_map = np.copy(val_map[0])
     positive_idxs = np.where(val_map==3)[0]
     negative1_idxs = np.where(val_map==2)[0]
@@ -258,15 +258,21 @@ def filterTargets(val_map, nb_pos, nb_neg1, nb_hoi_rois, nb_neg2=0):
     selected_neg1_samples = negative1_idxs
     selected_neg2_samples = negative2_idxs
     selected_neg3_samples = negative3_idxs
-    
+        
     if nb_pos is None and nb_neg1 is None and nb_hoi_rois is None:
         sel_samples = selected_pos_samples.tolist() + selected_neg1_samples.tolist() + selected_neg3_samples.tolist()    
         return sel_samples
     
-    if nb_pos is not None and len(positive_idxs) > nb_pos and len(negative2_idxs)>0:
+    if only_pos:
+        if len(positive_idxs) > 16:
+            selected_pos_samples = np.random.choice(positive_idxs, 16, replace=False)
+        sel_samples = selected_pos_samples.tolist()
+        return sel_samples
+    
+    if nb_pos is not None and len(positive_idxs) > nb_pos and len(positive_idxs)>0:
         selected_pos_samples = np.random.choice(positive_idxs, nb_pos, replace=False)
         
-    if len(negative1_idxs) > nb_neg1 and len(negative2_idxs)>0:
+    if len(negative1_idxs) > nb_neg1 and len(negative1_idxs)>0:
         selected_neg1_samples = np.random.choice(negative1_idxs, nb_neg1, replace=False)
         
     if nb_neg2 > 0:
@@ -276,16 +282,17 @@ def filterTargets(val_map, nb_pos, nb_neg1, nb_hoi_rois, nb_neg2=0):
         selected_neg2_samples = np.random.choice(negative2_idxs, nb_hoi_rois - len(selected_pos_samples) - len(selected_neg1_samples), replace=False)
     elif len(negative2_idxs) > 0:
         selected_neg2_samples = np.random.choice(negative2_idxs, nb_hoi_rois - len(selected_pos_samples) - len(selected_neg1_samples), replace=True)
-        
-    if nb_hoi_rois is not None:
-        if len(negative1_idxs) > 0 and len(selected_neg2_samples) + len(selected_neg1_samples) + len(selected_pos_samples) < nb_hoi_rois:
+    
+    if nb_hoi_rois is not None and len(selected_neg2_samples)==0:
+        if len(negative1_idxs) > 0:
             selected_neg1_samples = np.random.choice(negative1_idxs, nb_hoi_rois - len(selected_pos_samples), replace=True)
         
-        if len(positive_idxs) > 0 and len(selected_neg2_samples) + len(selected_neg1_samples) + len(selected_pos_samples) < nb_hoi_rois:
+        elif len(positive_idxs) > 0:
             selected_pos_samples = np.random.choice(positive_idxs, nb_hoi_rois, replace=True)
         
     sel_samples = selected_pos_samples.tolist() + selected_neg1_samples.tolist() + selected_neg2_samples.tolist()    
 
+    
     return sel_samples
 
 def reduceTargets(Y, cfg, batchidx=None):
@@ -307,21 +314,25 @@ def reduceTargets(Y, cfg, batchidx=None):
     
     
     ## Pick reduced indexes ##
-    if batchidx is None:        
-        sel_samples = filterTargets(all_val_map, cfg.hoi_pos_share, cfg.hoi_neg1_share, cfg.nb_hoi_rois)
-        assert(len(sel_samples) == cfg.nb_hoi_rois), (len(sel_samples), all_val_map)
+    if batchidx is None:
+        if cfg.hoi_only_pos:
+            sel_samples = filterTargets(all_val_map, 16, None, None, only_pos=True)
+            if len(sel_samples) == 0:
+                return None, None, None, None
+        else:
+            sel_samples = filterTargets(all_val_map, cfg.hoi_pos_share, cfg.hoi_neg1_share, cfg.nb_hoi_rois)
+            assert(len(sel_samples) == cfg.nb_hoi_rois), (len(sel_samples), all_val_map)
 
     else:        
         sidx = batchidx * cfg.nb_hoi_rois
         fidx = min(all_target_labels.shape[1], sidx + cfg.nb_hoi_rois)
         sel_samples = list(range(sidx,fidx))
-        
-    assert(target_labels.shape[1] == cfg.nb_hoi_rois), target_labels.shape
+        assert(len(sel_samples) == cfg.nb_hoi_rois), (len(sel_samples), all_val_map)
     
     ## Reduce data by picked indexes ##  
-    hbboxes[:,:len(sel_samples),:]          = all_hbboxes[:, sel_samples, :]
-    obboxes[:,:len(sel_samples),:]          = all_obboxes[:, sel_samples, :]
-    target_labels[:,:len(sel_samples),:]    = all_target_labels[:, sel_samples, :]
+    hbboxes          = all_hbboxes[:, sel_samples, :]
+    obboxes          = all_obboxes[:, sel_samples, :]
+    target_labels    = all_target_labels[:, sel_samples, :]
     
     return hbboxes, obboxes, target_labels, all_val_map[:,sel_samples]
 

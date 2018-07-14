@@ -279,9 +279,10 @@ class basic_config:
        
        self.nb_hoi_rois = 32
        
-       self.hoi_pos_share  = int(self.nb_hoi_rois / 8 * 1)
-       self.hoi_neg1_share = int(self.nb_hoi_rois / 8 * 3)
-       self.hoi_neg2_share = int(self.nb_hoi_rois / 8 * 4)
+       self.hoi_only_pos = False
+       self.hoi_pos_share  = int(self.nb_hoi_rois / 8 * 4)
+       self.hoi_neg1_share = int(self.nb_hoi_rois / 8 * 1)
+       self.hoi_neg2_share = int(self.nb_hoi_rois / 8 * 3)
         
        # model
 #       self.nb_object_classes = 81
@@ -290,7 +291,7 @@ class basic_config:
    def get_args(self):
        try:
           argv = sys.argv[1:]
-          opts, args = getopt.getopt(argv,"ab:c:d:e:f:g:hi:j:l:m:n:o:q:r:s:tuw:x:z")
+          opts, args = getopt.getopt(argv,"ab:c:d:e:f:g:hi:j:l:m:n:o:pq:r:s:tuw:x:z")
        except getopt.GetoptError:
           print('.py argument error')
           sys.exit(2)
@@ -345,6 +346,8 @@ class basic_config:
           if opt == '-o':
               # optimizer
               self.optimizer = arg
+          if opt == '-p':
+              self.hoi_only_pos = True
           if opt == '-q':
               self.new_results_dir = arg
           if opt == '-r':

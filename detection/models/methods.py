@@ -303,15 +303,7 @@ class AllModels:
             shape=(cfg.nb_detection_rois, 5),
             name='input_roi'
         )
-        human_input = keras.layers.Input(
-            shape=(cfg.nb_detection_rois, 5),
-            name="input_human"
-        )
-        
-        object_input = keras.layers.Input(
-            shape=(cfg.nb_detection_rois, 5),
-            name="input_object"
-        )
+
         
         # HOI #
         img_hoi_input = keras.layers.Input(
