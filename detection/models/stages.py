@@ -86,11 +86,12 @@ class AllStages:
         for batchidx in range(math.ceil(nb_det_rois / self.cfg.nb_detection_rois)):    
             sidx = batchidx * self.cfg.nb_detection_rois
             fidx = min(nb_det_rois, sidx + self.cfg.nb_detection_rois)
-            batch_rois = rois_norm[:,sidx:fidx,:]
+            batch_rois = np.zeros((1,self.cfg.nb_detection_rois, 5))
+            batch_rois[0,:fidx-sidx,:] = rois_norm[:,sidx:fidx,:]
             det_props, det_deltas = self.model_det.predict_on_batch([self.shared_cnn, batch_rois])
 
-            all_det_props[:,sidx:fidx,:] = det_props#[:,:fidx-sidx,:]
-            all_det_deltas[:,sidx:fidx,:] = det_deltas#[:,:fidx-sidx,:]
+            all_det_props[:,sidx:fidx,:] = det_props[:,:fidx-sidx,:]
+            all_det_deltas[:,sidx:fidx,:] = det_deltas[:,:fidx-sidx,:]
         
         
         
