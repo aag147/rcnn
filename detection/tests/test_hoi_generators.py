@@ -59,7 +59,8 @@ for batchidx in range(genTrain.nb_batches):
     X, _ = filters_rpn.prepareInputs(imageMeta, genTrain.images_path, cfg)
     imageID = imageMeta['imageName']
     utils.update_progress_new(batchidx+1, genTrain.nb_batches, imageID)
-#    continue
+    
+    continue
     import draw
 #    draw.drawPositiveCropHoI(None, None, hcrops, ocrops, patterns, target_labels, imageMeta, imageDims, cfg, obj_mapping)
     
