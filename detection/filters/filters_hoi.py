@@ -316,7 +316,7 @@ def reduceTargets(Y, cfg, batchidx=None):
         fidx = min(all_target_labels.shape[1], sidx + cfg.nb_hoi_rois)
         sel_samples = list(range(sidx,fidx))
         
-    assert(target_labels.shape[1] == cfg.nb_hoi_rois)
+    assert(target_labels.shape[1] == cfg.nb_hoi_rois), target_labels.shape
     
     ## Reduce data by picked indexes ##  
     hbboxes[:,:len(sel_samples),:]          = all_hbboxes[:, sel_samples, :]
