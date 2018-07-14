@@ -59,7 +59,7 @@ for batchidx in range(genTrain.nb_batches):
     X, _ = filters_rpn.prepareInputs(imageMeta, genTrain.images_path, cfg)
     imageID = imageMeta['imageName']
     utils.update_progress_new(batchidx+1, genTrain.nb_batches, imageID)
-    continue
+#    continue
     import draw
 #    draw.drawPositiveCropHoI(None, None, hcrops, ocrops, patterns, target_labels, imageMeta, imageDims, cfg, obj_mapping)
     
@@ -72,6 +72,6 @@ for batchidx in range(genTrain.nb_batches):
     obboxes = np.expand_dims(obboxes,axis=0)
     h_bboxes, o_bboxes = filters_hoi.unprepareInputs(hbboxes, obboxes, imageDims)
     draw.drawGTBoxes(img, imageMeta, imageDims)
+#    draw.drawPositiveHoIs(img, h_bboxes[0], o_bboxes[0], target_labels, obj_mapping, imageMeta, imageDims, cfg)
     draw.drawPositiveHoI(img, h_bboxes[0], o_bboxes[0], patterns, target_labels, imageMeta, imageDims, cfg, obj_mapping)
 #    
-    break
