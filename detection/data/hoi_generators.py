@@ -92,7 +92,7 @@ class DataGenerator():
     
     def _getImageInputs(self, imageID):
         if self.doIndyInputs:
-            imageInputs = utils.load_obj(self.rois_path + self.data_type + '/' + imageID)
+            imageInputs = utils.load_obj(self.rois_path + self.data_type + 'new/' + imageID)
         else:
             imageInputs = self.imagesInputs[imageID]
         return imageInputs
