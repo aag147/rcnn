@@ -118,8 +118,8 @@ class DataGenerator():
             
             if self.mode == 'val':
                 all_hbboxes, all_obboxes, all_target_labels, all_val_map = Y_tmp
-                if all_val_map.shape[1] > 64:
-                    idxs = np.random.choice(list(range(64)), 64, replace=False)
+                if all_val_map.shape[1] > self.cfg.nb_hoi_rois:
+                    idxs = np.random.choice(list(range(self.cfg.nb_hoi_rois)), self.cfg.nb_hoi_rois, replace=False)
                     all_hbboxes = all_hbboxes[:,idxs,:]
                     all_obboxes = all_obboxes[:,idxs,:]
                     all_target_labels = all_target_labels[:,idxs,:]
