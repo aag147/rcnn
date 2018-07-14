@@ -309,7 +309,7 @@ def reduceTargets(Y, cfg, batchidx=None):
     ## Pick reduced indexes ##
     if batchidx is None:        
         sel_samples = filterTargets(all_val_map, cfg.hoi_pos_share, cfg.hoi_neg1_share, cfg.nb_hoi_rois)
-        assert(len(sel_samples) == cfg.nb_hoi_rois), len(sel_samples)
+        assert(len(sel_samples) == cfg.nb_hoi_rois), (len(sel_samples), all_val_map)
 
     else:        
         sidx = batchidx * cfg.nb_hoi_rois
