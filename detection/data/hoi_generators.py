@@ -213,7 +213,7 @@ class DataGenerator():
     def _generateBatchFromIDs(self, imageIdxs, list_idx):
         imageIDs = [self.dataID[idx] for idx in imageIdxs]
         
-#        utils.update_progress_new(list_idx+1, self.nb_batches, imageIDs[0])
+        utils.update_progress_new(list_idx+1, self.nb_batches, imageIDs[0])
         
         if self.cfg.do_fast_hoi:
             return self._generateFastBatch(imageIDs)
