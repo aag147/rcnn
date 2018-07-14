@@ -483,8 +483,8 @@ def _getSinglePairWiseStream(thisBB, thatBB, width, height, newWidth, newHeight,
     attWin = cv.resize(attWin, (newWidth, newHeight), interpolation = cv.INTER_NEAREST)
     attWin = attWin.astype(np.int)
 
-    xPad = int(abs(newWidth - cfg.winShape[1]) / 2)
-    yPad = int(abs(newHeight - cfg.winShape[0]) / 2)
+    xPad = int(abs(newWidth - cfg.winShape[1]) / 2.0)
+    yPad = int(abs(newHeight - cfg.winShape[0]) / 2.0)
     attWinPad = np.zeros(cfg.winShape).astype(np.int)
 #        print(attWin.shape, attWinPad.shape, xPad, yPad)
 #        print(height, width, newHeight, newWidth)
@@ -496,11 +496,11 @@ def _getPairWiseStream(hbbox, obbox, cfg):
     height = max(hbbox[1]+hbbox[3], obbox[1]+obbox[3]) - min(hbbox[1], obbox[1])
     if width > height:
         newWidth = cfg.winShape[1]
-        apr = newWidth / width
+        apr = newWidth / float(width)
         newHeight = max(1,int(height*apr))
     else:
         newHeight = cfg.winShape[0]
-        apr = newHeight / height
+        apr = newHeight / float(height)
         newWidth = max(1,int(width*apr))
         
     prsWin = _getSinglePairWiseStream(hbbox, obbox, width, height, newWidth, newHeight, cfg)

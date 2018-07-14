@@ -244,14 +244,14 @@ class basic_config:
        
        #rpn filters
        self.nb_shared_layers = 17
-       self.rpn_stride = 16
+       self.rpn_stride = 16.0
        self.nb_rpn_proposals = 256
         
        self.anchor_sizes = [64, 128, 256, 512]
        self.anchor_sizes = [0.5, 2, 8, 32]
-       self.anchor_sizes = [4, 8, 16, 32]
+       self.anchor_sizes = [4.0, 8.0, 16.0, 32.0]
        self.anchor_ratios = [[1, 1], [1, 0.5], [0.5, 1]]
-       self.anchor_ratios = [0.5, 1, 2]
+       self.anchor_ratios = [0.5, 1.0, 2.0]
        
        self.nb_anchors = len(self.anchor_sizes) * len(self.anchor_ratios)
         
@@ -280,9 +280,9 @@ class basic_config:
        self.nb_hoi_rois = 32
        
        self.hoi_only_pos = False
-       self.hoi_pos_share  = int(self.nb_hoi_rois / 8 * 4)
-       self.hoi_neg1_share = int(self.nb_hoi_rois / 8 * 1)
-       self.hoi_neg2_share = int(self.nb_hoi_rois / 8 * 3)
+       self.hoi_pos_share  = int(self.nb_hoi_rois / 8.0 * 4)
+       self.hoi_neg1_share = int(self.nb_hoi_rois / 8.0 * 1)
+       self.hoi_neg2_share = int(self.nb_hoi_rois / 8.0 * 3)
         
        # model
 #       self.nb_object_classes = 81
@@ -380,5 +380,5 @@ class basic_config:
        print('  Using class-specific weights!')
        stats, counts = utils.getLabelStats(imagesMeta, labels)
        p = counts / sum(counts)
-       wp = 1 / p
+       wp = 1 / float(p)
        self.wp = wp
