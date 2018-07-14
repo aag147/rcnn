@@ -272,10 +272,16 @@ def filterTargets(val_map, nb_pos, nb_neg1, nb_hoi_rois, nb_neg2=0):
     if nb_neg2 > 0:
         if len(negative2_idxs) > nb_neg2:
             selected_neg2_samples = np.random.choice(negative2_idxs, nb_neg2, replace=False)
-    elif len(negative2_idxs) + len(selected_neg1_samples) + len(selected_pos_samples) > nb_hoi_rois:
+    elif len(negative2_idxs) > 0 and len(negative2_idxs) + len(selected_neg1_samples) + len(selected_pos_samples) > nb_hoi_rois:
         selected_neg2_samples = np.random.choice(negative2_idxs, nb_hoi_rois - len(selected_pos_samples) - len(selected_neg1_samples), replace=False)
     elif len(negative2_idxs) > 0:
         selected_neg2_samples = np.random.choice(negative2_idxs, nb_hoi_rois - len(selected_pos_samples) - len(selected_neg1_samples), replace=True)
+        
+    if len(negative1_idxs) > 0 and len(selected_neg2_samples) + len(selected_neg1_samples) + len(selected_pos_samples) < nb_hoi_rois:
+        selected_neg1_samples = np.random.choice(negative1_idxs, nb_hoi_rois - len(selected_pos_samples)), replace=True)
+    
+    if len(positive_idxs) > 0 and len(selected_neg2_samples) + len(selected_neg1_samples) + len(selected_pos_samples) < nb_hoi_rois:
+        selected_pos_samples = np.random.choice(positive_idxs, nb_hoi_rois), replace=True)
         
     sel_samples = selected_pos_samples.tolist() + selected_neg1_samples.tolist() + selected_neg2_samples.tolist()    
 
