@@ -46,7 +46,7 @@ if True:
     Models = methods.AllModels(cfg, mode='test', do_rpn=False, do_det=False, do_hoi=True)
     Stages = stages.AllStages(cfg, Models, obj_mapping, hoi_mapping, mode='test')
 
-genIterator = genTrain.begin()
+genIterator = genVal.begin()
 
 for i in range(1):
     [X, all_hbboxes, all_obboxes, all_val_map], all_target_labels, imageMeta, imageDims, _ = next(genIterator)

@@ -21,8 +21,8 @@ def computeHOIAP(batch, GTMeta, nb_gt_samples, hoi_id):
     sorted_idxs = props.argsort()[::-1]
     nb_hois = len(sorted_idxs)
     
-    ious = [x/100 for x in range(50,100,5)]
-    nb_ious = len()
+#    ious = [x/100 for x in range(50,100,5)]
+#    nb_ious = len()
     
     tp = np.zeros((nb_hois))
     fp = np.zeros((nb_hois))
@@ -96,7 +96,7 @@ def computeHOImAP(COCO_mapping, imagesMeta, class_mapping, hoi_mapping, cfg):
     newGTMeta = {}
     for imageID, imageMeta in imagesMeta.items():
         gt_bboxes = imageMeta['objects']
-        gt_rels = imageMeta['rels']
+        gt_rels = np.array(imageMeta['rels'])
         gt_hbboxes, gt_obboxes = helper._transformGTBBox(gt_bboxes, class_mapping, gt_rels, dosplit=True)
         gt_rels = helper._getRealRels(gt_rels)
         newGTMeta[imageID] = {'gt_hbboxes': gt_hbboxes, 'gt_obboxes': gt_obboxes, 'gt_rels': gt_rels}
@@ -112,6 +112,7 @@ def computeHOImAP(COCO_mapping, imagesMeta, class_mapping, hoi_mapping, cfg):
         if len(batch)==0:
             continue
         AP = computeHOIAP(batch, newGTMeta, nb_gt_samples, hoi_id)
+        print(AP)
         AP_map[hoi_id] = AP
         
     mAP = np.mean(AP_map)

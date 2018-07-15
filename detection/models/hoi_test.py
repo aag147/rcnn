@@ -65,26 +65,19 @@ def saveEvalData(generator, Stages, cfg):
     evalData = []
     for batchidx in range(generator.nb_batches):
     
-        X, y, imageMeta, imageDims, times = next(genIterator)
-        imageID = imageMeta['imageID']
+        [X, all_hbboxes, all_obboxes, all_val_map], all_target_labels, imageMeta, imageDims, _ = next(genIterator)
+#        print(imageMeta)
+        imageID = imageMeta['imageName'].split('.')[0]
         if batchidx+1 % 100 == 0:
             utils.update_progress_new(batchidx+1, generator.nb_batches, imageID)
         
-        #STAGE 1
-        proposals = Stages.stageone(X, y, imageMeta, imageDims)
-        
-        #STAGE 2
-        bboxes = Stages.stagetwo(proposals, imageMeta, imageDims)
-        if bboxes is None:
-            continue
-        
         #STAGE 3
-        hbboxes, obboxes, props = Stages.stagethree(bboxes, imageMeta, imageDims)
-        if hbboxes is None:
+        pred_hbboxes, pred_obboxes, pred_props = Stages.stagethree([X,all_hbboxes,all_obboxes], imageMeta, imageDims, obj_mapping=None)
+        if pred_hbboxes is None:
             continue
         
         #CONVERT
-        evalData += filters_hoi.convertResults(hbboxes, obboxes, props, imageMeta, imageDims['scale'], cfg.rpn_stride)
+        evalData += filters_hoi.convertResults(pred_hbboxes, pred_obboxes, pred_props, imageMeta, imageDims['scale'], cfg.rpn_stride)
     return evalData
 
 def saveEvalResults(evalData, generator, cfg, obj_mapping, hoi_mapping):

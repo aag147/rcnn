@@ -15,7 +15,7 @@ sys.path.append('../data/')
 
 
 import extract_data
-from rpn_generators import DataGenerator
+from hoi_generators import DataGenerator
 
 import methods,\
        stages
@@ -30,10 +30,10 @@ if True:
     hoi_mapping = data.hoi_labels
     
     # Create batch generators
-    genTrain = DataGenerator(imagesMeta = data.trainGTMeta, cfg=cfg, data_type='train', do_meta=True)
-    genTest = DataGenerator(imagesMeta = data.testGTMeta, cfg=cfg, data_type='test', do_meta=True)
+    genTrain = DataGenerator(imagesMeta = data.trainGTMeta, cfg=cfg, data_type='train', do_meta=True, mode='test')
+    genTest = DataGenerator(imagesMeta = data.valGTMeta, cfg=cfg, data_type='test', do_meta=True, mode='test')
     
-    Models = methods.AllModels(cfg, mode='test', do_rpn=True, do_det=True, do_hoi=True)
+    Models = methods.AllModels(cfg, mode='test', do_rpn=False, do_det=False, do_hoi=True)
     Stages = stages.AllStages(cfg, Models, obj_mapping, hoi_mapping, mode='test')
     
 
@@ -42,5 +42,5 @@ evalTest = hoi_test.saveEvalData(genTest, Stages, cfg)
 hoi_test.saveEvalResults(evalTest, genTest, cfg, obj_mapping, hoi_mapping)
 
 # Train data
-evalTrain = hoi_test.saveEvalData(genTrain, Stages, cfg)
-hoi_test.saveEvalResults(evalTrain, genTrain, cfg, obj_mapping, hoi_mapping)
+#evalTrain = hoi_test.saveEvalData(genTrain, Stages, cfg)
+#hoi_test.saveEvalResults(evalTrain, genTrain, cfg, obj_mapping, hoi_mapping)
