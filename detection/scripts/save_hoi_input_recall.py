@@ -39,12 +39,12 @@ if True:
 #if True:
     nb_total = np.zeros(600)
     nb_tp = np.zeros(600)
-    for i, (imageID, imageMeta) in enumerate(genTrain.imagesMeta.items()):
+    for i, (imageID, imageMeta) in enumerate(genTest.imagesMeta.items()):
         
-        utils.update_progress_new(i+1, genTrain.nb_batches, imageID)
+        utils.update_progress_new(i+1, genTest.nb_batches, imageID)
         
-        img = cv.imread(genTrain.images_path + imageMeta['imageName'])
-        X, imageDims = filters_rpn.prepareInputs(imageMeta, genTrain.images_path, cfg)
+        img = cv.imread(genTest.images_path + imageMeta['imageName'])
+        X, imageDims = filters_rpn.prepareInputs(imageMeta, genTest.images_path, cfg)
         objs = imageMeta['objects']
         gt_rels = imageMeta['rels']
         gtbboxes = helper._transformGTBBox(objs, obj_mapping, None, scale=imageDims['scale'], rpn_stride=cfg.rpn_stride, dosplit=False)
