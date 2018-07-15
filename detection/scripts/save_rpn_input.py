@@ -35,5 +35,5 @@ if True:
     testMeta = data.testGTMeta
 
 # Save RPN input data
-rpn_test.saveInputData(valMeta, 'val', cfg)
+#rpn_test.saveInputData(valMeta, 'val', cfg)
 rpn_test.saveInputData(trainMeta, 'train', cfg)

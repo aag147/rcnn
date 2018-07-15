@@ -406,9 +406,12 @@ class AllModels:
             
             # Only train from conv3_1
             print('   Freezing first few layers...')
+            
+            nb_freeze_layers = 18 if cfg.do_finetune else cfg.nb_freeze_layers
+            print('   Freeze up to', nb_freeze_layers)
             for i, layer in enumerate(self.model_rpn.layers):
                 layer.trainable = False
-                if i > 6:
+                if i == nb_freeze_layers:
                     break
         
         ########################
@@ -483,7 +486,7 @@ class AllModels:
             # Only train from conv3_1
             for i, layer in enumerate(self.model_det.layers):
                 layer.trainable = False
-                if i > 6:
+                if i == self.cfg.nb_freeze_layers:
                     break
 
         ########################

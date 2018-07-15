@@ -130,6 +130,8 @@ class basic_config:
        self.move = False
        self.use_shared_cnn = False
        self.my_shared_weights = None
+       self.do_finetune = False
+       self.nb_freeze_layers = 7
        
        #basics
        self.dataset = 'HICO'
@@ -322,6 +324,9 @@ class basic_config:
               # final epoch
               assert arg.isdigit(), 'final epoch must be int'
               self.epoch_end = int(arg)
+              
+          if opt == '-F':
+              self.do_finetune = True
           if opt == '-g':
               # generator iterator type
               self.train_cfg.type = arg

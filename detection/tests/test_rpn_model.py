@@ -48,13 +48,13 @@ if True:
     Stages = stages.AllStages(cfg, Models, obj_mapping, hoi_mapping, mode='test')
 
 
-genIterator = genVal.begin()
+genIterator = genTrain.begin()
 
 for i in range(1):
-#    X, y, imageMeta, imageDims, times = next(genIterator)
+    X, y, imageMeta, imageDims, times = next(genIterator)
     imageID = imageMeta['imageName'].split('.')[0]
     
-    X, imageDims = filters_rpn.prepareInputs(imageMeta, genVal.images_path, cfg)
+    X, imageDims = filters_rpn.prepareInputs(imageMeta, genTrain.images_path, cfg)
     Y_tmp = filters_rpn.createTargets(imageMeta, imageDims, cfg)
     y = filters_rpn.reduceData(Y_tmp, cfg)
 

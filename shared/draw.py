@@ -409,21 +409,21 @@ def drawPositiveHoI(img, hbboxes, obboxes, patterns, props, imageMeta, imageDims
     nb_pairs = hbboxes.shape[0]
     c_idx=0
     for idx in range(nb_pairs):
-        if idx > 5 and idx < 100:
-            continue
-        if idx > 105:
-            break
-        
-        f, spl = plt.subplots(2,2)
-        spl = spl.ravel()
-        spl[0].imshow(img)
+#        if idx > 5 and idx < 100:
+#            continue
+#        if idx > 105:
+#            break
 #        hprop = (hbboxes[idx,4])
 #        oprop = (obboxes[idx,4])
 #        hlbl = int(hbboxes[idx,5])
 #        olbl = int(obboxes[idx,5])
         hoiprop = np.where(props[idx,:]>0.5)[0]
-        print(idx, hoiprop)
-        if len(hoiprop)>0 or True:
+        if len(hoiprop)>0:
+            print(idx, hoiprop)
+            
+            f, spl = plt.subplots(2,2)
+            spl = spl.ravel()   
+            spl[0].imshow(img)
             c = colours[c_idx]
             hbbox = hbboxes[idx,:4]*16
             obbox = obboxes[idx,:4]*16
@@ -431,8 +431,9 @@ def drawPositiveHoI(img, hbboxes, obboxes, patterns, props, imageMeta, imageDims
             obbox = drawProposalBox(obbox)
             spl[0].plot(hbbox[0,:], hbbox[1,:], c=c)
             spl[0].plot(obbox[0,:], obbox[1,:], c=c)
-            spl[2].imshow(patterns[idx,:,:,0])
-            spl[3].imshow(patterns[idx,:,:,1])
+            if patterns is not None:
+                spl[2].imshow(patterns[idx,:,:,0])
+                spl[3].imshow(patterns[idx,:,:,1])
             idxs.append(idx)
 #            print('Pos. label:', inv_obj_mapping[hlbl], inv_obj_mapping[olbl], hprop, oprop, hoiprop)
             

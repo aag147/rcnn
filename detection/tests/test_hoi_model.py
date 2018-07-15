@@ -49,7 +49,7 @@ if True:
 genIterator = genTrain.begin()
 
 for i in range(1):
-#    [X, all_hbboxes, all_obboxes, all_val_map], all_target_labels, imageMeta, imageDims, _ = next(genIterator)
+    [X, all_hbboxes, all_obboxes, all_val_map], all_target_labels, imageMeta, imageDims, _ = next(genIterator)
     imageID = imageMeta['imageName'].split('.')[0]
 
 
@@ -74,7 +74,7 @@ for i in range(1):
     draw.drawOverlapRois(img, bboxes, imageMeta, imageDims, cfg, obj_mapping)
     draw.drawGTBoxes(img, imageMeta, imageDims)
 #    draw.drawPositiveCropHoI(batch_h[:,1:], batch_o[:,1:], batch_hcrop[:,1:], batch_ocrop[:,1:], batch_p, None, imageMeta, imageDims, cfg, obj_mapping)
-    idxs = draw.drawPositiveHoI(img, pred_hbboxes, pred_obboxes, pred_props, imageMeta, imageDims, cfg, obj_mapping)
+    idxs = draw.drawPositiveHoI(img, pred_hbboxes, pred_obboxes, None, pred_props, imageMeta, imageDims, cfg, obj_mapping)
 #    good_bboxes = np.copy(all_obboxes[0,idxs,:])
 #    good_bboxes[:,2] += good_bboxes[:,0]
 #    good_bboxes[:,3] += good_bboxes[:,1]
