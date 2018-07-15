@@ -293,7 +293,7 @@ class basic_config:
    def get_args(self):
        try:
           argv = sys.argv[1:]
-          opts, args = getopt.getopt(argv,"ab:c:d:e:fF:g:hi:j:l:m:n:o:pq:r:s:tuw:x:z")
+          opts, args = getopt.getopt(argv,"ab:c:d:e:f:Fg:hi:j:l:m:n:o:pq:r:s:tuw:x:z")
        except getopt.GetoptError:
           print('Wrong arg opt..', argv)
           sys.exit(2)
@@ -322,7 +322,7 @@ class basic_config:
               self.epoch_splits = splits
           if opt == '-f':
               # final epoch
-              assert arg.isdigit(), 'final epoch must be int'
+              assert arg.isdigit(), 'final epoch must be int %s' % arg
               self.epoch_end = int(arg)
               
           if opt == '-F':
