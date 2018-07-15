@@ -93,6 +93,13 @@ def intct_reduction(cfg):
     
     return _slow
 
+
+def identity(cfg):
+    def _identity(x):
+        y = Lambda(lambda x: x)(x)
+        return y
+    return _identity
+
 def fullyConnected(cfg, stream=None, use_dropout=True):
     def fullyConnectedFixed(x):
         assert(len(x) == 1)

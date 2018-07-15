@@ -585,6 +585,17 @@ class AllModels:
                 "sigmoid",
                 name="hoi_out_class"
             )(hoi_score)
+            
+            human_fast_input = layers.identity(
+                cfg
+            )([
+                human_fast_input
+            ])
+            object_fast_input = layers.identity(
+                cfg
+            )([
+                object_fast_input
+            ])
     
             
             if self.mode=='test':    
@@ -675,6 +686,18 @@ class AllModels:
                 "sigmoid",
                 name="hoi_out_class"
             )(hoi_score)
+            
+            
+            human_slow_input = layers.identity(
+                cfg
+            )([
+                human_slow_input
+            ])
+            object_slow_input = layers.identity(
+                cfg
+            )([
+                object_slow_input
+            ])
     
             
             if self.mode=='test':    
