@@ -39,9 +39,9 @@ if True:
 #if True:
     nb_total = np.zeros(600)
     nb_tp = np.zeros(600)
-    for i, (imageID, imageMeta) in enumerate(genTest.imagesMeta.items()):
+    for j, (imageID, imageMeta) in enumerate(genTest.imagesMeta.items()):
         
-        utils.update_progress_new(i+1, genTest.nb_batches, imageID)
+        utils.update_progress_new(j+1, genTest.nb_batches, imageID)
         
         img = cv.imread(genTest.images_path + imageMeta['imageName'])
         X, imageDims = filters_rpn.prepareInputs(imageMeta, genTest.images_path, cfg)
@@ -53,7 +53,7 @@ if True:
         if np.max(gtbboxes[:,2]) > 2+imageDims['output_shape'][1] or np.max(gtbboxes[:,3]) > 2+imageDims['output_shape'][0]:
             print('bad bbs', imageID, np.max(gtbboxes[:,2]), np.max(gtbboxes[:,3]), imageDims['output_shape'])
         
-        imageInputs = utils.load_obj(cfg.my_input_path + 'trainold/' + imageID)
+        imageInputs = utils.load_obj(cfg.my_input_path + 'testnew/' + imageID)
         idxs = np.where(np.array(imageInputs['val_map'])==3)[0]
         nb_preds = len(idxs)
         hbboxes = np.array(imageInputs['hbboxes'])[idxs,:] / 1000.0
@@ -97,14 +97,14 @@ if True:
         img += cfg.PIXEL_MEANS
         img = img.astype(np.uint8)
         draw.drawGTBoxes(img, imageMeta, imageDims)    
-        draw.drawPositiveHoI(img, hbboxes[0], obboxes[0], target_labels[0], imageMeta, imageDims, cfg, obj_mapping)
+        draw.drawPositiveHoI(img, hbboxes[0], obboxes[0], None, target_labels[0], imageMeta, imageDims, cfg, obj_mapping)
         hcrops, ocrops = filters_hoi.convertBB2Crop(X, hbboxes, obboxes, imageDims)
     
         draw.drawPositiveCropHoI(hbboxes[0], obboxes[0], hcrops, ocrops, patterns[0], target_labels[0], imageMeta, imageDims, cfg, obj_mapping)
             
         
         
-        if i == 5:
+        if j == 5:
             break
 
 
