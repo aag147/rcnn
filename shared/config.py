@@ -282,9 +282,9 @@ class basic_config:
        self.nb_hoi_rois = 32
        
        self.hoi_only_pos = False
-       self.hoi_pos_share  = int(self.nb_hoi_rois / 8.0 * 4)
-       self.hoi_neg1_share = int(self.nb_hoi_rois / 8.0 * 1)
-       self.hoi_neg2_share = int(self.nb_hoi_rois / 8.0 * 3)
+       self.hoi_pos_share  = int(self.nb_hoi_rois / 8.0 * 2)
+       self.hoi_neg1_share = int(self.nb_hoi_rois / 8.0 * 2)
+       self.hoi_neg2_share = int(self.nb_hoi_rois / 8.0 * 4)
         
        # model
 #       self.nb_object_classes = 81
@@ -293,9 +293,9 @@ class basic_config:
    def get_args(self):
        try:
           argv = sys.argv[1:]
-          opts, args = getopt.getopt(argv,"ab:c:d:e:f:g:hi:j:l:m:n:o:pq:r:s:tuw:x:z")
+          opts, args = getopt.getopt(argv,"ab:c:d:e:fF:g:hi:j:l:m:n:o:pq:r:s:tuw:x:z")
        except getopt.GetoptError:
-          print('.py argument error')
+          print('Wrong arg opt..', argv)
           sys.exit(2)
      
 #    augment, backbone, cfg_method, dataset, epoch_split, final_epoch, generator_type, input_roi_dir, learning_rate, model, nb_batches, optimizer, results_dir, start_epoch, transfor data, uniform_sampling, weighing, ma(x)_classes
