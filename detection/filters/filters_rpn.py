@@ -77,7 +77,10 @@ def convertData(Y, cfg):
 
 def convertResults(bboxes, imageMeta, scale, rpn_stride):
     bboxes = np.copy(bboxes)
-    imageID = int(imageMeta['imageID'])
+    try:
+        imageID = int(imageMeta['imageID'])
+    except ValueError:
+        imageID = imageMeta['imageID']
     results = []
 
     idxs = np.argsort(bboxes[:,4])[::-1]
