@@ -418,7 +418,7 @@ def drawPositiveHoI(img, hbboxes, obboxes, patterns, props, imageMeta, imageDims
 #        oprop = (obboxes[idx,4])
 #        hlbl = int(hbboxes[idx,5])
 #        olbl = int(obboxes[idx,5])
-        hoiprop = np.where(props[idx,:]>0.10)[0]
+        hoiprop = np.where(props[idx,:]>0.01)[0]
         if len(hoiprop)>0:
             print(idx, hoiprop)
             
