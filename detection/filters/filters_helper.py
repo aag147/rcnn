@@ -26,16 +26,21 @@ def deltas2ObjBoxes(props, deltas, rois, imageDims, cfg, obj_mapping, do_regr=Tr
     bboxes = []
     obj_labels = [x for key,x in obj_mapping.items() if key != 'bg']
     
-    # standard deviation    
+    
     for labelID in obj_labels:
         label_pos = labelID - 1
-        idxs = np.argsort(props[0,:,labelID])[nb_bboxes-nb_top_bboxes:]
+#        idxs = np.argsort(props[0,:,labelID])[nb_bboxes-nb_top_bboxes:]
+        idxs = np.where(props[0,:,labelID]>0.05)[0]
         
         # extract label data
-        labelprops  = props[0,idxs,labelID]
+#        labelprops  = props[0,idxs,labelID]
+#        idxs2idxs = np.where(labelprops>0.05)[0]
+#        idxs = idxs[idxs2idxs]
+        if len(idxs)==0:
+            continue
+        labelprops  = props[0,idxs,labelID]        
         labeldeltas = deltas[0,idxs,4*label_pos:4*(label_pos+1)]
         labelrois   = rois[0,idxs,:]
-        
         if do_std:
             sx, sy, sw, sh = cfg.det_regr_std
             labeldeltas[:,0] /= sx
@@ -59,7 +64,7 @@ def deltas2ObjBoxes(props, deltas, rois, imageDims, cfg, obj_mapping, do_regr=Tr
                 
         # append props
         labelprops = np.expand_dims(labelprops, axis=1)
-        labellabels = np.expand_dims([labelID]*nb_top_bboxes, axis=1)
+        labellabels = np.expand_dims([labelID]*labelprops.shape[0], axis=1)
         label_bboxes = np.array(label_bboxes)
         label_bboxes = np.concatenate([label_bboxes, labelprops], axis=1)
         label_bboxes = np.concatenate([label_bboxes, labellabels], axis=1)

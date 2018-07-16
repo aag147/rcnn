@@ -406,7 +406,8 @@ def createTargets(bboxes, imageMeta, imageDims, cfg, class_mapping):
 #    print(gthboxes)
 #    print(gtoboxes)
     
-    
+    p2o_idxs = np.where(obboxes[:,5]==1)[0]
+    o2p_idxs = {x:i for i,x in enumerate(p2o_idxs)}
     for hidx, hbox in enumerate(hbboxes):
         h_ious = helper._computeIoUs(hbox, gthboxes)
             
@@ -414,6 +415,11 @@ def createTargets(bboxes, imageMeta, imageDims, cfg, class_mapping):
             objlabel = int(obox[5])
             o_ious = helper._computeIoUs(obox, gtoboxes)
                         
+            if objlabel==1 and (val_map[o2p_idxs[oidx],p2o_idxs[hidx]]>-1 and False or o2p_idxs[oidx]==hidx):
+                continue
+            
+            if objlabel==1:
+                print(hidx, oidx, p2o_idxs[hidx], o2p_idxs[oidx])
         
 #            print(gt_relmap.shape, len(h_ious), len(o_ious))
             for gth_idx, h_iou in enumerate(h_ious):

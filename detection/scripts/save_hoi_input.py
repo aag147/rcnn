@@ -24,8 +24,7 @@ import numpy as np
 import utils
 
 import os
-os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
-os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
+
 
 if True:
     # Load data
@@ -43,23 +42,23 @@ if True:
     sys.stdout.flush()
 
 #if True:
-#    cfg.det_nms_overlap_thresh = 0.5
-#    Stages = stages.AllStages(cfg, Models, obj_mapping, hoi_mapping, mode='train')
-#    imageInputs, imageID, bboxes = hoi_test.saveInputData(genTest, Stages, cfg)
-    cfg.det_nms_overlap_thresh = 0.9
+    cfg.det_nms_overlap_thresh = 0.5
     Stages = stages.AllStages(cfg, Models, obj_mapping, hoi_mapping, mode='train')
-    imageInputs, imageID, bboxes = hoi_test.saveInputData(genTrain, Stages, cfg)
+    imageInputs, imageID, bboxes = hoi_test.saveInputData(genTest, Stages, cfg)
+#    cfg.det_nms_overlap_thresh = 0.9
+#    Stages = stages.AllStages(cfg, Models, obj_mapping, hoi_mapping, mode='train')
+#    imageInputs, imageID, bboxes = hoi_test.saveInputData(genTrain, Stages, cfg)
 
-if True:
+if False:
 #    imageID = 'HICO_train2015_00025124'
     imageInputs = utils.load_obj(cfg.my_output_path + imageID)
 #    keys = list(inputMeta.keys())
     
 #    for imageID in keys:
-    imageMeta = genTrain.imagesMeta[imageID]
+    imageMeta = genTest.imagesMeta[imageID]
 #        imageInputs = inputMeta[imageID]
 
-    X, imageDims = filters_rpn.prepareInputs(imageMeta, genTrain.images_path, cfg)
+    X, imageDims = filters_rpn.prepareInputs(imageMeta, genTest.images_path, cfg)
     Y_tmp = filters_hoi.loadData(imageInputs, imageDims, cfg)
 
     hbboxes, obboxes, target_labels, val_map = Y_tmp
