@@ -181,10 +181,11 @@ class AllModels:
         if type(cfg.my_weights)==str and len(cfg.my_weights)>0:
             print('Loading my weights...')
             
-            if self.do_rpn:    
+            if self.do_rpn:
                 print('   Loading RPN weights...')
+                wdir = 'TUPPMI' if cfg.dataset=='TUPPMI' else 'COCO'
                 if self.mode == 'test' and self.nb_models > 0:
-                    path = cfg.part_results_path + "COCO/rpn" + cfg.my_results_dir
+                    path = cfg.part_results_path + wdir + "/rpn" + cfg.my_results_dir
                     self.model_rpn, rpn_before, rpn_after = self._load_test_weights(self.model_rpn, path)
                 elif cfg.use_shared_cnn:
                     self.model_rpn, rpn_before, rpn_after = self._load_shared_weights(self.model_rpn)

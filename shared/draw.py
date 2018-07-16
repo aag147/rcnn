@@ -217,6 +217,7 @@ def drawPositiveHoIs(img, h_bbox, o_bbox, labels, label_mapping, imageMeta, imag
         spl[spl_idx].plot(hbox[0,:], hbox[1,:])
         spl[spl_idx].plot(obox[0,:], obox[1,:])
 #        print(labels.shape)
+
         lbs = ', '.join([label_mapping[x]['pred_ing'] for x in np.where(labels[idx,:]>0.5)[0]]) + ' ' + label_mapping[np.where(labels[idx,:]>0.5)[0][0]]['obj'] if np.sum(labels[idx,:])>0 else 'none'
         print('label:', lbs)
         spl_idx += 1

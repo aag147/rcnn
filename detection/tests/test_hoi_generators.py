@@ -71,6 +71,6 @@ for batchidx in range(genTrain.nb_batches):
     obboxes = np.expand_dims(obboxes,axis=0)
     h_bboxes, o_bboxes = filters_hoi.unprepareInputs(hbboxes, obboxes, imageDims)
     draw.drawGTBoxes(img, imageMeta, imageDims)
-#    draw.drawPositiveHoIs(img, h_bboxes[0], o_bboxes[0], target_labels, obj_mapping, imageMeta, imageDims, cfg)
-#    draw.drawPositiveHoI(img, h_bboxes[0], o_bboxes[0], patterns, target_labels, imageMeta, imageDims, cfg, obj_mapping)
+    draw.drawPositiveHoIs(img, h_bboxes[0], o_bboxes[0], target_labels, hoi_mapping, imageMeta, imageDims, cfg)
+    draw.drawPositiveHoI(img, h_bboxes[0], o_bboxes[0], patterns, target_labels, imageMeta, imageDims, cfg, obj_mapping)
 #    

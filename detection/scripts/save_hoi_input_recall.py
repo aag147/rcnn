@@ -34,17 +34,23 @@ if True:
     genTrain = DataGenerator(imagesMeta = data.trainGTMeta, cfg=cfg, data_type='train', do_meta=True)
     genTest = DataGenerator(imagesMeta = data.valGTMeta, cfg=cfg, data_type='test', do_meta=True)
     
+    
+    generator = genTrain
+    
     sys.stdout.flush()
 
 #if True:
     nb_total = np.zeros(600)
     nb_tp = np.zeros(600)
-    for j, (imageID, imageMeta) in enumerate(genTest.imagesMeta.items()):
+    for j, (imageID, imageMeta) in enumerate(generator.imagesMeta.items()):
         
-        utils.update_progress_new(j+1, genTest.nb_batches, imageID)
+#        imageID = 'HICO_train2015_00028567'
+#        imageMeta = generator.imagesMeta[imageID]
         
-        img = cv.imread(genTest.images_path + imageMeta['imageName'])
-        X, imageDims = filters_rpn.prepareInputs(imageMeta, genTest.images_path, cfg)
+        utils.update_progress_new(j+1, generator.nb_batches, imageID)
+        
+        img = cv.imread(generator.images_path + imageMeta['imageName'])
+        X, imageDims = filters_rpn.prepareInputs(imageMeta, generator.images_path, cfg)
         objs = imageMeta['objects']
         gt_rels = imageMeta['rels']
         gtbboxes = helper._transformGTBBox(objs, obj_mapping, None, scale=imageDims['scale'], rpn_stride=cfg.rpn_stride, dosplit=False)
@@ -53,7 +59,7 @@ if True:
         if np.max(gtbboxes[:,2]) > 2+imageDims['output_shape'][1] or np.max(gtbboxes[:,3]) > 2+imageDims['output_shape'][0]:
             print('bad bbs', imageID, np.max(gtbboxes[:,2]), np.max(gtbboxes[:,3]), imageDims['output_shape'])
         
-        imageInputs = utils.load_obj(cfg.my_input_path + 'testnew/' + imageID)
+        imageInputs = utils.load_obj(cfg.my_input_path + 'trainnew/' + imageID)
         idxs = np.where(np.array(imageInputs['val_map'])==3)[0]
         nb_preds = len(idxs)
         hbboxes = np.array(imageInputs['hbboxes'])[idxs,:] / 1000.0
@@ -85,7 +91,8 @@ if True:
             nb_total[rel[2]] += 1
 
          
-        continue
+        
+#        continue
         import draw
         Y_tmp = filters_hoi.loadData(imageInputs, imageDims, cfg)
     
@@ -100,10 +107,10 @@ if True:
         draw.drawPositiveHoI(img, hbboxes[0], obboxes[0], None, target_labels[0], imageMeta, imageDims, cfg, obj_mapping)
         hcrops, ocrops = filters_hoi.convertBB2Crop(X, hbboxes, obboxes, imageDims)
     
-        draw.drawPositiveCropHoI(hbboxes[0], obboxes[0], hcrops, ocrops, patterns[0], target_labels[0], imageMeta, imageDims, cfg, obj_mapping)
+#        draw.drawPositiveCropHoI(hbboxes[0], obboxes[0], hcrops, ocrops, patterns[0], target_labels[0], imageMeta, imageDims, cfg, obj_mapping)
             
         
-        
+        break
         if j == 5:
             break
 
