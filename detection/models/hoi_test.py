@@ -59,7 +59,7 @@ def saveInputData(generator, Stages, cfg):
         utils.save_obj(inputMeta, save_path + imageID)
     return inputMeta, imageID, bboxes
 
-def saveEvalData(generator, Stages, cfg):
+def saveEvalData(generator, Stages, cfg, obj_mapping):
     genIterator = generator.begin()
     
     evalData = []
@@ -77,7 +77,7 @@ def saveEvalData(generator, Stages, cfg):
             continue
         
         #CONVERT
-        evalData += filters_hoi.convertResults(pred_hbboxes, pred_obboxes, pred_props, imageMeta, imageDims['scale'], cfg.rpn_stride)
+        evalData += filters_hoi.convertResults(pred_hbboxes, pred_obboxes, pred_props, imageMeta, imageDims['scale'], cfg.rpn_stride, obj_mapping)
     return evalData
 
 def saveEvalResults(evalData, generator, cfg, obj_mapping, hoi_mapping):

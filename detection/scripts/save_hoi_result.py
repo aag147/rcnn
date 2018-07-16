@@ -38,7 +38,7 @@ if True:
     
 
 # Test data
-evalTest = hoi_test.saveEvalData(genTest, Stages, cfg)
+evalTest = hoi_test.saveEvalData(genTest, Stages, cfg, hoi_mapping)
 hoi_test.saveEvalResults(evalTest, genTest, cfg, obj_mapping, hoi_mapping)
 
 # Train data

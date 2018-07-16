@@ -84,6 +84,9 @@ def computeHOIAP(batch, GTMeta, nb_gt_samples, hoi_id):
         
     
     mAP = np.mean(APs)
+    
+    print(props, tp)
+    print(mAP, nb_gt_samples[hoi_id], APs, tp[-1], fp[-1])
     return mAP
 
     
@@ -104,6 +107,7 @@ def computeHOImAP(COCO_mapping, imagesMeta, class_mapping, hoi_mapping, cfg):
         for gt_rel in gt_rels:
             nb_gt_samples[gt_rel[2]] += 1
     
+    
     AP_map = np.zeros((len(hoi_mapping)))
         
     for hoi_id, hoi_label in enumerate(hoi_mapping):
@@ -112,7 +116,6 @@ def computeHOImAP(COCO_mapping, imagesMeta, class_mapping, hoi_mapping, cfg):
         if len(batch)==0:
             continue
         AP = computeHOIAP(batch, newGTMeta, nb_gt_samples, hoi_id)
-        print(AP)
         AP_map[hoi_id] = AP
         
     mAP = np.mean(AP_map)

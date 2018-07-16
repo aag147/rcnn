@@ -49,7 +49,7 @@ if True:
 genIterator = genVal.begin()
 
 for i in range(1):
-#    [X, all_hbboxes, all_obboxes, all_val_map], all_target_labels, imageMeta, imageDims, _ = next(genIterator)
+    [X, all_hbboxes, all_obboxes, all_val_map], all_target_labels, imageMeta, imageDims, _ = next(genIterator)
     imageID = imageMeta['imageName'].split('.')[0]
 
 
