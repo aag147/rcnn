@@ -261,7 +261,11 @@ def computeRPNAR(COCO_mapping, imagesMeta, class_mapping, cfg):
         
         nb = gt_bboxes.shape[0]
         for gt_bbox in gt_bboxes:
-            newGTMeta.append({'image_id': int(imageID), 'bbox': gt_bbox})
+            try:
+                imageID = int(imageID)
+            except ValueError:
+                imageID = imageID
+            newGTMeta.append({'image_id': imageID, 'bbox': gt_bbox})
         
         nb_gt_samples += nb
         
