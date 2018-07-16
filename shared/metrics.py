@@ -85,7 +85,6 @@ def computeHOIAP(batch, GTMeta, nb_gt_samples, hoi_id):
     
     mAP = np.mean(APs)
     
-    print(props, tp)
     print(mAP, nb_gt_samples[hoi_id], APs, tp[-1], fp[-1])
     return mAP
 
