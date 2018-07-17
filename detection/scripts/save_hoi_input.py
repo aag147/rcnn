@@ -59,21 +59,22 @@ if False:
 #        imageInputs = inputMeta[imageID]
 
     X, imageDims = filters_rpn.prepareInputs(imageMeta, genTest.images_path, cfg)
-    Y_tmp = filters_hoi.loadData(imageInputs, imageDims, cfg)
+#    Y_tmp = filters_hoi.loadData(imageInputs, imageDims, cfg)
 
-    hbboxes, obboxes, target_labels, val_map = Y_tmp
-    obboxescp = np.copy(obboxes)
+#    hbboxes, obboxes, target_labels, val_map = Y_tmp
+#    obboxescp = np.copy(obboxes)
 #    hbboxes, obboxes, target_labels, val_map = filters_hoi.reduceTargets(Y_tmp, cfg)
-    patterns = filters_hoi.createInteractionPatterns(hbboxes, obboxes, cfg)
-    hcrops, ocrops = filters_hoi.convertBB2Crop(X, hbboxes, obboxes, imageDims)
+#    patterns = filters_hoi.createInteractionPatterns(hbboxes, obboxes, cfg)
+#    hcrops, ocrops = filters_hoi.convertBB2Crop(X, hbboxes, obboxes, imageDims)
 
     import draw
     img = np.copy(X[0])
     img += cfg.PIXEL_MEANS
     img = img.astype(np.uint8)
     draw.drawGTBoxes(img, imageMeta, imageDims)
-    draw.drawPositiveCropHoI(hbboxes[0], obboxes[0], hcrops, ocrops, patterns[0], target_labels[0], imageMeta, imageDims, cfg, obj_mapping)
-    draw.drawPositiveHoI(img, hbboxes[0], obboxes[0], patterns[0], target_labels[0], imageMeta, imageDims, cfg, obj_mapping)
+#    draw.drawPositiveCropHoI(hbboxes[0], obboxes[0], hcrops, ocrops, patterns[0], target_labels[0], imageMeta, imageDims, cfg, obj_mapping)
+#    draw.drawPositiveHoI(img, hbboxes[0], obboxes[0], patterns[0], target_labels[0], imageMeta, imageDims, cfg, obj_mapping)
+    draw.drawHumanAndObjectRois(img, bboxes[0], imageMeta, obj_mapping)
 
 print()
 print('Path:', cfg.my_output_path)

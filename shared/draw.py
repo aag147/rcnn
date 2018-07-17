@@ -363,6 +363,34 @@ def drawOverlapRois(img, rois, imageMeta, imageDims, cfg, obj_mapping):
 #        spl.plot(bbox[0,:], bbox[1,:])
     return (bboxes)
 
+
+def drawHumanAndObjectRois(img, rois, imageMeta, obj_mapping):
+    f, spl = plt.subplots(2,1)
+    spl[0].axis('off')
+    spl[1].axis('off')
+    spl[0].imshow(img)
+    spl[1].imshow(img)
+    
+    gt_labels = [obj_mapping[x['label']] for x in imageMeta['objects']]
+    
+    bboxes = []
+    hi = 0
+    oi = 0
+    for roi in rois:
+        labelID = int(roi[5])
+        if labelID==1 and hi < 15:
+            bb = roi[0:4]*16
+            bbox = drawProposalBox(bb)
+            spl[0].plot(bbox[0,:], bbox[1,:], c='red')
+            bboxes.append(bb)
+            hi += 1
+        elif labelID > 1 and oi < 15 and labelID in gt_labels:
+            bb = roi[0:4]*16
+            bbox = drawProposalBox(bb)
+            spl[1].plot(bbox[0,:], bbox[1,:], c='blue')
+            bboxes.append(bb)
+            oi += 1
+
 def drawPositiveRois(img, rois, obj_mapping):
     f, spl = plt.subplots(1)
     spl.axis('off')

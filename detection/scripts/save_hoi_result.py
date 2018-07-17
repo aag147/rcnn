@@ -36,7 +36,7 @@ if True:
     Models = methods.AllModels(cfg, mode='test', do_rpn=False, do_det=False, do_hoi=True)
     Stages = stages.AllStages(cfg, Models, obj_mapping, hoi_mapping, mode='test')
     
-
+sys.stdout.flush()
 # Test data
 evalTest = hoi_test.saveEvalData(genTest, Stages, cfg, hoi_mapping)
 hoi_test.saveEvalResults(evalTest, genTest, cfg, obj_mapping, hoi_mapping)

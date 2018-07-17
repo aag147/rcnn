@@ -21,7 +21,6 @@ import copy as cp
 def deltas2ObjBoxes(props, deltas, rois, imageDims, cfg, obj_mapping, do_regr=True, do_std=True):   
     output_shape = imageDims['output_shape']
     
-    nb_bboxes = rois.shape[1]
     nb_top_bboxes = 10
     bboxes = []
     obj_labels = [x for key,x in obj_mapping.items() if key != 'bg']
@@ -29,7 +28,6 @@ def deltas2ObjBoxes(props, deltas, rois, imageDims, cfg, obj_mapping, do_regr=Tr
     
     for labelID in obj_labels:
         label_pos = labelID - 1
-#        idxs = np.argsort(props[0,:,labelID])[nb_bboxes-nb_top_bboxes:]
         idxs = np.where(props[0,:,labelID]>0.05)[0]
         
         # extract label data
@@ -71,6 +69,7 @@ def deltas2ObjBoxes(props, deltas, rois, imageDims, cfg, obj_mapping, do_regr=Tr
         bboxes.extend(label_bboxes)
     
     bboxes = np.array(bboxes)
+    
     return bboxes
 
 def deltas2Boxes(props, deltas, rois, imageDims, cfg, do_regr=True, do_std=True):   
@@ -126,7 +125,7 @@ def deltas2Boxes(props, deltas, rois, imageDims, cfg, do_regr=True, do_std=True)
 
     return boxes
 
-def non_max_suppression_boxes(bboxes, cfg, nms_overlap_thresh=0.5):
+def non_max_suppression_boxes(bboxes, cfg, nms_overlap_thresh=0.5, max_boxes=300):
     # add some nms to reduce many boxes
     new_bboxes = []
     labelIDs = bboxes[:,5]
@@ -135,7 +134,7 @@ def non_max_suppression_boxes(bboxes, cfg, nms_overlap_thresh=0.5):
         sub_bboxes = bboxes[idxs,:]
         if sub_bboxes.shape[0] == 0:
             continue
-        boxes_nms = non_max_suppression_fast(sub_bboxes, overlap_thresh=nms_overlap_thresh)
+        boxes_nms = non_max_suppression_fast(sub_bboxes, overlap_thresh=nms_overlap_thresh,  max_boxes=max_boxes)
         new_bboxes.extend(boxes_nms)
         
     new_bboxes = np.array(new_bboxes)

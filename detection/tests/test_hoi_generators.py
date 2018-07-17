@@ -41,7 +41,7 @@ genTest = DataGenerator(imagesMeta = data.valGTMeta, cfg=cfg, data_type='test', 
 
 
 Stages = stages.AllStages(cfg, None, obj_mapping, hoi_mapping, mode='test')
-imageID = 'HICO_test2015_00009331'
+imageID = 'HICO_test2015_00004247'
 imageMeta = genTest.imagesMeta[imageID]
 #X, y, imageDims = Stages.stagezero(imageMeta, genTest.data_type)
 #imageInputs = utils.load_obj(cfg.my_input_path + 'testnew/' + imageID)
@@ -94,6 +94,7 @@ img = img.astype(np.uint8)
 #obboxes = np.expand_dims(obboxes,axis=0)
 #h_bboxes, o_bboxes = filters_hoi.unprepareInputs(hbboxes, obboxes, imageDims)
 draw.drawGTBoxes(img, imageMeta, imageDims)
-draw.drawPositiveHoIs(img, hbboxes[0], obboxes[0], target_labels[0], hoi_mapping, imageMeta, imageDims, cfg)
-draw.drawPositiveHoI(img, hbboxes[0], obboxes[0], patterns[0], target_labels[0], imageMeta, imageDims, cfg, obj_mapping)
-draw.drawOverlapRois(img, bboxes[0], imageMeta, imageDims, cfg, obj_mapping)
+#draw.drawPositiveHoIs(img, hbboxes[0], obboxes[0], target_labels[0], hoi_mapping, imageMeta, imageDims, cfg)
+#draw.drawPositiveHoI(img, hbboxes[0], obboxes[0], patterns[0], target_labels[0], imageMeta, imageDims, cfg, obj_mapping)
+#draw.drawOverlapRois(img, bboxes[0], imageMeta, imageDims, cfg, obj_mapping)
+draw.drawHumanAndObjectRois(img, bboxes[0])

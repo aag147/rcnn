@@ -106,7 +106,7 @@ class AllStages:
         if len(bboxes) == 0:
             return None
         
-        bboxes_nms = helper.non_max_suppression_boxes(bboxes, self.cfg, self.det_nms_thresh)
+        bboxes_nms = helper.non_max_suppression_boxes(bboxes, self.cfg, self.det_nms_thresh, max_boxes=10)
         
         bboxes_nms = np.expand_dims(bboxes_nms, axis=0)
         
