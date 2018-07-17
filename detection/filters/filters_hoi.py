@@ -184,7 +184,7 @@ def convertData(Y, cfg, mode='train'):
     if mode=='train':
         sel_samples = filterTargets(all_val_map, None, 75, None, nb_neg2=150)
     else:
-        if len(all_val_map)==0:
+        if all_val_map is None:
             return None
         sel_samples = filterTargets(all_val_map, None, None, None, nb_neg2=None)
         if len(sel_samples)==0:
@@ -420,8 +420,6 @@ def createTargets(bboxes, imageMeta, imageDims, cfg, class_mapping):
             if objlabel==1 and (val_map[o2p_idxs[oidx],p2o_idxs[hidx]]>-1 and False or o2p_idxs[oidx]==hidx):
                 continue
             
-            if objlabel==1:
-                print(hidx, oidx, p2o_idxs[hidx], o2p_idxs[oidx])
         
 #            print(gt_relmap.shape, len(h_ious), len(o_ious))
             for gth_idx, h_iou in enumerate(h_ious):
