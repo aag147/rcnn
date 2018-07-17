@@ -184,6 +184,8 @@ def convertData(Y, cfg, mode='train'):
     if mode=='train':
         sel_samples = filterTargets(all_val_map, None, 75, None, nb_neg2=150)
     else:
+        if len(all_val_map)==0:
+            return None
         sel_samples = filterTargets(all_val_map, None, None, None, nb_neg2=None)
         if len(sel_samples)==0:
             return None
