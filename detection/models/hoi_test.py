@@ -60,6 +60,13 @@ def saveInputData(generator, Stages, cfg):
     return inputMeta, imageID, bboxes
 
 def saveEvalData(generator, Stages, cfg, obj_mapping):
+    
+    cfg.my_output_path = cfg.results_path + 'hoi' + cfg.my_results_dir + '/res/' + generator.data_type + generator.approach + '/'
+    
+    if not os.path.exists(cfg.my_output_path):
+        os.makedirs(cfg.my_output_path)
+    save_path = cfg.my_output_path
+    print('   save_path:', save_path)
     genIterator = generator.begin()
     
     evalData = []
@@ -79,7 +86,8 @@ def saveEvalData(generator, Stages, cfg, obj_mapping):
         
         
         #CONVERT
-        evalData += filters_hoi.convertResults(pred_hbboxes, pred_obboxes, pred_props, imageMeta, imageDims['scale'], cfg.rpn_stride, obj_mapping)
+        evalData = filters_hoi.convertResults(pred_hbboxes, pred_obboxes, pred_props, imageMeta, imageDims['scale'], cfg.rpn_stride, obj_mapping)
+        utils.save_obj(evalData, save_path + imageID)
     return evalData
 
 def saveEvalResults(evalData, generator, cfg, obj_mapping, hoi_mapping):

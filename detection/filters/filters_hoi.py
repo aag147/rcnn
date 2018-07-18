@@ -245,7 +245,7 @@ def convertResults(hbboxes, obboxes, predicted_labels, imageMeta, scale, rpn_str
         hbbox = hbboxes[bidx,:]
         obbox = obboxes[bidx,:]
         preds = predicted_labels[bidx]
-        labels = np.where(preds>0.01)[0].tolist()
+        labels = np.where(preds>0.05)[0].tolist()
         props = preds[labels]
         nb_preds = len(labels)
 

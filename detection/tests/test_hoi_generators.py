@@ -41,10 +41,10 @@ genTest = DataGenerator(imagesMeta = data.valGTMeta, cfg=cfg, data_type='test', 
 
 
 Stages = stages.AllStages(cfg, None, obj_mapping, hoi_mapping, mode='test')
-imageID = 'HICO_test2015_00004209'
+imageID = 'HICO_test2015_00005579'
 imageMeta = genTest.imagesMeta[imageID]
 X, y, imageDims = Stages.stagezero(imageMeta, genTest.data_type)
-imageInputs = utils.load_obj(cfg.my_input_path + 'testnew/' + imageID)
+imageInputs = utils.load_obj(cfg.my_input_path + 'testnewest/' + imageID)
 Y_tmp = filters_hoi.loadData(imageInputs, imageDims, cfg)
 [hbboxes, obboxes, target_labels, all_val_map] = Y_tmp
 #hbboxes, obboxes, target_labels, val_map = filters_hoi.reduceTargets(Y_tmp, cfg)
