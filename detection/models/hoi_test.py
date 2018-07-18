@@ -110,7 +110,7 @@ def saveEvalResults(generator, cfg, obj_mapping, hoi_mapping):
     evalData = []
     nb_empty = 0
     for batchidx, (imageID, imageMeta) in enumerate(generator.imagesMeta.items()):
-        if os.path.exists(my_output_path + imageID):
+        if os.path.exists(my_output_path + imageID + '.pkl'):
             evalData.append(utils.load_obj(my_output_path + imageID))
         else:
             nb_empty += 1
