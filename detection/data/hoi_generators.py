@@ -246,6 +246,7 @@ class DataGenerator():
               imageIdx = imageIdxs[i]
               data = self._generateBatchFromIDs([imageIdx], i)
               if data is None:
+                  print('skip', imageIdx)
                   continue
               yield data
               
