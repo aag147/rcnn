@@ -269,6 +269,7 @@ def drawAnchors(img, anchorsGT, cfg):
         bbox = drawProposalBox(bb)
         spl.plot(bbox[0,:], bbox[1,:], c=c)
         bboxes.append(bb)
+    f.subplots_adjust(left=0.02, right=0.98, top=0.98, bottom=0.02)
     return np.array(bboxes)
         
 def drawPositiveAnchors(img, anchorsGT, cfg):
@@ -312,6 +313,8 @@ def drawOverlapAnchors(img, anchors, imageMeta, imageDims, cfg):
         bbox = drawBoundingBox(bb)
         spl.plot(bbox[0,:], bbox[1,:], c=c)
         bboxes.append(bb)
+        
+    f.subplots_adjust(left=0.02, right=0.98, top=0.98, bottom=0.02)
         
 #    for bbidx, gt in enumerate(gta):
 #        bb = {key:x*cfg.rpn_stride for key,x in gt.items()}
@@ -357,6 +360,7 @@ def drawOverlapRois(img, rois, imageMeta, imageDims, cfg, obj_mapping):
         spl.plot(bbox[0,:], bbox[1,:], c=c)
         bboxes.append(bb)
         
+    f.subplots_adjust(left=0.02, right=0.98, top=0.98, bottom=0.02)
 #    for bbidx, gt in enumerate(gta):
 #        bb = {key:x*cfg.rpn_stride for key,x in gt.items()}
 #        bbox = drawBoundingBox(bb)
@@ -403,6 +407,7 @@ def drawPositiveRois(img, rois, obj_mapping):
             bbox = drawProposalBox(bb)
             spl.plot(bbox[0,:], bbox[1,:], c='red')
             bboxes.append(bb)
+    f.subplots_adjust(left=0.02, right=0.98, top=0.98, bottom=0.02)
     return np.array(bboxes)
 
 
@@ -426,6 +431,9 @@ def drawGTBoxes(img, imageMeta, imageDims):
     for bb in bboxes:
         bbox = drawBoundingBox(bb)
         spl.plot(bbox[0,:], bbox[1,:], c='red')
+        
+    f.subplots_adjust(left=0.02, right=0.98, top=0.98, bottom=0.02)
+#    f.tight_layout()    
     return bboxes
 
 def drawPositiveHoI(img, hbboxes, obboxes, patterns, props, imageMeta, imageDims, cfg, obj_mapping):
@@ -505,7 +513,7 @@ def drawBoundingBox(bb):
     xmin = bb['xmin']; xmax = bb['xmax']
     ymin = bb['ymin']; ymax = bb['ymax']
     
-    box = np.array([[xmin, xmax, xmax, xmin, xmin], [ymin, ymin, ymax, ymax, ymin]])
+    box = np.array([[xmin, xmax, xmax, xmin, xmin], [ymin, ymin, ymax, ymax, ymin]]).astype(int)
     return box
 
 def drawProposalBox(bb):    
@@ -518,7 +526,7 @@ def drawProposalBox(bb):
     xmin = bb[0]; xmax = xmin + bb[2]
     ymin = bb[1]; ymax = ymin + bb[3]
     
-    box = np.array([[xmin, xmax, xmax, xmin, xmin], [ymin, ymin, ymax, ymax, ymin]])
+    box = np.array([[xmin, xmax, xmax, xmin, xmin], [ymin, ymin, ymax, ymax, ymin]]).astype(int)
     return box
 
 

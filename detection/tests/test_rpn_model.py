@@ -48,13 +48,15 @@ if True:
     Stages = stages.AllStages(cfg, Models, obj_mapping, hoi_mapping, mode='test')
 
 
-genIterator = genTrain.begin()
+genIterator = genVal.begin()
 
 for i in range(1):
     X, y, imageMeta, imageDims, times = next(genIterator)
     imageID = imageMeta['imageName'].split('.')[0]
+#    imageID = '000000485424'
+#    imageMeta = genVal.imagesMeta[imageID]
     
-    X, imageDims = filters_rpn.prepareInputs(imageMeta, genTrain.images_path, cfg)
+    X, imageDims = filters_rpn.prepareInputs(imageMeta, genVal.images_path, cfg)
     Y_tmp = filters_rpn.createTargets(imageMeta, imageDims, cfg)
     y = filters_rpn.reduceData(Y_tmp, cfg)
 
@@ -73,4 +75,4 @@ for i in range(1):
     draw.drawAnchors(img, proposals[0], cfg)
     posAnc = draw.drawOverlapAnchors(img, proposals[0], imageMeta, imageDims, cfg)
 
-    
+#    HICO_train2015_00022870

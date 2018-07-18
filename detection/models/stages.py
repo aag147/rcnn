@@ -146,11 +146,14 @@ class AllStages:
         for batchidx in range(math.ceil(nb_hoi_rois / self.cfg.nb_hoi_rois)):    
             sidx = batchidx * self.cfg.nb_hoi_rois
             fidx = min(nb_hoi_rois, sidx + self.cfg.nb_hoi_rois)
-            batch_h = hbboxes_norm[:,sidx:fidx,::]
-            batch_o = obboxes_norm[:,sidx:fidx,::]
-            batch_p = patterns[:,sidx:fidx,:,:,:]
+            batch_h = np.zeros((1,self.cfg.nb_hoi_rois,5))
+            batch_o = np.zeros((1,self.cfg.nb_hoi_rois,5))
+            batch_p = np.zeros((1,self.cfg.nb_hoi_rois, self.cfg.winShape[0], self.cfg.winShape[1], 2))
+            batch_h[0,:fidx-sidx,:] = hbboxes_norm[:,sidx:fidx,::]
+            batch_o[0,:fidx-sidx,:] = obboxes_norm[:,sidx:fidx,::]
+            batch_p[0,:fidx-sidx,::] = patterns[:,sidx:fidx,:,:,:]
             
-            if self.cfg.do_fast_hoi:    
+            if self.cfg.do_fast_hoi:  
                 batch = [self.shared_img, batch_h, batch_o, batch_p]
             else:
                 batch_hcrop = hcrops[sidx:fidx,::]

@@ -114,5 +114,9 @@ if True:
         if j == 5:
             break
 
-
-    print(np.mean([nb_tp[i] / nb_total[i] if nb_tp[i]>0 else 0 for i in range(600)]))
+    res = [nb_tp[i] / nb_total[i] if nb_tp[i]>0 else 0 for i in range(600)]
+    rare_idxs = np.where(nb_total<10)[0]
+    unrare_idxs = np.where(nb_total>=10)[0]
+    print('all', np.mean(res))
+    print('rare', np.mean(res[rare_idxs]))
+    print('unrare', np.mean(res[unrare_idxs]))

@@ -17,7 +17,7 @@ import os
 
 class DataGenerator():
     
-    def __init__(self, imagesMeta, cfg, data_type='train', do_meta=True, mode='train'):
+    def __init__(self, imagesMeta, cfg, data_type='train', do_meta=True, mode='train', approach='new'):
       'Initialization'
       self.data_type = data_type
       if data_type == 'train':
@@ -35,6 +35,7 @@ class DataGenerator():
       self.shuffle = g_cfg.shuffle
       self.inputs = cfg.inputs
       self.do_meta = do_meta
+      self.approach = approach
       
       cfg.img_out_reduction = (16, 16)
       
@@ -92,7 +93,8 @@ class DataGenerator():
     
     def _getImageInputs(self, imageID):
         if self.doIndyInputs:
-            imageInputs = utils.load_obj(self.rois_path + self.data_type + 'new/' + imageID)
+            adir = 'newest' if self.approach == 'newest' else 'new'
+            imageInputs = utils.load_obj(self.rois_path + self.data_type + adir+ '/' + imageID)
         else:
             imageInputs = self.imagesInputs[imageID]
         return imageInputs
@@ -202,6 +204,10 @@ class DataGenerator():
                     return [img, all_hbboxes, all_obboxes, patterns], all_target_labels, imageMeta, imageDims, None
                 return [img, b_hbboxes, b_obboxes, b_pattern], b_targets
                 
+            elif self.mode == 'test':
+                all_hbboxes, all_obboxes, all_target_labels, all_val_map = Y_tmp
+                return [img, all_hbboxes, all_obboxes, all_val_map], all_target_labels, imageMeta, imageDims, None
+            
             hbboxes, obboxes, target_labels, val_map = filters_hoi.reduceTargets(Y_tmp, self.cfg)
             patterns = filters_hoi.createInteractionPatterns(hbboxes, obboxes, self.cfg)
             hbboxes, obboxes = filters_hoi.prepareInputs(hbboxes, obboxes, imageDims)

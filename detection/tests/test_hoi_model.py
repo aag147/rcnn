@@ -51,7 +51,7 @@ genIterator = genVal.begin()
 for i in range(1):
     [X, all_hbboxes, all_obboxes, all_val_map], all_target_labels, imageMeta, imageDims, _ = next(genIterator)
     imageID = imageMeta['imageName'].split('.')[0]
-
+    print(np.max(all_hbboxes))
 
     print('Stage one...')
 #    proposals = Stages.stageone([X], y, imageMeta, imageDims)
@@ -70,12 +70,12 @@ for i in range(1):
     img += cfg.PIXEL_MEANS
     img = img.astype(np.uint8)
     img = cv.cvtColor(img, cv.COLOR_BGR2RGB)
-    bboxes = np.concatenate([all_hbboxes,all_obboxes],axis=1)[0]
-    draw.drawOverlapRois(img, bboxes, imageMeta, imageDims, cfg, obj_mapping)
+    bboxes = np.concatenate([all_hbboxes,all_obboxes],axis=1)[0][:,1:]
     draw.drawGTBoxes(img, imageMeta, imageDims)
     print('GT hoi labels')
     print('GT',np.unique(np.where(all_target_labels[0,:,:]>0)[0]), np.unique(np.where(all_target_labels[0,:,:]>0)[1]))
 #    draw.drawPositiveCropHoI(batch_h[:,1:], batch_o[:,1:], batch_hcrop[:,1:], batch_ocrop[:,1:], batch_p, None, imageMeta, imageDims, cfg, obj_mapping)
+#    draw.drawOverlapRois(img, bboxes, imageMeta, imageDims, cfg, obj_mapping)
     idxs = draw.drawPositiveHoI(img, pred_hbboxes, pred_obboxes, None, pred_props, imageMeta, imageDims, cfg, obj_mapping)
 #    good_bboxes = np.copy(all_obboxes[0,idxs,:])
 #    good_bboxes[:,2] += good_bboxes[:,0]
