@@ -154,12 +154,12 @@ class AllStages:
             batch_p[0,:fidx-sidx,::] = patterns[:,sidx:fidx,:,:,:]
             
             if self.cfg.do_fast_hoi:  
-                batch = [self.shared_img, batch_h, batch_o, batch_p]
+                batch = [self.shared_img, batch_h[:,:fidx-sidx,::], batch_o[:,:fidx-sidx,::], batch_p[:,:fidx-sidx,::]]
             else:
                 batch_hcrop = hcrops[sidx:fidx,::]
                 batch_ocrop = ocrops[sidx:fidx,::]
                 batch = [batch_hcrop, batch_ocrop, batch_p[0,:fidx-sidx,::], batch_h[0,:fidx-sidx,::], batch_o[0,:fidx-sidx,::]]
-            
+                        
             hoi_props, hoi_hbboxes, hoi_obboxes = self.model_hoi.predict_on_batch(batch)
             
             if not self.cfg.do_fast_hoi:

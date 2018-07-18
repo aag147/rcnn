@@ -225,12 +225,13 @@ class RoiPoolingConv(Layer):
         3D tensor with shape:
         `(1, num_rois, channels, pool_size, pool_size)`
     '''
-    def __init__(self, pool_size=3, nb_channels=3, batch_size=128, **kwargs):
+    def __init__(self, pool_size=3, nb_channels=3, batch_size=128, mode='train', **kwargs):
         super(RoiPoolingConv, self).__init__(**kwargs)
 #        assert K.image_dim_ordering() in {'tf'}, 'dim_ordering must be in {tf}'
         self.pool_size = pool_size
         self.nb_channels = 3
         self.batch_size = batch_size
+        self.mode = mode
 
     def build(self, input_shape):
         self.nb_channels = input_shape[0][3]
@@ -254,7 +255,8 @@ class RoiPoolingConv(Layer):
         final_output = tf.image.crop_and_resize(img, boxes=rois, box_ind=box_ind, crop_size=(self.pool_size, self.pool_size), method="bilinear")
 #        final_output = tf.stack(final_output) 
         final_output = K.expand_dims(final_output, axis=0)
-        final_output = K.reshape(final_output, (1, self.batch_size, self.pool_size, self.pool_size, self.nb_channels))
+        if self.mode=='train':
+            final_output = K.reshape(final_output, (1, self.batch_size, self.pool_size, self.pool_size, self.nb_channels))
         return final_output
     
     def get_config(self):

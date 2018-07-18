@@ -289,6 +289,8 @@ class AllModels:
         ########################
         ######## Inputs ########
         ########################
+        
+        
         # RPN #
         img_input = keras.layers.Input(
             shape=(None, None, 3),
@@ -296,31 +298,33 @@ class AllModels:
         )
         
         # DET #
+        nb_detection_rois = cfg.nb_detection_rois if self.mode=='train' else None
         img_det_input = keras.layers.Input(
             shape=(None, None, 3),
             name='input_image'
         )
         roi_input = keras.layers.Input(
-            shape=(cfg.nb_detection_rois, 5),
+            shape=(nb_detection_rois, 5),
             name='input_roi'
         )
 
         
         # HOI #
+        nb_hoi_rois = cfg.nb_hoi_rois if self.mode=='train' else None
         img_hoi_input = keras.layers.Input(
             shape=(None, None, 3),
             name='input_image'
         )
         human_fast_input = keras.layers.Input(
-            shape=(cfg.nb_hoi_rois, 5),
+            shape=(nb_hoi_rois, 5),
             name="input_human"
         )
         object_fast_input = keras.layers.Input(
-            shape=(cfg.nb_hoi_rois, 5),
+            shape=(nb_hoi_rois, 5),
             name="input_object"
         )
         interaction_fast_input = keras.layers.Input(
-            shape=(cfg.nb_hoi_rois, cfg.winShape[0], cfg.winShape[1], 2),
+            shape=(nb_hoi_rois, cfg.winShape[0], cfg.winShape[1], 2),
             name="input_interaction"
         )
         
@@ -513,7 +517,8 @@ class AllModels:
             ## HUMAN ##
             hoi_human_rois = layers.RoiPoolingConv(
                 pool_size=pool_size,
-                batch_size=cfg.nb_hoi_rois
+                batch_size=cfg.nb_hoi_rois,
+                mode = self.mode
             )([
                 output_features_hoi,
                 human_fast_input
@@ -539,7 +544,8 @@ class AllModels:
             ## OBJECT ##
             hoi_object_rois = layers.RoiPoolingConv(
                 pool_size=pool_size,
-                batch_size=cfg.nb_hoi_rois
+                batch_size=cfg.nb_hoi_rois,
+                mode = self.mode
             )([
                 output_features_hoi,
                 object_fast_input
