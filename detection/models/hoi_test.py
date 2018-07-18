@@ -90,7 +90,10 @@ def saveEvalData(generator, Stages, cfg, obj_mapping):
         utils.save_obj(evalData, save_path + imageID)
     return evalData
 
-def saveEvalResults(evalData, generator, cfg, obj_mapping, hoi_mapping):
+def saveEvalResults(generator, cfg, obj_mapping, hoi_mapping):
+    
+    my_output_path = cfg.results_path + 'hoi' + cfg.my_results_dir + '/res/' + generator.data_type + generator.approach + '/'
+    
     path = cfg.part_results_path + "HICO/hoi" + cfg.my_results_dir
     mode = generator.data_type
     
@@ -98,9 +101,16 @@ def saveEvalResults(evalData, generator, cfg, obj_mapping, hoi_mapping):
         path = path[:-1]
     path += '/'
     
-    utils.save_dict(evalData, path+mode+'_res')
-    
+    evalData = []
+    nb_empty = 0
+    for batchidx, (imageID, imageMeta) in enumerate(generator.imagesMeta.items()):
+        if os.path.exists(my_output_path + imageID):
+            evalData.append(utils.load_obj(my_output_path + imageID))
+        else:
+            nb_empty += 1
+            
     mAP, AP = metrics.computeHOImAP(evalData, generator.imagesMeta, obj_mapping, hoi_mapping, cfg)
-    saveMeta = {'mAP': mAP, 'AP': AP.tolist()}
+    saveMeta = {'mAP': mAP, 'zAP': AP.tolist(), 'nb_empties': nb_empty}
     utils.save_dict(saveMeta, path+mode+'_mAP')
     print('mAP', mode, mAP)
+    print('empties', nb_empty)

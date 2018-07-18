@@ -39,7 +39,7 @@ if True:
 sys.stdout.flush()
 # Test data
 evalTest = hoi_test.saveEvalData(genTest, Stages, cfg, hoi_mapping)
-hoi_test.saveEvalResults(evalTest, genTest, cfg, obj_mapping, hoi_mapping)
+hoi_test.saveEvalResults(genTest, cfg, obj_mapping, hoi_mapping)
 
 # Train data
 #evalTrain = hoi_test.saveEvalData(genTrain, Stages, cfg)
