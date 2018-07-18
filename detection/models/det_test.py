@@ -78,7 +78,7 @@ def saveEvalData(generator, Stages, cfg, obj_mapping):
         
         imageInputs = generator._getImageInputs(imageID)
         X, imageDims = filters_rpn.prepareInputs(imageMeta, generator.images_path, cfg)
-        Y_tmp = filters_hoi.loadData(imageInputs, imageDims, cfg)
+        Y_tmp = filters_detection.loadData(imageInputs, imageDims, cfg)
         proposals, target_labels, target_deltas = Y_tmp
         #STAGE 1
 #        proposals = Stages.stageone([img], y, imageMeta, imageDims)
