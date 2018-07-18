@@ -123,7 +123,7 @@ class AllModels:
         print('   Weights path:', path)
         assert os.path.exists(path), 'invalid path: %s' % path
         
-        if model.name == 'hoi':
+        if model.name == 'hoi' and cfg.backbone == 'alex':
             idx = 15
         else:
             idx = 11
