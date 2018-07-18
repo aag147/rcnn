@@ -30,7 +30,7 @@ def saveInputData(generator, Stages, cfg):
     
         img, y, imageMeta, imageDims, times = next(genIterator)   
         imageID = str(imageMeta['imageID'])
-        if batchidx+1 % 1000 == 0:
+        if (batchidx+1) % (generator.nb_batches // 100) == 0 or batchidx==1 or (batchidx+1) == generator.nb_batches:
             utils.update_progress_new(batchidx+1, generator.nb_batches, imageID)
         
         path = save_path + imageID + '.pkl'
@@ -64,10 +64,16 @@ def saveEvalData(generator, Stages, cfg, obj_mapping):
     genIterator = generator.begin()
     evalData = []
     
-    for i in range(generator.nb_batches):
+    for batchidx in range(generator.nb_batches):
         [img,proposals], y, imageMeta, imageDims, times = next(genIterator)
         imageID = imageMeta['imageID']
-        utils.update_progress_new(i+1, generator.nb_batches, imageID)
+        
+        if (batchidx+1) % (generator.nb_batches // 100) == 0 or batchidx==1 or (batchidx+1) == generator.nb_batches:
+            utils.update_progress_new(batchidx+1, generator.nb_batches, imageID)
+        
+        path = save_path + str(imageID) + '.pkl'
+        if os.path.exists(path):
+            continue
         
         #STAGE 1
 #        proposals = Stages.stageone([img], y, imageMeta, imageDims)
