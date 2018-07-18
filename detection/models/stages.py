@@ -158,7 +158,7 @@ class AllStages:
             else:
                 batch_hcrop = hcrops[sidx:fidx,::]
                 batch_ocrop = ocrops[sidx:fidx,::]
-                batch = [batch_hcrop, batch_ocrop, batch_p[0], batch_h[0], batch_o[0]]
+                batch = [batch_hcrop, batch_ocrop, batch_p[0,:fidx-sidx,::], batch_h[0,:fidx-sidx,::], batch_o[0,:fidx-sidx,::]]
             
             hoi_props, hoi_hbboxes, hoi_obboxes = self.model_hoi.predict_on_batch(batch)
             

@@ -37,7 +37,7 @@ hoi_mapping = data.hoi_labels
 
 # data
 genTrain = DataGenerator(imagesMeta = data.trainGTMeta, cfg=cfg, data_type='train', do_meta=True)
-genTest = DataGenerator(imagesMeta = data.valGTMeta, cfg=cfg, data_type='test', do_meta=True, mode='val')
+genTest = DataGenerator(imagesMeta = data.valGTMeta, cfg=cfg, data_type='test', do_meta=True, mode='test')
 
 
 Stages = stages.AllStages(cfg, None, obj_mapping, hoi_mapping, mode='test')
@@ -51,50 +51,52 @@ imageMeta = genTest.imagesMeta[imageID]
 #hcrops, ocrops = filters_hoi.convertBB2Crop(X, hbboxes, obboxes, imageDims)
 
 
-Models = methods.AllModels(cfg, mode='test', do_rpn=True, do_det=True, do_hoi=False)
-cfg.det_nms_overlap_thresh = 0.5
-Stages = stages.AllStages(cfg, Models, obj_mapping, hoi_mapping, mode='train')
-
-#STAGE 0
-X, y, imageDims = Stages.stagezero(imageMeta, 'test')
-
-#STAGE 1
-proposals = Stages.stageone([X], y, imageMeta, imageDims)
-
-#STAGE 2
-bboxes = Stages.stagetwo([proposals], imageMeta, imageDims)
-
-#STAGE 3
-Stages = stages.AllStages(cfg, None, obj_mapping, hoi_mapping, mode='test')
-hbboxes, obboxes, target_labels, val_map = Stages.stagethree_targets(bboxes, imageMeta, imageDims)
-patterns = filters_hoi.createInteractionPatterns(hbboxes, obboxes, cfg)
+#Models = methods.AllModels(cfg, mode='test', do_rpn=True, do_det=True, do_hoi=False)
+#cfg.det_nms_overlap_thresh = 0.5
+#Stages = stages.AllStages(cfg, Models, obj_mapping, hoi_mapping, mode='train')
+#
+##STAGE 0
+#X, y, imageDims = Stages.stagezero(imageMeta, 'test')
+#
+##STAGE 1
+#proposals = Stages.stageone([X], y, imageMeta, imageDims)
+#
+##STAGE 2
+#bboxes = Stages.stagetwo([proposals], imageMeta, imageDims)
+#
+##STAGE 3
+#Stages = stages.AllStages(cfg, None, obj_mapping, hoi_mapping, mode='test')
+#hbboxes, obboxes, target_labels, val_map = Stages.stagethree_targets(bboxes, imageMeta, imageDims)
+#patterns = filters_hoi.createInteractionPatterns(hbboxes, obboxes, cfg)
 #CONVERT
 #inputMeta = filters_hoi.convertData([hbboxes, obboxes, target_labels, val_map], cfg, mode=genTest.data_type)
 
 #utils.save_obj(inputMeta, cfg.part_data_path + imageID)
 
-genItr = genTrain.begin()
-for batchidx in range(genTrain.nb_batches):
-    break
-    [hcrops, ocrops, patterns, hbboxes, obboxes], target_labels, imageMeta, imageDims, _ = next(genItr)
+genItr = genTest.begin()
+for batchidx in range(genTest.nb_batches):
+    [img, all_hbboxes, all_obboxes, all_val_map], target_labels, imageMeta, imageDims, _ = next(genItr)
+    utils.update_progress_new(batchidx+1, genTest.nb_batches, imageID)
+    continue
+    
 #    [img, hbboxes, obboxes, patterns], target_labels, imageMeta, imageDims, _ = next(genItr)
     
-    X, _ = filters_rpn.prepareInputs(imageMeta, genTrain.images_path, cfg)
+    X, _ = filters_rpn.prepareInputs(imageMeta, genTest.images_path, cfg)
     imageID = imageMeta['imageName']
     
 #    continue
 #    draw.drawPositiveCropHoI(None, None, hcrops, ocrops, patterns, target_labels, imageMeta, imageDims, cfg, obj_mapping)
     
 #    import draw
-import draw  
-img = np.copy(X[0])
-img += cfg.PIXEL_MEANS
-img = img.astype(np.uint8)
+#import draw  
+#img = np.copy(X[0])
+#img += cfg.PIXEL_MEANS
+#img = img.astype(np.uint8)
 #hbboxes = np.expand_dims(hbboxes,axis=0)
 #obboxes = np.expand_dims(obboxes,axis=0)
 #h_bboxes, o_bboxes = filters_hoi.unprepareInputs(hbboxes, obboxes, imageDims)
-draw.drawGTBoxes(img, imageMeta, imageDims)
+#draw.drawGTBoxes(img, imageMeta, imageDims)
 #draw.drawPositiveHoIs(img, hbboxes[0], obboxes[0], target_labels[0], hoi_mapping, imageMeta, imageDims, cfg)
 #draw.drawPositiveHoI(img, hbboxes[0], obboxes[0], patterns[0], target_labels[0], imageMeta, imageDims, cfg, obj_mapping)
 #draw.drawOverlapRois(img, bboxes[0], imageMeta, imageDims, cfg, obj_mapping)
-draw.drawHumanAndObjectRois(img, bboxes[0])
+#draw.drawHumanAndObjectRois(img, bboxes[0])

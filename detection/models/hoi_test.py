@@ -35,7 +35,7 @@ def saveInputData(generator, Stages, cfg):
 #        imageID = 'HICO_train2015_00019135'
 #        imageMeta = generator.imagesMeta[imageID]
 #        X, y, imageDims = Stages.stagezero(imageMeta, generator.data_type)
-        if batchidx % 500 == 0 or batchidx==100 or batchidx==250:
+        if (batchidx+1) % (generator.nb_batches // 100) == 0:
             utils.update_progress_new(batchidx, generator.nb_batches, imageID)
         
         
@@ -68,9 +68,8 @@ def saveEvalData(generator, Stages, cfg, obj_mapping):
         [X, all_hbboxes, all_obboxes, all_val_map], all_target_labels, imageMeta, imageDims, _ = next(genIterator)
 #        print(imageMeta)
         imageID = imageMeta['imageName'].split('.')[0]
-        if batchidx+1 % 100 == 0:
+        if (batchidx+1) % (generator.nb_batches // 100) == 0 or batchidx==0 or (batchidx+1) == generator.nb_batches:
             utils.update_progress_new(batchidx+1, generator.nb_batches, imageID)
-        
         #STAGE 3
         pred_hbboxes, pred_obboxes, pred_props = Stages.stagethree([X,all_hbboxes,all_obboxes], imageMeta, imageDims, obj_mapping=None)
         if pred_hbboxes is None:

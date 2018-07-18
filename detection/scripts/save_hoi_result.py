@@ -30,8 +30,8 @@ if True:
     hoi_mapping = data.hoi_labels
     
     # Create batch generators
-    genTrain = DataGenerator(imagesMeta = data.trainGTMeta, cfg=cfg, data_type='train', do_meta=True, mode='test', approach='newest')
-    genTest = DataGenerator(imagesMeta = data.valGTMeta, cfg=cfg, data_type='test', do_meta=True, mode='test', approach='newest')
+    genTrain = DataGenerator(imagesMeta = data.trainGTMeta, cfg=cfg, data_type='train', do_meta=True, mode='test', approach='new')
+    genTest = DataGenerator(imagesMeta = data.valGTMeta, cfg=cfg, data_type='test', do_meta=True, mode='test', approach='new')
     
     Models = methods.AllModels(cfg, mode='test', do_rpn=False, do_det=False, do_hoi=True)
     Stages = stages.AllStages(cfg, Models, obj_mapping, hoi_mapping, mode='test')
