@@ -96,6 +96,7 @@ class DataGenerator():
     
     def _getImageInputs(self, imageID):
         if self.doIndyInputs:
+            assert os.path.exists(self.rois_path+imageID+'.pkl'), self.rois_path + imageID
             imageInputs = utils.load_obj(self.rois_path + imageID)
         else:
             imageInputs = self.imagesInputs[imageID]
