@@ -14,6 +14,7 @@ import filters_hoi,\
 import time
 import utils
 import os
+import sys
 
 class DataGenerator():
     
@@ -247,6 +248,7 @@ class DataGenerator():
               data = self._generateBatchFromIDs([imageIdx], i)
               if data is None:
                   print('skip', imageIdx)
+                  sys.stdout.flush()
                   continue
               yield data
               
