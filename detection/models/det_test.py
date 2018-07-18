@@ -53,6 +53,14 @@ def saveInputData(generator, Stages, cfg):
         utils.save_obj(detMeta, save_path + imageID)
 
 def saveEvalData(generator, Stages, cfg, obj_mapping):
+    
+    cfg.my_output_path = cfg.results_path + 'det' + cfg.my_results_dir + '/res/' + generator.data_type + '/'
+    
+    if not os.path.exists(cfg.my_output_path):
+        os.makedirs(cfg.my_output_path)
+    save_path = cfg.my_output_path
+    print('   save_path:', save_path)
+    
     genIterator = generator.begin()
     evalData = []
     
@@ -70,12 +78,24 @@ def saveEvalData(generator, Stages, cfg, obj_mapping):
             continue
         
         #CONVERT
-        evalData += filters_detection.convertResults(bboxes[0], imageMeta, obj_mapping, imageDims['scale'], cfg.rpn_stride)
+        evalData = filters_detection.convertResults(bboxes[0], imageMeta, obj_mapping, imageDims['scale'], cfg.rpn_stride)
+        utils.save_obj(evalData, save_path + imageID)
         
     return evalData
 
 def saveEvalResults(evalData, generator, cfg):
+    
+    my_output_path = cfg.results_path + 'det' + cfg.my_results_dir + '/res/' + generator.data_type + '/'
+
+    evalData = []
+    nb_empty = 0
+    for batchidx, (imageID, imageMeta) in enumerate(generator.imagesMeta.items()):
+        if os.path.exists(my_output_path + imageID):
+            evalData.append(utils.load_obj(my_output_path + imageID))
+        else:
+            nb_empty += 1
+    
     path = cfg.results_path + "det" + cfg.my_results_dir + '/'
     mode = generator.data_type
     utils.save_dict(evalData, path+mode+'_res')
-    
+    print('nb_empty', nb_empty)

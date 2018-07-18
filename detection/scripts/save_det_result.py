@@ -40,7 +40,7 @@ if True:
 
 # Val data
 evalVal = det_test.saveEvalData(genVal, Stages, cfg, obj_mapping)
-det_test.saveEvalResults(evalVal, genVal, cfg)
+det_test.saveEvalResults(genVal, cfg)
 
 # Test data
 #evalTest = det_test.saveEvalData(genTest, Stages, cfg, obj_mapping)
