@@ -114,7 +114,7 @@ class AllModels:
         print('   -loading test weights...')
         cfg = self.cfg
         # Check path to weights
-        if path[-1] == 'f':
+        if path[-1] == 'F':
             if not os.path.exists(path):
                 path = path[:-1]
             elif model.name != 'rpn':
