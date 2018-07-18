@@ -79,7 +79,7 @@ def saveEvalData(generator, Stages, cfg, obj_mapping):
         
         #CONVERT
         evalData = filters_detection.convertResults(bboxes[0], imageMeta, obj_mapping, imageDims['scale'], cfg.rpn_stride)
-        utils.save_obj(evalData, save_path + imageID)
+        utils.save_obj(evalData, save_path + str(imageID))
         
     return evalData
 
@@ -90,7 +90,7 @@ def saveEvalResults(evalData, generator, cfg):
     evalData = []
     nb_empty = 0
     for batchidx, (imageID, imageMeta) in enumerate(generator.imagesMeta.items()):
-        if os.path.exists(my_output_path + imageID):
+        if os.path.exists(my_output_path + str(imageID)):
             evalData.append(utils.load_obj(my_output_path + imageID))
         else:
             nb_empty += 1
