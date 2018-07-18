@@ -70,7 +70,7 @@ def saveEvalData(generator, Stages, cfg, obj_mapping):
             continue
 #        print(imageMeta)
         imageID = imageMeta['imageName'].split('.')[0]
-        if (batchidx+1) % (generator.nb_batches // 100) == 0 or batchidx==0 or (batchidx+1) == generator.nb_batches:
+        if (batchidx+1) % (generator.nb_batches // 100) == 0 or batchidx==1 or (batchidx+1) == generator.nb_batches:
             utils.update_progress_new(batchidx+1, generator.nb_batches, imageID)
         #STAGE 3
         pred_hbboxes, pred_obboxes, pred_props = Stages.stagethree([X,all_hbboxes,all_obboxes], imageMeta, imageDims, obj_mapping=None)

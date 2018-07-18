@@ -248,7 +248,7 @@ class DataGenerator():
               data = self._generateBatchFromIDs([imageIdx], i)
               if data is None:
                   if self.mode=='test':
-                      yield [None, None, None, None], None, None, None, None
+                      data = [None, None, None, None], None, None, None, None
                   else:
                       continue
               yield data
