@@ -13,6 +13,7 @@ import filters_detection,\
 import os
 import numpy as np
 import sys
+import random as r
 
 def saveInputData(generator, Stages, cfg):  
     cfg.my_output_path = cfg.results_path + 'det' + cfg.my_results_dir + '/output/' + generator.data_type + 'newest/'
@@ -67,30 +68,32 @@ def saveEvalData(generator, Stages, cfg, obj_mapping):
         os.makedirs(cfg.my_output_path)
     save_path = cfg.my_output_path
     print('   save_path:', save_path)
-    genIterator = generator.begin()
     
     evalData = []
-    for batchidx in range(generator.nb_batches):
-    
-        [X, all_hbboxes, all_obboxes, all_val_map], all_target_labels, imageMeta, imageDims, _ = next(genIterator)
-        if X is None:
-            continue
-#        print(imageMeta)
-        imageID = imageMeta['imageName'].split('.')[0]
+    imagesIDs = list(generator.imagesMeta.keys())
+    r.shuffle(imagesIDs)
+    for batchidx, imageID in enumerate(imagesIDs):    
         if (batchidx+1) % (generator.nb_batches // 100) == 0 or batchidx==1 or (batchidx+1) == generator.nb_batches:
             utils.update_progress_new(batchidx+1, generator.nb_batches, imageID)
-            
-            
+                
         path = save_path + imageID + '.pkl'
         if os.path.exists(path):
             continue
+        imageMeta = generator.imagesMeta[imageID]
+        imageMeta['id'] = imageID
+#        [X, all_hbboxes, all_obboxes, all_val_map], all_target_labels, imageMeta, imageDims, _ = next(genIterator)
+        imageInputs = generator._getImageInputs(imageID)
+        X, imageDims = filters_rpn.prepareInputs(imageMeta, generator.images_path, cfg)
+        Y_tmp = filters_hoi.loadData(imageInputs, imageDims, cfg)
             
+        all_hbboxes, all_obboxes, all_target_labels, all_val_map = Y_tmp
+
         #STAGE 3
         pred_hbboxes, pred_obboxes, pred_props = Stages.stagethree([X,all_hbboxes,all_obboxes], imageMeta, imageDims, obj_mapping=None)
         if pred_hbboxes is None:
+            utils.save_obj(None, save_path + imageID)
             continue
-        
-        
+                
         #CONVERT
         evalData = filters_hoi.convertResults(pred_hbboxes, pred_obboxes, pred_props, imageMeta, imageDims['scale'], cfg.rpn_stride, obj_mapping)
         utils.save_obj(evalData, save_path + imageID)
@@ -111,7 +114,9 @@ def saveEvalResults(generator, cfg, obj_mapping, hoi_mapping):
     nb_empty = 0
     for batchidx, (imageID, imageMeta) in enumerate(generator.imagesMeta.items()):
         if os.path.exists(my_output_path + imageID + '.pkl'):
-            evalData.append(utils.load_obj(my_output_path + imageID))
+            data = utils.load_obj(my_output_path + imageID)
+            if data is not None:
+                evalData.append(data)
         else:
             nb_empty += 1
             

@@ -13,6 +13,7 @@ import filters_helper as helper,\
        
        
 import os
+import random as r
 
 def saveInputData(generator, Stages, cfg):    
     cfg.my_output_path = cfg.results_path + 'rpn' + cfg.my_results_dir + '/output/'
@@ -61,25 +62,29 @@ def saveEvalData(generator, Stages, cfg, obj_mapping):
     save_path = cfg.my_output_path
     print('   save_path:', save_path)
     
-    genIterator = generator.begin()
     evalData = []
     
-    for batchidx in range(generator.nb_batches):
-        [img,proposals], y, imageMeta, imageDims, times = next(genIterator)
-        imageID = imageMeta['imageID']
-        
+    imagesIDs = list(generator.imagesMeta.keys())
+    r.shuffle(imagesIDs)
+    for batchidx, imageID in enumerate(imagesIDs):    
         if (batchidx+1) % (generator.nb_batches // 100) == 0 or batchidx==1 or (batchidx+1) == generator.nb_batches:
             utils.update_progress_new(batchidx+1, generator.nb_batches, imageID)
-        
-        path = save_path + str(imageID) + '.pkl'
+                
+        path = save_path + imageID + '.pkl'
         if os.path.exists(path):
             continue
+        imageMeta = generator.imagesMeta[imageID]
+        imageMeta['id'] = imageID
         
+        imageInputs = generator._getImageInputs(imageID)
+        X, imageDims = filters_rpn.prepareInputs(imageMeta, generator.images_path, cfg)
+        Y_tmp = filters_hoi.loadData(imageInputs, imageDims, cfg)
+        proposals, target_labels, target_deltas = Y_tmp
         #STAGE 1
 #        proposals = Stages.stageone([img], y, imageMeta, imageDims)
         
         #STAGE 2
-        bboxes = Stages.stagetwo([img,proposals], imageMeta, imageDims)
+        bboxes = Stages.stagetwo([X,proposals], imageMeta, imageDims)
         if bboxes is None:
             continue
         
