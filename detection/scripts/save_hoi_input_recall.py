@@ -35,13 +35,14 @@ if True:
     genTest = DataGenerator(imagesMeta = data.valGTMeta, cfg=cfg, data_type='test', do_meta=True)
     
     
-    generator = genTrain
+    generator = genTest
     
     sys.stdout.flush()
 
 #if True:
     nb_total = np.zeros(600)
     nb_tp = np.zeros(600)
+    nb_empty = 0
     for j, (imageID, imageMeta) in enumerate(generator.imagesMeta.items()):
         
 #        imageID = 'HICO_train2015_00028567'
@@ -59,12 +60,18 @@ if True:
         if np.max(gtbboxes[:,2]) > 2+imageDims['output_shape'][1] or np.max(gtbboxes[:,3]) > 2+imageDims['output_shape'][0]:
             print('bad bbs', imageID, np.max(gtbboxes[:,2]), np.max(gtbboxes[:,3]), imageDims['output_shape'])
         
-        imageInputs = utils.load_obj(cfg.my_input_path + 'trainnew/' + imageID)
-        idxs = np.where(np.array(imageInputs['val_map'])==3)[0]
+        imageInputs = utils.load_obj(cfg.my_input_path + 'testnewest/' + imageID)
+        
+        if imageInputs is None:
+            idxs = []
+            nb_empty += 1
+        else:
+            idxs = np.where(np.array(imageInputs['val_map'])==3)[0]
+            hbboxes = np.array(imageInputs['hbboxes'])[idxs,:] / 1000.0
+            obboxes = np.array(imageInputs['o_bboxes'])[idxs,:] / 1000.0
+            labels = np.array(imageInputs['hoi_labels'])[idxs]
+        
         nb_preds = len(idxs)
-        hbboxes = np.array(imageInputs['hbboxes'])[idxs,:] / 1000.0
-        obboxes = np.array(imageInputs['o_bboxes'])[idxs,:] / 1000.0
-        labels = np.array(imageInputs['hoi_labels'])[idxs]
         
         for i in range(nb_preds):
             hbbox = np.copy(hbboxes[i,:4])
@@ -91,19 +98,20 @@ if True:
             nb_total[rel[2]] += 1
 
          
-        
-#        continue
+        continue
         import draw
-        Y_tmp = filters_hoi.loadData(imageInputs, imageDims, cfg)
-    
-        hbboxes, obboxes, target_labels, val_map = Y_tmp
-#        hbboxes, obboxes, target_labels, val_map = filters_hoi.reduceTargets(Y_tmp, cfg)
-        patterns = filters_hoi.createInteractionPatterns(hbboxes, obboxes, cfg)
         
         img = np.copy(X[0])
         img += cfg.PIXEL_MEANS
         img = img.astype(np.uint8)
         draw.drawGTBoxes(img, imageMeta, imageDims)    
+        
+        
+        Y_tmp = filters_hoi.loadData(imageInputs, imageDims, cfg)
+    
+        hbboxes, obboxes, target_labels, val_map = Y_tmp
+#        hbboxes, obboxes, target_labels, val_map = filters_hoi.reduceTargets(Y_tmp, cfg)
+        patterns = filters_hoi.createInteractionPatterns(hbboxes, obboxes, cfg)
         draw.drawPositiveHoI(img, hbboxes[0], obboxes[0], None, target_labels[0], imageMeta, imageDims, cfg, obj_mapping)
         hcrops, ocrops = filters_hoi.convertBB2Crop(X, hbboxes, obboxes, imageDims)
     
@@ -114,9 +122,10 @@ if True:
         if j == 5:
             break
 
-    res = [nb_tp[i] / nb_total[i] if nb_tp[i]>0 else 0 for i in range(600)]
+    res = np.array([nb_tp[i] / nb_total[i] if nb_tp[i]>0 else 0 for i in range(600)])
     rare_idxs = np.where(nb_total<10)[0]
     unrare_idxs = np.where(nb_total>=10)[0]
     print('all', np.mean(res))
     print('rare', np.mean(res[rare_idxs]))
     print('unrare', np.mean(res[unrare_idxs]))
+    print('nulls', nb_empty)

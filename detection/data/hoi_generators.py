@@ -247,9 +247,10 @@ class DataGenerator():
               imageIdx = imageIdxs[i]
               data = self._generateBatchFromIDs([imageIdx], i)
               if data is None:
-                  print('skip', imageIdx)
-                  sys.stdout.flush()
-                  continue
+                  if self.mode=='test':
+                      yield [None, None, None, None], None, None, None, None
+                  else:
+                      continue
               yield data
               
     def _generateRandomImageCentricBatches(self):

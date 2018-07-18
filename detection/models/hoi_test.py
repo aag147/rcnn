@@ -66,16 +66,17 @@ def saveEvalData(generator, Stages, cfg, obj_mapping):
     for batchidx in range(generator.nb_batches):
     
         [X, all_hbboxes, all_obboxes, all_val_map], all_target_labels, imageMeta, imageDims, _ = next(genIterator)
+        if X is None:
+            continue
 #        print(imageMeta)
         imageID = imageMeta['imageName'].split('.')[0]
-#        if (batchidx+1) % (generator.nb_batches // 100) == 0 or batchidx==0 or (batchidx+1) == generator.nb_batches:
+        if (batchidx+1) % (generator.nb_batches // 100) == 0 or batchidx==0 or (batchidx+1) == generator.nb_batches:
+            utils.update_progress_new(batchidx+1, generator.nb_batches, imageID)
         #STAGE 3
         pred_hbboxes, pred_obboxes, pred_props = Stages.stagethree([X,all_hbboxes,all_obboxes], imageMeta, imageDims, obj_mapping=None)
         if pred_hbboxes is None:
             continue
         
-        utils.update_progress_new(batchidx+1, generator.nb_batches, imageID)
-        print(all_hbboxes.shape)
         
         #CONVERT
         evalData += filters_hoi.convertResults(pred_hbboxes, pred_obboxes, pred_props, imageMeta, imageDims['scale'], cfg.rpn_stride, obj_mapping)
