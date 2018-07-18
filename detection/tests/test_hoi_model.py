@@ -37,7 +37,7 @@ if True:
     
     # Create batch generators
     genTrain = DataGenerator(imagesMeta = data.trainGTMeta, cfg=cfg, data_type='train', do_meta=True, mode='test')
-    genVal = DataGenerator(imagesMeta = data.valGTMeta, cfg=cfg, data_type='test', do_meta=True, mode='test', approach='newest')
+    genVal = DataGenerator(imagesMeta = data.valGTMeta, cfg=cfg, data_type='test', do_meta=True, mode='test', approach='new')
 #    genTest = DataGenerator(imagesMeta = data.testGTMeta, cfg=cfg, data_type='test', do_meta=True)
     
 
@@ -51,7 +51,6 @@ genIterator = genVal.begin()
 for i in range(1):
     [X, all_hbboxes, all_obboxes, all_val_map], all_target_labels, imageMeta, imageDims, _ = next(genIterator)
     imageID = imageMeta['imageName'].split('.')[0]
-    print(np.max(all_hbboxes))
 
     print('Stage one...')
 #    proposals = Stages.stageone([X], y, imageMeta, imageDims)

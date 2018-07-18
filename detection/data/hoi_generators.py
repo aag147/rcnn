@@ -225,7 +225,7 @@ class DataGenerator():
         
     def _generateBatchFromIDs(self, imageIdxs, list_idx):
         imageIDs = [self.dataID[idx] for idx in imageIdxs]
-        imageIDs = ['HICO_test2015_00005579']
+#        imageIDs = ['HICO_test2015_00008335']
 #        utils.update_progress_new(list_idx+1, self.nb_batches, imageIDs[0])
         
         if self.cfg.do_fast_hoi:
