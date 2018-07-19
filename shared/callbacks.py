@@ -52,6 +52,8 @@ class SaveLog2File(Callback):
        loss_reg  = logs.get('rpn_out_regress_loss') if 'rpn_out_regress_loss' in logs else 0.0
        loss_cls = logs.get('det_out_class_loss') if 'det_out_class_loss' in logs else loss_cls
        loss_reg  = logs.get('det_out_regress_loss') if 'det_out_regress_loss' in logs else loss_reg
+       loss_cls = logs.get('det_fineout_class_loss') if 'det_fineout_class_loss' in logs else loss_cls
+       loss_reg  = logs.get('det_fineout_regress_loss') if 'det_fineout_regress_loss' in logs else loss_reg
        
        val_loss_cls = logs.get('val_rpn_out_class_loss') if 'val_rpn_out_class_loss' in logs else 0.0
        val_loss_reg  = logs.get('val_rpn_out_regress_loss') if 'val_rpn_out_regress_loss' in logs else 0.0
