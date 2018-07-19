@@ -124,7 +124,7 @@ class AllModels:
         assert os.path.exists(path), 'invalid path: %s' % path
         
         if model.name == 'hoi' and cfg.backbone == 'alex':
-            idx = 15
+            idx = 17
         else:
             idx = 11
         
