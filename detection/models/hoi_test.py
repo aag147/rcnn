@@ -86,6 +86,10 @@ def saveEvalData(generator, Stages, cfg, obj_mapping):
         X, imageDims = filters_rpn.prepareInputs(imageMeta, generator.images_path, cfg)
         Y_tmp = filters_hoi.loadData(imageInputs, imageDims, cfg)
             
+        if Y_tmp is None:
+            utils.save_obj(None, save_path + imageID)
+            continue
+        
         all_hbboxes, all_obboxes, all_target_labels, all_val_map = Y_tmp
 
         #STAGE 3
@@ -118,7 +122,7 @@ def saveEvalResults(generator, cfg, obj_mapping, hoi_mapping):
         
         if os.path.exists(my_output_path + imageID + '.pkl'):
             data = utils.load_obj(my_output_path + imageID)
-            if data is not None:
+            if data is not None and len(data) > 0:
                 evalData.extend(data)
         else:
             nb_empty += 1
