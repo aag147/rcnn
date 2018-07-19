@@ -37,19 +37,19 @@ class basic_config:
           my_output_path = my_results_path + 'output/'
           my_actual_results_dir = self.my_results_dir
       elif len(self.new_results_dir) > 0:
-          print("   New directory... (name given)")
-          my_actual_results_dir = self.new_results_dir
-          my_results_dir = self.dataset + '/' + self.new_results_dir + '/'
-          my_results_path = self.part_results_path + my_results_dir
+          print("   New directory... (name given)")          
           
-          if os.path.exists(my_results_path):
-              raise Exception("directory already exists %s" % my_results_path)
-          
-          my_weights_path = my_results_path + 'weights/'
-          my_output_path = my_results_path + 'output/'
-          os.mkdir(my_results_path)
-          os.mkdir(my_weights_path)
-          os.mkdir(my_output_path)
+          for fid in range(100):
+            my_actual_results_dir = self.new_results_dir + + '%d' % fid
+            my_results_dir = self.dataset + "/" + my_actual_results_dir + '/'
+            my_results_path = self.part_results_path + my_results_dir
+            if not os.path.exists(my_results_path):
+                my_weights_path = my_results_path + 'weights/'
+                my_output_path = my_results_path + 'output/'
+                os.mkdir(my_results_path)
+                os.mkdir(my_weights_path)
+                os.mkdir(my_output_path)
+                break
           
       else:
           print("   New directory...")
