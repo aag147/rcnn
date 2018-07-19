@@ -151,7 +151,7 @@ def plotLosses(log):
     plt.show()
     
     
-def plotRPNLosses(hist):
+def plotRPNLosses(hist, mode='rpn'):
     x = hist[:,0]
     t = hist[:,1]
     tc = hist[:,3]
@@ -162,16 +162,21 @@ def plotRPNLosses(hist):
     
     f, spl = plt.subplots(1)
     plt.plot(x, t, c=(0,0,1))
-    plt.plot(x, tc, c=(0.5,0,1.0))
-    plt.plot(x, tr, c=(0.5,0,0.8))
     plt.plot(x, v, c=(0,1,0))
-    plt.plot(x, vc, c=(0.5,1.0,0.0))
-    plt.plot(x, vr, c=(0.5,0.8,0.0))
+    
+    if mode == 'rpn':
+        plt.plot(x, tc, c=(0.5,0,1.0))
+        plt.plot(x, tr, c=(0.5,0,0.8))
+        plt.plot(x, vc, c=(0.5,1.0,0.0))
+        plt.plot(x, vr, c=(0.5,0.8,0.0))
     
 #    plt.title('DET loss')
     plt.ylabel('Loss')
     plt.xlabel('Iteration (in 10K)')
-    plt.legend(['train+L2', 'train cls', 'train regr', 'val+L2', 'val cls', 'val regr'], loc='upper right')
+    if mode == 'hoi':
+        plt.legend(['train+L2', 'val+L2'], loc='upper right')
+    else:
+        plt.legend(['train+L2', 'train cls', 'train regr', 'val+L2', 'val cls', 'val regr'], loc='upper right')
     plt.show()    
 
 

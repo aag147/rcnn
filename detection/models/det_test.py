@@ -86,6 +86,7 @@ def saveEvalData(generator, Stages, cfg, obj_mapping):
         #STAGE 2
         bboxes = Stages.stagetwo([X,proposals], imageMeta, imageDims)
         if bboxes is None:
+            utils.save_obj(None, save_path + str(imageID))
             continue
         
         #CONVERT
@@ -94,15 +95,17 @@ def saveEvalData(generator, Stages, cfg, obj_mapping):
         
     return evalData
 
-def saveEvalResults(evalData, generator, cfg):
+def saveEvalResults(generator, cfg):
     
     my_output_path = cfg.results_path + 'det' + cfg.my_results_dir + '/res/' + generator.data_type + '/'
 
     evalData = []
     nb_empty = 0
     for batchidx, (imageID, imageMeta) in enumerate(generator.imagesMeta.items()):
-        if os.path.exists(my_output_path + str(imageID)):
-            evalData.append(utils.load_obj(my_output_path + imageID))
+        if os.path.exists(my_output_path + str(imageID) + '.pkl'):
+            data = utils.load_obj(my_output_path + imageID)
+            if data is not None and len(data) > 0:
+                evalData.extend(data)
         else:
             nb_empty += 1
     

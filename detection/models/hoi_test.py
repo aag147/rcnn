@@ -113,13 +113,16 @@ def saveEvalResults(generator, cfg, obj_mapping, hoi_mapping):
     evalData = []
     nb_empty = 0
     for batchidx, (imageID, imageMeta) in enumerate(generator.imagesMeta.items()):
+        if (batchidx+1) % (generator.nb_batches // 100) == 0 or batchidx==1 or (batchidx+1) == generator.nb_batches:
+            utils.update_progress_new(batchidx+1, generator.nb_batches, imageID)
+        
         if os.path.exists(my_output_path + imageID + '.pkl'):
             data = utils.load_obj(my_output_path + imageID)
             if data is not None:
-                evalData.append(data)
+                evalData.extend(data)
         else:
             nb_empty += 1
-            
+
     mAP, AP = metrics.computeHOImAP(evalData, generator.imagesMeta, obj_mapping, hoi_mapping, cfg)
     saveMeta = {'mAP': mAP, 'zAP': AP.tolist(), 'nb_empties': nb_empty}
     utils.save_dict(saveMeta, path+mode+'_mAP')

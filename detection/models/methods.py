@@ -466,7 +466,7 @@ class AllModels:
                     kernel_regularizer = keras.regularizers.l2(cfg.weight_decay),
                     bias_regularizer   = keras.regularizers.l2(cfg.weight_decay)
                 ),
-                name="det_out_class"
+                name="det_out_class" if not cfg.do_finetune else "det_fineout_class"
             )(object_features)
             
             object_deltas = keras.layers.TimeDistributed(
@@ -477,7 +477,7 @@ class AllModels:
                     kernel_regularizer = keras.regularizers.l2(cfg.weight_decay),
                     bias_regularizer   = keras.regularizers.l2(cfg.weight_decay)
                 ),
-                name="det_out_regress"
+                name="det_out_regress" if not cfg.do_finetune else "det_fineout_regress"
             )(object_features)
     
             detection_outputs = [
@@ -489,9 +489,10 @@ class AllModels:
             self.model_det.name = 'det'
     
             # Only train from conv3_1
+            nb_freeze_layers = 24 if cfg.do_finetune else cfg.nb_freeze_layers
             for i, layer in enumerate(self.model_det.layers):
                 layer.trainable = False
-                if i == self.cfg.nb_freeze_layers:
+                if i == nb_freeze_layers:
                     break
 
         ########################

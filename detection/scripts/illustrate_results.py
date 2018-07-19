@@ -28,12 +28,12 @@ if True:
     cfg = data.cfg
     obj_mapping = data.class_mapping
 
-#path = cfg.my_results_path + 'history.txt'
-#hist =  np.loadtxt(path, delimiter=', ')
+path = cfg.my_results_path + 'history.txt'
+hist =  np.loadtxt(path, delimiter=', ')
 #
 import draw
 import filters_rpn
-#draw.plotRPNLosses(hist)
+draw.plotRPNLosses(hist, mode='hoi')
     
 
 images_path = cfg.data_path + 'images/val/'
