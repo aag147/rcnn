@@ -40,7 +40,7 @@ class basic_config:
           print("   New directory... (name given)")          
           
           for fid in range(100):
-            my_actual_results_dir = self.new_results_dir + + '%d' % fid
+            my_actual_results_dir = self.new_results_dir + '%d' % fid
             my_results_dir = self.dataset + "/" + my_actual_results_dir + '/'
             my_results_path = self.part_results_path + my_results_dir
             if not os.path.exists(my_results_path):
