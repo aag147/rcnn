@@ -126,7 +126,7 @@ class DataGenerator():
         imageIdxs = np.array(range(self.nb_images))
         while 1:
           r.shuffle(imageIdxs)
-          for i in range(self.nb_batches):
+          for i in range(self.nb_images):
               imageIdx = imageIdxs[i]
               data = self._generateBatchFromIDs([imageIdx])
               if data is None:
