@@ -50,12 +50,19 @@ if True:
                  callbacks.SaveLog2File(cfg), \
                  callbacks.PrintCallBack()]
     
-    model_det.fit_generator(generator = genTrain.begin(), \
-                steps_per_epoch = genTrain.nb_batches, \
-                verbose = 2,\
-                validation_data = genVal.begin(), \
-                validation_steps = genVal.nb_batches, \
-                epochs = cfg.epoch_end, initial_epoch=cfg.epoch_begin, callbacks=callbacks)
+    if cfg.dataset == 'TUPPMI':
+        model_det.fit_generator(generator = genTrain.begin(), \
+                    steps_per_epoch = genTrain.nb_batches, \
+                    verbose = 2,\
+                    epochs = cfg.epoch_end, initial_epoch=cfg.epoch_begin, callbacks=callbacks)
+    else:
+        
+        model_det.fit_generator(generator = genTrain.begin(), \
+                    steps_per_epoch = genTrain.nb_batches, \
+                    verbose = 2,\
+                    validation_data = genVal.begin(), \
+                    validation_steps = genVal.nb_batches, \
+                    epochs = cfg.epoch_end, initial_epoch=cfg.epoch_begin, callbacks=callbacks)
 
     # Save stuff
     Models.save_model(saveShared=True)
