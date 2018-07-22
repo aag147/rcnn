@@ -28,7 +28,8 @@ def deltas2ObjBoxes(props, deltas, rois, imageDims, cfg, obj_mapping, do_regr=Tr
     
     for labelID in obj_labels:
         label_pos = labelID - 1
-        idxs = np.where(props[0,:,labelID]>0.05)[0]
+#        idxs = np.where(props[0,:,labelID]>0.05)[0]
+        idxs = np.argsort(props[0,:,labelID])[-nb_top_bboxes:][::-1]
         
         # extract label data
 #        labelprops  = props[0,idxs,labelID]

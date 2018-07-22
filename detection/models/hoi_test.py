@@ -16,7 +16,7 @@ import sys
 import random as r
 
 def saveInputData(generator, Stages, cfg):  
-    cfg.my_output_path = cfg.results_path + 'det' + cfg.my_results_dir + '/output/' + generator.data_type + 'newest/'
+    cfg.my_output_path = cfg.results_path + 'det' + cfg.my_results_dir + '/output/' + generator.data_type + 'new/'
     
     if not os.path.exists(cfg.my_output_path):
         os.makedirs(cfg.my_output_path)
