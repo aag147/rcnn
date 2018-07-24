@@ -165,7 +165,7 @@ def loadData(imageInput, imageDims, cfg):
     all_target_labels = (imageInput['hoi_labels'])
     val_map = np.array(imageInput['val_map'])
         
-    all_target_labels = utils.getMatrixLabels(cfg.nb_hoi_classes, all_target_labels)
+    all_target_labels = utils.getMatrixLabels(cfg.nb_hoi_classes, all_target_labels, labels2classes=True)
     
 #    if len(np.where(val_map==3)[0])==0:
 #        return None, None, None, None
@@ -244,8 +244,12 @@ def convertResults(hbboxes, obboxes, predicted_labels, imageMeta, scale, rpn_str
     for bidx in range(nb_boxes):
         hbbox = hbboxes[bidx,:]
         obbox = obboxes[bidx,:]
+        
+        if (hbbox == obbox).all():
+            continue
         preds = predicted_labels[bidx]
-        labels = np.where(preds>0.05)[0].tolist()
+#        labels = np.where(preds>0.001)[0].tolist()
+        labels = [x for x in list(range(len(hoi_mapping))) if hoi_mapping[x]['obj'] in gt_labels]
         props = preds[labels]
         nb_preds = len(labels)
 

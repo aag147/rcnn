@@ -28,7 +28,7 @@ def computeHOIAP(batch, GTMeta, nb_gt_samples, hoi_id):
     fp = np.zeros((nb_hois))
     
     
-    for idx in sorted_idxs:
+    for sort_idx, idx in enumerate(sorted_idxs):
         hoi = batch[idx]
         hbbox = hoi['hbbox']
         obbox = hoi['obbox']
@@ -56,22 +56,28 @@ def computeHOIAP(batch, GTMeta, nb_gt_samples, hoi_id):
             if min(hum_overlap, obj_overlap) > max_iou:
                 max_iou = min(hum_overlap, obj_overlap)
                 best_idx = gt_idx
-        
+
         if max_iou >= 0.5:
             if gt_rels[best_idx,3] == 0:
-                tp[idx] = 1 # true positive
+                tp[sort_idx] = 1 # true positive
                 GTMeta[imageID]['gt_rels'][best_idx,3] = 1
             else:
-                fp[idx] = 1 # false positive (double)
+                fp[sort_idx] = 1 # false positive (double)
         else:
-            fp[idx] = 1 # false positive
+            fp[sort_idx] = 1 # false positive
     
     tp = np.cumsum(tp)
     fp = np.cumsum(fp)
     
     recall = tp / nb_gt_samples[hoi_id]
-#    recall = tp / 1
     precision = tp / (fp+tp)
+    
+#    print('recall', recall[:25])
+#    print('pres', precision[:25])
+#    print('tp', tp[:25])
+#    print('fp', fp[:25])
+#    print('tp/fp', (tp+fp)[:25])
+#    print('nb_gt', nb_gt_samples[hoi_id])
     
     APs = np.zeros((11))
     for r in range(0,11):
@@ -83,10 +89,11 @@ def computeHOIAP(batch, GTMeta, nb_gt_samples, hoi_id):
         APs[r] = p
         
     
-    mAP = np.mean(APs)
+    AP = np.mean(APs)
     
-    print(mAP, nb_gt_samples[hoi_id], APs, tp[-1], fp[-1])
-    return mAP
+#    print(mAP, nb_gt_samples[hoi_id], APs, tp[-1], fp[-1])
+    print('AP', AP)
+    return AP
 
     
 
@@ -432,7 +439,7 @@ def computemAPLoss(Y, Y_hat):
         
         nb_class_samples = len(np.where(Y[:,x]==1)[0])
         
-        nb_preds = np.sum(Y_hat[:,x]>=0.5)
+        nb_preds = np.sum(Y_hat[:,x]>=0.1)
         
         tp = np.zeros(nb_preds)
         fp = np.zeros(nb_preds)

@@ -38,8 +38,12 @@ if True:
     
 sys.stdout.flush()
 # Test data
-evalTest = hoi_test.saveEvalData(genTest, Stages, cfg, hoi_mapping)
-hoi_test.saveEvalResults(genTest, cfg, obj_mapping, hoi_mapping)
+evalTestSub, imageMeta = hoi_test.saveEvalData(genTest, Stages, cfg, hoi_mapping)
+hoi_test.saveEvalResults(genTest, cfg, obj_mapping, hoi_mapping
+                         
+                         )
+#import draw
+#draw.drawOverlapHOIRes(evalTestSub, genTest.imagesMeta, obj_mapping, hoi_mapping, genTest.images_path)
 
 # Train data
 #evalTrain = hoi_test.saveEvalData(genTrain, Stages, cfg)

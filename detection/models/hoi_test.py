@@ -14,6 +14,7 @@ import os
 import numpy as np
 import sys
 import random as r
+import copy as cp
 
 def saveInputData(generator, Stages, cfg):  
     cfg.my_output_path = cfg.results_path + 'det' + cfg.my_results_dir + '/output/' + generator.data_type + 'new/'
@@ -70,10 +71,11 @@ def saveEvalData(generator, Stages, cfg, obj_mapping):
     print('   save_path:', save_path)
     
     evalData = []
+    imageMeta = None
     imagesIDs = list(generator.imagesMeta.keys())
     r.shuffle(imagesIDs)
-    for batchidx, imageID in enumerate(imagesIDs):    
-        if (batchidx+1) % (generator.nb_batches // 100) == 0 or batchidx==1 or (batchidx+1) == generator.nb_batches:
+    for batchidx, imageID in enumerate(imagesIDs):
+        if (batchidx+1) % (max(1,generator.nb_batches // 100)) == 0 or batchidx==1 or (batchidx+1) == generator.nb_batches:
             utils.update_progress_new(batchidx+1, generator.nb_batches, imageID)
                 
         path = save_path + imageID + '.pkl'
@@ -97,13 +99,13 @@ def saveEvalData(generator, Stages, cfg, obj_mapping):
         if pred_hbboxes is None:
             utils.save_obj(None, save_path + imageID)
             continue
-                
+          
         #CONVERT
         evalData = filters_hoi.convertResults(pred_hbboxes, pred_obboxes, pred_props, imageMeta, imageDims['scale'], cfg.rpn_stride, obj_mapping)
         utils.save_obj(evalData, save_path + imageID)
-    return evalData
+    return evalData, imageMeta
 
-def saveEvalResults(generator, cfg, obj_mapping, hoi_mapping):
+def saveEvalResults(generator, cfg, obj_mapping, hoi_mapping, evalData=None):
     
     my_output_path = cfg.results_path + 'hoi' + cfg.my_results_dir + '/res/' + generator.data_type + generator.approach + '/'
     
@@ -113,20 +115,21 @@ def saveEvalResults(generator, cfg, obj_mapping, hoi_mapping):
     if not os.path.exists(path):
         path = path[:-1]
     path += '/'
-    
-    evalData = []
     nb_empty = 0
-    for batchidx, (imageID, imageMeta) in enumerate(generator.imagesMeta.items()):
-        if (batchidx+1) % (generator.nb_batches // 100) == 0 or batchidx==1 or (batchidx+1) == generator.nb_batches:
-            utils.update_progress_new(batchidx+1, generator.nb_batches, imageID)
-        
-        if os.path.exists(my_output_path + imageID + '.pkl'):
-            data = utils.load_obj(my_output_path + imageID)
-            if data is not None and len(data) > 0:
-                evalData.extend(data)
-        else:
-            nb_empty += 1
-
+    if evalData is None:
+        evalData = []
+        for batchidx, (imageID, imageMeta) in enumerate(generator.imagesMeta.items()):
+            if (batchidx+1) % (max(1,generator.nb_batches // 100)) == 0 or batchidx==1 or (batchidx+1) == generator.nb_batches:
+                utils.update_progress_new(batchidx+1, generator.nb_batches, imageID)
+            
+            if os.path.exists(my_output_path + imageID + '.pkl'):
+                data = utils.load_obj(my_output_path + imageID)
+                if data is not None and len(data) > 0:
+                    evalData.extend(data)
+            else:
+                nb_empty += 1
+                
+    evalData = cp.copy(evalData)
     mAP, AP = metrics.computeHOImAP(evalData, generator.imagesMeta, obj_mapping, hoi_mapping, cfg)
     saveMeta = {'mAP': mAP, 'zAP': AP.tolist(), 'nb_empties': nb_empty}
     utils.save_dict(saveMeta, path+mode+'_mAP')

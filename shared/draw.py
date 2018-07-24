@@ -459,9 +459,10 @@ def drawPositiveHoI(img, hbboxes, obboxes, patterns, props, imageMeta, imageDims
 #        oprop = (obboxes[idx,4])
 #        hlbl = int(hbboxes[idx,5])
 #        olbl = int(obboxes[idx,5])
-        hoiprop = np.where(props[idx,:]>0.05)[0]
-        if len(hoiprop)>0 or True:
-            print(idx, hoiprop)
+        hoilabel = np.where(props[idx,:]>0.001)[0]
+        if len(hoilabel)>0 or True:
+            hoiprop = props[idx,hoilabel]
+#            print(idx, hoilabel, hoiprop)
             
             f, spl = plt.subplots(2,2)
             spl = spl.ravel()   
@@ -482,6 +483,173 @@ def drawPositiveHoI(img, hbboxes, obboxes, patterns, props, imageMeta, imageDims
             c_idx = (c_idx+1) % len(colours)
     return np.array(idxs)
 
+
+def drawOverlapHOIRes(evalData, imagesMeta, obj_mapping, hoi_mapping, images_path):
+
+    prev_imageID = ''
+    
+    for idx, line in enumerate(evalData):
+        line = cp.copy(line)
+        imageID = line['image_id']
+        if imageID != prev_imageID:
+            imageMeta = imagesMeta[imageID]
+            img = cv.imread(images_path + imageMeta['imageName'])
+            assert img is not None
+            img = cv.cvtColor(img, cv.COLOR_BGR2RGB)
+            
+            import filters_helper as helper    
+            gt_hbboxes, gt_obboxes = helper._transformGTBBox(imageMeta['objects'], obj_mapping, np.array(imageMeta['rels']), dosplit=True)
+            gt_rels = helper._getRealRels(np.array(imageMeta['rels']))
+            gt_objs = np.unique(gt_obboxes[:,4])
+        
+        
+        hbbox = line['hbbox']
+        obbox = line['obbox']
+        label = line['category_id']
+        prop  = line['score']
+        
+        overlap = 0
+        for gt_idx, gt_rel in enumerate(gt_rels):
+            gt_hbbox = gt_hbboxes[gt_rel[0]:gt_rel[0]+1]
+            gt_obbox = gt_obboxes[gt_rel[1]:gt_rel[1]+1]
+            gt_label = gt_rel[2]
+            
+            if gt_label != label:
+                continue
+                        
+            hum_overlap = helper._computeIoUs(hbbox, gt_hbbox)[0]
+            obj_overlap = helper._computeIoUs(obbox, gt_obbox)[0]
+            
+            if min(hum_overlap, obj_overlap) > overlap:
+                overlap = min(hum_overlap, obj_overlap)
+            print(overlap)
+    
+        hbbox = np.copy(hbbox)
+        obbox = np.copy(obbox)
+        hbbox[2] -= hbbox[0]
+        hbbox[3] -= hbbox[1]
+        obbox[2] -= obbox[0]
+        obbox[3] -= obbox[1]
+
+        if overlap >= 0.5:
+            
+            f, spl = plt.subplots(1,1)
+            spl.imshow(img)
+            hbbox = drawProposalBox(hbbox)
+            obbox = drawProposalBox(obbox)
+            spl.plot(hbbox[0,:], hbbox[1,:], c='red')
+            spl.plot(obbox[0,:], obbox[1,:], c='red')
+            print('Pos. label:', hoi_mapping[label], prop) 
+        else:
+#            continue
+            f, spl = plt.subplots(1,1)
+            spl.imshow(img)
+            hbbox = drawProposalBox(hbbox)
+            obbox = drawProposalBox(obbox)
+            spl.plot(hbbox[0,:], hbbox[1,:], c='black')
+            spl.plot(obbox[0,:], obbox[1,:], c='black')
+            print('Neg. label:', hoi_mapping[label], prop)
+
+def drawOverlapHoI(img, hbboxes, obboxes, props, imageMeta, imageDims, cfg, obj_mapping, hoi_mapping):
+#    f, spl = plt.subplots(2,2)
+#    spl = spl.ravel()
+#    spl[0].imshow(img)
+    import filters_helper as helper    
+    gt_hbboxes, gt_obboxes = helper._transformGTBBox(imageMeta['objects'], obj_mapping, np.array(imageMeta['rels']), scale=imageDims['scale'], dosplit=True)
+    gt_rels = helper._getRealRels(np.array(imageMeta['rels']))
+    gt_objs = np.unique(gt_obboxes[:,4])
+    
+    inv_obj_mapping = {x:key for key,x in obj_mapping.items()}
+    colours = ['#FEc75c', '#123456','#456789', '#abcdef','#fedcba', '#987654','#654321', '#994ee4']
+    idxs = []
+    nb_pairs = hbboxes.shape[0]
+    c_idx=0
+
+    for idx in range(nb_pairs):
+#        if idx > 5 and idx < 100:
+#            continue
+#        if idx > 105:
+#            break
+#        hprop = (hbboxes[idx,4])
+#        oprop = (obboxes[idx,4])
+#        hlbl = int(hbboxes[idx,5])
+#        olbl = int(obboxes[idx,5])
+#        hoilabels = np.where(props[idx,:]>0.001)[0]
+        hoilabels = list(range(600))
+        hoilabels = [x for x in hoilabels if obj_mapping[hoi_mapping[x]['obj']] in gt_objs]
+        hoiprops = [props[idx,x] for x in hoilabels if x in hoilabels]
+        
+        hbbox = hbboxes[idx,:4]*16
+        obbox = obboxes[idx,:4]*16
+        
+        hbbox_cp = np.copy(hbbox)
+        obbox_cp = np.copy(obbox)
+        
+        hbbox_cp[2] += hbbox_cp[0]
+        hbbox_cp[3] += hbbox_cp[1]
+        obbox_cp[2] += obbox_cp[0]
+        obbox_cp[3] += obbox_cp[1]
+        
+        overlap = 0
+        overlap_labels = []
+        for gt_idx, gt_rel in enumerate(gt_rels):
+            gt_hbbox = gt_hbboxes[gt_rel[0]:gt_rel[0]+1]
+            gt_obbox = gt_obboxes[gt_rel[1]:gt_rel[1]+1]
+            gt_label = gt_rel[2]
+            
+            if gt_label not in hoilabels:
+#                print(gt_label, hoilabels)
+                continue
+                        
+            hum_overlap = helper._computeIoUs(hbbox_cp, gt_hbbox)[0]
+            obj_overlap = helper._computeIoUs(obbox_cp, gt_obbox)[0]
+            
+#            print(', '.join(['%.4f' % x for x in hbbox_cp]), ', '.join(['%.4f' % x for x in obbox_cp]))
+#            print(', '.join(['%.4f' % x for x in gt_hbbox[0]]), ', '.join(['%.4f' % x for x in gt_obbox[0]]))
+#            print(hum_overlap, obj_overlap)
+            
+            if min(hum_overlap, obj_overlap) > overlap:
+                overlap = min(hum_overlap, obj_overlap)
+            if min(hum_overlap, obj_overlap) > 0.5:
+                overlap_labels.append(gt_label)
+                
+#        gt_hbboxes[:,2] -= gt_hbboxes[:,0]
+#        gt_hbboxes[:,3] -= gt_hbboxes[:,1]
+#        gt_obboxes[:,2] -= gt_obboxes[:,0]
+#        gt_obboxes[:,3] -= gt_obboxes[:,1]
+        if len(hoilabels)>0 and overlap >= 0.5:
+            hoiprops = [props[idx,x] for x in hoilabels if x in overlap_labels]
+            
+            f, spl = plt.subplots(1,1)
+            spl.imshow(img)
+            c = colours[c_idx]
+            hbbox = drawProposalBox(hbbox)
+            obbox = drawProposalBox(obbox)
+            spl.plot(hbbox[0,:], hbbox[1,:], c=c)
+            spl.plot(obbox[0,:], obbox[1,:], c=c)
+            
+#            hbbox = drawProposalBox(gt_hbbox[0])
+#            obbox = drawProposalBox(gt_obbox[0])
+#            spl[0].plot(hbbox[0,:], hbbox[1,:], c=c)
+#            spl[0].plot(obbox[0,:], obbox[1,:], c=c)
+            
+            idxs.append(idx)
+            labelsstr = [hoi_mapping[x] for x in overlap_labels]
+            print('Pos. label:', labelsstr, hoiprops)
+            
+            c_idx = (c_idx+1) % len(colours)
+        else:
+#            continue
+            f, spl = plt.subplots(1,1)
+            spl.imshow(img)
+            c = colours[c_idx]
+            hbbox = drawProposalBox(hbbox)
+            obbox = drawProposalBox(obbox)
+            spl.plot(hbbox[0,:], hbbox[1,:], c='black')
+            spl.plot(obbox[0,:], obbox[1,:], c='black')
+            hoiprops = ', '.join(['%.4f' % x for x in hoiprops])
+            print('Neg. label:', hoilabels, hoiprops)
+    return np.array(idxs)
 
 def drawPositiveCropHoI(hbboxes, obboxes, hcrops, ocrops, patterns, props, imageMeta, imageDims, cfg, obj_mapping):
     inv_obj_mapping = {x:key for key,x in obj_mapping.items()}
@@ -638,7 +806,7 @@ def drawHoIExample(imageMeta, images_path, hoi_mapping):
         spl.plot(line[:,1], line[:,0], c='red')
         spl.scatter(line[:,1], line[:,0], c='red', s=5)
         print(names[j])
-        if j == 2:
+        if j == 5:
             break
 
 def drawImages(imagesID, imagesMeta, labels, path, imagesBadOnes = False):

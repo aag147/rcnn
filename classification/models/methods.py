@@ -33,7 +33,10 @@ def _final_stop(inputs, outputs, cfg):
         
         path = cfg.my_weights_path + cfg.my_weights
         assert os.path.exists(path), 'invalid path: %s' % path
-        model = load_model(path)
+        if cfg.only_use_weights:
+            model.load_weights(path)
+        else:
+            model = load_model(path)
         
 #    for layer in model.layers:
 #        if hasattr(layer, 'kernel_regularizer'):

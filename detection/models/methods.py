@@ -590,7 +590,7 @@ class AllModels:
             hoi_score = keras.layers.Add()([hoi_human_scores, hoi_object_scores, hoi_pattern_scores])
             
             hoi_final_score = keras.layers.Activation(
-                "sigmoid",
+                "sigmoid" if cfg.dataset!='TUPPMI' else 'softmax',
                 name="hoi_out_class"
             )(hoi_score)
             

@@ -326,7 +326,7 @@ def isPointInsideBoxes(point, boxes):
 
 
 # %% Y Matrix to Y Vector, and opposite
-def getMatrixLabels(nb_classes, Y):
+def getMatrixLabels(nb_classes, Y, labels2classes=False):
     YMatrix = np.zeros((len(Y), nb_classes))
     sIdx = 0
     for y in Y:
