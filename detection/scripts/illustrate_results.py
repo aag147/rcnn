@@ -19,7 +19,10 @@ import extract_data
 import utils
 import numpy as np
 import filters_helper as helper
-
+import os
+from hoi_generators import DataGenerator
+import metrics
+import draw
 
 if True:
     # Load data
@@ -27,14 +30,55 @@ if True:
     data = extract_data.object_data()
     cfg = data.cfg
     obj_mapping = data.class_mapping
+    hoi_mapping = data.hoi_labels
 
-path = cfg.my_results_path + 'history.txt'
-hist =  np.loadtxt(path, delimiter=', ')
-#
-import draw
-import filters_rpn
-draw.plotRPNLosses(hist, mode='hoi')
+
+if False:
+    path = cfg.part_results_path + 'HICO/hoi80fastvgg2/history.txt'
+    hist =  np.loadtxt(path, delimiter=', ')
+    hist[:,0] /= 2
+
+    import filters_rpn
+    draw.plotRPNLosses(hist, mode='hoi', yaxis='log')
     
+
+def loadEvalData(generator, my_output_path):    
+    evalData = []
+    for batchidx, (imageID, imageMeta) in enumerate(generator.imagesMeta.items()):
+        if (batchidx+1) % (max(1,generator.nb_batches // 100)) == 0 or batchidx==1 or (batchidx+1) == generator.nb_batches:
+            utils.update_progress_new(batchidx+1, generator.nb_batches, imageID)
+        
+        data = utils.load_obj(my_output_path + imageID)
+        if data is not None and len(data) > 0:
+            evalData.extend(data)
+
+    return evalData
+
+if False:
+    genTest = DataGenerator(imagesMeta = data.valGTMeta, cfg=cfg, data_type='test', do_meta=True, mode='test', approach='new')
+    my_output_path = cfg.part_results_path + 'HICO/hoi80fastvgg2/res/testnew/'
+    evalData = loadEvalData(genTest, my_output_path)
+
+if False:
+    evalDataRdx = []
+    overlap_thresh = 0.05
+    for line in evalData:
+        score = line['score']
+        if score >= overlap_thresh:
+            evalDataRdx.append(line)
+    mAPRdx, AP_mapRdx, evalsRdx = metrics.computeHOImAP(evalDataRdx, imagesMeta, obj_mapping, hoi_mapping, cfg, do_cfm=True)    
+    
+if True:
+
+    cfm = np.zeros((601,601))
+    for line in evalsRdx:
+        pred = line['category_id']+1
+        gt   = line['eval']+1
+        cfm[gt,pred] += 1
+        
+    cfm_norm = cfm / (np.sum(cfm,axis=0)+0.0000000001)
+    draw.plot_confusion_matrix(cfm, normalize=True, no_bg=False)
+    draw.plot_confusion_matrix(cfm, normalize=True, no_bg=True)
 
 if False:
     images_path = cfg.data_path + 'images/val/'

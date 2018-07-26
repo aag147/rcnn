@@ -60,7 +60,7 @@ if True:
         if np.max(gtbboxes[:,2]) > 2+imageDims['output_shape'][1] or np.max(gtbboxes[:,3]) > 2+imageDims['output_shape'][0]:
             print('bad bbs', imageID, np.max(gtbboxes[:,2]), np.max(gtbboxes[:,3]), imageDims['output_shape'])
         
-        imageInputs = utils.load_obj(cfg.my_input_path + 'testnewest/' + imageID)
+        imageInputs = utils.load_obj(cfg.my_input_path + 'testnew/' + imageID)
         
         if imageInputs is None:
             idxs = []

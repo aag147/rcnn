@@ -99,7 +99,7 @@ def plot_area_stats(stats, sort=False):
 def plot_confusion_matrix(cm, classes=None,
                           normalize=False,
                           no_bg=False,
-                          title='Confusion matrix',
+                          name='Confusion matrix',
                           cmap=plt.cm.Blues):
     """
     http://scikit-learn.org/stable/auto_examples/model_selection/plot_confusion_matrix.html
@@ -117,10 +117,13 @@ def plot_confusion_matrix(cm, classes=None,
     else:
         print('Confusion matrix, without normalization')
 
-#    print(cm)
 
+    cm_padding = np.zeros([x+10*2 for x in cm.shape])
+    cm_padding[10:-10,10:-10] = cm
+#    print(cm)
+    f = plt.figure()
     plt.imshow(cm, interpolation='nearest', cmap=cmap)
-    plt.title(title)
+    plt.title(name)
     plt.colorbar()
 #    tick_marks = np.arange(len(classes))
 #    plt.xticks(tick_marks, classes, rotation=45)
@@ -151,7 +154,7 @@ def plotLosses(log):
     plt.show()
     
     
-def plotRPNLosses(hist, mode='rpn'):
+def plotRPNLosses(hist, mode='rpn', yaxis=None):
     x = hist[:,0]
     t = hist[:,1]
     tc = hist[:,3]
@@ -161,16 +164,19 @@ def plotRPNLosses(hist, mode='rpn'):
     vr = hist[:,8]
     
     f, spl = plt.subplots(1)
-    plt.plot(x, t, c=(0,0,1))
-    plt.plot(x, v, c=(0,1,0))
+    spl.plot(x, t, c=(0,0,1))
+    spl.plot(x, v, c=(0,1,0))
     
     if mode == 'rpn':
-        plt.plot(x, tc, c=(0.5,0,1.0))
-        plt.plot(x, tr, c=(0.5,0,0.8))
-        plt.plot(x, vc, c=(0.5,1.0,0.0))
-        plt.plot(x, vr, c=(0.5,0.8,0.0))
+        spl.plot(x, tc, c=(0.5,0,1.0))
+        spl.plot(x, tr, c=(0.5,0,0.8))
+        spl.plot(x, vc, c=(0.5,1.0,0.0))
+        spl.plot(x, vr, c=(0.5,0.8,0.0))
     
 #    plt.title('DET loss')
+    if yaxis is not None:
+        spl.set_yscale('log')
+        spl.axis((-1,31,10**-1,10**1.7))
     plt.ylabel('Loss')
     plt.xlabel('Iteration (in 10K)')
     if mode == 'hoi':

@@ -33,15 +33,13 @@ if True:
     genTrain = DataGenerator(imagesMeta = data.trainGTMeta, cfg=cfg, data_type='train', do_meta=True, mode='test', approach='new')
     genTest = DataGenerator(imagesMeta = data.valGTMeta, cfg=cfg, data_type='test', do_meta=True, mode='test', approach='new')
     
-    Models = methods.AllModels(cfg, mode='test', do_rpn=False, do_det=False, do_hoi=True)
+    Models = methods.AllModels(cfg, mode='test', do_rpn=True, do_det=True, do_hoi=True)
     Stages = stages.AllStages(cfg, Models, obj_mapping, hoi_mapping, mode='test')
     
 sys.stdout.flush()
 # Test data
-evalTestSub, imageMeta = hoi_test.saveEvalData(genTest, Stages, cfg, hoi_mapping)
-hoi_test.saveEvalResults(genTest, cfg, obj_mapping, hoi_mapping
-                         
-                         )
+#evalTestSub, imageMeta = hoi_test.saveEvalData(genTest, Stages, cfg, hoi_mapping)
+#hoi_test.saveEvalResults(genTest, cfg, obj_mapping, hoi_mapping)
 #import draw
 #draw.drawOverlapHOIRes(evalTestSub, genTest.imagesMeta, obj_mapping, hoi_mapping, genTest.images_path)
 
