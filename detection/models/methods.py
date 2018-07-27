@@ -491,7 +491,7 @@ class AllModels:
             self.model_det.name = 'det'
     
             # Only train from conv3_1
-            nb_freeze_layers = 24 if cfg.do_finetune else cfg.nb_freeze_layers
+            nb_freeze_layers = 17 if cfg.do_finetune else cfg.nb_freeze_layers
             for i, layer in enumerate(self.model_det.layers):
                 layer.trainable = False
                 if i == nb_freeze_layers:
