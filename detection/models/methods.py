@@ -414,7 +414,7 @@ class AllModels:
             # Only train from conv3_1
             print('   Freezing first few layers...')
             
-            nb_freeze_layers = 18 if cfg.do_finetune else cfg.nb_freeze_layers
+            nb_freeze_layers = 17 if cfg.do_finetune else cfg.nb_freeze_layers
             print('   Freeze up to', nb_freeze_layers)
             for i, layer in enumerate(self.model_rpn.layers):
                 layer.trainable = False
@@ -592,7 +592,7 @@ class AllModels:
             hoi_score = keras.layers.Add()([hoi_human_scores, hoi_object_scores, hoi_pattern_scores])
             
             hoi_final_score = keras.layers.Activation(
-                "sigmoid" if cfg.dataset!='TUPPMI' else 'softmax',
+                "softmax" if cfg.dataset == 'TUPPMI' else 'sigmoid',
                 name="hoi_out_class"
             )(hoi_score)
             

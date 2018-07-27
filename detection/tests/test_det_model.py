@@ -45,12 +45,12 @@ if True:
     Stages = stages.AllStages(cfg, Models, obj_mapping, hoi_mapping, mode='test')
 
 
-genIterator = genVal.begin()
+genIterator = genTrain.begin()
 
 for i in range(1):
     X, y, imageMeta, imageDims, times = next(genIterator)
 #    imageMeta = genVal.imagesMeta['385029']
-    X, y, imageDims = Stages.stagezero(imageMeta, genVal.data_type)
+    X, y, imageDims = Stages.stagezero(imageMeta, genTrain.data_type)
     imageID = imageMeta['imageName'].split('.')[0]
     img = np.copy(X[0])
     img -= np.min(img)

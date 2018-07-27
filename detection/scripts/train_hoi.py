@@ -50,13 +50,20 @@ if True:
                  callbacks.SaveLog2File(cfg), \
                  callbacks.PrintCallBack()]
 
-    model_hoi.fit_generator(generator = genTrain.begin(), \
-                steps_per_epoch = genTrain.nb_batches, \
-                verbose = 2,\
-                max_queue_size = 100,\
-                validation_data = genTest.begin(), \
-                validation_steps = genTest.nb_batches, \
-                epochs = cfg.epoch_end, initial_epoch=cfg.epoch_begin, callbacks=callbacks)
+    if cfg.dataset == 'TUPPMI':
+        model_hoi.fit_generator(generator = genTrain.begin(), \
+                    steps_per_epoch = genTrain.nb_batches, \
+                    verbose = 2,\
+                    max_queue_size = 100,\
+                    epochs = cfg.epoch_end, initial_epoch=cfg.epoch_begin, callbacks=callbacks)
+    else:
+        model_hoi.fit_generator(generator = genTrain.begin(), \
+                    steps_per_epoch = genTrain.nb_batches, \
+                    verbose = 2,\
+                    max_queue_size = 100,\
+                    validation_data = genTest.begin(), \
+                    validation_steps = genTest.nb_batches, \
+                    epochs = cfg.epoch_end, initial_epoch=cfg.epoch_begin, callbacks=callbacks)
 
     # Save stuff
     Models.save_model()

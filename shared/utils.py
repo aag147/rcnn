@@ -333,7 +333,10 @@ def getMatrixLabels(nb_classes, Y, labels2classes=False):
         if y is not np.ndarray:
             y = [y]
         for clIdx in y:
-            YMatrix[sIdx][clIdx] = 1
+            YMatrix[sIdx,clIdx] = 1
+        
+        if labels2classes and np.sum(YMatrix[sIdx,:])==0:
+            YMatrix[sIdx,-1] = 1
         sIdx += 1
     return YMatrix
 
