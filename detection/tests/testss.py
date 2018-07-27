@@ -25,6 +25,9 @@ import utils
 import draw
 import numpy as np
 import cv2 as cv
+import glob
+import os
+import shutil
 
 if True:
     # Load data
@@ -32,14 +35,30 @@ if True:
     cfg = data.cfg
     obj_mapping = data.class_mapping
     hoi_mapping = data.hoi_labels
+    inv_hoi_mapping = {x['pred']+x['obj']:idx for idx,x in enumerate(hoi_mapping)}
     
-    # Create batch generators
-    genTrain = DataGenerator(imagesMeta = data.trainGTMeta, cfg=cfg, data_type='train', do_meta=True)
-    genVal = DataGenerator(imagesMeta = data.valGTMeta, cfg=cfg, data_type='val', do_meta=True)
-#    genTest = DataGenerator(imagesMeta = data.testGTMeta, cfg=cfg, data_type='test', do_meta=True)
- 
+    path = 'C:\\Users\\aag14/Documents/Skole/Speciale/PPMI/ori_image/'
+    images_path = 'C:\\Users\\aag14/Documents/Skole/Speciale/data/TUPPMI/images/test/'
+
+    objs = ['cello', 'flute', 'french horn', 'guitar', 'harp', 'saxophone', 'trumpet', 'violin']
+    preds = ['play_instrument', 'with_instrument']
     
-    Models = methods.AllModels(cfg, mode='test', do_rpn=True, do_det=True, do_hoi=False)
+    imagesMeta = {}
     
-#if True:
-    Stages = stages.AllStages(cfg, Models, obj_mapping, hoi_mapping, mode='test')
+    data_type = 'test'
+    
+    for obj in objs:
+        for pred in preds:
+            real_pred = 'play' if pred == 'play_instrument' else 'hold'
+            for filename in glob.iglob(path + pred +'/' + obj + '/' + data_type + '/*'):
+                 imageName = filename.split('\\')[-1]
+                 imageID  = imageName.split('.')[0]
+                 label = inv_hoi_mapping[real_pred+obj]
+#                 print(imageID, pred, obj, label)
+                 if imageID in imagesMeta:
+                     print('whaaaaaaaat', imageID)
+                 imagesMeta[imageID] = {'imageID':imageID, 'imageName':imageName, 'label':label}
+#                 if not os.path.exists(images_path+imageID+'.jpg'):
+#                     shutil.copy2(filename, images_path)
+                    
+    utils.save_dict(imagesMeta, path+data_type)
