@@ -36,7 +36,8 @@ if True:
     
     
     generator = genTest
-    
+    print(cfg.my_input_path+'testnew/')
+
     sys.stdout.flush()
 
 #if True:

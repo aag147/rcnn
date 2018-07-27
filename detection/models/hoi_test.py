@@ -130,7 +130,7 @@ def saveEvalResults(generator, cfg, obj_mapping, hoi_mapping, evalData=None):
                 nb_empty += 1
                 
     evalData = cp.copy(evalData)
-    mAP, AP = metrics.computeHOImAP(evalData, generator.imagesMeta, obj_mapping, hoi_mapping, cfg)
+    mAP, AP, _ = metrics.computeHOImAP(evalData, generator.imagesMeta, obj_mapping, hoi_mapping, cfg)
     saveMeta = {'mAP': mAP, 'zAP': AP.tolist(), 'nb_empties': nb_empty}
     utils.save_dict(saveMeta, path+mode+'_mAP')
     print('mAP', mode, mAP)
