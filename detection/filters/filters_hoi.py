@@ -165,7 +165,7 @@ def loadData(imageInput, imageDims, cfg):
     all_target_labels = (imageInput['hoi_labels'])
     val_map = np.array(imageInput['val_map'])
         
-    all_target_labels = utils.getMatrixLabels(cfg.nb_hoi_classes, all_target_labels, labels2classes=cfg.data_set=='TUPPMI')
+    all_target_labels = utils.getMatrixLabels(cfg.nb_hoi_classes, all_target_labels, labels2classes=cfg.dataset=='TUPPMI')
     
 #    if len(np.where(val_map==3)[0])==0:
 #        return None, None, None, None
