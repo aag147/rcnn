@@ -42,13 +42,15 @@ if True:
     sys.stdout.flush()
 
 #if True:
+#    cfg.det_nms_overlap_thresh = 0.5
+#    Stages = stages.AllStages(cfg, Models, obj_mapping, hoi_mapping, mode='train')
+#    imageInputs, imageID, bboxes = hoi_test.saveInputData(genTest, Stages, cfg)
+#    cfg.det_nms_overlap_thresh = 0.9
+#    Stages = stages.AllStages(cfg, Models, obj_mapping, hoi_mapping, mode='train')
+#    imageInputs, imageID, bboxes = hoi_test.saveInputData(genTrain, Stages, cfg)
     cfg.det_nms_overlap_thresh = 0.5
     Stages = stages.AllStages(cfg, Models, obj_mapping, hoi_mapping, mode='train')
-    imageInputs, imageID, bboxes = hoi_test.saveInputData(genTest, Stages, cfg)
-    cfg.det_nms_overlap_thresh = 0.9
-    Stages = stages.AllStages(cfg, Models, obj_mapping, hoi_mapping, mode='train')
     imageInputs, imageID, bboxes = hoi_test.saveInputData(genTrain, Stages, cfg)
-
 if False:
 #    imageID = 'HICO_train2015_00025124'
     imageInputs = utils.load_obj(cfg.my_output_path + imageID)

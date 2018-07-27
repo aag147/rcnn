@@ -43,12 +43,14 @@ if True:
     nb_total = np.zeros(600)
     nb_tp = np.zeros(600)
     nb_empty = 0
+    nb_total_preds = 0
     for j, (imageID, imageMeta) in enumerate(generator.imagesMeta.items()):
         
 #        imageID = 'HICO_train2015_00028567'
 #        imageMeta = generator.imagesMeta[imageID]
         
-        utils.update_progress_new(j+1, generator.nb_batches, imageID)
+        if (j+1) % 100 == 0:
+            utils.update_progress_new((j+1), generator.nb_images, imageID)
         
         img = cv.imread(generator.images_path + imageMeta['imageName'])
         X, imageDims = filters_rpn.prepareInputs(imageMeta, generator.images_path, cfg)
@@ -81,6 +83,8 @@ if True:
             obbox[2] += obbox[0]
             obbox[3] += obbox[1]
             label = labels[i]
+            
+            nb_total_preds += 1
             
             gth_ols = helper._computeIoUs(hbbox, gtbboxes)
             gto_ols = helper._computeIoUs(obbox, gtbboxes)

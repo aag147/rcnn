@@ -24,7 +24,7 @@ from hoi_generators import DataGenerator
 import metrics
 import draw
 
-if True:
+if False:
     # Load data
     print('Loading data...')
     data = extract_data.object_data()
@@ -55,23 +55,26 @@ def loadEvalData(generator, my_output_path):
     return evalData
 
 if False:
+    # HOI eval data
     genTest = DataGenerator(imagesMeta = data.valGTMeta, cfg=cfg, data_type='test', do_meta=True, mode='test', approach='new')
     my_output_path = cfg.part_results_path + 'HICO/hoi80fastvgg2/res/testnew/'
     evalData = loadEvalData(genTest, my_output_path)
+    imagesMeta = genTest.imagesMeta
 
-if False:
+#if False:
+    # eval data with evaluation
     evalDataRdx = []
     overlap_thresh = 0.05
     for line in evalData:
         score = line['score']
         if score >= overlap_thresh:
             evalDataRdx.append(line)
-    mAPRdx, AP_mapRdx, evalsRdx = metrics.computeHOImAP(evalDataRdx, imagesMeta, obj_mapping, hoi_mapping, cfg, do_cfm=True)    
+    mAP, AP_map, evals = metrics.computeHOImAP(evalData, imagesMeta, obj_mapping, hoi_mapping, cfg, return_data='plt')    
     
-if True:
-
+if False:
+    # Multi label confusion matrix
     cfm = np.zeros((601,601))
-    for line in evalsRdx:
+    for line in evals:
         pred = line['category_id']+1
         gt   = line['eval']+1
         cfm[gt,pred] += 1
@@ -79,6 +82,33 @@ if True:
     cfm_norm = cfm / (np.sum(cfm,axis=0)+0.0000000001)
     draw.plot_confusion_matrix(cfm, normalize=True, no_bg=False)
     draw.plot_confusion_matrix(cfm, normalize=True, no_bg=True)
+
+if True:
+    # plot eval data
+    props = [x['score'] for x in evalData]
+    idxs = np.argsort(props)[::-1]
+    images_path = 'C:\\Users\\aag14/Documents/Skole/Speciale/data/HICO/images/test/'
+    
+    nb_preds = 0
+    used_objs = []
+    show_lines = []
+    for idx in idxs:
+        line = evalData[idx]
+        pred_eval = line['eval']
+        if pred_eval != 1:
+            continue
+        if hoi_mapping[line['category_id']]['obj'] in used_objs:
+            continue
+        used_objs.append(hoi_mapping[line['category_id']]['obj'])
+        nb_preds += 1
+        if nb_preds < 0:
+            continue
+#        draw.drawHoIExample(imagesMeta[line['image_id']], images_path, hoi_mapping)
+        show_lines.append(line)
+        if nb_preds == 80:
+            break
+        
+    draw.drawOverlapHOIRes(show_lines, imagesMeta, obj_mapping, hoi_mapping, images_path)
 
 if False:
     images_path = cfg.data_path + 'images/val/'

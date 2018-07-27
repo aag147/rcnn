@@ -528,7 +528,6 @@ def drawOverlapHOIRes(evalData, imagesMeta, obj_mapping, hoi_mapping, images_pat
             
             if min(hum_overlap, obj_overlap) > overlap:
                 overlap = min(hum_overlap, obj_overlap)
-            print(overlap)
     
         hbbox = np.copy(hbbox)
         obbox = np.copy(obbox)
@@ -537,24 +536,54 @@ def drawOverlapHOIRes(evalData, imagesMeta, obj_mapping, hoi_mapping, images_pat
         obbox[2] -= obbox[0]
         obbox[3] -= obbox[1]
 
+
+        hdotx = hbbox[0] + (hbbox[2] / 2)
+        hdoty = hbbox[1] + (hbbox[3] / 2)
+        odotx = obbox[0] + (obbox[2] / 2)
+        odoty = obbox[1] + (obbox[3] / 2)
+        conn = np.array([[odoty, odotx], [hdoty, hdotx]])
+        hbbox = drawProposalBox(hbbox)
+        obbox = drawProposalBox(obbox)
+
+        titlename = hoi_mapping[label]['pred_ing'] + ' ' + hoi_mapping[label]['obj']
+        titlename += '(%.2f)' % prop
+
         if overlap >= 0.5:
             
             f, spl = plt.subplots(1,1)
+            spl.axis('off')
             spl.imshow(img)
-            hbbox = drawProposalBox(hbbox)
-            obbox = drawProposalBox(obbox)
-            spl.plot(hbbox[0,:], hbbox[1,:], c='red')
-            spl.plot(obbox[0,:], obbox[1,:], c='red')
-            print('Pos. label:', hoi_mapping[label], prop) 
+            
+            spl.plot(hbbox[0,:], hbbox[1,:], c='green')
+            spl.plot(obbox[0,:], obbox[1,:], c='blue')
+            spl.plot(conn[:,1], conn[:,0], c='red')
+            spl.scatter(conn[:,1], conn[:,0], c='red', s=5)
+            f.subplots_adjust(left=0.02, right=0.98, top=0.98, bottom=0.02)
+#            f.suptitle('')
+            
+            print(str(idx) + '. Pos. label:', hoi_mapping[label], prop, overlap, imageID) 
         else:
 #            continue
             f, spl = plt.subplots(1,1)
+            spl.axis('off')
             spl.imshow(img)
-            hbbox = drawProposalBox(hbbox)
-            obbox = drawProposalBox(obbox)
-            spl.plot(hbbox[0,:], hbbox[1,:], c='black')
-            spl.plot(obbox[0,:], obbox[1,:], c='black')
-            print('Neg. label:', hoi_mapping[label], prop)
+
+            spl.plot(hbbox[0,:], hbbox[1,:], c='green')
+            spl.plot(obbox[0,:], obbox[1,:], c='blue')
+            spl.plot(conn[:,1], conn[:,0], c='red')
+            spl.scatter(conn[:,1], conn[:,0], c='red', s=5)
+            f.subplots_adjust(left=0.02, right=0.98, top=0.98, bottom=0.02)
+            f.suptitle('Neg: ' + titlename)
+            print('Neg. label:', hoi_mapping[label], prop, line['eval'], overlap, imageID)
+            f, spl = plt.subplots(1,1)
+            spl.axis('off')
+            spl.imshow(img)
+
+            spl.plot(hbbox[0,:], hbbox[1,:], c='green')
+            spl.plot(obbox[0,:], obbox[1,:], c='blue')
+            spl.plot(conn[:,1], conn[:,0], c='red')
+            spl.scatter(conn[:,1], conn[:,0], c='red', s=5)
+            f.subplots_adjust(left=0.02, right=0.98, top=0.98, bottom=0.02)
 
 def drawOverlapHoI(img, hbboxes, obboxes, props, imageMeta, imageDims, cfg, obj_mapping, hoi_mapping):
 #    f, spl = plt.subplots(2,2)
@@ -774,7 +803,8 @@ def drawObjExample(imageMeta, images_path):
         
 
 
-def drawHoIExample(imageMeta, images_path, hoi_mapping):    
+def drawHoIExample(imageMeta, images_path, hoi_mapping):
+    imageMeta = cp.copy(imageMeta)
     img = cv.imread(images_path + imageMeta['imageName'])
     assert img is not None
     img = cv.cvtColor(img, cv.COLOR_BGR2RGB)
@@ -787,8 +817,8 @@ def drawHoIExample(imageMeta, images_path, hoi_mapping):
     names = []
     for rel in imageMeta['rels']:
         label = hoi_mapping[rel[2]]
-        obj = all_objs[rel[0]]
-        prs = all_objs[rel[1]]
+        obj = all_objs[rel[1]]
+        prs = all_objs[rel[0]]
         objBB = drawBoundingBox(obj)
         prsBB = drawBoundingBox(prs)
         
@@ -800,20 +830,23 @@ def drawHoIExample(imageMeta, images_path, hoi_mapping):
         lines.append(line)
         names.append(label)
         
+    nametitle = ', '.join([x['pred_ing'] for x in names]) + ' ' + names[0]['obj']
+    f, spl = plt.subplots(2,2)
+    spl = spl.ravel()
     for j, _ in enumerate(imageMeta['rels']):
-        f, spl = plt.subplots(1,1)
         obj = objs[j]
         prs = prss[j]
         line = lines[j]
-        spl.axis('off')
-        spl.imshow(img)
-        spl.plot(obj[0,:], obj[1,:], c='green')
-        spl.plot(prs[0,:], prs[1,:], c='blue')
-        spl.plot(line[:,1], line[:,0], c='red')
-        spl.scatter(line[:,1], line[:,0], c='red', s=5)
-        print(names[j])
-        if j == 5:
+        spl[j].axis('off')
+        spl[j].imshow(img)
+        spl[j].plot(obj[0,:], obj[1,:], c='blue')
+        spl[j].plot(prs[0,:], prs[1,:], c='green')
+        spl[j].plot(line[:,1], line[:,0], c='red')
+        spl[j].scatter(line[:,1], line[:,0], c='red', s=5)
+#        print(names[j])
+        if j == 3:
             break
+    f.suptitle('GT: ' + nametitle)
 
 def drawImages(imagesID, imagesMeta, labels, path, imagesBadOnes = False):
     f, spl = plt.subplots(2,2)

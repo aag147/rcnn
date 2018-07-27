@@ -13,7 +13,7 @@ from sklearn.metrics import confusion_matrix
 
 #%%
 
-def computeHOIAP(batch, GTMeta, nb_gt_samples, hoi_id, do_cfm=False):
+def computeHOIAP(batch, GTMeta, nb_gt_samples, hoi_id, return_data=None):
     import filters_helper as helper
     
     props = np.array([x['score'] for x in batch])
@@ -59,7 +59,7 @@ def computeHOIAP(batch, GTMeta, nb_gt_samples, hoi_id, do_cfm=False):
                 max_iou = min(hum_overlap, obj_overlap)
                 best_idx = gt_idx
 
-        if do_cfm:
+        if return_data is not None:
             max_iou_bad = 0.0
             best_label_bad = -1
             
@@ -82,18 +82,22 @@ def computeHOIAP(batch, GTMeta, nb_gt_samples, hoi_id, do_cfm=False):
             if gt_rels[best_idx,3] == 0:
                 tp[sort_idx] = 1 # true positive
                 GTMeta[imageID]['gt_rels'][best_idx,3] = 1
-                evals[idx]['eval'] = hoi_id
+                evals[idx]['eval'] = hoi_id if return_data=='cfm' else 1 # true
             else:
                 fp[sort_idx] = 1 # false positive (double)
-                evals[idx]['eval'] = hoi_id
+                evals[idx]['eval'] = hoi_id if return_data=='cfm' else 1 # true (double)
         else:
             fp[sort_idx] = 1 # false positive
             
-            if do_cfm:
-                if max_iou_bad >= 0.5:
-                    evals[idx]['eval'] = best_label_bad
+            if return_data is not None:
+                if max_iou > 0.15 and return_data=='plt':
+                    evals[idx]['eval'] = best_label_bad if return_data=='cfm' else -1 # low overlap
+                elif max_iou_bad >= 0.5:
+                    evals[idx]['eval'] = best_label_bad if return_data=='cfm' else -2 # misclass
+                elif max_iou_bad > 0.15:
+                    evals[idx]['eval'] = -1 if return_data=='cfm' else -3# misclass +  low overlap
                 else:
-                    evals[idx]['eval'] = -1
+                    evals[idx]['eval'] = -1 if return_data=='cfm' else -4# background
     
     tp = np.cumsum(tp)
     fp = np.cumsum(fp)
@@ -127,7 +131,7 @@ def computeHOIAP(batch, GTMeta, nb_gt_samples, hoi_id, do_cfm=False):
     
 
 
-def computeHOImAP(COCO_mapping, imagesMeta, class_mapping, hoi_mapping, cfg, do_cfm=False):
+def computeHOImAP(COCO_mapping, imagesMeta, class_mapping, hoi_mapping, cfg, return_data=False):
     import filters_helper as helper
 
     nb_gt_samples = np.zeros((len(hoi_mapping)))
@@ -150,7 +154,7 @@ def computeHOImAP(COCO_mapping, imagesMeta, class_mapping, hoi_mapping, cfg, do_
         batch = [x for x in COCO_mapping if x['category_id']==hoi_id]
         if len(batch)==0:
             continue
-        AP, evals = computeHOIAP(batch, newGTMeta, nb_gt_samples, hoi_id, do_cfm)
+        AP, evals = computeHOIAP(batch, newGTMeta, nb_gt_samples, hoi_id, return_data)
         evalData.extend(evals)
         AP_map[hoi_id] = AP
         
