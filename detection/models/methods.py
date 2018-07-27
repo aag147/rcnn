@@ -195,8 +195,9 @@ class AllModels:
             
             if self.do_det:
                 print('   Loading DET weights...')
+                wdir = 'TUPPMI' if cfg.dataset=='TUPPMI' else 'COCO'
                 if self.mode == 'test' and self.nb_models > 0:
-                    path = cfg.part_results_path + "COCO/det" + cfg.my_results_dir
+                    path = cfg.part_results_path + wdir + "/det" + cfg.my_results_dir
                     self.model_det, det_before, det_after = self._load_test_weights(self.model_det, path)
                 elif cfg.use_shared_cnn:
                     self.model_det, det_before, det_after = self._load_shared_weights(self.model_det)
@@ -205,8 +206,9 @@ class AllModels:
             
             if self.do_hoi:
                 print('   Loading HOI weights...')
+                wdir = 'TUPPMI' if cfg.dataset=='TUPPMI' else 'HICO'
                 if self.mode == 'test' and self.nb_models > 0:
-                    path = cfg.part_results_path + "HICO/hoi" + cfg.my_results_dir
+                    path = cfg.part_results_path + wdir + "/hoi" + cfg.my_results_dir
                     self.model_hoi, hoi_before, hoi_after = self._load_test_weights(self.model_hoi, path)
                 elif cfg.use_shared_cnn:
                     self.model_hoi, hoi_before, hoi_after = self._load_shared_weights(self.model_hoi)
