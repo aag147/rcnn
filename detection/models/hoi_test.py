@@ -16,8 +16,10 @@ import sys
 import random as r
 import copy as cp
 
-def saveInputData(generator, Stages, cfg):  
-    cfg.my_output_path = cfg.results_path + 'det' + cfg.my_results_dir + '/output/' + generator.data_type + 'new/'
+def saveInputData(generator, Stages, cfg, do_train_eval=False):  
+    rdir = 'evalnew' if do_train_eval else 'new'
+    mode = 'test' if do_train_eval else generator.data_type
+    cfg.my_output_path = cfg.results_path + 'det' + cfg.my_results_dir + '/output/' + generator.data_type + rdir + '/'
     
     if not os.path.exists(cfg.my_output_path):
         os.makedirs(cfg.my_output_path)
@@ -56,7 +58,7 @@ def saveInputData(generator, Stages, cfg):
         all_hbboxes, all_obboxes, all_target_labels, val_map = Stages.stagethree_targets(bboxes, imageMeta, imageDims)
         
         #CONVERT
-        inputMeta = filters_hoi.convertData([all_hbboxes, all_obboxes, all_target_labels, val_map], cfg, mode=generator.data_type)
+        inputMeta = filters_hoi.convertData([all_hbboxes, all_obboxes, all_target_labels, val_map], cfg, mode=mode)
         
         utils.save_obj(inputMeta, save_path + imageID)
     return inputMeta, imageID, bboxes

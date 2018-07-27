@@ -50,7 +50,7 @@ if True:
     imageInputs, imageID, bboxes = hoi_test.saveInputData(genTrain, Stages, cfg)
 #    cfg.det_nms_overlap_thresh = 0.5
 #    Stages = stages.AllStages(cfg, Models, obj_mapping, hoi_mapping, mode='train')
-#    imageInputs, imageID, bboxes = hoi_test.saveInputData(genTrain, Stages, cfg)
+#    imageInputs, imageID, bboxes = hoi_test.saveInputData(genTrain, Stages, cfg, do_train_eval=True)
 
 
 
