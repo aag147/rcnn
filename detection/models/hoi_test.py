@@ -27,6 +27,7 @@ def saveInputData(generator, Stages, cfg, do_train_eval=False):
         raise Exception('Output directory does not exist! %s' % cfg.my_output_path)
     save_path = cfg.my_output_path
     print('   save_path:', save_path)
+    print('   mode:', mode)
 
     genIterator = generator.begin()
     inputMeta = None
@@ -39,13 +40,12 @@ def saveInputData(generator, Stages, cfg, do_train_eval=False):
 #        imageID = 'HICO_train2015_00019135'
 #        imageMeta = generator.imagesMeta[imageID]
 #        X, y, imageDims = Stages.stagezero(imageMeta, generator.data_type)
-        if (batchidx+1) % (generator.nb_batches // 100) == 0 or batchidx==0 or (batchidx+1) == generator.nb_batches:
+        if (batchidx+1) % (max(1,generator.nb_batches // 100)) == 0 or batchidx==0 or (batchidx+1) == generator.nb_batches:
             utils.update_progress_new(batchidx, generator.nb_batches, imageID)
         
         
         path = save_path + imageID + '.pkl'
         if os.path.exists(path):
-#            print(path)
             continue
         
         #STAGE 1

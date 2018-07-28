@@ -58,7 +58,7 @@ class DataGenerator():
           self.imagesInputs = utils.load_obj(self.rois_path + 'hoiputs_'+data_type)
           self.doIndyInputs = False
       else:
-          adir = 'newest' if self.approach == 'newest' else 'new'
+          adir = self.approach 
           self.rois_path = self.rois_path + self.data_type + adir+ '/'
           assert os.path.exists(self.rois_path), self.rois_path
           self.doIndyInputs = True

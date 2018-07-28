@@ -69,7 +69,7 @@ if False:
 
     hbboxes, obboxes, target_labels, val_map = Y_tmp
     obboxescp = np.copy(obboxes)
-    hbboxes, obboxes, target_labels, val_map = filters_hoi.reduceTargets(Y_tmp, cfg)
+#    hbboxes, obboxes, target_labels, val_map = filters_hoi.reduceTargets(Y_tmp, cfg)
     patterns = filters_hoi.createInteractionPatterns(hbboxes, obboxes, cfg)
     hcrops, ocrops = filters_hoi.convertBB2Crop(X, hbboxes, obboxes, imageDims)
 
