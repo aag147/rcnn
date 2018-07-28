@@ -161,11 +161,11 @@ def getLabelStats(imagesMeta, labels):
         stats['total'] += len(imageMeta['rels'])
         stats['totalx'] += min(32,len(imageMeta['rels']))
         
-        for relID, rel in imageMeta['rels'].items():
-            if 'labels' in rel:
-                continue
+        for rel in imageMeta['rels']:
+#            if 'labels' in rel:
+#                continue
             
-            idx = rel['label']
+            idx = rel[2]
             name = labels[idx]
             stats[name['obj']][name['pred']] += 1
             stats[name['obj']]['total'] += 1

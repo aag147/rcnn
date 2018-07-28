@@ -380,7 +380,7 @@ class basic_config:
               self.do_fast_hoi = True
               
    def set_class_weights(self, labels, imagesMeta):
-       if self.wp >= 0: 
+       if self.wp != -1: 
            return
        print('  Using class-specific weights!')
        stats, counts = utils.getLabelStats(imagesMeta, labels)

@@ -123,7 +123,7 @@ class object_data:
         cfg.nb_object_classes = len(class_mapping)
         cfg.nb_classes = len(hoi_labels) if hoi_labels is not None else 0
         cfg.nb_hoi_classes = cfg.nb_classes
-        cfg.set_class_weights(class_mapping, trainGTMeta)
+        cfg.set_class_weights(hoi_labels, trainGTMeta)
 #        _, valMeta = utils.splitData(list(trainMeta.keys()), trainMeta)
         
         self.cfg = cfg
