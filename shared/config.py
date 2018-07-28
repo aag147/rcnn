@@ -385,5 +385,8 @@ class basic_config:
        print('  Using class-specific weights!')
        stats, counts = utils.getLabelStats(imagesMeta, labels)
        p = counts / sum(counts)
-       wp = 1 / float(p)
+       p = np.array(p)
+#       print(p)
+#       self.wp = p
+       wp = 1 / (p)
        self.wp = wp
