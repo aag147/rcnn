@@ -59,7 +59,7 @@ for i in range(nb_iterations):
     imageID = imageMeta['imageName'].split('.')[0]
     
     if (i+1) % 100 == 0:
-        utils.update_progress_new((i+1), generator.nb_images, imageID)
+        utils.update_progress_new((i+1), nb_iterations, imageID)
 #    print('imageID', imageID)
 #    print('Stage one...')
     proposals, times = Stages.stageone([X], y, imageMeta, imageDims)

@@ -134,9 +134,11 @@ class AllStages:
         # hoi prepare
         if len(X)==3:
             [self.shared_img, all_hbboxes, all_obboxes] = X
+            self.shared_cnn = self.shared_img
         else:
             if len(X)==2:
                 [self.shared_img, bboxes] = X
+                self.shared_cnn = self.shared_img
             else:
                 [bboxes] = X
             bboxes = np.copy(bboxes)
