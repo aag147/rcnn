@@ -52,7 +52,7 @@ if True:
     if cfg.dataset == 'TUPPMI':
         model_hoi.fit_generator(generator = genTrain.begin(), \
                     steps_per_epoch = genTrain.nb_batches, \
-#                    verbose = 2,\
+                    verbose = 2,\
                     epochs = cfg.epoch_end, initial_epoch=cfg.epoch_begin, callbacks=callbacks)
     else:
         genTest = DataGenerator(imagesMeta = data.valGTMeta, cfg=cfg, data_type='test', do_meta=False, mode='val')
