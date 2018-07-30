@@ -32,17 +32,17 @@ if True:
     
 #     Create batch generators
     genTrain = DataGenerator(imagesMeta = data.trainGTMeta, cfg=cfg, data_type='train', do_meta=True)
-    genTest = DataGenerator(imagesMeta = data.valGTMeta, cfg=cfg, data_type='test', do_meta=True)
+#    genTest = DataGenerator(imagesMeta = data.valGTMeta, cfg=cfg, data_type='test', do_meta=True)
     
     
-    generator = genTest
+    generator = genTrain
     print(cfg.my_input_path+'testnew/')
 
     sys.stdout.flush()
 
 #if True:
-    nb_total = np.zeros(600)
-    nb_tp = np.zeros(600)
+    nb_total = np.zeros(cfg.nb_hoi_classes-1)
+    nb_tp = np.zeros(cfg.nb_hoi_classes-1)
     nb_empty = 0
     nb_total_preds = 0
     for j, (imageID, imageMeta) in enumerate(generator.imagesMeta.items()):
@@ -63,7 +63,7 @@ if True:
         if np.max(gtbboxes[:,2]) > 2+imageDims['output_shape'][1] or np.max(gtbboxes[:,3]) > 2+imageDims['output_shape'][0]:
             print('bad bbs', imageID, np.max(gtbboxes[:,2]), np.max(gtbboxes[:,3]), imageDims['output_shape'])
         
-        imageInputs = utils.load_obj(cfg.my_input_path + 'testnew/' + imageID)
+        imageInputs = utils.load_obj(cfg.my_input_path + 'trainnew/' + imageID)
         
         if imageInputs is None:
             idxs = []
@@ -127,7 +127,7 @@ if True:
         if j == 5:
             break
 
-    res = np.array([nb_tp[i] / nb_total[i] if nb_tp[i]>0 else 0 for i in range(600)])
+    res = np.array([nb_tp[i] / nb_total[i] if nb_tp[i]>0 else 0 for i in range(cfg.nb_hoi_classes-1)])
     rare_idxs = np.where(nb_total<10)[0]
     unrare_idxs = np.where(nb_total>=10)[0]
     print('all', np.mean(res))

@@ -282,7 +282,7 @@ def drawPositiveHoIs(img, h_bbox, o_bbox, labels, label_mapping, imageMeta, imag
     nb_imgs = len(ps_idxs)
     
 #    f, spl = plt.subplots(math.ceil((nb_imgs+1)/2), 2)
-    f, spl = plt.subplots(3, 2)
+    f, spl = plt.subplots(5, 5)
     spl = spl.ravel()    
     
     # GT Boxes
@@ -306,7 +306,7 @@ def drawPositiveHoIs(img, h_bbox, o_bbox, labels, label_mapping, imageMeta, imag
         lbs = ', '.join([label_mapping[x]['pred_ing'] for x in np.where(labels[idx,:]>0.5)[0]]) + ' ' + label_mapping[np.where(labels[idx,:]>0.5)[0][0]]['obj'] if np.sum(labels[idx,:])>0 else 'none'
         print('label:', lbs)
         spl_idx += 1
-        if spl_idx == 6:
+        if spl_idx == 25:
             break
     
 
@@ -489,7 +489,7 @@ def drawPositiveRois(img, rois, obj_mapping):
     bboxes = []
     for roi in rois:
         labelID = int(roi[5])
-        if labelID==9:
+        if labelID>0:
             bb = roi[0:4]*16
             bbox = drawProposalBox(bb)
             spl.plot(bbox[0,:], bbox[1,:], c='red')

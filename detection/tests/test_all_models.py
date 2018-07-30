@@ -24,7 +24,6 @@ import methods,\
        filters_rpn,\
        filters_hoi
 import utils
-import draw
 import numpy as np
 import cv2 as cv
 
@@ -45,37 +44,42 @@ if True:
     Models = methods.AllModels(cfg, mode='test', do_rpn=True, do_det=True, do_hoi=True)
 Stages = stages.AllStages(cfg, Models, obj_mapping, hoi_mapping, mode='test', return_times = True)
 
-iterator = genVal
-genIterator = iterator.begin()
+generator = genVal
+genIterator = generator.begin()
 
-nb_iterations = 3
+nb_iterations = 5000
 all_times = np.zeros((nb_iterations, 5))
 
-for i in range(1):
+for i in range(nb_iterations):
     X, y, imageMeta, imageDims, times = next(genIterator)
     
 #    imageID = 'HICO_test2015_00005714'
 #    imageMeta = iterator.imagesMeta[imageID]
 #    X, y, imageDims = Stages.stagezero(imageMeta, iterator.data_type)
     imageID = imageMeta['imageName'].split('.')[0]
-    print('imageID', imageID)
-    print('Stage one...')
+    
+    if (i+1) % 100 == 0:
+        utils.update_progress_new((i+1), generator.nb_images, imageID)
+#    print('imageID', imageID)
+#    print('Stage one...')
     proposals, times = Stages.stageone([X], y, imageMeta, imageDims)
     all_times[i, 0:2] = times
-    print('Stage two...')
+#    print('Stage two...')
     bboxes, times = Stages.stagetwo([proposals], imageMeta, imageDims)
     all_times[i, 2:4] = times
-    print('Stage three...')
+#    print('Stage three...')
     pred_hbboxes, pred_obboxes, pred_props, times = Stages.stagethree([bboxes], imageMeta, imageDims, obj_mapping)
     all_times[i, 4:5] = times
     
+    continue
+    import draw
     print('Draw...')
     img = np.copy(X[0])
     img += cfg.PIXEL_MEANS
     img = img.astype(np.uint8)
     img = cv.cvtColor(img, cv.COLOR_BGR2RGB)
     draw.drawGTBoxes(img, imageMeta, imageDims)
-    draw.drawHoIExample(imageMeta, iterator.images_path, hoi_mapping)
+    draw.drawHoIExample(imageMeta, generator.images_path, hoi_mapping)
 #    print('GT hoi labels')
 #    print('GT',np.unique(np.where(all_target_labels[0,:,:]>0)[0]), np.unique(np.where(all_target_labels[0,:,:]>0)[1]))
 #    draw.drawPositiveCropHoI(batch_h[:,1:], batch_o[:,1:], batch_hcrop[:,1:], batch_ocrop[:,1:], batch_p, None, imageMeta, imageDims, cfg, obj_mapping)

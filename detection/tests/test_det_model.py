@@ -49,7 +49,7 @@ genIterator = iterator.begin()
 
 for i in range(1):
 #    X, y, imageMeta, imageDims, times = next(genIterator)
-    imageMeta = iterator.imagesMeta['ILSVRC2012_val_00012964']
+    imageMeta = iterator.imagesMeta['n04141076_8884']
     X, y, imageDims = Stages.stagezero(imageMeta, iterator.data_type)
     imageID = imageMeta['imageName'].split('.')[0]
     print('imageID', imageID)
