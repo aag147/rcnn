@@ -78,7 +78,6 @@ def splitInputs(bboxes, imageMeta, obj_mapping):
     hbboxes = bboxes[:,h_idxs,:4]
     obboxes = bboxes[:,o_idxs,:]
     obboxes = knownObjects(obboxes, imageMeta, obj_mapping)
-    
     nb_hbboxes = hbboxes.shape[1]
     nb_obboxes = obboxes.shape[1]
     

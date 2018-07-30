@@ -114,11 +114,10 @@ class AllModels:
         print('   -loading test weights...')
         cfg = self.cfg
         # Check path to weights
-        if path[-1] == 'F':
-            if not os.path.exists(path):
-                path = path[:-1]
-            elif model.name != 'rpn':
+        if cfg.use_shared_cnn:
+            if model.name != 'rpn':
                 by_name = True
+                idx = 4
         path += '/weights/' + cfg.my_weights
         print('   Weights path:', path)
         assert os.path.exists(path), 'invalid path: %s' % path
@@ -127,11 +126,16 @@ class AllModels:
             idx = 17
         else:
             idx = 11
+            
+        if cfg.use_shared_cnn and by_name:
+            idx = 10 if model.name =='hoi' else 6
+        
         
         # Load weights
-        weights_before = model.layers[4].get_weights()[0][0,0] if by_name else model.layers[idx].get_weights()[0][0,0,0,0]
-        model.load_weights(path, by_name=False)        
-        weights_after  = model.layers[4].get_weights()[0][0,0] if by_name else model.layers[idx].get_weights()[0][0,0,0,0]
+        print('   -', model.name, idx)
+        weights_before = model.layers[idx].get_weights()[0][0,0] if by_name else model.layers[idx].get_weights()[0][0,0,0,0]
+        model.load_weights(path, by_name=by_name)        
+        weights_after  = model.layers[idx].get_weights()[0][0,0] if by_name else model.layers[idx].get_weights()[0][0,0,0,0]
         assert weights_before != weights_after, 'weights have not been loaded'
         
         return model, weights_before, weights_after
@@ -220,8 +224,9 @@ class AllModels:
                 assert rpn_after == rpn_final, 'RPN weights have been overwritten'
             
             if self.do_det:
-                det_final = self.model_det.layers[4].get_weights()[0][0,0]
-                if type(det_final) != float:
+                if len(self.model_det.layers[6].get_weights()) > 0:
+                    det_final = self.model_det.layers[6].get_weights()[0][0,0]
+                else:
                     det_final = self.model_det.layers[11].get_weights()[0][0,0,0,0]
                 assert det_after == det_final, 'DET weights have been overwritten'
 
@@ -426,28 +431,29 @@ class AllModels:
         ########################
         if self.do_det:
             print('   Creating DET model...')
-            output_features_det = models.VGG16_buildin(cfg)(img_det_input)
             
             self.nb_models += 1
             
             if self.mode=='test' and cfg.use_shared_cnn:    
+                print('   -using shared CNN')
+                output_features_det = features_input
                 detection_inputs = [
                     features_input,
                     roi_input
                 ]
             else:
+                output_features_det = models.VGG16_buildin(cfg)(img_det_input)
                 detection_inputs = [
                     img_det_input,
                     roi_input
                 ]
                 
-            pool_features_input = features_input if self.mode=='test' and cfg.use_shared_cnn else output_features_det
                 
             object_rois = layers.RoiPoolingConv(
                 pool_size=pool_size,
                 batch_size=cfg.nb_detection_rois
             )([
-                pool_features_input,
+                output_features_det,
                 roi_input
             ])
             
@@ -503,20 +509,28 @@ class AllModels:
         if self.do_hoi and cfg.do_fast_hoi:
             print('   Creating fast HOI model...')
             self.nb_models += 1
-                        
-            if cfg.backbone == 'vgg':
-                output_features_hoi = models.VGG16_buildin(cfg)(img_hoi_input)
+
+            if self.mode=='test' and cfg.use_shared_cnn:    
+                print('   -using shared CNN')
+                output_features_hoi = features_input
+                hoi_inputs = [
+                    features_input,
+                    human_fast_input,
+                    object_fast_input,
+                    interaction_fast_input
+                ]
             else:
-                output_features_hoi = models.AlexNet_buildin(cfg)(img_hoi_input)
-            
-            
-            hoi_inputs = [
-                img_hoi_input,
-                human_fast_input,
-                object_fast_input,
-                interaction_fast_input
-            ]
-            
+                if cfg.backbone == 'vgg':
+                    output_features_hoi = models.VGG16_buildin(cfg)(img_hoi_input)
+                else:
+                    output_features_hoi = models.AlexNet_buildin(cfg)(img_hoi_input)
+                hoi_inputs = [
+                    img_hoi_input,
+                    human_fast_input,
+                    object_fast_input,
+                    interaction_fast_input
+                ]
+                        
             ## HUMAN ##
             hoi_human_rois = layers.RoiPoolingConv(
                 pool_size=pool_size,

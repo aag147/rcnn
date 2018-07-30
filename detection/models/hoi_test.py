@@ -77,7 +77,7 @@ def saveEvalData(generator, Stages, cfg, obj_mapping):
     imagesIDs = list(generator.imagesMeta.keys())
     r.shuffle(imagesIDs)
     for batchidx, imageID in enumerate(imagesIDs):
-        if (batchidx+1) % (max(1,generator.nb_batches // 100)) == 0 or batchidx==1 or (batchidx+1) == generator.nb_batches:
+        if (batchidx+1) % (max(100,generator.nb_batches // 100)) == 0 or batchidx==1 or (batchidx+1) == generator.nb_batches:
             utils.update_progress_new(batchidx+1, generator.nb_batches, imageID)
                 
         path = save_path + imageID + '.pkl'

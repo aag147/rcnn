@@ -16,9 +16,10 @@ import sys
 
 class DataGenerator():
     
-    def __init__(self, imagesMeta, cfg, data_type='train', do_meta=True):
+    def __init__(self, imagesMeta, cfg, data_type='train', do_meta=True, mode='train'):
       'Initialization'
       self.data_type = data_type
+      self.mode = mode
       if data_type == 'train':
           g_cfg = cfg.train_cfg
       elif data_type == 'val':
@@ -80,6 +81,10 @@ class DataGenerator():
             io_start = time.time()
             img, imageDims = filters_rpn.prepareInputs(imageMeta, self.images_path, self.cfg)
             io_end = time.time()
+            
+            if self.mode == 'test':
+                return img, None, imageMeta, imageDims, None
+            
             pp_start = time.time()
             Y_tmp = filters_rpn.loadData(imageMeta, self.anchors_path, self.cfg)
 

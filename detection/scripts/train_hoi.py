@@ -34,7 +34,6 @@ if True:
 
     # data
     genTrain = DataGenerator(imagesMeta = data.trainGTMeta, cfg=cfg, data_type='train', do_meta=False)
-    genTest = DataGenerator(imagesMeta = data.valGTMeta, cfg=cfg, data_type='test', do_meta=False, mode='val')
 
     # models
     Models = methods.AllModels(cfg, mode='train', do_hoi=True)
@@ -53,10 +52,10 @@ if True:
     if cfg.dataset == 'TUPPMI':
         model_hoi.fit_generator(generator = genTrain.begin(), \
                     steps_per_epoch = genTrain.nb_batches, \
-                    verbose = 2,\
-                    max_queue_size = 100,\
+#                    verbose = 2,\
                     epochs = cfg.epoch_end, initial_epoch=cfg.epoch_begin, callbacks=callbacks)
     else:
+        genTest = DataGenerator(imagesMeta = data.valGTMeta, cfg=cfg, data_type='test', do_meta=False, mode='val')
         model_hoi.fit_generator(generator = genTrain.begin(), \
                     steps_per_epoch = genTrain.nb_batches, \
                     verbose = 2,\

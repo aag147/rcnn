@@ -13,14 +13,15 @@ import numpy as np,\
        copy as cp,\
        math,\
        os
-
+import time
 
 class AllStages:
-    def __init__(self, cfg, Models, obj_mapping, hoi_mapping, mode='train'):
+    def __init__(self, cfg, Models, obj_mapping, hoi_mapping, mode='train', return_times = False):
         self.mode = mode
         self.cfg = cfg
         self.obj_mapping = obj_mapping
         self.hoi_mapping = hoi_mapping
+        self.return_times = return_times
         if Models is not None:
             self.model_rpn, self.model_det, self.model_hoi = Models.get_models()
         
@@ -50,6 +51,7 @@ class AllStages:
         [img] = X
         
         #rpn predict
+        start_pred = time.time()
         if self.cfg.use_shared_cnn:
             rpn_props, rpn_deltas, F = self.model_rpn.predict_on_batch(img)
             self.shared_cnn = F
@@ -57,13 +59,19 @@ class AllStages:
             rpn_props, rpn_deltas = self.model_rpn.predict_on_batch(img)
             self.shared_cnn = img
         self.shared_img = img
+        end_pred = time.time()
         
         #rpn post
+        start_pp = time.time()
         proposals = helper.deltas2Anchors(rpn_props, rpn_deltas, self.cfg, imageDims, do_regr=do_regr)
         proposals = helper.non_max_suppression_fast(proposals, overlap_thresh = self.rpn_nms_thresh)
-        
         proposals = np.expand_dims(proposals, axis=0)
-        return proposals
+        end_pp = time.time()
+        
+        if self.return_times:
+            return proposals, [end_pred-start_pred, end_pp-start_pp]
+        else:
+            return proposals
     
     def stagetwo_targets(self, X, imageMeta, imageDims):
         proposals = X[0,::]
@@ -80,6 +88,7 @@ class AllStages:
         rois_norm = filters_detection.prepareInputs(rois, imageDims)
         
         # det predict
+        start_pred = time.time()
         nb_det_rois = rois.shape[1]
         all_det_props = np.zeros((1,nb_det_rois, self.cfg.nb_object_classes))
         all_det_deltas = np.zeros((1,nb_det_rois, (self.cfg.nb_object_classes-1)*4))
@@ -93,12 +102,13 @@ class AllStages:
             all_det_props[:,sidx:fidx,:] = det_props[:,:fidx-sidx,:]
             all_det_deltas[:,sidx:fidx,:] = det_deltas[:,:fidx-sidx,:]
         
-        
+        end_pred = time.time()
         
         # det post
+        start_pp = time.time()
         rois = filters_detection.unprepareInputs(rois_norm, imageDims)
 
-        if self.mode=='train':
+        if self.mode=='train' or self.model_hoi is not None or self.cfg.dataset=='TUPPMI':
             bboxes = helper.deltas2ObjBoxes(all_det_props, all_det_deltas, rois, imageDims, self.cfg, self.obj_mapping)
         else:
             bboxes = helper.deltas2Boxes(all_det_props, all_det_deltas, rois, imageDims, self.cfg)
@@ -107,11 +117,14 @@ class AllStages:
             return None
         
         bboxes_nms = helper.non_max_suppression_boxes(bboxes, self.cfg, self.det_nms_thresh, max_boxes=10)
-        
         bboxes_nms = np.expand_dims(bboxes_nms, axis=0)
+        end_pp = time.time()
         
-        return bboxes_nms
-    
+        if self.return_times:
+            return bboxes_nms, [end_pred-start_pred, end_pp-start_pp]
+        else:
+            return bboxes_nms
+        
     def stagethree_targets(self, X, imageMeta, imageDims):
         bboxes = X[0,::]
         all_hbboxes, all_obboxes, all_target_labels, val_map = filters_hoi.createTargets(bboxes, imageMeta, imageDims, self.cfg, self.obj_mapping)
@@ -138,6 +151,7 @@ class AllStages:
         hbboxes_norm, obboxes_norm = filters_hoi.prepareInputs(all_hbboxes, all_obboxes, imageDims)
         
         # hoi predict
+        start_pred = time.time()
         nb_hoi_rois = hbboxes_norm.shape[1]
 #        nb_hoi_rois = self.cfg.nb_hoi_rois
         all_hoi_props = np.zeros((1,nb_hoi_rois, self.cfg.nb_hoi_classes))
@@ -154,7 +168,7 @@ class AllStages:
             batch_p[0,:fidx-sidx,::] = patterns[:,sidx:fidx,:,:,:]
             
             if self.cfg.do_fast_hoi:  
-                batch = [self.shared_img, batch_h[:,:fidx-sidx,::], batch_o[:,:fidx-sidx,::], batch_p[:,:fidx-sidx,::]]
+                batch = [self.shared_cnn, batch_h[:,:fidx-sidx,::], batch_o[:,:fidx-sidx,::], batch_p[:,:fidx-sidx,::]]
             else:
                 batch_hcrop = hcrops[sidx:fidx,::]
                 batch_ocrop = ocrops[sidx:fidx,::]
@@ -171,6 +185,12 @@ class AllStages:
             all_hoi_hbboxes[:,sidx:fidx,:] = hoi_hbboxes[:,:fidx-sidx,:]
             all_hoi_obboxes[:,sidx:fidx,:] = hoi_obboxes[:,:fidx-sidx,:]
         
+        end_pred = time.time()
+        
         # hoi post
         all_hoi_hbboxes, all_hoi_obboxes = filters_hoi.unprepareInputs(all_hoi_hbboxes, all_hoi_obboxes, imageDims)
-        return all_hoi_hbboxes[0], all_hoi_obboxes[0], all_hoi_props[0]
+        
+        if self.return_times:
+            return all_hoi_hbboxes[0], all_hoi_obboxes[0], all_hoi_props[0], [end_pred-start_pred]
+        else:
+            return all_hoi_hbboxes[0], all_hoi_obboxes[0], all_hoi_props[0]

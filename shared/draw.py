@@ -165,26 +165,99 @@ def plotRPNLosses(hist, mode='rpn', yaxis=None):
     
     f, spl = plt.subplots(1)
     spl.plot(x, t, c=(0,0,1))
-    spl.plot(x, v, c=(0,1,0))
     
-    if mode == 'rpn':
+    if mode in ['rpn','det']:
         spl.plot(x, tc, c=(0.5,0,1.0))
         spl.plot(x, tr, c=(0.5,0,0.8))
+        
+    spl.plot(x, v, c=(0,1,0))
+    if mode in ['rpn','det']:
         spl.plot(x, vc, c=(0.5,1.0,0.0))
         spl.plot(x, vr, c=(0.5,0.8,0.0))
+        
+    if mode in ['rpn', 'det']:
+        nb_itr = 49
+    else:
+        nb_itr = 30
     
 #    plt.title('DET loss')
     if yaxis is not None:
         spl.set_yscale('log')
-        spl.axis((-1,31,10**-1,10**1.7))
+        spl.axis((-1,nb_itr+1,10**-1,10**1.7))
     plt.ylabel('Loss')
     plt.xlabel('Iteration (in 10K)')
     if mode == 'hoi':
-        plt.legend(['train+L2', 'val+L2'], loc='upper right')
+        plt.legend(['train+L2', 'test+L2'], loc='upper right')
     else:
         plt.legend(['train+L2', 'train cls', 'train regr', 'val+L2', 'val cls', 'val regr'], loc='upper right')
     plt.show()    
+    
+    
+def plotFasterLosses(hists, mode='rpn', yaxis=None):
+    [hist1, hist2, hist3] = hists
+    x = hist1[:,0]
+    I = hist1[:,5]
+    Ic = hist1[:,7]
+    Ir = hist1[:,8]
+    II = hist2[:,5]
+    IIc = hist2[:,7]
+    IIr = hist2[:,8]
+    III = hist3[:,5]
+    IIIc = hist3[:,7]
+    IIIr = hist3[:,8]
+    
+    f, spl = plt.subplots(1)
+    
 
+    if mode in ['rpn','det']:
+        spl.plot(hist1[:,0], Ic, c=(0,0.5,1.0))
+        spl.plot(hist1[:,0], Ir, c=(0,0.5,0.8))
+    else:
+        spl.plot(x, I, c=(0,0,1))
+        
+
+    if mode in ['rpn','det']:
+        spl.plot(hist2[:,0], IIc, c=(0.5,1.0,0.0))
+        spl.plot(hist2[:,0], IIr, c=(0.5,0.8,0.0))
+    else:
+        spl.plot(x, II, c=(0,1,0))
+        
+    if mode in ['rpn','det']:
+        spl.plot(hist3[:,0], IIIc, c=(1.0,0.0,0.5))
+        spl.plot(hist3[:,0], IIIr, c=(0.8,0.0,0.5))
+    else:
+        spl.plot(x, III, c=(1,0,0))
+        
+    if mode in ['rpn', 'det']:
+        nb_itr = 49
+    else:
+        nb_itr = 30
+    
+#    plt.title('DET loss')
+    if yaxis is not None:
+        spl.set_yscale('log')
+        spl.axis((-1,nb_itr+1,10**-1,10**0.5))
+    plt.ylabel('Loss')
+    plt.xlabel('Iteration (in 10K)')
+    if mode == 'hoi':
+        plt.legend(['Model I+L2', 'Model II+L2', 'Model III+L2'], loc='upper right')
+    else:
+        plt.legend(['Model I cls', 'Model I regr', 'Model II cls', 'Model II regr', 'Model III cls', 'Model III regr'], loc='upper right')
+    plt.show()    
+
+def pltAPs(APs, yaxis=None):
+    x = list(range(len(APs)))
+    f, spl = plt.subplots(1)
+    spl.bar(x, APs, bottom=0.00000000000000000001)
+
+    if yaxis is not None:
+        spl.set_yscale('log')
+        spl.axis((-1,len(APs),10**-2,10**0))
+    else:
+        spl.axis((-1,len(APs),0,0.7))
+    plt.ylabel('AP')
+    plt.xlabel('Classes')
+    plt.show()     
 
 def drawHoIComplete(img, h_bbox, o_bbox, pattern, labels, label_mapping, cfg):
     f, spl = plt.subplots(2,2)
@@ -208,7 +281,8 @@ def drawPositiveHoIs(img, h_bbox, o_bbox, labels, label_mapping, imageMeta, imag
     ps_idxs = np.where(np.sum(labels>0.5, axis=1)>0)[0]
     nb_imgs = len(ps_idxs)
     
-    f, spl = plt.subplots(math.ceil((nb_imgs+1)/2), 2)
+#    f, spl = plt.subplots(math.ceil((nb_imgs+1)/2), 2)
+    f, spl = plt.subplots(3, 2)
     spl = spl.ravel()    
     
     # GT Boxes
@@ -232,6 +306,8 @@ def drawPositiveHoIs(img, h_bbox, o_bbox, labels, label_mapping, imageMeta, imag
         lbs = ', '.join([label_mapping[x]['pred_ing'] for x in np.where(labels[idx,:]>0.5)[0]]) + ' ' + label_mapping[np.where(labels[idx,:]>0.5)[0][0]]['obj'] if np.sum(labels[idx,:])>0 else 'none'
         print('label:', lbs)
         spl_idx += 1
+        if spl_idx == 6:
+            break
     
 
 
@@ -413,7 +489,7 @@ def drawPositiveRois(img, rois, obj_mapping):
     bboxes = []
     for roi in rois:
         labelID = int(roi[5])
-        if labelID>0:
+        if labelID==9:
             bb = roi[0:4]*16
             bbox = drawProposalBox(bb)
             spl.plot(bbox[0,:], bbox[1,:], c='red')
@@ -575,15 +651,15 @@ def drawOverlapHOIRes(evalData, imagesMeta, obj_mapping, hoi_mapping, images_pat
             f.subplots_adjust(left=0.02, right=0.98, top=0.98, bottom=0.02)
             f.suptitle('Neg: ' + titlename)
             print('Neg. label:', hoi_mapping[label], prop, line['eval'], overlap, imageID)
-            f, spl = plt.subplots(1,1)
-            spl.axis('off')
-            spl.imshow(img)
-
-            spl.plot(hbbox[0,:], hbbox[1,:], c='green')
-            spl.plot(obbox[0,:], obbox[1,:], c='blue')
-            spl.plot(conn[:,1], conn[:,0], c='red')
-            spl.scatter(conn[:,1], conn[:,0], c='red', s=5)
-            f.subplots_adjust(left=0.02, right=0.98, top=0.98, bottom=0.02)
+#            f, spl = plt.subplots(1,1)
+#            spl.axis('off')
+#            spl.imshow(img)
+#
+#            spl.plot(hbbox[0,:], hbbox[1,:], c='green')
+#            spl.plot(obbox[0,:], obbox[1,:], c='blue')
+#            spl.plot(conn[:,1], conn[:,0], c='red')
+#            spl.scatter(conn[:,1], conn[:,0], c='red', s=5)
+#            f.subplots_adjust(left=0.02, right=0.98, top=0.98, bottom=0.02)
 
 def drawOverlapHoI(img, hbboxes, obboxes, props, imageMeta, imageDims, cfg, obj_mapping, hoi_mapping):
 #    f, spl = plt.subplots(2,2)
@@ -609,10 +685,10 @@ def drawOverlapHoI(img, hbboxes, obboxes, props, imageMeta, imageDims, cfg, obj_
 #        oprop = (obboxes[idx,4])
 #        hlbl = int(hbboxes[idx,5])
 #        olbl = int(obboxes[idx,5])
-#        hoilabels = np.where(props[idx,:]>0.001)[0]
-        hoilabels = list(range(600))
-        hoilabels = [x for x in hoilabels if obj_mapping[hoi_mapping[x]['obj']] in gt_objs]
-        hoiprops = [props[idx,x] for x in hoilabels if x in hoilabels]
+        hoilabels = np.where(props[idx,:]>0.01)[0]
+#        hoilabels = list(range(600))
+#        hoilabels = [x for x in hoilabels if obj_mapping[hoi_mapping[x]['obj']] in gt_objs]
+        hoiprops = ([props[idx,x] for x in hoilabels if x in hoilabels])
         
         hbbox = hbboxes[idx,:4]*16
         obbox = obboxes[idx,:4]*16
@@ -652,16 +728,38 @@ def drawOverlapHoI(img, hbboxes, obboxes, props, imageMeta, imageDims, cfg, obj_
 #        gt_hbboxes[:,3] -= gt_hbboxes[:,1]
 #        gt_obboxes[:,2] -= gt_obboxes[:,0]
 #        gt_obboxes[:,3] -= gt_obboxes[:,1]
+                
+                
+        hdotx = hbbox[0] + (hbbox[2] / 2)
+        hdoty = hbbox[1] + (hbbox[3] / 2)
+        odotx = obbox[0] + (obbox[2] / 2)
+        odoty = obbox[1] + (obbox[3] / 2)
+        conn = np.array([[odoty, odotx], [hdoty, hdotx]])
+        hbbox = drawProposalBox(hbbox)
+        obbox = drawProposalBox(obbox)        
+        
         if len(hoilabels)>0 and overlap >= 0.5:
-            hoiprops = [props[idx,x] for x in hoilabels if x in overlap_labels]
+#            hoiprops = [props[idx,x] for x in hoilabels if x in overlap_labels]
             
             f, spl = plt.subplots(1,1)
+            spl.axis('off')
             spl.imshow(img)
             c = colours[c_idx]
-            hbbox = drawProposalBox(hbbox)
-            obbox = drawProposalBox(obbox)
-            spl.plot(hbbox[0,:], hbbox[1,:], c=c)
-            spl.plot(obbox[0,:], obbox[1,:], c=c)
+                        
+            spl.plot(hbbox[0,:], hbbox[1,:], c='green')
+            spl.plot(obbox[0,:], obbox[1,:], c='blue')
+            spl.plot(conn[:,1], conn[:,0], c='red')
+            spl.scatter(conn[:,1], conn[:,0], c='red', s=5)
+            f.subplots_adjust(left=0.02, right=0.98, top=0.98, bottom=0.02)
+            
+            
+            pos_lbls = []
+            neg_lbls = []
+            for lbl in hoilabels:
+                if lbl in overlap_labels:
+                    pos_lbls.append(lbl)
+                else:
+                    neg_lbls.append(lbl)
             
 #            hbbox = drawProposalBox(gt_hbbox[0])
 #            obbox = drawProposalBox(gt_obbox[0])
@@ -669,21 +767,26 @@ def drawOverlapHoI(img, hbboxes, obboxes, props, imageMeta, imageDims, cfg, obj_
 #            spl[0].plot(obbox[0,:], obbox[1,:], c=c)
             
             idxs.append(idx)
-            labelsstr = [hoi_mapping[x] for x in overlap_labels]
-            print('Pos. label:', labelsstr, hoiprops)
+            labelsstr = ', '.join([str(x) for x in pos_lbls])
+            print('Pos. label:', labelsstr, props[idx,pos_lbls])
+            labelsstr = ', '.join([str(x) for x in neg_lbls])
+            print('Neg. label:', labelsstr, props[idx,neg_lbls])
             
             c_idx = (c_idx+1) % len(colours)
-        else:
+        elif len(hoilabels) > 0:
+            labelsstr = ', '.join([str(x) for x in hoilabels])
+            print('All neg. label:', labelsstr, props[idx,hoilabels])
 #            continue
             f, spl = plt.subplots(1,1)
+            spl.axis('off')
             spl.imshow(img)
-            c = colours[c_idx]
-            hbbox = drawProposalBox(hbbox)
-            obbox = drawProposalBox(obbox)
-            spl.plot(hbbox[0,:], hbbox[1,:], c='black')
-            spl.plot(obbox[0,:], obbox[1,:], c='black')
-            hoiprops = ', '.join(['%.4f' % x for x in hoiprops])
-            print('Neg. label:', hoilabels, hoiprops)
+            spl.plot(hbbox[0,:], hbbox[1,:], c='green')
+            spl.plot(obbox[0,:], obbox[1,:], c='blue')
+            spl.plot(conn[:,1], conn[:,0], c='red')
+            spl.scatter(conn[:,1], conn[:,0], c='red', s=5)
+            f.subplots_adjust(left=0.02, right=0.98, top=0.98, bottom=0.02)
+#            hoiprops = ', '.join(['%.4f' % x for x in hoiprops])
+#            print('Neg. label:', overlap, labelsstr, props[hoilabels])
     return np.array(idxs)
 
 def drawPositiveCropHoI(hbboxes, obboxes, hcrops, ocrops, patterns, props, imageMeta, imageDims, cfg, obj_mapping):

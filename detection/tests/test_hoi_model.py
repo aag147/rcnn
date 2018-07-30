@@ -61,7 +61,7 @@ for i in range(1):
 #    all_hbboxes, all_obboxes, all_target_labels, all_val_map = Stages.stagethree_targets(bboxes, imageMeta, imageDims)
 #    hbboxes, obboxes, target_labels, val_map = filters_hoi.reduceTargets([all_hbboxes, all_obboxes, all_target_labels, all_val_map], cfg)
 #    all_hoi_hbboxes, all_hoi_obboxes, all_hoi_props = Stages.stagethree([X,bboxes], imageMeta, imageDims, obj_mapping, include='all')
-#    pred_hbboxes, pred_obboxes, pred_props = Stages.stagethree([X,all_hbboxes,all_obboxes], imageMeta, imageDims, obj_mapping)
+    pred_hbboxes, pred_obboxes, pred_props = Stages.stagethree([X,all_hbboxes,all_obboxes], imageMeta, imageDims, obj_mapping)
 #    batch_hcrop, batch_ocrop, batch_p, batch_h, batch_o = Stages.stagethree([X,all_hbboxes,all_obboxes], imageMeta, imageDims, obj_mapping)
     
     
@@ -80,7 +80,7 @@ for i in range(1):
     draw.drawPositiveRois(img, bboxes, obj_mapping)
     draw.drawOverlapAnchors(img, bboxes, imageMeta, imageDims, cfg)
 #    idxs = draw.drawPositiveHoI(img, pred_hbboxes, pred_obboxes, None, pred_props, imageMeta, imageDims, cfg, obj_mapping)
-#    draw.drawOverlapHoI(img, pred_hbboxes, pred_obboxes, pred_props, imageMeta, imageDims, cfg, obj_mapping, hoi_mapping)
+    draw.drawOverlapHoI(img, pred_hbboxes, pred_obboxes, pred_props, imageMeta, imageDims, cfg, obj_mapping, hoi_mapping)
 #    good_bboxes = np.copy(all_obboxes[0,idxs,:])
 #    good_bboxes[:,2] += good_bboxes[:,0]
 #    good_bboxes[:,3] += good_bboxes[:,1]

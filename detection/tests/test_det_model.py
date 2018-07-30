@@ -34,9 +34,8 @@ if True:
     hoi_mapping = data.hoi_labels
     
     # Create batch generators
-    genTrain = DataGenerator(imagesMeta = data.trainGTMeta, cfg=cfg, data_type='train', do_meta=True)
-    genVal = DataGenerator(imagesMeta = data.valGTMeta, cfg=cfg, data_type='val', do_meta=True)
-#    genTest = DataGenerator(imagesMeta = data.testGTMeta, cfg=cfg, data_type='test', do_meta=True)
+    genTrain = DataGenerator(imagesMeta = data.trainGTMeta, cfg=cfg, data_type='train', do_meta=True, mode='test')
+    genVal = DataGenerator(imagesMeta = data.valGTMeta, cfg=cfg, data_type='test', do_meta=True, mode='test')
  
     
     Models = methods.AllModels(cfg, mode='test', do_rpn=True, do_det=True, do_hoi=False)
@@ -45,13 +44,15 @@ if True:
     Stages = stages.AllStages(cfg, Models, obj_mapping, hoi_mapping, mode='test')
 
 
-genIterator = genTrain.begin()
+iterator = genTrain
+genIterator = iterator.begin()
 
 for i in range(1):
-    X, y, imageMeta, imageDims, times = next(genIterator)
-#    imageMeta = genVal.imagesMeta['385029']
-    X, y, imageDims = Stages.stagezero(imageMeta, genTrain.data_type)
+#    X, y, imageMeta, imageDims, times = next(genIterator)
+    imageMeta = iterator.imagesMeta['ILSVRC2012_val_00012964']
+    X, y, imageDims = Stages.stagezero(imageMeta, iterator.data_type)
     imageID = imageMeta['imageName'].split('.')[0]
+    print('imageID', imageID)
     img = np.copy(X[0])
     img -= np.min(img)
     img /= np.max(img)
@@ -62,11 +63,11 @@ for i in range(1):
     print('Stage two...')
 #    rois, target_props, target_deltas, IouS = filters_detection.createTargets(proposals, imageMeta, imageDims, obj_mapping, cfg)
 #    bboxes = helper.deltas2Boxes(target_props, target_deltas[:,:,80:], rois, imageDims, cfg)
-    bboxes = Stages.stagetwo([X,proposals], imageMeta, imageDims)
+    bboxes = Stages.stagetwo([proposals], imageMeta, imageDims)
     
     print('Draw stuff...')
-    draw.drawGTBoxes(img, imageMeta, imageDims)
-    overlapAnchors = draw.drawOverlapAnchors(img, proposals[0], imageMeta, imageDims, cfg)
+#    draw.drawGTBoxes(img, imageMeta, imageDims)
+#    overlapAnchors = draw.drawOverlapAnchors(img, proposals[0], imageMeta, imageDims, cfg)
     draw.drawOverlapRois(img, bboxes[0], imageMeta, imageDims, cfg, obj_mapping)
+    draw.drawPositiveAnchors(img, proposals[0], cfg)
     draw.drawPositiveRois(img, bboxes[0], obj_mapping)
-    overlapRois = draw.drawOverlapRois(img, bboxes[0], imageMeta, imageDims, cfg, obj_mapping)

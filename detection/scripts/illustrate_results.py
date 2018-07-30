@@ -24,7 +24,7 @@ from hoi_generators import DataGenerator
 import metrics
 import draw
 
-if False:
+if True:
     # Load data
     print('Loading data...')
     data = extract_data.object_data()
@@ -34,12 +34,21 @@ if False:
 
 
 if False:
-    path = cfg.part_results_path + 'HICO/hoi80fastvgg2/history.txt'
-    hist =  np.loadtxt(path, delimiter=', ')
-    hist[:,0] /= 2
+    
+    hists = []
+    models = ['_256', 'S', 'SH']
+    submodel = 'det'
+    ddir = 'HICO' if submodel == 'hoi' else 'COCO'
+    for i in range(3):
+        path = cfg.part_results_path + ddir + '/'+submodel+'80'+models[i]+'/history.txt'
+        hist =  np.loadtxt(path, delimiter=', ')
+        if 'HICO' in path and hist.shape[0]>30:
+            hist[:,0] /= 2
+        hists.append(hist)
 
     import filters_rpn
-    draw.plotRPNLosses(hist, mode='hoi', yaxis='log')
+#    draw.plotRPNLosses(hist, mode='rpn', yaxis='log')
+    draw.plotFasterLosses(hists, mode=submodel)
     
 
 def loadEvalData(generator, my_output_path):    
@@ -57,7 +66,7 @@ def loadEvalData(generator, my_output_path):
 if False:
     # HOI eval data
     genTest = DataGenerator(imagesMeta = data.valGTMeta, cfg=cfg, data_type='test', do_meta=True, mode='test', approach='new')
-    my_output_path = cfg.part_results_path + 'HICO/hoi80fastvgg2/res/testnew/'
+    my_output_path = cfg.part_results_path + 'HICO/hoi80S/res/testnew/'
     evalData = loadEvalData(genTest, my_output_path)
     imagesMeta = genTest.imagesMeta
 
@@ -83,6 +92,24 @@ if False:
     draw.plot_confusion_matrix(cfm, normalize=True, no_bg=False)
     draw.plot_confusion_matrix(cfm, normalize=True, no_bg=True)
 
+if False:
+    # plot multi label APs
+    obj_AP_map = np.zeros((80,))
+    obj_hoi_nb = np.zeros((80,))
+    old_obj = ''
+    for idx, label in enumerate(hoi_mapping):
+        obj = label['obj']
+        if obj != old_obj:
+            old_obj = obj
+            obj_idx = obj_mapping[obj]-1
+        obj_hoi_nb[obj_idx] += 1
+        obj_AP_map[obj_idx] += AP_map[idx]
+        
+    obj_AP_map /= obj_hoi_nb 
+    
+    draw.pltAPs(AP_map)
+    draw.pltAPs(obj_AP_map)
+
 if True:
     # plot eval data
     props = [x['score'] for x in evalData]
@@ -99,14 +126,18 @@ if True:
             continue
         if hoi_mapping[line['category_id']]['obj'] in used_objs:
             continue
+#        if hoi_mapping[line['category_id']]['obj'] != 'book':
+#            continue
+#        if line['category_id'] != 249:
+#            continue
         used_objs.append(hoi_mapping[line['category_id']]['obj'])
         nb_preds += 1
         if nb_preds < 0:
             continue
 #        draw.drawHoIExample(imagesMeta[line['image_id']], images_path, hoi_mapping)
         show_lines.append(line)
-        if nb_preds == 80:
-            break
+#        if nb_preds == 20:
+#            break
         
     draw.drawOverlapHOIRes(show_lines, imagesMeta, obj_mapping, hoi_mapping, images_path)
 
