@@ -607,7 +607,7 @@ class AllModels:
             
             hoi_final_score = keras.layers.Activation(
                 "softmax" if cfg.dataset == 'TUPPMI' else 'sigmoid',
-                name="hoi_out_class"
+                name="hoi_out_class" if not cfg.do_finetune else "hoi_fineout_class"
             )(hoi_score)
             
             human_fast_input = layers.identity(
