@@ -555,7 +555,8 @@ class AllModels:
                     kernel_initializer = keras.initializers.RandomNormal(stddev=0.01),
                     kernel_regularizer = keras.regularizers.l2(cfg.weight_decay),
                 ),
-                name="scores4human"
+                name="scores4human" if not cfg.do_finetune else "scores4human_finetune"
+
             )(hoi_human_features)
                 
             ## OBJECT ##
@@ -582,7 +583,7 @@ class AllModels:
                     kernel_initializer = keras.initializers.RandomNormal(stddev=0.01),
                     kernel_regularizer = keras.regularizers.l2(cfg.weight_decay),
                 ),
-                name="scores4object"
+                name="scores4object" if not cfg.do_finetune else "scores4object_finetune"
             )(hoi_object_features)
                 
                 
@@ -599,7 +600,7 @@ class AllModels:
                     kernel_initializer = keras.initializers.RandomNormal(stddev=0.01),
                     kernel_regularizer = keras.regularizers.l2(cfg.weight_decay),
                 ),
-                name = 'scores4pattern'
+                name="scores4pattern" if not cfg.do_finetune else "scores4pattern_finetune"
             )(hoi_pattern_features)
                 
             ## FINAL ##
