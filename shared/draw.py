@@ -541,21 +541,28 @@ def drawPositiveHoI(img, hbboxes, obboxes, patterns, props, imageMeta, imageDims
 #        oprop = (obboxes[idx,4])
 #        hlbl = int(hbboxes[idx,5])
 #        olbl = int(obboxes[idx,5])
-        hoilabel = np.where(props[idx,:]>0.001)[0]
-        if len(hoilabel)>0 or True:
+        hoilabel = list(np.where(props[idx,:]>0.1)[0])
+#        hoilabel = np.argmax(props[idx,:])
+        valid_hoi = False
+        for i in range(16):
+            if i in hoilabel:
+                valid_hoi = True
+        if valid_hoi:
+            if 16 in hoilabel:
+                hoilabel.remove(16)
             hoiprop = props[idx,hoilabel]
-#            print(idx, hoilabel, hoiprop)
+            print(idx, hoilabel, hoiprop)
             
-            f, spl = plt.subplots(2,2)
-            spl = spl.ravel()   
-            spl[0].imshow(img)
+            f, spl = plt.subplots(1,1)
+#            spl = spl.ravel()   
+            spl.imshow(img)
             c = colours[c_idx]
             hbbox = hbboxes[idx,:4]*16
             obbox = obboxes[idx,:4]*16
             hbbox = drawProposalBox(hbbox)
             obbox = drawProposalBox(obbox)
-            spl[0].plot(hbbox[0,:], hbbox[1,:], c=c)
-            spl[0].plot(obbox[0,:], obbox[1,:], c=c)
+            spl.plot(hbbox[0,:], hbbox[1,:], c=c)
+            spl.plot(obbox[0,:], obbox[1,:], c=c)
             if patterns is not None:
                 spl[2].imshow(patterns[idx,:,:,0])
                 spl[3].imshow(patterns[idx,:,:,1])
@@ -934,22 +941,23 @@ def drawHoIExample(imageMeta, images_path, hoi_mapping):
         names.append(label)
         
     nametitle = ', '.join([x['pred_ing'] for x in names]) + ' ' + names[0]['obj']
-    f, spl = plt.subplots(2,2)
-    spl = spl.ravel()
+    f, spl = plt.subplots(1,1)
+#    spl = spl.ravel()
     for j, _ in enumerate(imageMeta['rels']):
         obj = objs[j]
         prs = prss[j]
         line = lines[j]
-        spl[j].axis('off')
-        spl[j].imshow(img)
-        spl[j].plot(obj[0,:], obj[1,:], c='blue')
-        spl[j].plot(prs[0,:], prs[1,:], c='green')
-        spl[j].plot(line[:,1], line[:,0], c='red')
-        spl[j].scatter(line[:,1], line[:,0], c='red', s=5)
+        spl.axis('off')
+        spl.imshow(img)
+        spl.plot(obj[0,:], obj[1,:], c='blue')
+        spl.plot(prs[0,:], prs[1,:], c='green')
+        spl.plot(line[:,1], line[:,0], c='red')
+        spl.scatter(line[:,1], line[:,0], c='red', s=5)
 #        print(names[j])
-        if j == 3:
+        if j == 0:
             break
-    f.suptitle('GT: ' + nametitle)
+#    f.suptitle('GT: ' + nametitle)
+    f.subplots_adjust(left=0.02, right=0.98, top=0.98, bottom=0.02)
 
 def drawImages(imagesID, imagesMeta, labels, path, imagesBadOnes = False):
     f, spl = plt.subplots(2,2)

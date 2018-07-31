@@ -285,6 +285,8 @@ class basic_config:
        self.hoi_pos_share  = int(self.nb_hoi_rois / 8.0 * 2)
        self.hoi_neg1_share = int(self.nb_hoi_rois / 8.0 * 2)
        self.hoi_neg2_share = int(self.nb_hoi_rois / 8.0 * 4)
+       
+       self.do_categorical_hoi = False
         
        # model
 #       self.nb_object_classes = 81
@@ -312,6 +314,8 @@ class basic_config:
              # cfg method
              assert hasattr(mcfg, arg), 'method cfg needs to exist'
              self = getattr(mcfg, arg)(self)
+          if opt == '-C':
+              self.do_categorical_hoi = True
           if opt == '-d':
               # dataset
               self.dataset = arg

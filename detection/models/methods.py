@@ -100,10 +100,10 @@ class AllModels:
             my_metrics={'det_out_class':'categorical_accuracy'}
         if self.do_hoi:
             model = self.model_hoi
-            loss = 'categorical_crossentropy' if cfg.dataset=='TUPPMI' else losses.hoi_loss_cls(cfg.wp)
+            loss = 'categorical_crossentropy' if cfg.do_categorical_hoi else losses.hoi_loss_cls(cfg.wp)
             print('   -HOI loss', loss)
             my_losses = [loss] 
-            my_metrics = ['categorical_accuracy'] if cfg.dataset=='TUPPMI' else None
+            my_metrics = ['categorical_accuracy'] if cfg.do_categorical_hoi else None
             
         model.compile(optimizer=opt, loss=my_losses, metrics=my_metrics)
         
@@ -609,7 +609,7 @@ class AllModels:
             hoi_score = keras.layers.Add()([hoi_human_scores, hoi_object_scores, hoi_pattern_scores])
             
             hoi_final_score = keras.layers.Activation(
-                "softmax" if cfg.dataset == 'TUPPMI' else 'sigmoid',
+                "softmax" if cfg.do_categorical_hoi else 'sigmoid',
                 name="hoi_out_class" if not cfg.do_finetune else "hoi_fineout_class"
             )(hoi_score)
             

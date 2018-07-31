@@ -33,7 +33,7 @@ if True:
     hoi_mapping = data.hoi_labels
 
 
-if True:
+if False:
     
     hists = []
     models = ['_256', 'S', 'SH']
@@ -49,6 +49,16 @@ if True:
     import filters_rpn
 #    draw.plotRPNLosses(hist, mode='rpn', yaxis='log')
     draw.plotFasterLosses(hists, mode=submodel)
+    
+if True:
+    # plot GT hoi examples
+    genTrain = DataGenerator(imagesMeta = data.trainGTMeta, cfg=cfg, data_type='train', do_meta=True, mode='test', approach='new')
+    imagesID = genTrain.dataID
+    idxs = [59,100,222,777]
+    for idx in idxs:
+        imageMeta = genTrain.imagesMeta[imagesID[idx]]
+        print(hoi_mapping[imageMeta['rels'][0][2]])
+        draw.drawHoIExample(imageMeta, genTrain.images_path, hoi_mapping)
     
 
 def loadEvalData(generator, my_output_path):    

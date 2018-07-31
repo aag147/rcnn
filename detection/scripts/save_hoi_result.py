@@ -30,19 +30,19 @@ if True:
     hoi_mapping = data.hoi_labels
     
     # Create batch generators
-    genTrain = DataGenerator(imagesMeta = data.trainGTMeta, cfg=cfg, data_type='train', do_meta=True, mode='test', approach='new')
-    genTest = DataGenerator(imagesMeta = data.valGTMeta, cfg=cfg, data_type='test', do_meta=True, mode='test', approach='new')
+    genTrain = DataGenerator(imagesMeta = data.trainGTMeta, cfg=cfg, data_type='train', do_meta=True, mode='test', approach='evalnew')
+#    genTest = DataGenerator(imagesMeta = data.valGTMeta, cfg=cfg, data_type='test', do_meta=True, mode='test', approach='new')
     
     Models = methods.AllModels(cfg, mode='test', do_rpn=False, do_det=False, do_hoi=True)
     Stages = stages.AllStages(cfg, Models, obj_mapping, hoi_mapping, mode='test')
     
 sys.stdout.flush()
 # Test data
-evalTestSub, imageMeta = hoi_test.saveEvalData(genTest, Stages, cfg, hoi_mapping)
-hoi_test.saveEvalResults(genTest, cfg, obj_mapping, hoi_mapping)
+#evalTest, imageMeta = hoi_test.saveEvalData(genTest, Stages, cfg, hoi_mapping)
+#hoi_test.saveEvalResults(genTest, cfg, obj_mapping, hoi_mapping)
 #import draw
 #draw.drawOverlapHOIRes(evalTestSub, genTest.imagesMeta, obj_mapping, hoi_mapping, genTest.images_path)
 
 # Train data
-#evalTrain, imageMeta = hoi_test.saveEvalData(genTrain, Stages, cfg, hoi_mapping)
-#hoi_test.saveEvalResults(genTrain, cfg, obj_mapping, hoi_mapping)
+evalTrain, imageMeta = hoi_test.saveEvalData(genTrain, Stages, cfg, hoi_mapping)
+hoi_test.saveEvalResults(genTrain, cfg, obj_mapping, hoi_mapping)

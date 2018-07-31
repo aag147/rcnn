@@ -71,13 +71,13 @@ def prepareInputs(h_bboxes, o_bboxes, imageDims):
     
     return newh_bboxes, newo_bboxes
 
-def splitInputs(bboxes, imageMeta, obj_mapping):
+def splitInputs(bboxes, imageMeta, obj_mapping, hoi_mapping=None):
     h_idxs = np.where(bboxes[0,:,5]==1)[0]
     o_idxs = np.where(bboxes[0,:,5]>0)[0]
     
     hbboxes = bboxes[:,h_idxs,:4]
     obboxes = bboxes[:,o_idxs,:]
-    obboxes = knownObjects(obboxes, imageMeta, obj_mapping)
+    obboxes = knownObjects(obboxes, imageMeta, obj_mapping, hoi_mapping)
     nb_hbboxes = hbboxes.shape[1]
     nb_obboxes = obboxes.shape[1]
     
@@ -92,14 +92,21 @@ def splitInputs(bboxes, imageMeta, obj_mapping):
     
     return bboxes_pairs[0:1,::], bboxes_pairs[1:2,::]
         
-def knownObjects(bboxes, imageMeta, obj_mapping):
-    objs = imageMeta['objects']
-    lbls = []
-    for rel in imageMeta['rels']:
-        obj = objs[rel[1]]
-        label = obj_mapping[obj['label']]
-        if label not in lbls:
-            lbls.append(label)
+def knownObjects(bboxes, imageMeta, obj_mapping, hoi_mapping):
+    if 'objecs' in imageMeta:
+        objs = imageMeta['objects']
+        lbls = []
+        for rel in imageMeta['rels']:
+            obj = objs[rel[1]]
+            label = obj_mapping[obj['label']]
+            if label not in lbls:
+                lbls.append(label)
+    else:
+        hoi_label_id = imageMeta['label']
+        hoi_label = hoi_mapping[hoi_label_id]
+        obj_label = obj_mapping[hoi_label['obj']]
+        lbls = [obj_label]
+        
     known_idxs = np.in1d(bboxes[0,:,5], lbls)
     bboxes = bboxes[:,known_idxs,:4]
     return bboxes
@@ -164,7 +171,7 @@ def loadData(imageInput, imageDims, cfg):
     all_target_labels = (imageInput['hoi_labels'])
     val_map = np.array(imageInput['val_map'])
         
-    all_target_labels = utils.getMatrixLabels(cfg.nb_hoi_classes, all_target_labels, labels2classes=cfg.dataset=='TUPPMI')
+    all_target_labels = utils.getMatrixLabels(cfg.nb_hoi_classes, all_target_labels, labels2classes=cfg.do_categorical_hoi)
     
 #    if len(np.where(val_map==3)[0])==0:
 #        return None, None, None, None

@@ -142,7 +142,7 @@ class AllStages:
             else:
                 [bboxes] = X
             bboxes = np.copy(bboxes)
-            all_hbboxes, all_obboxes = filters_hoi.splitInputs(bboxes, imageMeta, obj_mapping)
+            all_hbboxes, all_obboxes = filters_hoi.splitInputs(bboxes, imageMeta, obj_mapping, self.hoi_mapping)
         
         if all_hbboxes is None:
             return None, None, None
