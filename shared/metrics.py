@@ -505,7 +505,7 @@ def computemAPLoss(Y, Y_hat):
         AP = np.mean(Ps)
         APs[x] = AP
     mAP = np.mean(APs)
-    return mAP
+    return mAP, APs
         
 
 

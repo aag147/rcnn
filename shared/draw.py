@@ -357,7 +357,7 @@ def drawAnchors(img, anchorsGT, cfg):
         spl.plot(bbox[0,:], bbox[1,:], c=c)
         bboxes.append(bb)
     f.subplots_adjust(left=0.02, right=0.98, top=0.98, bottom=0.02)
-    return np.array(bboxes)
+#    return np.array(bboxes)
         
 def drawPositiveAnchors(img, anchorsGT, cfg):
     f, spl = plt.subplots(1)
@@ -371,7 +371,7 @@ def drawPositiveAnchors(img, anchorsGT, cfg):
             bbox = drawProposalBox(bb)
             spl.plot(bbox[0,:], bbox[1,:])
             bboxes.append(bb)
-    return np.array(bboxes)
+#    return np.array(bboxes)
 
 def drawOverlapAnchors(img, anchors, imageMeta, imageDims, cfg):
     import filters_helper as helper
@@ -407,7 +407,7 @@ def drawOverlapAnchors(img, anchors, imageMeta, imageDims, cfg):
 #        bb = {key:x*cfg.rpn_stride for key,x in gt.items()}
 #        bbox = drawBoundingBox(bb)
 #        spl.plot(bbox[0,:], bbox[1,:])
-    return (bboxes)
+#    return (bboxes)
 
 def drawOverlapRois(img, rois, imageMeta, imageDims, cfg, obj_mapping):
     import filters_helper as helper
@@ -452,7 +452,7 @@ def drawOverlapRois(img, rois, imageMeta, imageDims, cfg, obj_mapping):
 #        bb = {key:x*cfg.rpn_stride for key,x in gt.items()}
 #        bbox = drawBoundingBox(bb)
 #        spl.plot(bbox[0,:], bbox[1,:])
-    return (bboxes)
+#    return (bboxes)
 
 
 def drawHumanAndObjectRois(img, rois, imageMeta, obj_mapping):
@@ -495,7 +495,7 @@ def drawPositiveRois(img, rois, obj_mapping):
             spl.plot(bbox[0,:], bbox[1,:], c='red')
             bboxes.append(bb)
     f.subplots_adjust(left=0.02, right=0.98, top=0.98, bottom=0.02)
-    return np.array(bboxes)
+#    return np.array(bboxes)
 
 
 def drawBoxes(img, bboxes, imageDims):
@@ -521,7 +521,7 @@ def drawGTBoxes(img, imageMeta, imageDims):
         
     f.subplots_adjust(left=0.02, right=0.98, top=0.98, bottom=0.02)
 #    f.tight_layout()    
-    return bboxes
+#    return bboxes
 
 def drawPositiveHoI(img, hbboxes, obboxes, patterns, props, imageMeta, imageDims, cfg, obj_mapping):
 #    f, spl = plt.subplots(2,2)
@@ -563,7 +563,7 @@ def drawPositiveHoI(img, hbboxes, obboxes, patterns, props, imageMeta, imageDims
 #            print('Pos. label:', inv_obj_mapping[hlbl], inv_obj_mapping[olbl], hprop, oprop, hoiprop)
             
             c_idx = (c_idx+1) % len(colours)
-    return np.array(idxs)
+#    return np.array(idxs)
 
 
 def drawOverlapHOIRes(evalData, imagesMeta, obj_mapping, hoi_mapping, images_path):
@@ -787,7 +787,7 @@ def drawOverlapHoI(img, hbboxes, obboxes, props, imageMeta, imageDims, cfg, obj_
             f.subplots_adjust(left=0.02, right=0.98, top=0.98, bottom=0.02)
 #            hoiprops = ', '.join(['%.4f' % x for x in hoiprops])
 #            print('Neg. label:', overlap, labelsstr, props[hoilabels])
-    return np.array(idxs)
+#    return np.array(idxs)
 
 def drawPositiveCropHoI(hbboxes, obboxes, hcrops, ocrops, patterns, props, imageMeta, imageDims, cfg, obj_mapping):
     inv_obj_mapping = {x:key for key,x in obj_mapping.items()}
@@ -818,7 +818,7 @@ def drawPositiveCropHoI(hbboxes, obboxes, hcrops, ocrops, patterns, props, image
         if i == 7:
             break
             
-    return np.array(idxs)   
+#    return np.array(idxs)   
 
 def drawBoundingBox(bb):
     xmin = bb['xmin']; xmax = bb['xmax']

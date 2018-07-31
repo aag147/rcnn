@@ -100,8 +100,10 @@ class AllModels:
             my_metrics={'det_out_class':'categorical_accuracy'}
         if self.do_hoi:
             model = self.model_hoi
-            my_losses = [losses.hoi_loss_cls(cfg.wp)] 
-            my_metrics = None
+            loss = 'categorical_crossentropy' if cfg.dataset=='TUPPMI' else losses.hoi_loss_cls(cfg.wp)
+            print('   -HOI loss', loss)
+            my_losses = [loss] 
+            my_metrics = ['categorical_accuracy'] if cfg.dataset=='TUPPMI' else None
             
         model.compile(optimizer=opt, loss=my_losses, metrics=my_metrics)
         

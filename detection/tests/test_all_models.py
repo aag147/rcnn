@@ -47,7 +47,7 @@ Stages = stages.AllStages(cfg, Models, obj_mapping, hoi_mapping, mode='test', re
 generator = genVal
 genIterator = generator.begin()
 
-nb_iterations = 5000
+nb_iterations = 1
 all_times = np.zeros((nb_iterations, 5))
 
 for i in range(nb_iterations):
@@ -71,7 +71,7 @@ for i in range(nb_iterations):
     pred_hbboxes, pred_obboxes, pred_props, times = Stages.stagethree([bboxes], imageMeta, imageDims, obj_mapping)
     all_times[i, 4:5] = times
     
-    continue
+#    continue
     import draw
     print('Draw...')
     img = np.copy(X[0])

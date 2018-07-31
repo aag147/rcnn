@@ -33,11 +33,11 @@ if True:
     hoi_mapping = data.hoi_labels
 
 
-if False:
+if True:
     
     hists = []
     models = ['_256', 'S', 'SH']
-    submodel = 'det'
+    submodel = 'hoi'
     ddir = 'HICO' if submodel == 'hoi' else 'COCO'
     for i in range(3):
         path = cfg.part_results_path + ddir + '/'+submodel+'80'+models[i]+'/history.txt'
@@ -64,9 +64,16 @@ def loadEvalData(generator, my_output_path):
     return evalData
 
 if False:
+    # number of GT samples
+    nb_gt_samples = np.zeros((cfg.nb_hoi_classes))
+    for imageID, imageMeta in data.trainGTMeta.items():
+        for rel in imageMeta['rels']:
+            nb_gt_samples[rel[2]] += 1
+
+if False:
     # HOI eval data
     genTest = DataGenerator(imagesMeta = data.valGTMeta, cfg=cfg, data_type='test', do_meta=True, mode='test', approach='new')
-    my_output_path = cfg.part_results_path + 'HICO/hoi80S/res/testnew/'
+    my_output_path = cfg.part_results_path + 'HICO/hoi80slow/res/testnew/'
     evalData = loadEvalData(genTest, my_output_path)
     imagesMeta = genTest.imagesMeta
 
@@ -79,6 +86,12 @@ if False:
         if score >= overlap_thresh:
             evalDataRdx.append(line)
     mAP, AP_map, evals = metrics.computeHOImAP(evalData, imagesMeta, obj_mapping, hoi_mapping, cfg, return_data='plt')    
+    
+    unrare_idxs = np.where(nb_gt_samples>=10)[0]
+    rare_idxs = np.where(nb_gt_samples<10)[0]
+    mAPRare = np.mean(AP_map[rare_idxs])
+    mAPUnRare = np.mean(AP_map[unrare_idxs])
+
     
 if False:
     # Multi label confusion matrix
@@ -110,7 +123,7 @@ if False:
     draw.pltAPs(AP_map)
     draw.pltAPs(obj_AP_map)
 
-if True:
+if False:
     # plot eval data
     props = [x['score'] for x in evalData]
     idxs = np.argsort(props)[::-1]
