@@ -119,6 +119,8 @@ class object_data:
 #            testGTMeta = self.reduceData(testGTMeta, reduced_objs, reduced_hoi_map)
             valGTMeta = self.reduceData(valGTMeta, reduced_objs, reduced_hoi_map)
             
+        if cfg.dataset == 'TUPPMI' and not cfg.do_categorical_hoi:
+            hoi_labels = hoi_labels[0:-1]
             
         cfg.nb_object_classes = len(class_mapping)
         cfg.nb_classes = len(hoi_labels) if hoi_labels is not None else 0

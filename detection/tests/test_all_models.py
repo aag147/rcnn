@@ -51,7 +51,7 @@ nb_iterations = 1
 all_times = np.zeros((nb_iterations, 5))
 
 for i in range(nb_iterations):
-    X, y, imageMeta, imageDims, times = next(genIterator)
+#    X, y, imageMeta, imageDims, times = next(genIterator)
     
 #    imageID = 'Play_Saxophone_007'
 #    imageMeta = generator.imagesMeta[imageID]

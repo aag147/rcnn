@@ -31,6 +31,7 @@ if True:
     # config
     cfg = data.cfg
     utils.saveConfig(cfg)
+    hoi_mapping = data.hoi_labels
 
     # data
     genTrain = DataGenerator(imagesMeta = data.trainGTMeta, cfg=cfg, data_type='train', do_meta=False)
