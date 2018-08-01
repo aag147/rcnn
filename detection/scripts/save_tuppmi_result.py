@@ -27,7 +27,7 @@ import random as r
 import copy as cp
 import numpy as np
 
-if False:
+if True:
     # Load data
     data = extract_data.object_data(False)
     cfg = data.cfg
@@ -118,7 +118,7 @@ def saveEvalResults(generator, cfg, obj_mapping, hoi_mapping, evalData=None):
         for batchidx, (imageID, imageMeta) in enumerate(generator.imagesMeta.items()):
             if (batchidx+1) % (max(1,generator.nb_batches // 100)) == 0 or batchidx==1 or (batchidx+1) == generator.nb_batches:
                 utils.update_progress_new(batchidx+1, generator.nb_batches, imageID)
-            print(imageID)
+            print(my_output_path + imageID + '.pkl')
             if os.path.exists(my_output_path + imageID + '.pkl'):
                 data = utils.load_obj(my_output_path + imageID)
                 best_score = 0
@@ -146,5 +146,5 @@ def saveEvalResults(generator, cfg, obj_mapping, hoi_mapping, evalData=None):
     print('empties', nb_empty)
 
 # Train data
-evalTest, imageMeta = saveEvalData(genTest, Stages, cfg, hoi_mapping)
-#allEvalData = saveEvalResults(genTrain, cfg, obj_mapping, hoi_mapping)
+#evalTest, imageMeta = saveEvalData(genTest, Stages, cfg, hoi_mapping)
+allEvalData = saveEvalResults(genTest, cfg, obj_mapping, hoi_mapping)
