@@ -33,6 +33,19 @@ if True:
     hoi_mapping = data.hoi_labels
 
 
+if True:
+    submodel = 'det'
+    model = '_256'
+    ddir = 'HICO' if submodel == 'hoi' else 'COCO'
+    path = cfg.part_results_path + ddir + '/'+submodel+'80'+model+'/history.txt'
+    hist =  np.loadtxt(path, delimiter=', ')
+    if 'HICO' in path and hist.shape[0]>30:
+        hist[:,0] /= 2
+
+    import filters_rpn
+    draw.plotRPNLosses(hist, mode=submodel)
+
+
 if False:
     
     hists = []
@@ -50,7 +63,7 @@ if False:
 #    draw.plotRPNLosses(hist, mode='rpn', yaxis='log')
     draw.plotFasterLosses(hists, mode=submodel)
     
-if True:
+if False:
     # plot GT hoi examples
     genTrain = DataGenerator(imagesMeta = data.trainGTMeta, cfg=cfg, data_type='train', do_meta=True, mode='test', approach='new')
     imagesID = genTrain.dataID

@@ -167,13 +167,13 @@ def plotRPNLosses(hist, mode='rpn', yaxis=None):
     spl.plot(x, t, c=(0,0,1))
     
     if mode in ['rpn','det']:
-        spl.plot(x, tc, c=(0.5,0,1.0))
-        spl.plot(x, tr, c=(0.5,0,0.8))
+        spl.plot(x, tc, c=(1.0,0.0,1.0))
+        spl.plot(x, tr, c=(0.75,0.5,0.8))
         
     spl.plot(x, v, c=(0,1,0))
     if mode in ['rpn','det']:
-        spl.plot(x, vc, c=(0.5,1.0,0.0))
-        spl.plot(x, vr, c=(0.5,0.8,0.0))
+        spl.plot(x, vc, c=(1.0,1.0,0.0))
+        spl.plot(x, vr, c=(0.75,0.8,0.5))
         
     if mode in ['rpn', 'det']:
         nb_itr = 49
@@ -523,7 +523,7 @@ def drawGTBoxes(img, imageMeta, imageDims):
 #    f.tight_layout()    
 #    return bboxes
 
-def drawPositiveHoI(img, hbboxes, obboxes, patterns, props, imageMeta, imageDims, cfg, obj_mapping):
+def drawPositiveHoI(img, hbboxes, obboxes, patterns, props, imageMeta, imageDims, cfg, obj_mapping, hoi_mapping):
 #    f, spl = plt.subplots(2,2)
 #    spl = spl.ravel()
 #    spl[0].imshow(img)
@@ -541,7 +541,7 @@ def drawPositiveHoI(img, hbboxes, obboxes, patterns, props, imageMeta, imageDims
 #        oprop = (obboxes[idx,4])
 #        hlbl = int(hbboxes[idx,5])
 #        olbl = int(obboxes[idx,5])
-        hoilabel = list(np.where(props[idx,:]>0.1)[0])
+        hoilabel = list(np.where(props[idx,:]>0.01)[0])
 #        hoilabel = np.argmax(props[idx,:])
         valid_hoi = False
         for i in range(16):
@@ -551,7 +551,8 @@ def drawPositiveHoI(img, hbboxes, obboxes, patterns, props, imageMeta, imageDims
             if 16 in hoilabel:
                 hoilabel.remove(16)
             hoiprop = props[idx,hoilabel]
-            print(idx, hoilabel, hoiprop)
+            lblstr = ', '.join([hoi_mapping[x]['pred'] + ' ' + hoi_mapping[x]['obj'] for x in hoilabel])
+            print(idx, hoilabel, hoiprop, lblstr)
             
             f, spl = plt.subplots(1,1)
 #            spl = spl.ravel()   
@@ -744,7 +745,6 @@ def drawOverlapHoI(img, hbboxes, obboxes, props, imageMeta, imageDims, cfg, obj_
         conn = np.array([[odoty, odotx], [hdoty, hdotx]])
         hbbox = drawProposalBox(hbbox)
         obbox = drawProposalBox(obbox)        
-        
         if len(hoilabels)>0 and overlap >= 0.5:
 #            hoiprops = [props[idx,x] for x in hoilabels if x in overlap_labels]
             

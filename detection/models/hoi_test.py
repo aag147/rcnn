@@ -63,7 +63,7 @@ def saveInputData(generator, Stages, cfg, do_train_eval=False):
         utils.save_obj(inputMeta, save_path + imageID)
     return inputMeta, imageID, bboxes
 
-def saveEvalData(generator, Stages, cfg, obj_mapping):
+def saveEvalData(generator, Stages, cfg, hoi_mapping):
     
     cfg.my_output_path = cfg.results_path + 'hoi' + cfg.my_results_dir + '/res/' + generator.data_type + generator.approach + '/'
     
@@ -103,7 +103,7 @@ def saveEvalData(generator, Stages, cfg, obj_mapping):
             continue
           
         #CONVERT
-        evalData = filters_hoi.convertResults(pred_hbboxes, pred_obboxes, pred_props, imageMeta, imageDims['scale'], cfg.rpn_stride, obj_mapping)
+        evalData = filters_hoi.convertResults(pred_hbboxes, pred_obboxes, pred_props, imageMeta, imageDims['scale'], cfg, hoi_mapping)
         utils.save_obj(evalData, save_path + imageID)
     return evalData, imageMeta
 
@@ -111,7 +111,7 @@ def saveEvalResults(generator, cfg, obj_mapping, hoi_mapping, evalData=None):
     
     my_output_path = cfg.results_path + 'hoi' + cfg.my_results_dir + '/res/' + generator.data_type + generator.approach + '/'
     
-    path = cfg.part_results_path + "HICO/hoi" + cfg.my_results_dir
+    path = cfg.part_results_path + cfg.dataset + "/hoi" + cfg.my_results_dir
     mode = generator.data_type
     
     if not os.path.exists(path):

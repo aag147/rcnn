@@ -51,7 +51,7 @@ nb_iterations = 1
 all_times = np.zeros((nb_iterations, 5))
 
 for i in range(nb_iterations):
-#    X, y, imageMeta, imageDims, times = next(genIterator)
+    X, y, imageMeta, imageDims, times = next(genIterator)
     
 #    imageID = 'Play_Saxophone_007'
 #    imageMeta = generator.imagesMeta[imageID]
@@ -92,7 +92,7 @@ for i in range(nb_iterations):
 #    draw.drawOverlapRois(img, bboxes, imageMeta, imageDims, cfg, obj_mapping)
     draw.drawPositiveRois(img, bboxes_rdx[0], obj_mapping)
 #    draw.drawOverlapRois(img, bboxes[0], imageMeta, imageDims, cfg, obj_mapping)
-    draw.drawPositiveHoI(img, pred_hbboxes, pred_obboxes, None, pred_props, imageMeta, imageDims, cfg, obj_mapping)
+    draw.drawPositiveHoI(img, pred_hbboxes, pred_obboxes, None, pred_props, imageMeta, imageDims, cfg, obj_mapping, hoi_mapping)
 #    draw.drawOverlapHoI(img, pred_hbboxes, pred_obboxes, pred_props, imageMeta, imageDims, cfg, obj_mapping, hoi_mapping)
 
 all_times_mean = np.mean(all_times, axis=0)

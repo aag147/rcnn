@@ -130,7 +130,7 @@ class AllStages:
         all_hbboxes, all_obboxes, all_target_labels, val_map = filters_hoi.createTargets(bboxes, imageMeta, imageDims, self.cfg, self.obj_mapping)
         return all_hbboxes, all_obboxes, all_target_labels, val_map
     
-    def stagethree(self, X, imageMeta, imageDims, obj_mapping, include='all'):
+    def stagethree(self, X, imageMeta, imageDims, obj_mapping=None, include='all'):
         # hoi prepare
         if len(X)==3:
             [self.shared_img, all_hbboxes, all_obboxes] = X
@@ -142,7 +142,7 @@ class AllStages:
             else:
                 [bboxes] = X
             bboxes = np.copy(bboxes)
-            all_hbboxes, all_obboxes = filters_hoi.splitInputs(bboxes, imageMeta, obj_mapping, self.hoi_mapping)
+            all_hbboxes, all_obboxes = filters_hoi.splitInputs(bboxes, imageMeta, self.obj_mapping, self.hoi_mapping)
         
         if all_hbboxes is None:
             return None, None, None

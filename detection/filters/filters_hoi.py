@@ -93,7 +93,7 @@ def splitInputs(bboxes, imageMeta, obj_mapping, hoi_mapping=None):
     return bboxes_pairs[0:1,::], bboxes_pairs[1:2,::]
         
 def knownObjects(bboxes, imageMeta, obj_mapping, hoi_mapping):
-    if 'objecs' in imageMeta:
+    if 'objects' in imageMeta:
         objs = imageMeta['objects']
         lbls = []
         for rel in imageMeta['rels']:
@@ -210,7 +210,9 @@ def convertData(Y, cfg, mode='train'):
     hoiMeta = {'hbboxes':all_hbboxes, 'o_bboxes':all_obboxes, 'hoi_labels':all_target_labels, 'val_map':all_val_map}
     return hoiMeta
 
-def convertResults(hbboxes, obboxes, predicted_labels, imageMeta, scale, rpn_stride, hoi_mapping):
+def convertResults(hbboxes, obboxes, predicted_labels, imageMeta, scale, cfg, hoi_mapping):
+    
+    rpn_stride = cfg.rpn_stride
     hbboxes = np.copy(hbboxes)
     obboxes = np.copy(obboxes)
     
@@ -234,16 +236,20 @@ def convertResults(hbboxes, obboxes, predicted_labels, imageMeta, scale, rpn_str
     obboxes[:,2] = obboxes[:,2] + obboxes[:,0]
     obboxes[:,3] = obboxes[:,3] + obboxes[:,1]
     
-    gt_idxs = list(np.array(imageMeta['rels'])[:,1])
 
     gt_labels = []
     
-    objs = imageMeta['objects']
-    objs = [obj for i,obj in enumerate(objs) if i in gt_idxs]
-    for obj in objs:
-        label = obj['label']
-        if label not in gt_labels:
-            gt_labels.append(label)
+    if cfg.dataset == 'TUPPMI':
+        label = hoi_mapping[imageMeta['label']]['obj']
+        gt_labels.append(label)
+    else:
+        gt_idxs = list(np.array(imageMeta['rels'])[:,1])
+        objs = imageMeta['objects']
+        objs = [obj for i,obj in enumerate(objs) if i in gt_idxs]
+        for obj in objs:
+            label = obj['label']
+            if label not in gt_labels:
+                gt_labels.append(label)
     
     results = []
     nb_boxes = hbboxes.shape[0]
