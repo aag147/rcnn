@@ -4,6 +4,7 @@ The code is based around https://github.com/jinfagang/keras_frcnn,  https://gith
 
 
 Training HOI detection
+
 (a) Data has to be downloaded and converted to the correct datatype.
 
 (b-1) All models are trained running the training scripts in detection/scripts/
@@ -15,6 +16,7 @@ Training HOI detection
 
 
 Testing HOI detection
+
 (a) Data has to be downloaded and converted to the correct datatype)
 
 (b) The data is fed through all sub-models in the test-all-models script in detection/tests/
@@ -22,6 +24,7 @@ Testing HOI detection
 
 
 Training and testing HOI classification with ground truth bounding boxes
+
 (a) Data has to be downloaded and converted to the correct datatype)
 
 (b) Train the model with the rcnn script in classification/scripts/
