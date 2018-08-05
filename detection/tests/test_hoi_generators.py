@@ -76,7 +76,7 @@ Stages = stages.AllStages(cfg, None, obj_mapping, hoi_mapping, mode='test')
 
 iterator = genTrain
 genItr = iterator.begin()
-for batchidx in range(iterator.nb_batches):
+for batchidx in range(1):
     [img, all_hbboxes, all_obboxes, patterns], target_labels, imageMeta, imageDims, _ = next(genItr)
     imageID = imageMeta['imageName']
     utils.update_progress_new(batchidx+1, iterator.nb_batches, imageID)
@@ -99,6 +99,6 @@ img = img.astype(np.uint8)
 hbboxes, obboxes = filters_hoi.unprepareInputs(all_hbboxes, all_obboxes, imageDims)
 draw.drawGTBoxes(img, imageMeta, imageDims)
 draw.drawPositiveHoIs(img, hbboxes[0], obboxes[0], target_labels[0], hoi_mapping, imageMeta, imageDims, cfg)
-#draw.drawPositiveHoI(img, hbboxes[0], obboxes[0], patterns[0], target_labels[0], imageMeta, imageDims, cfg, obj_mapping)
+draw.drawPositiveHoI(img, hbboxes[0], obboxes[0], patterns[0], target_labels[0], imageMeta, imageDims, cfg, obj_mapping, hoi_mapping)
 #draw.drawOverlapRois(img, bboxes[0], imageMeta, imageDims, cfg, obj_mapping)
 #draw.drawHumanAndObjectRois(img, bboxes[0])

@@ -112,10 +112,13 @@ def plot_confusion_matrix(cm, classes=None,
             cm = cm[1:,1:]
             cm = cm.astype('float') / (cm.sum(axis=0)[np.newaxis,:] + 0.000000000000001)
         else:
-            cm[:,1:] = cm[:,1:].astype('float') / (cm[:,1:].sum(axis=0)[np.newaxis,:] + 0.000000000000001)
+            cm[:,:] = cm[:,:].astype('float') / (cm[:,:].sum(axis=1)[np.newaxis,:] + 0.000000000000001)
         print("Normalized confusion matrix")
     else:
         print('Confusion matrix, without normalization')
+
+    bad_idxs = np.where(cm>1.0)
+    cm[bad_idxs[0],bad_idxs[1]] = 0.0
 
 
     cm_padding = np.zeros([x+10*2 for x in cm.shape])
@@ -211,20 +214,20 @@ def plotFasterLosses(hists, mode='rpn', yaxis=None):
 
     if mode in ['rpn','det']:
         spl.plot(hist1[:,0], Ic, c=(0,0.5,1.0))
-        spl.plot(hist1[:,0], Ir, c=(0,0.5,0.8))
+        spl.plot(hist1[:,0], Ir, c=(0.5,0.0,1.0))
     else:
         spl.plot(x, I, c=(0,0,1))
         
 
     if mode in ['rpn','det']:
         spl.plot(hist2[:,0], IIc, c=(0.5,1.0,0.0))
-        spl.plot(hist2[:,0], IIr, c=(0.5,0.8,0.0))
+        spl.plot(hist2[:,0], IIr, c=(0.0,1.0,0.5))
     else:
         spl.plot(x, II, c=(0,1,0))
         
     if mode in ['rpn','det']:
         spl.plot(hist3[:,0], IIIc, c=(1.0,0.0,0.5))
-        spl.plot(hist3[:,0], IIIr, c=(0.8,0.0,0.5))
+        spl.plot(hist3[:,0], IIIr, c=(1.0,0.5,0.0))
     else:
         spl.plot(x, III, c=(1,0,0))
         
@@ -240,9 +243,9 @@ def plotFasterLosses(hists, mode='rpn', yaxis=None):
     plt.ylabel('Loss')
     plt.xlabel('Iteration (in 10K)')
     if mode == 'hoi':
-        plt.legend(['Model I+L2', 'Model II+L2', 'Model III+L2'], loc='upper right')
+        plt.legend(['Model I+L2', 'Model II+L2', 'Model III+L2'], loc='upper right', prop={'size': 12})
     else:
-        plt.legend(['Model I cls', 'Model I regr', 'Model II cls', 'Model II regr', 'Model III cls', 'Model III regr'], loc='upper right')
+        plt.legend(['Model I cls', 'Model I regr', 'Model II cls', 'Model II regr', 'Model III cls', 'Model III regr'], loc='upper right', prop={'size': 12})
     plt.show()    
 
 def pltAPs(APs, yaxis=None):
@@ -544,30 +547,51 @@ def drawPositiveHoI(img, hbboxes, obboxes, patterns, props, imageMeta, imageDims
         hoilabel = list(np.where(props[idx,:]>0.01)[0])
 #        hoilabel = np.argmax(props[idx,:])
         valid_hoi = False
-        for i in range(16):
+        for i in range(len(hoi_mapping)):
             if i in hoilabel:
                 valid_hoi = True
         if valid_hoi:
-            if 16 in hoilabel:
-                hoilabel.remove(16)
+#            if 16 in hoilabel:
+#                hoilabel.remove(16)
             hoiprop = props[idx,hoilabel]
             lblstr = ', '.join([hoi_mapping[x]['pred'] + ' ' + hoi_mapping[x]['obj'] for x in hoilabel])
             print(idx, hoilabel, hoiprop, lblstr)
             
             f, spl = plt.subplots(1,1)
+            spl.axis('off')
 #            spl = spl.ravel()   
             spl.imshow(img)
             c = colours[c_idx]
+            
+
             hbbox = hbboxes[idx,:4]*16
             obbox = obboxes[idx,:4]*16
+            
+            hdotx = hbbox[0] + (hbbox[2] / 2)
+            hdoty = hbbox[1] + (hbbox[3] / 2)
+            odotx = obbox[0] + (obbox[2] / 2)
+            odoty = obbox[1] + (obbox[3] / 2)
+            conn = np.array([[odoty, odotx], [hdoty, hdotx]])
             hbbox = drawProposalBox(hbbox)
             obbox = drawProposalBox(obbox)
-            spl.plot(hbbox[0,:], hbbox[1,:], c=c)
-            spl.plot(obbox[0,:], obbox[1,:], c=c)
+
+            spl.plot(hbbox[0,:], hbbox[1,:], c='green')
+            spl.plot(obbox[0,:], obbox[1,:], c='blue')
+            spl.plot(conn[:,1], conn[:,0], c='red')
+            spl.scatter(conn[:,1], conn[:,0], c='red', s=5)
+            f.subplots_adjust(left=0.02, right=0.98, top=0.98, bottom=0.02)
+            
             if patterns is not None:
-                spl[2].imshow(patterns[idx,:,:,0])
-                spl[3].imshow(patterns[idx,:,:,1])
+                f, spl = plt.subplots(1,1)
+                spl.axis('off')
+                spl.imshow(patterns[idx,:,:,0], cmap='gray')
+                f.subplots_adjust(left=0.02, right=0.98, top=0.98, bottom=0.02)
+                f, spl = plt.subplots(1,1)
+                spl.axis('off')
+                spl.imshow(patterns[idx,:,:,1], cmap='gray')
+                f.subplots_adjust(left=0.02, right=0.98, top=0.98, bottom=0.02)
             idxs.append(idx)
+            break
 #            print('Pos. label:', inv_obj_mapping[hlbl], inv_obj_mapping[olbl], hprop, oprop, hoiprop)
             
             c_idx = (c_idx+1) % len(colours)
@@ -584,13 +608,14 @@ def drawOverlapHOIRes(evalData, imagesMeta, obj_mapping, hoi_mapping, images_pat
         if imageID != prev_imageID:
             imageMeta = imagesMeta[imageID]
             img = cv.imread(images_path + imageMeta['imageName'])
-            assert img is not None
+            assert img is not None, images_path + imageMeta['imageName']
             img = cv.cvtColor(img, cv.COLOR_BGR2RGB)
             
-            import filters_helper as helper    
-            gt_hbboxes, gt_obboxes = helper._transformGTBBox(imageMeta['objects'], obj_mapping, np.array(imageMeta['rels']), dosplit=True)
-            gt_rels = helper._getRealRels(np.array(imageMeta['rels']))
-            gt_objs = np.unique(gt_obboxes[:,4])
+            if 'objects' in imageMeta:
+                import filters_helper as helper    
+                gt_hbboxes, gt_obboxes = helper._transformGTBBox(imageMeta['objects'], obj_mapping, np.array(imageMeta['rels']), dosplit=True)
+                gt_rels = helper._getRealRels(np.array(imageMeta['rels']))
+                gt_objs = np.unique(gt_obboxes[:,4])
         
         
         hbbox = line['hbbox']
@@ -598,20 +623,23 @@ def drawOverlapHOIRes(evalData, imagesMeta, obj_mapping, hoi_mapping, images_pat
         label = line['category_id']
         prop  = line['score']
         
-        overlap = 0
-        for gt_idx, gt_rel in enumerate(gt_rels):
-            gt_hbbox = gt_hbboxes[gt_rel[0]:gt_rel[0]+1]
-            gt_obbox = gt_obboxes[gt_rel[1]:gt_rel[1]+1]
-            gt_label = gt_rel[2]
-            
-            if gt_label != label:
-                continue
-                        
-            hum_overlap = helper._computeIoUs(hbbox, gt_hbbox)[0]
-            obj_overlap = helper._computeIoUs(obbox, gt_obbox)[0]
-            
-            if min(hum_overlap, obj_overlap) > overlap:
-                overlap = min(hum_overlap, obj_overlap)
+        if 'objects' in imageMeta:
+            overlap = 0
+            for gt_idx, gt_rel in enumerate(gt_rels):
+                gt_hbbox = gt_hbboxes[gt_rel[0]:gt_rel[0]+1]
+                gt_obbox = gt_obboxes[gt_rel[1]:gt_rel[1]+1]
+                gt_label = gt_rel[2]
+                
+                if gt_label != label:
+                    continue
+                            
+                hum_overlap = helper._computeIoUs(hbbox, gt_hbbox)[0]
+                obj_overlap = helper._computeIoUs(obbox, gt_obbox)[0]
+                
+                if min(hum_overlap, obj_overlap) > overlap:
+                    overlap = min(hum_overlap, obj_overlap)
+        else:
+            overlap = 1
     
         hbbox = np.copy(hbbox)
         obbox = np.copy(obbox)

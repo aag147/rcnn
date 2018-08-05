@@ -80,21 +80,6 @@ def saveEvalData(generator, Stages, cfg, hoi_mapping):
         proposals = Stages.stageone([X], y, imageMeta, imageDims)
         bboxes = Stages.stagetwo([proposals], imageMeta, imageDims)
         pred_hbboxes, pred_obboxes, pred_props = Stages.stagethree([bboxes], imageMeta, imageDims)
-        
-#        new_pred_props = np.zeros_like(pred_props)
-#        max_pred_idx = None
-#        max_pred = 0
-#        for pred_idx in range(pred_props.shape[0]):
-#            label = np.argmax(pred_props[pred_idx,intval_beg:intval_beg+1])
-#            pred = pred_props[pred_idx,label]
-#            new_pred_props[pred_idx,label] = pred
-#            if pred > max_pred:
-#                max_pred = pred
-#                max_pred_idx = pred_idx
-                
-#        pred_hbboxes = pred_hbboxes[max_pred_idx,:]
-#        pred_obboxes = pred_obboxes[max_pred_idx,:]
-#        pred_props = pred_props[max_pred_idx,:]
           
         #CONVERT
         evalData = filters_hoi.convertResults(pred_hbboxes, pred_obboxes, pred_props, imageMeta, imageDims['scale'], cfg, hoi_mapping)
@@ -103,7 +88,7 @@ def saveEvalData(generator, Stages, cfg, hoi_mapping):
     return evalData, imageMeta
 
 def saveEvalResults(generator, cfg, obj_mapping, hoi_mapping, evalData=None):
-    
+    evalDataInput = evalData
     my_output_path = cfg.results_path + 'hoi' + cfg.my_results_dir + '/res/' + generator.data_type + 'res/'
     
     path = cfg.part_results_path + cfg.dataset + "/hoi" + cfg.my_results_dir
@@ -113,32 +98,91 @@ def saveEvalResults(generator, cfg, obj_mapping, hoi_mapping, evalData=None):
         path = path[:-1]
     path += '/'
     nb_empty = 0
-    if evalData is None:
+    nb_gt_samples = np.zeros(cfg.nb_hoi_classes)
+    if evalData is None or True:
         evalData = []
         for batchidx, (imageID, imageMeta) in enumerate(generator.imagesMeta.items()):
             if (batchidx+1) % (max(1,generator.nb_batches // 100)) == 0 or batchidx==1 or (batchidx+1) == generator.nb_batches:
                 utils.update_progress_new(batchidx+1, generator.nb_batches, imageID)
-            print(my_output_path + imageID + '.pkl')
-            if os.path.exists(my_output_path + imageID + '.pkl'):
-                data = utils.load_obj(my_output_path + imageID)
-                best_score = 0
-                best_idx = None
-                for idx, det in enumerate(data):
-                    if det['score'] > best_score:
-                        best_score = det['score']
-                        best_idx = idx
-                    
-                best_data = [data[best_idx]]
-                    
-                if data is not None and len(data) > 0:
-                    evalData.extend(best_data)
-            else:
-                nb_empty += 1
+            
+            gt_label = imageMeta['label']
+            
+            data = utils.load_obj(my_output_path + imageID)
+            best_score = -1
+            best_idx = None
+            for idx, det in enumerate(data):
+                if det['score'] > best_score:
+                    best_score = det['score']
+                    best_idx = idx
                 
+            best_data = [data[best_idx]]
+            best_data[0]['gt'] = gt_label
+            nb_gt_samples[gt_label] += 1
+                
+            if data is not None and len(data) > 0:
+                evalData.extend(best_data)
+
+                
+    evalData = evalDataInput
     evalData = cp.copy(evalData)
+#    return evalData, None
     
+    cfm = np.zeros((cfg.nb_hoi_classes, cfg.nb_hoi_classes))
     
-    return evalData
+    APs = np.zeros(cfg.nb_hoi_classes)
+    for label in range(cfg.nb_hoi_classes):
+        subset = [x for x in evalData if x['category_id']==label]
+        
+        if len(subset)==0:
+            continue
+        
+        props = [x['score'] for x in subset]
+        
+        nb_preds = len(props)
+        idxs = np.argsort(props)[::-1]
+        
+        tps = np.zeros(nb_preds)
+        fps = np.zeros(nb_preds)
+        
+        nb_class_samples = nb_gt_samples[label]
+        
+        for i in range(nb_preds):
+            idx = idxs[i]
+            pred = subset[idx]
+            
+            cfm[pred['gt'], pred['category_id']] += 1
+            
+            if pred['category_id'] == pred['gt']:
+                tps[i] = 1
+            else:
+                fps[i] = 1
+        
+        if np.sum(tps)==0:
+            continue
+        
+        tp = np.cumsum(tps)
+        fp = np.cumsum(fps)
+        
+        print(label, tp[-1], nb_class_samples)
+#        break
+        recall = tp / nb_class_samples
+        precision = tp / (fp+tp)
+        
+
+        Ps = np.zeros((11))
+        for rec in range(0,10):
+            idxs = np.where(recall>= rec/10.0)[0]
+            if len(idxs) == 0:
+                p = 0.0
+            else:
+                p = np.max(precision[idxs])
+            Ps[rec] = p
+                
+        AP = np.mean(Ps)
+        APs[label] = AP
+    
+    mAP = np.mean(APs)
+    return evalData, mAP, cfm
     
     saveMeta = {'mAP': mAP, 'zAP': AP.tolist(), 'nb_empties': nb_empty}
     utils.save_dict(saveMeta, path+mode+'_mAP')
@@ -147,4 +191,4 @@ def saveEvalResults(generator, cfg, obj_mapping, hoi_mapping, evalData=None):
 
 # Train data
 #evalTest, imageMeta = saveEvalData(genTest, Stages, cfg, hoi_mapping)
-allEvalData = saveEvalResults(genTest, cfg, obj_mapping, hoi_mapping)
+allEvalData, mAP, cfm = saveEvalResults(genTest, cfg, obj_mapping, hoi_mapping, allEvalData)

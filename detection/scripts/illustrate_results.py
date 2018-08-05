@@ -33,7 +33,7 @@ if True:
     hoi_mapping = data.hoi_labels
 
 
-if True:
+if False:
     submodel = 'det'
     model = '_256'
     ddir = 'HICO' if submodel == 'hoi' else 'COCO'
@@ -59,8 +59,6 @@ if False:
             hist[:,0] /= 2
         hists.append(hist)
 
-    import filters_rpn
-#    draw.plotRPNLosses(hist, mode='rpn', yaxis='log')
     draw.plotFasterLosses(hists, mode=submodel)
     
 if False:
@@ -96,7 +94,7 @@ if False:
 if False:
     # HOI eval data
     genTest = DataGenerator(imagesMeta = data.valGTMeta, cfg=cfg, data_type='test', do_meta=True, mode='test', approach='new')
-    my_output_path = cfg.part_results_path + 'HICO/hoi80slow/res/testnew/'
+    my_output_path = cfg.part_results_path + 'HICO/hoi80vggcs/res/testnew/'
     evalData = loadEvalData(genTest, my_output_path)
     imagesMeta = genTest.imagesMeta
 
@@ -148,25 +146,27 @@ if False:
 
 if False:
     # plot eval data
-    props = [x['score'] for x in evalData]
+    props = [x['score'] for x in allEvalData]
     idxs = np.argsort(props)[::-1]
-    images_path = 'C:\\Users\\aag14/Documents/Skole/Speciale/data/HICO/images/test/'
+    images_path = 'C:\\Users\\aag14/Documents/Skole/Speciale/data/TUPPMI/images/test/'
     
     nb_preds = 0
     used_objs = []
+    used_hois = []
     show_lines = []
     for idx in idxs:
-        line = evalData[idx]
-        pred_eval = line['eval']
-        if pred_eval != 1:
+        line = allEvalData[idx]
+        pred_eval = line['gt']==line['category_id']
+        if pred_eval == 1:
             continue
-        if hoi_mapping[line['category_id']]['obj'] in used_objs:
+        if line['category_id'] in used_hois:
             continue
 #        if hoi_mapping[line['category_id']]['obj'] != 'book':
 #            continue
 #        if line['category_id'] != 249:
 #            continue
-        used_objs.append(hoi_mapping[line['category_id']]['obj'])
+#        used_objs.append(hoi_mapping[line['category_id']]['obj'])
+        used_hois.append(line['category_id'])
         nb_preds += 1
         if nb_preds < 0:
             continue
@@ -175,7 +175,7 @@ if False:
 #        if nb_preds == 20:
 #            break
         
-    draw.drawOverlapHOIRes(show_lines, imagesMeta, obj_mapping, hoi_mapping, images_path)
+    draw.drawOverlapHOIRes(show_lines, genTest.imagesMeta, obj_mapping, hoi_mapping, images_path)
 
 if False:
     images_path = cfg.data_path + 'images/val/'
